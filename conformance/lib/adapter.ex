@@ -23,11 +23,31 @@ defmodule Ash.Conformance.Adapter do
   @callback benchmark_persist!(atom(), [map()]) :: term()
   @doc "Whether this integration provides the resources for a fixture."
   @callback fixture?(atom()) :: boolean()
+  @doc "Expectation records by scenario ID, for every scenario in the adapter's profiles."
+  @callback expectations() :: %{String.t() => term()}
+  @doc """
+  For an adapter from another repository: the data layer and its configuration
+  block for one of the shared tables, e.g. `{MyDataLayer, quote(do: my_dl do table(...) end)}`.
+  """
+  @callback resource_config(table :: String.t()) :: {module(), Macro.t()}
+  @doc "Options added to every shared identity, such as `pre_check?: true`."
+  @callback identity_options() :: keyword()
+  @optional_callbacks resource_config: 1, identity_options: 0
 
-  def all, do: [Ash.Conformance.Sqlite, Ash.Conformance.Postgres]
+  @doc """
+  Reviewed adapters: the built-in ones, plus any listed in config, so an
+  adapter from another repository can join without editing this file:
+
+      config :ash_conformance, adapters: [MyApp.Conformance.Adapter]
+  """
+  def all,
+    do:
+      [Ash.Conformance.Sqlite, Ash.Conformance.Postgres] ++
+        Application.get_env(:ash_conformance, :adapters, [])
 
   @doc "Integrations with no expectation records; they run only as unreviewed surveys."
-  def unreviewed, do: [Ash.Conformance.Ets]
+  def unreviewed,
+    do: [Ash.Conformance.Ets] ++ Application.get_env(:ash_conformance, :unreviewed_adapters, [])
 
   def find!(name) do
     Enum.find(all() ++ unreviewed(), &(to_string(&1.id()) == name)) ||
@@ -65,6 +85,7 @@ defmodule Ash.Conformance.Sqlite do
   @moduledoc false
   @behaviour Ash.Conformance.Adapter
   def id, do: :sqlite
+  def expectations, do: Ash.Conformance.Expectations.builtin(:sqlite)
   def fixture?(_fixture), do: true
   def profiles, do: [:shared]
   def instrumentation, do: Ash.Conformance.SQLInstrumentation
@@ -91,6 +112,7 @@ defmodule Ash.Conformance.Postgres do
   @moduledoc false
   @behaviour Ash.Conformance.Adapter
   def id, do: :postgres
+  def expectations, do: Ash.Conformance.Expectations.builtin(:postgres)
   def fixture?(_fixture), do: true
   def profiles, do: [:shared, :context_tenancy]
   def instrumentation, do: Ash.Conformance.SQLInstrumentation

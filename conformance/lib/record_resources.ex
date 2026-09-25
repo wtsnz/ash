@@ -19,10 +19,9 @@ defmodule Ash.Conformance.RecordResources do
 
   defmacro __using__(opts) do
     namespace = opts |> Keyword.fetch!(:namespace) |> Macro.expand(__CALLER__)
-    adapter = Keyword.fetch!(opts, :adapter)
+    adapter = opts |> Keyword.fetch!(:adapter) |> Macro.expand(__CALLER__)
     record = Module.concat(namespace, Record)
-    # ETS cannot enforce uniqueness itself, so Ash checks the identity first.
-    identity_opts = if adapter == :ets, do: [pre_check?: true], else: []
+    identity_opts = Ash.Conformance.Resource.identity_options(adapter)
 
     quote context: Elixir do
       defmodule unquote(record) do

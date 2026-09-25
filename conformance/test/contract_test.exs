@@ -116,4 +116,30 @@ defmodule Ash.Conformance.ContractTest do
       end
     end
   end
+
+  defmodule ExternalAdapter do
+    @moduledoc false
+    def id, do: :external
+    def expectations, do: %{"record.read_all" => :supported}
+    def identity_options, do: [pre_check?: true]
+  end
+
+  describe "adapters from other repositories" do
+    setup do
+      on_exit(fn -> Application.delete_env(:ash_conformance, :adapters) end)
+    end
+
+    test "join through config, with their own expectations, without editing shared code" do
+      Application.put_env(:ash_conformance, :adapters, [ExternalAdapter])
+
+      assert ExternalAdapter in Adapter.all()
+      assert Expectations.for("record.read_all", :external) == :supported
+      assert Expectations.for("record.read_all", :sqlite) == :supported
+    end
+
+    test "can ask for identities to be pre-checked" do
+      assert Ash.Conformance.Resource.identity_options(ExternalAdapter) == [pre_check?: true]
+      assert Ash.Conformance.Resource.identity_options(:postgres) == []
+    end
+  end
 end

@@ -4,11 +4,13 @@
 
 defmodule Ash.Conformance.Expectations do
   @moduledoc """
-  Explicit baseline for the pinned adapters and the parent AshSQL checkout.
+  Expectation records, gathered from each adapter's `expectations/0`.
 
-  New scenarios and adapters have no implicit status. A gap has a narrow error
-  or wrong-result signature and a local implementation task. Updating this file
-  never changes the shared scenario's expected answer.
+  The built-in SQLite and Postgres records live in this module. An adapter
+  from another repository returns its own map from `expectations/0`, so it
+  never edits this file. New scenarios and adapters have no implicit status.
+  A gap has a narrow error or wrong-result signature and a local task.
+  Updating a record never changes the shared scenario's expected answer.
   """
 
   @supported_both ~w(
@@ -76,7 +78,29 @@ defmodule Ash.Conformance.Expectations do
 
   def for(id, adapter), do: all() |> Map.fetch!(id) |> Map.fetch!(adapter)
 
+  @doc "Every adapter's records, by scenario ID and then adapter ID."
   def all do
+    for adapter <- Ash.Conformance.Adapter.all(),
+        {id, expectation} <- adapter.expectations(),
+        reduce: %{} do
+      acc ->
+        Map.update(
+          acc,
+          id,
+          %{adapter.id() => expectation},
+          &Map.put(&1, adapter.id(), expectation)
+        )
+    end
+  end
+
+  @doc "The built-in records for `:sqlite` or `:postgres`."
+  def builtin(adapter_id) do
+    for {id, statuses} <- builtin_table(), Map.has_key?(statuses, adapter_id), into: %{} do
+      {id, Map.fetch!(statuses, adapter_id)}
+    end
+  end
+
+  defp builtin_table do
     Map.merge(Map.new(@supported_both, &{&1, both(:supported)}), gaps())
     |> Map.merge(
       Map.new(

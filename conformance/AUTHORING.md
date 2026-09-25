@@ -60,7 +60,16 @@ missing expectations, duplicate IDs, unexpected passes and changed signatures.
 
 ## Add an adapter
 
-Implement `Ash.Conformance.Adapter` and register it in `Adapter.all/0`:
+Implement `Ash.Conformance.Adapter`. An adapter in this repository is added to
+`Adapter.all/0`; one in another repository is listed in config instead, so no
+shared file changes:
+
+```elixir
+# A reviewed adapter, with its own expectation records:
+config :ash_conformance, adapters: [MyDataLayer.Conformance]
+# Or one that only produces unreviewed surveys:
+config :ash_conformance, unreviewed_adapters: [MyDataLayer.Conformance]
+```
 
 | Callback | Responsibility |
 | --- | --- |
@@ -72,6 +81,24 @@ Implement `Ash.Conformance.Adapter` and register it in `Adapter.all/0`:
 | `benchmark_persist!/2` | Persist larger fixtures outside timing. May delegate to ordinary persistence. |
 | `custom_aggregate/0` | Adapter-specific custom aggregate implementation. |
 | `instrumentation/0` | Optional module for untimed `measure/2` and `metadata/1`, or `nil`. |
+| `fixture?/1` | Whether the integration provides the resources for a fixture. |
+| `expectations/0` | Expectation records by scenario ID; `%{}` for a survey-only adapter. |
+| `resource_config/1` (optional) | `{data_layer, config_block}` for a shared table, so the shared resource roles work unchanged. |
+| `identity_options/0` (optional) | Options for every shared identity, e.g. `[pre_check?: true]` when uniqueness is not enforced by storage. |
+
+To reuse the shared roles, implement `resource_config/1` and instantiate the
+resource macros with your adapter module, as `Ash.Conformance.Ets` does with
+`:ets`:
+
+```elixir
+defmodule MyDataLayer.Conformance.Resources do
+  use Ash.Conformance.Resources, namespace: MyDataLayer.Conformance, adapter: MyDataLayer.Conformance
+end
+```
+
+Start with `mix conformance.survey`, review what it reports, then record
+expectations: supported, unsupported with the exact rejection, known defect with
+the exact wrong answer, or unresolved.
 
 The SQL adapters implement these with repositories and migrations. The runner,
 shared scenarios and benchmark harness never require a connection or an Ecto

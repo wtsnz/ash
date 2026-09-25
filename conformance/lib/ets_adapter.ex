@@ -13,6 +13,8 @@ defmodule Ash.Conformance.Ets do
   @behaviour Ash.Conformance.Adapter
 
   def id, do: :ets
+  # Unreviewed: surveys classify results instead of checking records.
+  def expectations, do: %{}
   def fixture?(fixture), do: fixture in [:aggregate, :records, :isolation, :empty]
   def profiles, do: [:shared]
   def instrumentation, do: nil

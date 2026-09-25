@@ -6,9 +6,8 @@ defmodule Ash.Conformance.IsolationResources do
 
   defmacro __using__(opts) do
     namespace = opts |> Keyword.fetch!(:namespace) |> Macro.expand(__CALLER__)
-    adapter = Keyword.fetch!(opts, :adapter)
-    # ETS cannot enforce uniqueness itself, so Ash checks identities first.
-    identity_opts = if adapter == :ets, do: [pre_check?: true], else: []
+    adapter = opts |> Keyword.fetch!(:adapter) |> Macro.expand(__CALLER__)
+    identity_opts = Ash.Conformance.Resource.identity_options(adapter)
 
     definitions =
       for {prefix, secured?, contextual?} <- [

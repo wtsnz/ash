@@ -14,8 +14,23 @@ end
 defmodule Ash.Conformance.Resource do
   @moduledoc false
 
+  @doc """
+  Identity options for an adapter. ETS cannot enforce uniqueness itself, so
+  Ash checks identities first; other adapters may ask for the same.
+  """
+  def identity_options(:ets), do: [pre_check?: true]
+  def identity_options(adapter) when adapter in [:sqlite, :postgres], do: []
+
+  def identity_options(module) do
+    Code.ensure_compiled!(module)
+
+    if function_exported?(module, :identity_options, 0),
+      do: module.identity_options(),
+      else: []
+  end
+
   defmacro __using__(opts) do
-    adapter = Keyword.fetch!(opts, :adapter)
+    adapter = opts |> Keyword.fetch!(:adapter) |> Macro.expand(__CALLER__)
     table = Keyword.fetch!(opts, :table)
     authorizers = Keyword.get(opts, :authorizers, [])
 
@@ -49,6 +64,11 @@ defmodule Ash.Conformance.Resource do
                table(unquote(String.to_atom(table)))
              end
            end}
+
+        # An adapter from another repository supplies its own data layer and
+        # configuration block for each shared table.
+        module ->
+          module.resource_config(table)
       end
 
     quote do
