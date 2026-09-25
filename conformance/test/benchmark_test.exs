@@ -47,6 +47,14 @@ defmodule Ash.Conformance.BenchmarkTest do
       "workload_version" => 1,
       "adapter" => "sqlite",
       "environment" => %{
+        "elixir" => "1.20.0",
+        "otp" => "29",
+        "erts" => "17.0.1",
+        "os" => "linux",
+        "architecture" => "x86_64",
+        "schedulers" => 4,
+        "database" => %{"version" => "3.53.4"},
+        "client_concurrency" => 1,
         "hardware" => "machine-a",
         "dependencies" => %{"ash_sql" => "abc", "ash" => "3.0"}
       },
@@ -74,6 +82,18 @@ defmodule Ash.Conformance.BenchmarkTest do
           Map.put(base, "results", [put_in(hd(base["results"]), ["parameters", "parents"], 11)])
         ] do
       assert_raise ArgumentError, ~r/Incompatible/, fn -> Benchmark.compare!(base, modified) end
+    end
+
+    incomplete = update_in(base, ["environment"], &Map.delete(&1, "elixir"))
+
+    assert_raise ArgumentError, ~r/Incomplete benchmark environment/, fn ->
+      Benchmark.compare!(incomplete, incomplete)
+    end
+
+    duplicate = Map.put(base, "results", base["results"] ++ base["results"])
+
+    assert_raise ArgumentError, ~r/Duplicate benchmark/, fn ->
+      Benchmark.compare!(duplicate, duplicate)
     end
 
     invalid = Map.put(base, "results", [Map.put(hd(base["results"]), "validation", "failed")])

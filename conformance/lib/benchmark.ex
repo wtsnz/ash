@@ -198,6 +198,7 @@ defmodule Ash.Conformance.Benchmark do
   end
 
   def compare!(base, current) do
+    Enum.each([base, current], &validate_report!/1)
     keys = ~w(schema_version workload_version adapter)
 
     for key <- keys,
@@ -244,5 +245,28 @@ defmodule Ash.Conformance.Benchmark do
       }
     end
     |> Enum.sort_by(&{&1.workload, &1.parameters})
+  end
+
+  defp validate_report!(report) do
+    unless report["schema_version"] == 1 and report["workload_version"] == 1 and
+             is_binary(report["adapter"]) and is_map(report["environment"]) and
+             is_list(report["results"]) and report["results"] != [] do
+      raise ArgumentError, "Incomplete or unsupported benchmark report"
+    end
+
+    for key <-
+          ~w(elixir otp erts os architecture schedulers hardware database client_concurrency dependencies),
+        is_nil(report["environment"][key]),
+        do: raise(ArgumentError, "Incomplete benchmark environment: #{key}")
+
+    for row <- report["results"],
+        key <- ~w(workload parameters validation samples warmup latency_us),
+        is_nil(row[key]),
+        do: raise(ArgumentError, "Incomplete benchmark workload: #{key}")
+
+    ids = Enum.map(report["results"], &{&1["workload"], &1["parameters"]})
+
+    if length(ids) != length(Enum.uniq(ids)),
+      do: raise(ArgumentError, "Duplicate benchmark workload/dataset")
   end
 end
