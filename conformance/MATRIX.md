@@ -9,26 +9,26 @@ Elixir scenarios and expectations define the contract. CI runs each adapter inde
 
 | Scenario | sqlite | postgres |
 | --- | --- | --- |
-| [`auth.aggregate_filter`](lib/scenarios/isolation.ex#L234) | supported | supported |
-| [`auth.aggregate_sort`](lib/scenarios/isolation.ex#L243) | supported | supported |
-| [`auth.bounds`](lib/scenarios/isolation.ex#L279) | supported | supported |
-| [`auth.children`](lib/scenarios/isolation.ex#L198) | supported | supported |
-| [`auth.context_aggregates`](lib/scenarios/isolation.ex#L326) | supported | supported |
-| [`auth.context_read`](lib/scenarios/isolation.ex#L308) | supported | supported |
-| [`auth.context_relationship`](lib/scenarios/isolation.ex#L317) | supported | supported |
-| [`auth.context_root`](lib/scenarios/isolation.ex#L335) | supported | supported |
-| [`auth.from_many`](lib/scenarios/isolation.ex#L289) | supported | supported |
-| [`auth.keyset_pages`](lib/scenarios/isolation.ex#L267) | supported | supported |
-| [`auth.loaded_aggregates`](lib/scenarios/isolation.ex#L216) | supported | supported |
-| [`auth.offset_page`](lib/scenarios/isolation.ex#L254) | supported | supported |
-| [`auth.read`](lib/scenarios/isolation.ex#L189) | supported | supported |
-| [`auth.relationship_load`](lib/scenarios/isolation.ex#L207) | supported | supported |
-| [`auth.root_aggregates`](lib/scenarios/isolation.ex#L225) | supported | supported |
-| [`auth.tenant_interaction`](lib/scenarios/isolation.ex#L298) | supported | supported |
-| [`auth.write_bulk_destroy`](lib/scenarios/isolation.ex#L495) | supported | supported |
-| [`auth.write_bulk_update_atomic`](lib/scenarios/isolation.ex#L460) | supported | supported |
-| [`auth.write_bulk_update_stream`](lib/scenarios/isolation.ex#L477) | supported | supported |
-| [`auth.write_forbidden`](lib/scenarios/isolation.ex#L512) | supported | supported |
+| [`auth.aggregate_filter`](lib/scenarios/isolation.ex#L239) | supported | supported |
+| [`auth.aggregate_sort`](lib/scenarios/isolation.ex#L248) | supported | supported |
+| [`auth.bounds`](lib/scenarios/isolation.ex#L284) | supported | supported |
+| [`auth.children`](lib/scenarios/isolation.ex#L203) | supported | supported |
+| [`auth.context_aggregates`](lib/scenarios/isolation.ex#L331) | supported | supported |
+| [`auth.context_read`](lib/scenarios/isolation.ex#L313) | supported | supported |
+| [`auth.context_relationship`](lib/scenarios/isolation.ex#L322) | supported | supported |
+| [`auth.context_root`](lib/scenarios/isolation.ex#L340) | supported | supported |
+| [`auth.from_many`](lib/scenarios/isolation.ex#L294) | supported | supported |
+| [`auth.keyset_pages`](lib/scenarios/isolation.ex#L272) | supported | supported |
+| [`auth.loaded_aggregates`](lib/scenarios/isolation.ex#L221) | supported | supported |
+| [`auth.offset_page`](lib/scenarios/isolation.ex#L259) | supported | supported |
+| [`auth.read`](lib/scenarios/isolation.ex#L194) | supported | supported |
+| [`auth.relationship_load`](lib/scenarios/isolation.ex#L212) | supported | supported |
+| [`auth.root_aggregates`](lib/scenarios/isolation.ex#L230) | supported | supported |
+| [`auth.tenant_interaction`](lib/scenarios/isolation.ex#L303) | supported | supported |
+| [`auth.write_bulk_destroy`](lib/scenarios/isolation.ex#L500) | supported | supported |
+| [`auth.write_bulk_update_atomic`](lib/scenarios/isolation.ex#L465) | supported | supported |
+| [`auth.write_bulk_update_stream`](lib/scenarios/isolation.ex#L482) | supported | supported |
+| [`auth.write_forbidden`](lib/scenarios/isolation.ex#L517) | supported | supported |
 | [`bounds.default_sort`](lib/scenarios/bounds.ex#L36) | [known_defect](GAPS.md#default-sort) · AshSQL | [known_defect](GAPS.md#default-sort) · AshSQL |
 | [`bounds.default_sort_control`](lib/scenarios/bounds.ex#L39) | supported | supported |
 | [`bounds.filter_after_limit`](lib/scenarios/bounds.ex#L21) | supported | supported |
@@ -68,8 +68,8 @@ Elixir scenarios and expectations define the contract. CI runs each adapter inde
 | [`context.through_arguments`](lib/scenarios/context.ex#L69) | supported | supported |
 | [`context.through_bypass`](lib/scenarios/context.ex#L75) | supported | [known_defect](GAPS.md#tenant-bypass) · AshSQL |
 | [`context.through_tenant`](lib/scenarios/context.ex#L72) | supported | supported |
-| [`equivalence.root_reference`](lib/scenarios/isolation.ex#L363) | supported | supported |
-| [`equivalence.visible_count_load`](lib/scenarios/isolation.ex#L349) | supported | supported |
+| [`equivalence.root_reference`](lib/scenarios/isolation.ex#L368) | supported | supported |
+| [`equivalence.visible_count_load`](lib/scenarios/isolation.ex#L354) | supported | supported |
 | [`field.aggregate`](lib/scenarios/operations.ex#L260) | supported | supported |
 | [`field.calculation`](lib/scenarios/operations.ex#L257) | supported | supported |
 | [`field.root_aggregate`](lib/scenarios/operations.ex#L263) | supported | supported |
@@ -156,7 +156,7 @@ Elixir scenarios and expectations define the contract. CI runs each adapter inde
 | [`query.lock_for_update`](lib/scenarios/queries.ex#L51) | [unsupported](GAPS.md#row-locks) · AshSQLite | supported |
 | [`query.union`](lib/scenarios/queries.ex#L34) | [unsupported](GAPS.md#query-combinations) · AshSQLite | supported |
 | [`query.uniq_sum_rejected`](lib/scenarios/queries.ex#L68) | supported | supported |
-| [`read.selection_expression`](lib/scenarios/isolation.ex#L379) | supported | supported |
+| [`read.selection_expression`](lib/scenarios/isolation.ex#L384) | supported | supported |
 | [`record.atomic_update`](lib/scenarios/records.ex#L349) | supported | supported |
 | [`record.calculation_argument`](lib/scenarios/records.ex#L349) | supported | supported |
 | [`record.calculation_load`](lib/scenarios/records.ex#L349) | supported | supported |
@@ -239,9 +239,9 @@ Elixir scenarios and expectations define the contract. CI runs each adapter inde
 | [`tenant.aggregate_filter_sort`](lib/scenarios/isolation.ex#L83) | supported | supported |
 | [`tenant.aggregate_keyset_pages`](lib/scenarios/isolation.ex#L112) | supported | supported |
 | [`tenant.aggregate_offset_page`](lib/scenarios/isolation.ex#L98) | supported | supported |
-| [`tenant.bounds`](lib/scenarios/isolation.ex#L165) | supported | supported |
-| [`tenant.explicit_global`](lib/scenarios/isolation.ex#L152) | supported | supported |
-| [`tenant.from_many`](lib/scenarios/isolation.ex#L175) | supported | supported |
+| [`tenant.bounds`](lib/scenarios/isolation.ex#L170) | supported | supported |
+| [`tenant.explicit_global`](lib/scenarios/isolation.ex#L157) | supported | supported |
+| [`tenant.from_many`](lib/scenarios/isolation.ex#L180) | supported | supported |
 | [`tenant.identities`](lib/scenarios/isolation.ex#L29) | supported | supported |
 | [`tenant.invalid`](lib/scenarios/isolation.ex#L133) | supported | supported |
 | [`tenant.loaded_aggregates`](lib/scenarios/isolation.ex#L64) | supported | supported |
@@ -250,9 +250,9 @@ Elixir scenarios and expectations define the contract. CI runs each adapter inde
 | [`tenant.relationship_filter`](lib/scenarios/isolation.ex#L50) | supported | supported |
 | [`tenant.relationship_load`](lib/scenarios/isolation.ex#L39) | supported | supported |
 | [`tenant.root_aggregates`](lib/scenarios/isolation.ex#L74) | supported | supported |
-| [`tenant.unknown`](lib/scenarios/isolation.ex#L143) | supported | supported |
-| [`tenant.write_bulk_destroy`](lib/scenarios/isolation.ex#L437) | supported | supported |
-| [`tenant.write_local_identity`](lib/scenarios/isolation.ex#L421) | supported | supported |
+| [`tenant.unknown`](lib/scenarios/isolation.ex#L148) | supported | supported |
+| [`tenant.write_bulk_destroy`](lib/scenarios/isolation.ex#L442) | supported | supported |
+| [`tenant.write_local_identity`](lib/scenarios/isolation.ex#L426) | supported | supported |
 | [`txn.after_action_rollback`](lib/scenarios/transactions.ex#L23) | supported | supported |
 | [`txn.commit`](lib/scenarios/transactions.ex#L74) | supported | supported |
 | [`txn.explicit_rollback`](lib/scenarios/transactions.ex#L59) | supported | supported |
@@ -304,7 +304,7 @@ Elixir scenarios and expectations define the contract. CI runs each adapter inde
 | [`write.atomic_update`](lib/scenarios/writes.ex#L33) | supported | supported |
 | [`write.bulk_destroy_filter`](lib/scenarios/writes.ex#L26) | supported | supported |
 | [`write.bulk_update_filter`](lib/scenarios/writes.ex#L14) | supported | supported |
-| [`write.lifecycle`](lib/scenarios/isolation.ex#L399) | supported | supported |
+| [`write.lifecycle`](lib/scenarios/isolation.ex#L404) | supported | supported |
 | [`write.single_atomic_update`](lib/scenarios/writes.ex#L41) | supported | supported |
 
 ## Gaps by owner

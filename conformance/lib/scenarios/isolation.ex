@@ -135,8 +135,13 @@ defmodule Ash.Conformance.Scenarios.Isolation do
         :tenancy,
         {Ash.Error.Invalid, [{Ash.Error.Query.InvalidFilterValue, "invalid"}]},
         fn ctx ->
-          {:error, error} = Ash.read(ctx.adapter.resource(:tenant_parent), tenant: "invalid")
-          {error.__struct__, Enum.map(error.errors, &{&1.__struct__, &1.value})}
+          case Ash.read(ctx.adapter.resource(:tenant_parent), tenant: "invalid") do
+            {:error, error} ->
+              {error.__struct__, Enum.map(error.errors, &{&1.__struct__, &1.value})}
+
+            {:ok, records} ->
+              {:accepted, Enum.map(records, & &1.local_id)}
+          end
         end,
         @tenancy
       ),

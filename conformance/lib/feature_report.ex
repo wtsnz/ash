@@ -49,7 +49,12 @@ defmodule Ash.Conformance.FeatureReport do
         |> Enum.map(& &1.task)
         |> Enum.reject(&is_nil/1)
         |> Enum.uniq()
-        |> Enum.map(&Gaps.id/1)
+        |> Enum.map(&Gaps.id/1),
+      # Unreviewed surveys have no gap records, so the failing scenarios stand in.
+      failing:
+        rows
+        |> Enum.filter(&(&1.status != :supported and Map.has_key?(&1, :classification)))
+        |> Enum.map(&{&1.scenario, &1.classification})
     }
   end
 
@@ -99,10 +104,18 @@ defmodule Ash.Conformance.FeatureReport do
             cells = Enum.map_join(ids, " | ", &cell(Map.fetch!(summaries, {feature.id, &1})))
 
             gaps =
-              ids
-              |> Enum.flat_map(&Map.fetch!(summaries, {feature.id, &1}).gaps)
-              |> Enum.uniq()
-              |> Enum.map_join(", ", &"[#{&1}](GAPS.md##{&1})")
+              if source == :unreviewed do
+                ids
+                |> Enum.flat_map(&Map.fetch!(summaries, {feature.id, &1}).failing)
+                |> Enum.map_join(", ", fn {scenario, classification} ->
+                  "`#{scenario}` #{String.replace(to_string(classification), "_", " ")}"
+                end)
+              else
+                ids
+                |> Enum.flat_map(&Map.fetch!(summaries, {feature.id, &1}).gaps)
+                |> Enum.uniq()
+                |> Enum.map_join(", ", &"[#{&1}](GAPS.md##{&1})")
+              end
 
             "| #{feature.title} | #{cells} | #{gaps} |"
           end)
@@ -110,7 +123,7 @@ defmodule Ash.Conformance.FeatureReport do
         """
         ## #{level}. #{name}
 
-        | Feature | #{Enum.join(ids, " | ")} | Gaps |
+        | Feature | #{Enum.join(ids, " | ")} | #{if source == :unreviewed, do: "Not working", else: "Gaps"} |
         | --- | #{Enum.map_join(ids, " | ", fn _ -> "---" end)} | --- |
         #{rows}
         """

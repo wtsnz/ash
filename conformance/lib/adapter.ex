@@ -21,8 +21,18 @@ defmodule Ash.Conformance.Adapter do
   @callback persist!(atom(), [map()], keyword()) :: term()
   @callback instrumentation() :: module() | nil
   @callback benchmark_persist!(atom(), [map()]) :: term()
+  @doc "Whether this integration provides the resources for a fixture."
+  @callback fixture?(atom()) :: boolean()
 
   def all, do: [Ash.Conformance.Sqlite, Ash.Conformance.Postgres]
+
+  @doc "Integrations with no expectation records; they run only as unreviewed surveys."
+  def unreviewed, do: [Ash.Conformance.Ets]
+
+  def find!(name) do
+    Enum.find(all() ++ unreviewed(), &(to_string(&1.id()) == name)) ||
+      raise ArgumentError, "Unknown adapter: #{inspect(name)}"
+  end
 
   def selected do
     requested = System.get_env("CONFORMANCE_ADAPTERS", "sqlite,postgres") |> String.split(",")
@@ -55,6 +65,7 @@ defmodule Ash.Conformance.Sqlite do
   @moduledoc false
   @behaviour Ash.Conformance.Adapter
   def id, do: :sqlite
+  def fixture?(_fixture), do: true
   def profiles, do: [:shared]
   def instrumentation, do: Ash.Conformance.SQLInstrumentation
   def repo, do: Ash.Conformance.SqliteRepo
@@ -80,6 +91,7 @@ defmodule Ash.Conformance.Postgres do
   @moduledoc false
   @behaviour Ash.Conformance.Adapter
   def id, do: :postgres
+  def fixture?(_fixture), do: true
   def profiles, do: [:shared, :context_tenancy]
   def instrumentation, do: Ash.Conformance.SQLInstrumentation
   def repo, do: Ash.Conformance.PostgresRepo

@@ -3,16 +3,17 @@
 
 defmodule Ash.Conformance.Ets do
   @moduledoc """
-  A non-SQL bring-up integration using Ash's ETS data layer.
+  A non-SQL integration using Ash's ETS data layer.
 
   It is deliberately not in `Adapter.all/0`: it has no expectation records, so
-  it runs only through `Ash.Conformance.Probe`, whose observations are always
-  unreviewed. It shows the runner, fixtures and shared resource roles working
-  without Ecto, a repository or SQL.
+  it runs only through probes and `mix conformance.survey`, whose results are
+  always unreviewed. It shows the runner, fixtures and shared resource roles
+  working without Ecto, a repository or SQL.
   """
   @behaviour Ash.Conformance.Adapter
 
   def id, do: :ets
+  def fixture?(fixture), do: fixture in [:aggregate, :records, :isolation, :empty]
   def profiles, do: [:shared]
   def instrumentation, do: nil
 
@@ -21,7 +22,9 @@ defmodule Ash.Conformance.Ets do
   def custom_aggregate, do: Ash.Conformance.EtsSum
   def setup!, do: :ok
 
-  @roles ~w(parent child rating tag link child_tag event reading tenant_child tenant_link authorized_child ledger record)a
+  @roles ~w(parent child rating tag link child_tag event reading tenant_child tenant_link
+            authorized_child ledger record tenant_parent tenant_item secure_parent secure_item
+            context_parent context_item)a
 
   def checkout!, do: checkin!()
 

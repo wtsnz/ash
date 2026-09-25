@@ -40,11 +40,13 @@ defmodule Ash.Conformance.Resource do
            end}
 
         # Private tables belong to the calling process, which isolates each case.
+        # Roles that share a SQL table share an ETS table, as views do in SQL.
         :ets ->
           {Ash.DataLayer.Ets,
            quote do
              ets do
                private?(true)
+               table(unquote(String.to_atom(table)))
              end
            end}
       end

@@ -59,7 +59,8 @@ jobs:
         run: |
           mix conformance.matrix
           mix conformance.features
-          git diff --exit-code -- MATRIX.md COVERAGE.md CAPABILITIES.md FEATURES.md
+          mix conformance.survey ets --output surveys
+          git diff --exit-code -- MATRIX.md COVERAGE.md CAPABILITIES.md FEATURES.md surveys/
       - name: Informational benchmark smoke
         if: github.event_name == 'workflow_dispatch' && inputs.benchmark
         run: mix conformance.bench

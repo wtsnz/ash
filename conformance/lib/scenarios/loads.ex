@@ -87,6 +87,9 @@ defmodule Ash.Conformance.Scenarios.Loads do
 
     case :persistent_term.get(key, nil) do
       nil ->
+        # Capturing needs ExUnit's capture server, which mix tasks do not start.
+        {:ok, _} = Application.ensure_all_started(:ex_unit)
+
         {_, output} =
           ExUnit.CaptureIO.with_io(:stderr, fn ->
             Code.compile_quoted(through_definition(module, adapter))

@@ -7,3 +7,6 @@
 /results/
 /cover/
 erl_crash.dump
+
+# Survey data is regenerated; the Markdown report is committed.
+/surveys/*.json

@@ -226,10 +226,21 @@ defmodule Ash.Conformance.Runner do
     exception -> {:error, exception.__struct__, Exception.message(exception)}
   end
 
-  defp passes?(scenario, {:ok, actual}),
+  defp passes?(scenario, outcome), do: semantic_pass?(scenario, outcome)
+
+  @doc """
+  Whether an outcome is the scenario's intended answer, including an intended
+  rejection. Used by the strict runner and by unreviewed surveys.
+  """
+  def semantic_pass?(%{expected: :unresolved}, _outcome), do: false
+
+  def semantic_pass?(%{expected: {:error, exception, pattern}}, {:error, exception, message}),
+    do: Regex.match?(pattern, message)
+
+  def semantic_pass?(scenario, {:ok, actual}),
     do: Ash.Conformance.Compare.equal?(actual, scenario.expected)
 
-  defp passes?(_scenario, _outcome), do: false
+  def semantic_pass?(_scenario, _outcome), do: false
 
   defp matches?({:value, expected}, {:ok, actual}),
     do: Ash.Conformance.Compare.equal?(expected, actual)

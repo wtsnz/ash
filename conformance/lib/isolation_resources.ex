@@ -7,6 +7,8 @@ defmodule Ash.Conformance.IsolationResources do
   defmacro __using__(opts) do
     namespace = opts |> Keyword.fetch!(:namespace) |> Macro.expand(__CALLER__)
     adapter = Keyword.fetch!(opts, :adapter)
+    # ETS cannot enforce uniqueness itself, so Ash checks identities first.
+    identity_opts = if adapter == :ets, do: [pre_check?: true], else: []
 
     definitions =
       for {prefix, secured?, contextual?} <- [
@@ -38,7 +40,7 @@ defmodule Ash.Conformance.IsolationResources do
             end
 
             identities do
-              identity(:local_id, [:local_id])
+              identity(:local_id, [:local_id], unquote(identity_opts))
             end
 
             actions do
@@ -135,7 +137,7 @@ defmodule Ash.Conformance.IsolationResources do
             end
 
             identities do
-              identity(:local_id, [:local_id])
+              identity(:local_id, [:local_id], unquote(identity_opts))
             end
 
             actions do
@@ -183,4 +185,9 @@ end
 defmodule Ash.Conformance.PostgresIsolationResources do
   @moduledoc false
   use Ash.Conformance.IsolationResources, namespace: Ash.Conformance.Postgres, adapter: :postgres
+end
+
+defmodule Ash.Conformance.EtsIsolationResources do
+  @moduledoc false
+  use Ash.Conformance.IsolationResources, namespace: Ash.Conformance.Ets, adapter: :ets
 end

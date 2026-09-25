@@ -14,6 +14,14 @@ semantic decision or is untested. Gap links say why, and who owns the fix. The
 catalog behind it is `lib/features.ex`; every scenario belongs to exactly one
 feature.
 
+Data layers without reviewed expectations can still get a report.
+`mix conformance.survey ADAPTER` runs every scenario the integration can host
+and classifies each result against the intended answer: works, rejected with a
+documented error, wrong answer, crashed or open question. The report is marked
+unreviewed. [surveys/features-ets.md](surveys/features-ets.md) is Ash's own ETS
+data layer surveyed this way. Review a survey before turning its results into
+expectations.
+
 Each scenario has one semantic answer and explicit adapter expectations.
 PostgreSQL is a comparison implementation, not the oracle. A green test suite
 can include matched defects; the reports separate those from semantic passes.
