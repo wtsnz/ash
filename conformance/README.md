@@ -192,12 +192,12 @@ Module names follow paths under `lib/`:
 | --- | --- |
 | `scenario.ex`, `runner.ex`, `catalog.ex`, `compare.ex` | Declaring scenarios, running them in three seed orders, strict comparison. |
 | `probe.ex`, `survey.ex` | Running scenarios without expectations: one case, or a whole adapter. |
-| `contracts/` | What is expected: the feature catalog, expectation records, gap owners, capability claims. |
+| `contracts/` | What is expected: the feature catalog, record builders, shared gaps, capability claims. |
 | `scenarios/` | One file per feature level: records, types, querying, relationships, writes, transactions, tenancy, authorization, consistency. `aggregates/` holds the aggregate scenarios by topic. |
 | `resources/` | Shared resource roles, as macros each adapter instantiates. |
 | `fixtures.ex`, `fixtures/` | Building a fixture in a seed order, and each fixture's literal rows. |
-| `adapter.ex`, `adapters/` | The adapter behaviour, and one file per adapter with its repo, custom aggregate, manual relationship and resource instances. |
-| `sql/` | Storage setup, migrations and query instrumentation shared by the SQL adapters. |
+| `adapter.ex`, `adapters/` | The adapter behaviour, and one folder per adapter: the adapter (repo, custom aggregate, manual relationship, resource instances) and, when reviewed, its expectation records and its own gaps. |
+| `sql/` | Storage setup, migrations, column types, query instrumentation and AshSQL's gaps, shared by the SQL adapters. |
 | `report.ex`, `report/` | Results, the feature report, inventory, matrix and comparisons. |
 | `benchmark.ex`, `benchmark/` | Independent larger fixtures, workloads and timing. |
 

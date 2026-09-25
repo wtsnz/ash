@@ -78,33 +78,29 @@ defmodule Ash.Conformance.CatalogTest do
     end
   end
 
-  test "every gap has an owner that matches GAPS.md" do
-    sections =
-      File.read!("GAPS.md")
-      |> String.split(~r/^## /m, trim: true)
-      |> Enum.drop(1)
-      |> Map.new(fn section ->
-        [heading | body] = String.split(section, "\n")
-        {heading |> String.downcase() |> String.replace(" ", "-"), Enum.join(body, "\n")}
-      end)
+  test "GAPS.md is rendered from the gaps where their knowledge lives" do
+    assert File.read!("GAPS.md") == Gaps.markdown(), "Run MIX_ENV=test mix conformance.gaps"
 
-    assert Enum.sort(Map.keys(sections)) == Enum.sort(Gaps.ids())
+    # Gaps.all/0 raises unless IDs are unique, titles match their anchors,
+    # owners are distinct, and decisions and limitations say so.
+    assert Gaps.all() != []
 
-    for {id, body} <- sections do
-      assert body =~ ~r/^#{Regex.escape(Gaps.owner_line(id))}$/m,
-             "#{id} must state: #{Gaps.owner_line(id)}"
-
-      assert Enum.uniq(Gaps.owners(id)) == Gaps.owners(id)
-
-      case Gaps.kind(id) do
-        :implementation -> :ok
-        :decision -> assert body =~ "Decision:"
-        :limitation -> assert body =~ "Limitation:"
-      end
+    for id <- Gaps.ids() do
+      assert File.read!("GAPS.md") =~ ~r/^#{Regex.escape(Gaps.owner_line(id))}$/m
     end
+  end
 
-    for %{task: task, owners: owners} <- Report.declaration_rows(), task do
-      assert owners == task |> Gaps.id() |> Gaps.names()
+  test "gaps an adapter records must exist, and every gap is used or is shared" do
+    linked =
+      for {_id, statuses} <- Expectations.all(),
+          {_adapter, {_status, _signature, "GAPS.md#" <> gap}} <- statuses,
+          into: MapSet.new(),
+          do: gap
+
+    shared = Enum.map(Ash.Conformance.Contracts.SharedGaps.all(), & &1.id)
+
+    for id <- Gaps.ids(), id not in shared do
+      assert id in linked, "#{id} is documented but no expectation links to it"
     end
   end
 

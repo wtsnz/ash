@@ -32,8 +32,9 @@ separate workload covers this operation. Use `fallback: "..."` to name an Ash
 fallback the operation should exercise, such as in-memory evaluation. The runner
 then records the operation's data-layer query count, through the adapter's
 instrumentation, beside the result; zero queries is the only positive
-observation. The count never changes the verdict. Add the ID to `Contracts.Expectations` explicitly
-for every applicable adapter; there is no implicit supported default.
+observation. The count never changes the verdict. Add the ID to each reviewed
+adapter's own `expectations.ex` (for example `lib/adapters/sqlite/expectations.ex`)
+explicitly; there is no implicit supported default.
 
 Use `fixture: :aggregate`, `:isolation` or `:context_tenancy`. New fixture builders
 are selected in `Fixtures.build!/2`. Scenario-specific extra setup belongs in
@@ -50,23 +51,29 @@ fields, as in `tenant.invalid`. Exception assertions require a specific class
 and narrow pattern. Never add a catch-all signature or regenerate expectations
 from current output. A deliberate semantic change needs a decision and review.
 
-Run both adapters, inspect failures, update the local gap task only after
-understanding the cause, and regenerate the matrix/inventory. Every gap in
-`GAPS.md` names its owner (Ash, AshSQL, AshSQLite or AshPostgres) and has an
-entry in `lib/contracts/gaps.ex`. Use the failure's stack trace or a direct control to
-find the owner. A gap is implementation work, a decision for Ash, or a
+Run both adapters, inspect failures, record a gap only after understanding the
+cause, and regenerate the matrix, inventory and `GAPS.md` (`mix conformance.gaps`).
+A gap lives where its knowledge belongs:
+
+- `lib/contracts/shared_gaps.ex`: Ash's own defects and undecided semantics;
+- `lib/sql/gaps.ex`: defects AshSQL causes on every data layer built on it;
+- the adapter's `gaps/0` (for example `lib/adapters/sqlite/gaps.ex`): what only
+  that data layer shows.
+
+Each names its owners, first owner first. Use the failure's stack trace or a
+direct control to find the owner. A gap is implementation work, a decision for Ash, or a
 limitation: something unsupported by design, where the documented rejection is
 the intended result. Tests reject
 missing expectations, duplicate IDs, unexpected passes and changed signatures.
 
 ## Add a data layer
 
-A new data layer takes one file and one list entry. `lib/adapters/ets.ex` is the
-smallest complete example.
+A new data layer takes one folder and one list entry. `lib/adapters/ets/adapter.ex`
+is the smallest complete example.
 
 1. **Depend on it.** Add the data layer to `mix.exs`, pinned to a release or a
    Git commit.
-2. **Write `lib/adapters/<name>.ex`.**
+2. **Write `lib/adapters/<name>/adapter.ex`.**
 
    ```elixir
    defmodule Ash.Conformance.MyDataLayer do
@@ -106,8 +113,10 @@ smallest complete example.
 5. **Review it, when you want strict contracts.** Record an expectation for
    every scenario (supported, unsupported with the exact rejection, known
    defect with the exact wrong answer, or unresolved), return them from
-   `expectations/0`, and move the adapter to `config :ash_conformance, adapters: [...]`. It then gets a column in
-   `FEATURES.md` and runs in `mix test`.
+   `expectations/0` (kept in `lib/adapters/<name>/expectations.ex`, built with
+   `Ash.Conformance.Contracts.Records`), return the gaps only it shows from
+   `gaps/0`, and move the adapter to `config :ash_conformance, adapters: [...]`.
+   It then gets a column in `FEATURES.md` and runs in `mix test`.
 
 ## Adapter callbacks
 
@@ -125,6 +134,7 @@ smallest complete example.
 | `instrumentation/0` | Optional module for untimed `measure/2` and `metadata/1`, or `nil`. |
 | `fixture?/1` | Whether the integration provides the resources for a fixture. |
 | `expectations/0` | Expectation records by scenario ID; `%{}` for a survey-only adapter. |
+| `gaps/0` | Gaps only this data layer shows, rendered into `GAPS.md`. |
 | `resource_config/1` | `{data_layer, config_block}` for a shared table. |
 | `resource_options/0` | Extra `use Ash.Resource` options for every shared resource, such as an extension that derives data layer settings from the attributes. |
 | `notes/0` | What the integration does differently from a plain application, such as a workaround for a data layer defect; listed in `ECOSYSTEM.md`. |

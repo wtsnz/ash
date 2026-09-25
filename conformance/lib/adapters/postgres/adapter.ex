@@ -6,7 +6,8 @@ defmodule Ash.Conformance.Postgres do
   @moduledoc false
   use Ash.Conformance.Adapter, id: :postgres, label: "AshPostgres", package: :ash_postgres
 
-  def expectations, do: Ash.Conformance.SQL.Expectations.for(:postgres)
+  def expectations, do: Ash.Conformance.Postgres.Expectations.all()
+  def gaps, do: Ash.Conformance.Postgres.Gaps.all()
   def fixture?(_fixture), do: true
   def profiles, do: [:shared, :context_tenancy]
   def instrumentation, do: Ash.Conformance.SQL.Instrumentation

@@ -4,70 +4,58 @@
 
 defmodule Ash.Conformance.Contracts.Gaps do
   @moduledoc """
-  The project that owns each `GAPS.md` entry.
+  Every known gap, gathered from where its knowledge lives, and `GAPS.md`.
 
-  The first owner is where the fix starts. Later owners also need changes, such
-  as an adapter capability gate or context passed in by Ash. Decisions are
-  semantic questions for Ash to settle before any adapter can implement them.
-  Limitations are unsupported by design; the documented rejection is the
-  intended result for that adapter.
-  Postgres defects are listed under AshSQL when its lateral strategy produces
-  them.
+  - `Ash.Conformance.Contracts.SharedGaps`: Ash's own defects and undecided
+    semantics, which apply to every data layer.
+  - `Ash.Conformance.SQL.Gaps`: defects AshSQL causes on every data layer
+    built on it.
+  - Each adapter's `gaps/0`: what only that data layer shows, next to its
+    expectation records.
+
+  A gap has an ID (its `GAPS.md` anchor), a title, a kind and its owners.
+  The first owner is where the fix starts; later owners also need changes,
+  such as an adapter capability gate or context passed in by Ash.
+  Implementations are defects to fix. Decisions are semantic questions for
+  Ash to settle before any adapter can implement them. Limitations are
+  unsupported by design; the documented rejection is the intended result.
   """
+
+  alias Ash.Conformance.Adapter
 
   @names %{ash: "Ash", ash_sql: "AshSQL", ash_postgres: "AshPostgres", ash_sqlite: "AshSQLite"}
 
-  @gaps %{
-    "root-kinds" => {:implementation, [:ash_sql, :ash_sqlite]},
-    "root-relationship" => {:implementation, [:ash_sql]},
-    "root-first" => {:implementation, [:ash_sql]},
-    "many-to-many-paths" => {:implementation, [:ash_sql]},
-    "parent-correlation" => {:implementation, [:ash_sql, :ash_sqlite]},
-    "parent-through-load" => {:implementation, [:ash_sql, :ash]},
-    "nested-parent" => {:implementation, [:ash_sql, :ash]},
-    "manual" => {:implementation, [:ash_sql, :ash_sqlite]},
-    "no-attributes" => {:implementation, [:ash_sql, :ash_sqlite]},
-    "filter-dependencies" => {:implementation, [:ash_sql]},
-    "filter-fanout" => {:implementation, [:ash_sql]},
-    "record-identity" => {:implementation, [:ash_sql]},
-    "sorted-distinct-reads" => {:implementation, [:ash_sqlite, :ash_sql]},
-    "decimal-precision" => {:implementation, [:ash_sqlite]},
-    "query-distinct" => {:implementation, [:ash_sqlite]},
-    "query-combinations" => {:implementation, [:ash_sqlite]},
-    "row-locks" => {:limitation, [:ash_sqlite]},
-    "many-to-many-load-limit" => {:implementation, [:ash, :ash_sqlite]},
-    "through-fallback" => {:implementation, [:ash, :ash_sqlite]},
-    "upsert-conditions" => {:implementation, [:ash_sqlite]},
-    "skipped-upsert-tenant" => {:implementation, [:ash_postgres]},
-    "from-many" => {:implementation, [:ash_sql]},
-    "default-sort" => {:implementation, [:ash_sql]},
-    "unsorted-bounds" => {:implementation, [:ash_sql]},
-    "root-bounds" => {:implementation, [:ash_sql]},
-    "unsorted-list-nil" => {:implementation, [:ash_sql]},
-    "relationship-context" => {:implementation, [:ash]},
-    "authorization-bounds" => {:implementation, [:ash, :ash_sql]},
-    "prepared-query" => {:implementation, [:ash_sql]},
-    "tenant-bypass" => {:implementation, [:ash_sql]},
-    "path-multiplicity" => {:decision, [:ash]},
-    "keyless-identity" => {:decision, [:ash]},
-    "many-to-many-bounds-api" => {:decision, [:ash]},
-    "unique-list-order" => {:decision, [:ash]},
-    "true-or-nil" => {:decision, [:ash]},
-    "duration-storage" => {:implementation, [:ash_sqlite]},
-    "value-representation" => {:decision, [:ash]},
-    "nul-in-text" => {:limitation, [:ash_postgres]},
-    "union-nil" => {:implementation, [:ash]}
-  }
+  @doc "Every gap: shared ones first, then AshSQL's, then each adapter's."
+  def all do
+    groups()
+    |> Enum.flat_map(fn {_heading, gaps} -> gaps end)
+    |> tap(&validate!/1)
+  end
 
-  def all, do: @gaps
-  def ids, do: Map.keys(@gaps)
-  def kind(id), do: @gaps |> Map.fetch!(id) |> elem(0)
-  def owners(id), do: @gaps |> Map.fetch!(id) |> elem(1)
-  def names(id), do: Enum.map(owners(id), &Map.fetch!(@names, &1))
+  defp groups do
+    [
+      {"Ash", Ash.Conformance.Contracts.SharedGaps.all()},
+      {"AshSQL", Ash.Conformance.SQL.Gaps.all()}
+    ] ++
+      for adapter <- Adapter.every(), adapter.gaps() != [], do: {adapter.label(), adapter.gaps()}
+  end
+
+  def ids, do: Enum.map(all(), & &1.id)
+  def fetch!(id), do: Enum.find(all(), &(&1.id == id)) || raise(KeyError, key: id, term: "gaps")
+  def kind(id), do: fetch!(id).kind
+  def owners(id), do: fetch!(id).owners
+  def names(id), do: Enum.map(owners(id), &name/1)
 
   def id("GAPS.md#" <> id), do: id
 
-  @doc "The owner line each `GAPS.md` section must contain."
+  # Packages outside the shipped stack are named by their adapter's label.
+  defp name(package) do
+    Map.get(@names, package) ||
+      Enum.find_value(Adapter.every(), &(&1.package() == package && &1.label())) ||
+      to_string(package)
+  end
+
+  @doc "The owner line that opens a gap's `GAPS.md` section."
   def owner_line(id) do
     label =
       case kind(id) do
@@ -77,5 +65,64 @@ defmodule Ash.Conformance.Contracts.Gaps do
       end
 
     "#{label}: #{Enum.join(names(id), ", then ")}."
+  end
+
+  defp validate!(gaps) do
+    ids = Enum.map(gaps, & &1.id)
+
+    if ids != Enum.uniq(ids),
+      do: raise(ArgumentError, "Duplicate gap IDs: #{inspect(ids -- Enum.uniq(ids))}")
+
+    for gap <- gaps do
+      unless anchor(gap.title) == gap.id,
+        do: raise(ArgumentError, "Gap #{gap.id}'s title #{inspect(gap.title)} must match its ID")
+
+      unless gap.owners != [] and Enum.uniq(gap.owners) == gap.owners,
+        do: raise(ArgumentError, "Gap #{gap.id} needs distinct owners")
+
+      required = %{decision: "Decision:", limitation: "Limitation:"}[gap.kind]
+
+      if required && !String.contains?(gap.body, required),
+        do: raise(ArgumentError, "Gap #{gap.id} must state its #{required}")
+    end
+
+    :ok
+  end
+
+  defp anchor(title), do: title |> String.downcase() |> String.replace(" ", "-")
+
+  @doc "`GAPS.md`: every gap, grouped by where it lives."
+  def markdown do
+    sections =
+      Enum.map_join(groups(), "\n", fn {heading, gaps} ->
+        entries =
+          Enum.map_join(gaps, "\n", fn gap ->
+            "## #{gap.title}\n\n#{owner_line(gap.id)}\n#{String.trim_trailing(gap.body)}\n"
+          end)
+
+        "# #{heading}\n\n#{entries}"
+      end)
+
+    """
+    <!-- SPDX-FileCopyrightText: 2026 ash_sql contributors <https://github.com/ash-project/ash_sql/graphs/contributors> -->
+    <!-- SPDX-License-Identifier: MIT -->
+
+    # Known gaps
+
+    Generated by `mix conformance.gaps`. Each entry is a local follow-up task;
+    no GitHub issue is implied. Expectation records link each nonconforming
+    result to an entry below. Unless marked as a decision, the shared scenario
+    contains the intended result, and an observed result never replaces it
+    automatically.
+
+    Each entry names the project that owns the fix, in the order the work is
+    needed. Decisions are semantic questions for Ash to settle before a data
+    layer implements them. Entries are grouped by where their knowledge lives:
+    Ash's shared defects and decisions (`lib/contracts/shared_gaps.ex`),
+    AshSQL's defects (`lib/sql/gaps.ex`), then each data layer's own (its
+    adapter's `gaps/0`).
+
+    #{sections}
+    """
   end
 end

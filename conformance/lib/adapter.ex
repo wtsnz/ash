@@ -45,6 +45,12 @@ defmodule Ash.Conformance.Adapter do
   layer, such as a column type chosen for the database, so reports can say so.
   """
   @callback notes() :: [String.t()]
+  @doc """
+  Gaps only this data layer shows, rendered into `GAPS.md`: maps with `id`,
+  `title`, `kind` (`:implementation`, `:decision` or `:limitation`), `owners`
+  (packages, first owner first) and a Markdown `body`.
+  """
+  @callback gaps() :: [map()]
 
   @doc """
   Reviewed adapters, from config. The suite names no adapter itself, so the
@@ -138,6 +144,7 @@ defmodule Ash.Conformance.Adapter do
       def identity_options, do: []
       def resource_options, do: []
       def notes, do: []
+      def gaps, do: []
 
       defoverridable profiles: 0,
                      resource: 1,
@@ -152,7 +159,8 @@ defmodule Ash.Conformance.Adapter do
                      checkin!: 0,
                      identity_options: 0,
                      resource_options: 0,
-                     notes: 0
+                     notes: 0,
+                     gaps: 0
     end
   end
 end

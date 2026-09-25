@@ -6,10 +6,10 @@ defmodule Ash.Conformance.Contracts.Expectations do
   @moduledoc """
   Expectation records, gathered from each adapter's `expectations/0`.
 
-  Every adapter returns its own map from `expectations/0`, so adding or
-  reviewing an adapter never edits this module; the shipped SQLite and
-  Postgres records are in `Ash.Conformance.SQL.Expectations`. New scenarios
-  and adapters have no implicit status.
+  Every adapter returns its own map from `expectations/0`, kept next to the
+  adapter (for example `lib/adapters/sqlite/expectations.ex`), so adding or
+  reviewing an adapter never edits this module. `Ash.Conformance.Contracts.Records`
+  builds the records. New scenarios and adapters have no implicit status.
   A gap has a narrow error or wrong-result signature and a local task.
   Updating a record never changes the shared scenario's expected answer.
   """
