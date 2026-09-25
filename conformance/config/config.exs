@@ -12,7 +12,7 @@ config :logger, level: :warning
 # and gate CI; unreviewed ones run only as surveys in the ecosystem report.
 config :ash_conformance,
   adapters: [Ash.Conformance.Sqlite, Ash.Conformance.Postgres],
-  unreviewed_adapters: [Ash.Conformance.Ets, Ash.Conformance.Csv]
+  unreviewed_adapters: [Ash.Conformance.Ets, Ash.Conformance.Csv, Ash.Conformance.Mysql]
 
 config :ash_conformance, Ash.Conformance.SqliteRepo,
   database: Path.expand("../tmp/data_layer.sqlite3", __DIR__),
@@ -29,5 +29,14 @@ config :ash_conformance, Ash.Conformance.PostgresRepo,
   username: System.get_env("PGUSER", "postgres"),
   password: System.get_env("PGPASSWORD", "postgres"),
   database: System.get_env("CONFORMANCE_PG_DATABASE", "ash_conformance_local"),
+  pool: Ecto.Adapters.SQL.Sandbox,
+  pool_size: 2
+
+config :ash_conformance, Ash.Conformance.MysqlRepo,
+  hostname: System.get_env("MYSQL_HOST", "localhost"),
+  port: String.to_integer(System.get_env("MYSQL_PORT", "3306")),
+  username: System.get_env("MYSQL_USER", "root"),
+  password: System.get_env("MYSQL_PASSWORD", "mysql"),
+  database: "ash_conformance_local",
   pool: Ecto.Adapters.SQL.Sandbox,
   pool_size: 2

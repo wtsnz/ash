@@ -8,6 +8,8 @@ defmodule Ash.Conformance.SQL.Database do
   @doc """
   Creates the database, runs the shared migrations and any `migrations:` the
   adapter adds as `{version, module}`, and puts the sandbox in manual mode.
+  `replace:` swaps a shared migration by version, for a database that cannot
+  create one of its column types.
   """
   def setup!(repo, opts \\ []) do
     config = repo.config()
@@ -22,14 +24,20 @@ defmodule Ash.Conformance.SQL.Database do
 
     {:ok, _} = repo.start_link()
 
+    replace = Keyword.get(opts, :replace, %{})
+
+    shared = [
+      {1, Ash.Conformance.SQL.Migrations.Aggregate},
+      {2, Ash.Conformance.SQL.Migrations.Isolation},
+      {4, Ash.Conformance.SQL.Migrations.Values},
+      {5, Ash.Conformance.SQL.Migrations.Ledger},
+      {6, Ash.Conformance.SQL.Migrations.Records}
+    ]
+
     migrations =
-      [
-        {1, Ash.Conformance.SQL.Migrations.Aggregate},
-        {2, Ash.Conformance.SQL.Migrations.Isolation},
-        {4, Ash.Conformance.SQL.Migrations.Values},
-        {5, Ash.Conformance.SQL.Migrations.Ledger},
-        {6, Ash.Conformance.SQL.Migrations.Records}
-      ] ++ Keyword.get(opts, :migrations, [])
+      Enum.map(shared, fn {version, migration} ->
+        {version, Map.get(replace, version, migration)}
+      end) ++ Keyword.get(opts, :migrations, [])
 
     for {version, migration} <- migrations do
       Ecto.Migrator.up(repo, version, migration, log: false)
