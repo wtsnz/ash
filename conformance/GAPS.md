@@ -192,6 +192,81 @@ decimals as text and using SQLite's optional decimal extension, or documenting
 the limit. Averages are floats in Ash, so they match after rounding. Dates,
 times and microsecond datetimes aggregate correctly on both adapters.
 
+## Query distinct
+
+Owner: AshSQLite.
+
+Support `Ash.Query.distinct/2`. AshSQLite does not advertise `:distinct`, so
+Ash rejects the query with "Data layer does not support distincting". Ash's
+distinct keeps one record per distinct value, chosen by the sort, like
+Postgres's `DISTINCT ON`. SQLite has no `DISTINCT ON`, but a window function
+ranked by the sort can pick the same records. Postgres returns children 13, 21,
+11 and 14 for labels high, other, same and nil.
+
+## Query combinations
+
+Owner: AshSQLite.
+
+Support combination queries such as `union`. AshSQLite does not advertise
+`:combine`, so Ash rejects the read with "Data layer does not support combining
+queries". SQLite has `UNION`, `UNION ALL` and `INTERSECT`, so this is
+implementation work. Postgres returns children 11, 12 and 13.
+
+## Row locks
+
+Limitation owner: AshSQLite.
+Limitation: SQLite has no row-level locks. Ash's `LockNotSupported` error for
+`lock(:for_update)` is the intended result on SQLite.
+
+Postgres locks and returns the row inside a transaction. No implementation task
+is recorded; revisit only if AshSQLite chooses to map a lock type to SQLite's
+database-level locking.
+
+## Many-to-many load limit
+
+Owner: Ash, then AshSQLite.
+SQLite does not advertise lateral joins, so Ash chooses how to apply the
+bound. It is correct for has-many loads with the same limit and offset.
+
+Apply a limit on a many-to-many load query to each parent. Loading tags with
+`limit(1)` should give parent 1 tag 202 and parent 2 tag 201, as in Ash's own
+load tests and on Postgres. SQLite gives parent 2 no tags: the limit is applied
+across all parents together.
+
+## Through fallback
+
+Owner: Ash, then AshSQLite.
+Ash checks `:through_relationship` when a resource is defined, but the failed
+check is only printed as a warning, so the resource still compiles.
+
+Reject or correctly load `through` relationships on data layers that do not
+support them. On SQLite, loading `ratings` through `[:children, :ratings]`
+gives every parent parent 1's four ratings; parents 2 and 3 have none. The
+aggregate over the same relationship is correct. Postgres returns the intended
+ratings and counts without a warning.
+
+## Upsert conditions
+
+Owner: AshSQLite.
+
+Support `upsert_condition` expressions that use `upsert_conflict/1`. AshSQLite
+advertises upserts, including atomic upserts, but raises "Unsupported
+expression" for `upsert_conflict(:value)`, or passes it as an unsupported
+parameter in the generated SQL. SQLite's `ON CONFLICT ... DO UPDATE ... WHERE`
+can express the condition using `excluded`.
+
+## Skipped upsert tenant
+
+Owner: AshPostgres.
+The lookup for skipped records filters by the identity's attributes and sets
+the tenant on the query. It then calls `data_layer_query/1` directly, so Ash
+never applies the attribute tenant filter.
+
+Return the skipped record from the upsert's own tenant. With
+`return_skipped_upsert?: true`, a tenant 1 upsert of local ID 1 whose condition
+skips the write returns record 2001 from tenant 2, with its value 700. The
+intended record is tenant 1's record 1001. This exposes another tenant's data.
+
 ## From many
 
 Owner: AshSQL.

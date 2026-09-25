@@ -39,6 +39,9 @@ end
 defmodule Ash.Conformance.SqliteRepo do
   @moduledoc false
   use AshSqlite.Repo, otp_app: :ash_conformance
+
+  # AshSQLite recommends write transactions and its installer enables them.
+  def write_transactions?, do: true
 end
 
 defmodule Ash.Conformance.PostgresRepo do

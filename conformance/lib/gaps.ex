@@ -9,6 +9,8 @@ defmodule Ash.Conformance.Gaps do
   The first owner is where the fix starts. Later owners also need changes, such
   as an adapter capability gate or context passed in by Ash. Decisions are
   semantic questions for Ash to settle before any adapter can implement them.
+  Limitations are unsupported by design; the documented rejection is the
+  intended result for that adapter.
   Postgres defects are listed under AshSQL when its lateral strategy produces
   them.
   """
@@ -30,6 +32,13 @@ defmodule Ash.Conformance.Gaps do
     "record-identity" => {:implementation, [:ash_sql]},
     "sorted-distinct-reads" => {:implementation, [:ash_sqlite, :ash_sql]},
     "decimal-precision" => {:implementation, [:ash_sqlite]},
+    "query-distinct" => {:implementation, [:ash_sqlite]},
+    "query-combinations" => {:implementation, [:ash_sqlite]},
+    "row-locks" => {:limitation, [:ash_sqlite]},
+    "many-to-many-load-limit" => {:implementation, [:ash, :ash_sqlite]},
+    "through-fallback" => {:implementation, [:ash, :ash_sqlite]},
+    "upsert-conditions" => {:implementation, [:ash_sqlite]},
+    "skipped-upsert-tenant" => {:implementation, [:ash_postgres]},
     "from-many" => {:implementation, [:ash_sql]},
     "default-sort" => {:implementation, [:ash_sql]},
     "unsorted-bounds" => {:implementation, [:ash_sql]},
@@ -54,7 +63,13 @@ defmodule Ash.Conformance.Gaps do
 
   @doc "The owner line each `GAPS.md` section must contain."
   def owner_line(id) do
-    label = if kind(id) == :decision, do: "Decision owner", else: "Owner"
+    label =
+      case kind(id) do
+        :decision -> "Decision owner"
+        :limitation -> "Limitation owner"
+        :implementation -> "Owner"
+      end
+
     "#{label}: #{Enum.join(names(id), ", then ")}."
   end
 end

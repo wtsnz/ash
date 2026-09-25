@@ -10,26 +10,27 @@ Per-scenario results in `results/` distinguish semantic passes, matched gaps and
 | Area | Coverage | Boundary |
 | --- | --- | --- |
 | reads | implemented | Filtering, expression calculations, selection, deterministic sort |
-| aggregates | implemented | 169 scenarios ported from the AshSQL suite; all nine kinds, owners per gap |
-| calculations | implemented | Expression and aggregate fields; runtime calculation combinations planned |
-| relationships | implemented | Direct, multi-hop, many-to-many, manual, bounds and from_many |
+| aggregates | implemented | 169 scenarios ported from the AshSQL suite, seeded generated cases; owners per gap |
+| calculations | implemented | Expression and aggregate fields; in-memory Ash.calculate with fallback evidence |
+| relationships | implemented | Direct, multi-hop, many-to-many, manual, through, bounds, per-parent load limits, from_many |
 | attribute_tenancy | implemented | Two tenants with overlapping local identities; actor/context interactions |
 | context_tenancy | implemented | Separate Postgres provisioning profile; no SQLite schema requirement |
 | authorization | implemented | Actor policy, relationships, aggregates, pages, shared context |
 | pagination | implemented | Static offset/keyset pages, aggregate ordering and counts |
-| distinctness | implemented | Aggregate uniqueness, composite identities, fanout controls; query DISTINCT planned |
+| distinctness | implemented | Query distinct, aggregate uniqueness, composite identities and fanout controls |
 | writes | implemented | Create/update/destroy lifecycle; atomic bulk writes that filter by or read aggregates |
-| upsert | planned | Conflict targets, tenant-aware identities and skipped records |
-| bulk_atomic | planned | Partial failure, return records, atomic changes and fallback strategies |
-| transactions_locking | planned | Isolation, rollback and locks need a separate concurrency profile |
+| upsert | implemented | Tenant-scoped identities, bulk upserts, conditions and skipped records |
+| bulk_atomic | implemented | Partial success, tenant-scoped atomic updates; stream strategy fallback planned |
+| transactions_locking | implemented | Rollback on hook failure, raise and explicit rollback, commit, row locks; isolation levels and concurrent locking planned |
 | types_constraints | implemented | Constrained types, strings, decimals, dates, times and microsecond datetimes in aggregates |
-| query_combinations | planned | Union, union_all and intersection semantics by resource |
+| query_combinations | implemented | Union; union_all and intersection planned |
 | concurrent_pagination | planned | Mutating datasets and consistency guarantees need a decision |
-| generated_cases | planned | Bounded deterministic generators after the static isolation corpus |
+| generated_cases | implemented | 24 seeded filtered-aggregate cases checked against an in-memory reference |
 
 The context-tenancy profile is Postgres-only. SQLite has no schema-provisioning obligation.
-Missing profiles are not passing tests. Fallback evidence is limited to instrumented core
-dispatch tests; adapter scenarios report `unobserved` unless instrumentation proves a path.
-A false capability and a correct answer alone do not prove fallback execution.
+Missing profiles are not passing tests. Fallback evidence comes from instrumented core
+dispatch tests and from scenarios that name a fallback, which record the operation's
+data-layer query count. Other adapter scenarios report `unobserved`. A false capability
+and a correct answer alone do not prove fallback execution.
 
-209 executable scenarios are registered. See [MATRIX.md](MATRIX.md) for individual contracts.
+229 executable scenarios are registered. See [MATRIX.md](MATRIX.md) for individual contracts.

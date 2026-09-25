@@ -47,6 +47,10 @@ defmodule Ash.Conformance.Expectations do
     values.datetime_min values.decimal_avg values.time_min
     write.atomic_update write.bulk_destroy_filter write.bulk_update_filter
     write.single_atomic_update
+    load.limit_per_parent load.offset_per_parent query.uniq_sum_rejected calc.in_memory
+    txn.after_action_rollback txn.raise_rollback txn.explicit_rollback txn.commit
+    upsert.tenant_identity upsert.bulk bulk.partial_success bulk.atomic_increment
+    generated.filtered_aggregates
     values.constrained_scalar values.distinct_count values.distinct_list values.field_count
     values.filtered_first_default values.include_nil_first values.include_nil_list values.list_default
     values.root_empty values.same_name_distinct_definitions values.scalar_default
@@ -67,6 +71,48 @@ defmodule Ash.Conformance.Expectations do
 
   defp gaps do
     %{
+      "query.distinct" =>
+        sqlite(unsupported(~r/Data layer does not support distincting/, "query-distinct")),
+      "query.union" =>
+        sqlite(
+          unsupported(~r/Data layer does not support combining queries/, "query-combinations")
+        ),
+      "query.lock_for_update" =>
+        sqlite(
+          {:unsupported,
+           {:error, Ash.Error.Invalid,
+            ~r/Data layer for Ash\.Conformance\.Sqlite\.Child does not support lock: :for_update/},
+           task("row-locks")}
+        ),
+      "load.many_to_many_limit_per_parent" =>
+        sqlite(defect_value(%{1 => [202], 2 => [], 3 => []}, "many-to-many-load-limit")),
+      "load.through" =>
+        sqlite(
+          defect_value(
+            {true,
+             %{
+               1 => {[101, 102, 103, 104], 4},
+               2 => {[101, 102, 103, 104], 0},
+               3 => {[101, 102, 103, 104], 0}
+             }},
+            "through-fallback"
+          )
+        ),
+      "upsert.condition" =>
+        sqlite(
+          defect_error(
+            ~r/Unsupported expression in Elixir\.AshSqlite\.SqlImplementation query: %\{attribute: :value, __struct__: Ash\.Query\.UpsertConflict\}/,
+            "upsert-conditions"
+          )
+        ),
+      "upsert.skipped_record" => %{
+        sqlite:
+          defect_error(
+            ~r/\*\* \(Exqlite\.Error\) unsupported type: upsert_conflict\(:value\)/,
+            "upsert-conditions"
+          ),
+        postgres: defect_value([{2001, 2, 1, 700, true}], "skipped-upsert-tenant")
+      },
       "values.decimal_read_control" =>
         sqlite(
           defect_value(

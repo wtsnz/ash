@@ -31,6 +31,11 @@ defmodule Ash.Conformance.Catalog do
       Scenarios.Context,
       Scenarios.Values,
       Scenarios.Writes,
+      Scenarios.Loads,
+      Scenarios.Queries,
+      Scenarios.Transactions,
+      Scenarios.Upserts,
+      Scenarios.Generated,
       Scenarios.Isolation,
       Scenarios.Schema
     ]

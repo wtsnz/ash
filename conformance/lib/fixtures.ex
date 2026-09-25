@@ -8,6 +8,7 @@ defmodule Ash.Conformance.Fixtures do
   def build!(adapter, :context_tenancy), do: Ash.Conformance.ContextFixtures.seed!(adapter)
   def build!(adapter, :aggregate), do: seed!(adapter)
   def build!(adapter, :isolation), do: Ash.Conformance.IsolationFixtures.seed!(adapter)
+  def build!(adapter, :empty), do: %{adapter: adapter}
 
   def prepare!(context, "values.string_constraints") do
     context.adapter.persist!(
@@ -25,6 +26,17 @@ defmodule Ash.Conformance.Fixtures do
 
   def prepare!(_context, _id), do: :ok
 
+  @doc "Aggregate fixture children, also used as an in-memory reference."
+  def children do
+    [
+      %{id: 11, parent_id: 1, label: "same", value: 2, visible: true, tenant_id: "a"},
+      %{id: 12, parent_id: 1, label: "same", value: 2, visible: true, tenant_id: "a"},
+      %{id: 13, parent_id: 1, label: "high", value: 7, visible: false, tenant_id: "b"},
+      %{id: 14, parent_id: 1, label: nil, value: nil, visible: true, tenant_id: "a"},
+      %{id: 21, parent_id: 2, label: "other", value: 4, visible: true, tenant_id: "b"}
+    ]
+  end
+
   def seed!(adapter) do
     parents = [
       %{id: 1, label: "alpha", threshold: 3, tenant_id: "a"},
@@ -32,13 +44,7 @@ defmodule Ash.Conformance.Fixtures do
       %{id: 3, label: "empty", threshold: 9, tenant_id: "a"}
     ]
 
-    children = [
-      %{id: 11, parent_id: 1, label: "same", value: 2, visible: true, tenant_id: "a"},
-      %{id: 12, parent_id: 1, label: "same", value: 2, visible: true, tenant_id: "a"},
-      %{id: 13, parent_id: 1, label: "high", value: 7, visible: false, tenant_id: "b"},
-      %{id: 14, parent_id: 1, label: nil, value: nil, visible: true, tenant_id: "a"},
-      %{id: 21, parent_id: 2, label: "other", value: 4, visible: true, tenant_id: "b"}
-    ]
+    children = children()
 
     ratings = [
       %{id: 101, child_id: 11, score: 8},

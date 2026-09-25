@@ -27,7 +27,11 @@ Every ID is stable and unique. Define an explicit expected value from documented
 semantics, intentional Ash tests or an explicit decision. The source operation,
 fixture/profile, capabilities and expectation identify what is being specified.
 Use `description:` for explanation beyond the ID, and `benchmark: true` when a
-separate workload covers this operation. Add the ID to `Expectations` explicitly
+separate workload covers this operation. Use `fallback: "..."` to name an Ash
+fallback the operation should exercise, such as in-memory evaluation. The runner
+then records the operation's data-layer query count, through the adapter's
+instrumentation, beside the result; zero queries is the only positive
+observation. The count never changes the verdict. Add the ID to `Expectations` explicitly
 for every applicable adapter; there is no implicit supported default.
 
 Use `fixture: :aggregate`, `:isolation` or `:context_tenancy`. New fixture builders
@@ -46,7 +50,12 @@ and narrow pattern. Never add a catch-all signature or regenerate expectations
 from current output. A deliberate semantic change needs a decision and review.
 
 Run both adapters, inspect failures, update the local gap task only after
-understanding the cause, and regenerate the matrix/inventory. Tests reject
+understanding the cause, and regenerate the matrix/inventory. Every gap in
+`GAPS.md` names its owner (Ash, AshSQL, AshSQLite or AshPostgres) and has an
+entry in `lib/gaps.ex`. Use the failure's stack trace or a direct control to
+find the owner. A gap is implementation work, a decision for Ash, or a
+limitation: something unsupported by design, where the documented rejection is
+the intended result. Tests reject
 missing expectations, duplicate IDs, unexpected passes and changed signatures.
 
 ## Add an adapter

@@ -82,7 +82,12 @@ defmodule Ash.Conformance.CatalogTest do
 
       assert Gaps.owners(id) != []
       assert Enum.uniq(Gaps.owners(id)) == Gaps.owners(id)
-      assert Gaps.kind(id) == :implementation or body =~ "Decision:"
+
+      case Gaps.kind(id) do
+        :implementation -> :ok
+        :decision -> assert body =~ "Decision:"
+        :limitation -> assert body =~ "Limitation:"
+      end
     end
 
     for %{task: task, owners: owners} <- Report.declaration_rows(), task do

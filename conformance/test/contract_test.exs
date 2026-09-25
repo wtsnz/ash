@@ -62,7 +62,19 @@ defmodule Ash.Conformance.ContractTest do
 
   test "planned areas and unavailable profiles never become passes" do
     inventory = Inventory.document()
-    assert Enum.any?(inventory.areas, &(&1.id == :bulk_atomic and &1.status == :planned))
+
+    assert Enum.any?(
+             inventory.areas,
+             &(&1.id == :concurrent_pagination and &1.status == :planned)
+           )
+
+    ids = Enum.map(Catalog.all(), & &1.id)
+
+    for %{status: :planned, scenario_ids_or_prefixes: prefixes} <- inventory.areas,
+        prefix <- String.split(prefixes, ",") do
+      refute Enum.any?(ids, &String.starts_with?(&1, prefix)),
+             "planned area #{prefix} has registered scenarios"
+    end
 
     refute Enum.any?(
              Catalog.for_adapter(Ash.Conformance.Sqlite),
@@ -76,6 +88,11 @@ defmodule Ash.Conformance.ContractTest do
 
     assert File.read!("COVERAGE.md") == Inventory.markdown()
     assert File.read!("CAPABILITIES.md") == Capabilities.markdown()
+  end
+
+  test "SQLite's transaction claim follows the repo setting the suite configures" do
+    assert Ash.Conformance.SqliteRepo.write_transactions?()
+    assert Capabilities.probe(Ash.Conformance.Sqlite, :ledger, :transact).advertised
   end
 
   for adapter <- Adapter.selected() do

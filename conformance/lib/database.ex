@@ -25,6 +25,7 @@ defmodule Ash.Conformance.Database do
     Ecto.Migrator.up(repo, 1, Ash.Conformance.Schema, log: false)
     Ecto.Migrator.up(repo, 2, Ash.Conformance.IsolationSchema, log: false)
     Ecto.Migrator.up(repo, 4, Ash.Conformance.ValueSchema, log: false)
+    Ecto.Migrator.up(repo, 5, Ash.Conformance.LedgerSchema, log: false)
 
     if repo == Ash.Conformance.PostgresRepo do
       Ecto.Migrator.up(repo, 3, Ash.Conformance.ContextSchema, log: false)
@@ -99,6 +100,18 @@ defmodule Ash.Conformance.ValueSchema do
       add(:taken_on, :date)
       add(:taken_at, :utc_datetime_usec)
       add(:taken_time, :time)
+    end
+  end
+end
+
+defmodule Ash.Conformance.LedgerSchema do
+  @moduledoc false
+  use Ecto.Migration
+
+  def change do
+    create table(:dc_ledger, primary_key: false) do
+      add(:id, :bigint, primary_key: true)
+      add(:amount, :bigint)
     end
   end
 end

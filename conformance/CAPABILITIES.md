@@ -42,7 +42,7 @@ See [MATRIX.md](MATRIX.md) for behavior contracts and `results/` for actual exec
 | child | `:sort` | true | true |
 | child | `:through_relationship` | false | true |
 | child | `:timeout` | true | true |
-| child | `:transact` | false | true |
+| child | `:transact` | true | true |
 | child | `:update` | true | true |
 | child | `:update_many` | false | true |
 | child | `:update_query` | true | true |
@@ -99,7 +99,7 @@ See [MATRIX.md](MATRIX.md) for behavior contracts and `results/` for actual exec
 | parent | `:sort` | true | true |
 | parent | `:through_relationship` | false | true |
 | parent | `:timeout` | true | true |
-| parent | `:transact` | false | true |
+| parent | `:transact` | true | true |
 | parent | `:update` | true | true |
 | parent | `:update_many` | false | true |
 | parent | `:update_query` | true | true |
@@ -179,7 +179,7 @@ See [MATRIX.md](MATRIX.md) for behavior contracts and `results/` for actual exec
 | secure_parent | `:sort` | true | true |
 | secure_parent | `:through_relationship` | false | true |
 | secure_parent | `:timeout` | true | true |
-| secure_parent | `:transact` | false | true |
+| secure_parent | `:transact` | true | true |
 | secure_parent | `:update` | true | true |
 | secure_parent | `:update_many` | false | true |
 | secure_parent | `:update_query` | true | true |
@@ -217,7 +217,7 @@ See [MATRIX.md](MATRIX.md) for behavior contracts and `results/` for actual exec
 | tenant_parent | `:sort` | true | true |
 | tenant_parent | `:through_relationship` | false | true |
 | tenant_parent | `:timeout` | true | true |
-| tenant_parent | `:transact` | false | true |
+| tenant_parent | `:transact` | true | true |
 | tenant_parent | `:update` | true | true |
 | tenant_parent | `:update_many` | false | true |
 | tenant_parent | `:update_query` | true | true |

@@ -43,7 +43,23 @@ Postgres defaults to TCP `localhost:5432`, user/password `postgres`, database
 Use a different name for concurrent worktrees. Setup creates this dedicated
 database if absent and applies only suite migrations. It never drops databases
 or truncates tables. Fixtures run inside a sandbox transaction and roll back.
-SQLite uses this project's ignored `tmp/data_layer.sqlite3`.
+SQLite uses this project's ignored `tmp/data_layer.sqlite3`. Its repo enables
+`write_transactions?`, as AshSQLite recommends and its installer does. AshSQLite's
+`:transact` claim follows that repo setting, so capability claims are recorded
+per resource, not per adapter.
+
+To run against a local adapter checkout, name it explicitly. The pinned revision
+is used otherwise, and CI never sets these:
+
+```sh
+CONFORMANCE_ASH_SQLITE_PATH=../../ash_sqlite mise exec -- mix deps.get
+CONFORMANCE_ASH_SQLITE_PATH=../../ash_sqlite CONFORMANCE_ADAPTERS=sqlite mise exec -- mix test
+```
+
+`CONFORMANCE_ASH_SQL_PATH` and `CONFORMANCE_ASH_POSTGRES_PATH` work the same way.
+Local paths bypass `mix.lock`, so `--check-locked` does not apply, and every
+report lists them under `local_dependency_overrides`. Unset the variable and run
+`mix deps.get` to return to the pins.
 
 The Postgres context-tenancy profile creates `dc_tenant_a` and `dc_tenant_b`
 schemas inside that database. Both contain the same record identities with
@@ -80,11 +96,19 @@ promoted to supported. Changed wrong answers and unrelated errors fail too.
 Setup and fixture errors are outside operation-error capture. Unresolved
 semantics and implementation work have durable entries in [GAPS.md](GAPS.md).
 
-Fallback is reported as `unobserved` in adapter runs. Dedicated tests in
+Fallback evidence has two sources. Dedicated tests in
 `test/ash/data_layer/dispatch_contract_test.exs` in the parent project record
 single and batch callback execution, validate results, and check optional
-callback defaults. Those prove specific framework paths, not fallback execution
-in every adapter scenario. A negative claim plus a correct result is insufficient.
+callback defaults. In adapter runs, a scenario can name the Ash fallback it
+probes; the runner then counts the data-layer queries issued by the operation
+alone and records that beside the result, for example zero queries for
+`calc.in_memory`. The count never changes whether a scenario passes. Other
+scenarios report `unobserved`. A negative claim plus a correct result is
+insufficient.
+
+Each report also records the runtime, dependency revisions, database version and
+settings for every selected adapter, because claims and results can depend on
+them.
 
 Compare saved behavior reports by stable scenario ID:
 
@@ -106,8 +130,9 @@ instrumentation. Shared scenarios call public Ash read/load/aggregate/write APIs
 They do not inspect Ecto queries, SQL or join strategies.
 
 - `Scenario`, `Catalog`, `Runner`, `Expectations`: small registry and strict contracts.
+- `Gaps` and `GAPS.md`: each gap's owner and kind (implementation, decision or limitation).
 - `scenarios/`: aggregate corpus and isolation/profile operations.
-- `Resources`, `IsolationResources`, fixtures: shared resource roles and literal data.
+- `Resources`, `IsolationResources`, `WriteResources`, fixtures: shared resource roles and literal data.
 - `Adapter`, `Database`, custom aggregate/manual implementations: SQL integrations.
 - `Capabilities`, `Inventory`, `Report`, `Formatter`: claims, coverage and observations.
 - `benchmark/`, `Benchmark`: independent larger fixtures, operations, oracles and timing.
@@ -116,25 +141,41 @@ See [AUTHORING.md](AUTHORING.md) for scenarios/adapters, [SEMANTICS.md](SEMANTIC
 for normative sources and isolation answers, [BENCHMARKS.md](BENCHMARKS.md) for
 methodology, and [PROVENANCE.md](PROVENANCE.md) for migration and dependency pins.
 
-The initial scope covers all inherited aggregate shapes; attribute tenancy;
-actor and shared-context authorization; bounded/from-many relationships;
-offset/keyset pagination; selection/calculations; and a write lifecycle.
-Upsert, bulk/atomic actions, concurrency/locking, query combinations and generated
-cases remain planned. Implemented areas are representative, not exhaustive.
+The scope covers all inherited aggregate shapes; attribute tenancy; actor and
+shared-context authorization; bounded, from-many, `through` and per-parent-limited
+relationship loads; offset/keyset pagination; selection and calculations; query
+distinct, unions and row locks; transactions; upserts and bulk/atomic writes;
+decimal and temporal values; and 24 seeded generated cases. Concurrent pagination,
+isolation levels, `union_all`/`intersection` and stream-strategy bulk fallbacks
+remain planned. Implemented areas are representative, not exhaustive.
+
+## Prior art
+
+Django runs one framework test suite against each database backend, declares
+capabilities in a `DatabaseFeatures` class (some probed at runtime) and lists
+known failures per backend. Laravel runs one database integration directory
+against several connections, including per-parent eager-load limits for
+has-many, many-to-many and through relationships. This suite borrows both
+ideas: shared scenarios, capabilities recorded with the database version, and
+per-parent load bounds. It is stricter about known failures: Django's expected
+failures do not pin the wrong result or error, while every gap here does, and
+separates advertised support, observed fallback, unsupported features, defects
+and open decisions. Expected answers still come from Ash's semantics, not from
+either project.
 
 ## Verified baseline
 
-On the pinned revisions and Ash 3.33.11, the 186 scenario IDs produce these
-367 adapter checks. Five schema-profile scenarios run only on Postgres.
+On the pinned revisions and Ash 3.33.11, the 229 scenario IDs produce these
+453 adapter checks. Five schema-profile scenarios run only on Postgres.
 
 | Adapter | Semantic passes | Unsupported contracts | Known defects | Unresolved |
 | --- | ---: | ---: | ---: | ---: |
-| SQLite | 132 | 36 | 9 | 4 |
-| PostgreSQL | 156 | 0 | 26 | 4 |
+| SQLite | 161 | 41 | 18 | 4 |
+| PostgreSQL | 196 | 0 | 29 | 4 |
 
-The project runs 406 tests with both adapters, including runner, contract,
-reporting and benchmark-harness checks. The single-adapter commands run 219
-SQLite tests and 224 Postgres tests. The core dispatch additions and relevant
+The project runs 497 tests with both adapters, including runner, contract,
+reporting and benchmark-harness checks. The single-adapter commands run 267
+SQLite tests and 272 Postgres tests. The core dispatch additions and relevant
 Ash tests passed; the full Ash gate passed 4,233 tests and its other checks.
 REUSE passed on the staged source after retrying its tool installation.
 Both benchmark smoke runs validated seven workload/dataset combinations, ten

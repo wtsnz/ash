@@ -261,6 +261,13 @@ defmodule Ash.Conformance.Report do
          adapter
          |> Ash.Conformance.Benchmark.environment()
          |> Map.put(:local_dependency_overrides, local_overrides())}
+      rescue
+        exception ->
+          {adapter.id(),
+           %{
+             limitation: "Environment unavailable: #{Exception.message(exception)}",
+             local_dependency_overrides: local_overrides()
+           }}
       after
         adapter.checkin!()
       end

@@ -19,6 +19,18 @@ Expected answers come from these checked-out Ash sources:
   aggregate ordering, offset/keyset membership and counts.
 - [Shared policy-context tests](../test/policy/context_shared_test.exs): context
   propagation through reads, relationship loads and aggregate authorization.
+- [Load tests](../test/actions/load_test.exs): a limit or offset on a load query
+  applies to each parent, including many-to-many loads.
+- [Relationships guide](../documentation/topics/resources/relationships.md):
+  `through` relationships and the `:through_relationship` capability.
+- [Create actions guide](../documentation/topics/actions/create-actions.md) and
+  [bulk create tests](../test/actions/bulk/bulk_create_test.exs): upserts on
+  identities, `upsert_condition`, skipped upserts and partial success.
+- [Multi-step actions guide](../documentation/topics/advanced/multi-step-actions.md):
+  hooks run inside the action's transaction, so a failing `after_action` undoes
+  the write.
+- [Combination queries guide](../documentation/topics/advanced/combination-queries.md)
+  and the `Ash.Query.distinct/2` and `lock/2` documentation.
 - [Data-layer contract](../lib/ash/data_layer/data_layer.ex) and its action/query
   call sites: capability claims, dispatch and optional callback behavior.
 
@@ -71,3 +83,22 @@ path multiplicity, keyless distinct identity, unique-list ordering by another
 field, and a missing many-to-many bounds API. Current results remain strict
 characterizations. Agreement between adapters does not resolve those questions.
 Generated cases and concurrent-pagination semantics are follow-up work.
+
+## Added scenario answers
+
+Module documentation in `lib/scenarios/` states the data each answer comes from.
+Two points needed a decision:
+
+- A data layer that does not support a query feature should reject it with Ash's
+  documented error. `distinct`, combinations and locks do. A `through`
+  relationship on SQLite is only warned about, then loads wrong data, so it is a
+  defect rather than an unsupported contract.
+- `Ash.transact` on a data layer that advertises no transactions runs the
+  function without one. The suite configures AshSQLite as it recommends, with
+  write transactions on, and expects rollback. With them off, rollback would
+  not happen.
+
+`generated.filtered_aggregates` checks 24 cases from a fixed seed against an
+in-memory fold of the literal fixture values. The reference filters and folds;
+it does not model a planner.
+

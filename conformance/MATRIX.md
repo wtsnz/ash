@@ -42,6 +42,9 @@ Elixir scenarios and expectations define the contract. CI runs each adapter inde
 | [`bounds.root_order_then_limit`](lib/scenarios/bounds.ex#L49) | supported | [known_defect](GAPS.md#root-bounds) · AshSQL |
 | [`bounds.root_zero`](lib/scenarios/bounds.ex#L70) | supported | supported |
 | [`bounds.unsorted_limit`](lib/scenarios/bounds.ex#L30) | [known_defect](GAPS.md#unsorted-bounds) · AshSQL | supported |
+| [`bulk.atomic_increment`](lib/scenarios/upserts.ex#L136) | supported | supported |
+| [`bulk.partial_success`](lib/scenarios/upserts.ex#L98) | supported | supported |
+| [`calc.in_memory`](lib/scenarios/queries.ex#L82) | supported | supported |
 | [`context.actor`](lib/scenarios/context.ex#L41) | supported | supported |
 | [`context.arguments`](lib/scenarios/context.ex#L15) | supported | supported |
 | [`context.attribute_tenant`](lib/scenarios/context.ex#L54) | supported | supported |
@@ -96,12 +99,17 @@ Elixir scenarios and expectations define the contract. CI runs each adapter inde
 | [`filter.parent_through_control`](lib/scenarios/filters.ex#L198) | [known_defect](GAPS.md#parent-through-load) · AshSQL | [known_defect](GAPS.md#parent-through-load) · AshSQL |
 | [`filter.parent_unrelated`](lib/scenarios/filters.ex#L87) | [unsupported](GAPS.md#parent-correlation) · AshSQL | supported |
 | [`filter.sibling_independence`](lib/scenarios/filters.ex#L115) | supported | supported |
+| [`generated.filtered_aggregates`](lib/scenarios/generated.ex#L23) | supported | supported |
 | [`identity.composite_count`](lib/scenarios/relationships.ex#L129) | [unsupported](GAPS.md#record-identity) · AshSQL | supported |
 | [`identity.composite_fanout_count`](lib/scenarios/relationships.ex#L141) | [unsupported](GAPS.md#record-identity) · AshSQL | [known_defect](GAPS.md#filter-fanout) · AshSQL |
 | [`identity.keyless_count`](lib/scenarios/relationships.ex#L135) | supported | supported |
 | [`identity.keyless_distinct`](lib/scenarios/relationships.ex#L132) | [unresolved](GAPS.md#keyless-identity) · Ash | [unresolved](GAPS.md#keyless-identity) · Ash |
 | [`identity.keyless_source`](lib/scenarios/relationships.ex#L145) | [unsupported](GAPS.md#record-identity) · AshSQL | supported |
 | [`identity.root_composite_count`](lib/scenarios/relationships.ex#L138) | [unsupported](GAPS.md#record-identity) · AshSQL | supported |
+| [`load.limit_per_parent`](lib/scenarios/loads.ex#L20) | supported | supported |
+| [`load.many_to_many_limit_per_parent`](lib/scenarios/loads.ex#L37) | [known_defect](GAPS.md#many-to-many-load-limit) · Ash | supported |
+| [`load.offset_per_parent`](lib/scenarios/loads.ex#L27) | supported | supported |
+| [`load.through`](lib/scenarios/loads.ex#L50) | [known_defect](GAPS.md#through-fallback) · Ash | supported |
 | [`loaded.avg`](lib/scenarios/operations.ex#L29) | supported | supported |
 | [`loaded.count`](lib/scenarios/operations.ex#L29) | supported | supported |
 | [`loaded.custom`](lib/scenarios/operations.ex#L29) | supported | supported |
@@ -139,6 +147,10 @@ Elixir scenarios and expectations define the contract. CI runs each adapter inde
 | [`path.to_one_to_many_list`](lib/scenarios/relationships.ex#L36) | supported | supported |
 | [`path.to_one_to_many_sum`](lib/scenarios/relationships.ex#L17) | supported | supported |
 | [`path.unrelated`](lib/scenarios/relationships.ex#L100) | supported | supported |
+| [`query.distinct`](lib/scenarios/queries.ex#L20) | [unsupported](GAPS.md#query-distinct) · AshSQLite | supported |
+| [`query.lock_for_update`](lib/scenarios/queries.ex#L51) | [unsupported](GAPS.md#row-locks) · AshSQLite | supported |
+| [`query.union`](lib/scenarios/queries.ex#L34) | [unsupported](GAPS.md#query-combinations) · AshSQLite | supported |
+| [`query.uniq_sum_rejected`](lib/scenarios/queries.ex#L68) | supported | supported |
 | [`read.selection_expression`](lib/scenarios/isolation.ex#L378) | supported | supported |
 | [`root.avg`](lib/scenarios/operations.ex#L52) | supported | supported |
 | [`root.count`](lib/scenarios/operations.ex#L52) | supported | supported |
@@ -175,6 +187,14 @@ Elixir scenarios and expectations define the contract. CI runs each adapter inde
 | [`tenant.relationship_load`](lib/scenarios/isolation.ex#L38) | supported | supported |
 | [`tenant.root_aggregates`](lib/scenarios/isolation.ex#L73) | supported | supported |
 | [`tenant.unknown`](lib/scenarios/isolation.ex#L142) | supported | supported |
+| [`txn.after_action_rollback`](lib/scenarios/transactions.ex#L23) | supported | supported |
+| [`txn.commit`](lib/scenarios/transactions.ex#L72) | supported | supported |
+| [`txn.explicit_rollback`](lib/scenarios/transactions.ex#L57) | supported | supported |
+| [`txn.raise_rollback`](lib/scenarios/transactions.ex#L38) | supported | supported |
+| [`upsert.bulk`](lib/scenarios/upserts.ex#L46) | supported | supported |
+| [`upsert.condition`](lib/scenarios/upserts.ex#L59) | [known_defect](GAPS.md#upsert-conditions) · AshSQLite | supported |
+| [`upsert.skipped_record`](lib/scenarios/upserts.ex#L76) | [known_defect](GAPS.md#upsert-conditions) · AshSQLite | [known_defect](GAPS.md#skipped-upsert-tenant) · AshPostgres |
+| [`upsert.tenant_identity`](lib/scenarios/upserts.ex#L30) | supported | supported |
 | [`use.calculation`](lib/scenarios/operations.ex#L226) | supported | supported |
 | [`use.fanout_count`](lib/scenarios/operations.ex#L328) | supported | supported |
 | [`use.fanout_read_page`](lib/scenarios/operations.ex#L333) | [known_defect](GAPS.md#sorted-distinct-reads) · AshSQLite | supported |
@@ -231,6 +251,9 @@ The first owner is where the fix starts. Counts are scenarios linked to each gap
 | [relationship-context](GAPS.md#relationship-context) | Ash | implementation | 2 | 2 |
 | [unique-list-order](GAPS.md#unique-list-order) | Ash | decision | 1 | 1 |
 | [authorization-bounds](GAPS.md#authorization-bounds) | Ash, then AshSQL | implementation | 1 | 1 |
+| [many-to-many-load-limit](GAPS.md#many-to-many-load-limit) | Ash, then AshSQLite | implementation | 1 | 0 |
+| [through-fallback](GAPS.md#through-fallback) | Ash, then AshSQLite | implementation | 1 | 0 |
+| [skipped-upsert-tenant](GAPS.md#skipped-upsert-tenant) | AshPostgres | implementation | 0 | 1 |
 | [default-sort](GAPS.md#default-sort) | AshSQL | implementation | 1 | 1 |
 | [filter-dependencies](GAPS.md#filter-dependencies) | AshSQL | implementation | 4 | 0 |
 | [filter-fanout](GAPS.md#filter-fanout) | AshSQL | implementation | 7 | 9 |
@@ -250,4 +273,8 @@ The first owner is where the fix starts. Counts are scenarios linked to each gap
 | [parent-correlation](GAPS.md#parent-correlation) | AshSQL, then AshSQLite | implementation | 8 | 0 |
 | [root-kinds](GAPS.md#root-kinds) | AshSQL, then AshSQLite | implementation | 7 | 0 |
 | [decimal-precision](GAPS.md#decimal-precision) | AshSQLite | implementation | 4 | 0 |
+| [query-combinations](GAPS.md#query-combinations) | AshSQLite | implementation | 1 | 0 |
+| [query-distinct](GAPS.md#query-distinct) | AshSQLite | implementation | 1 | 0 |
+| [row-locks](GAPS.md#row-locks) | AshSQLite | limitation | 1 | 0 |
+| [upsert-conditions](GAPS.md#upsert-conditions) | AshSQLite | implementation | 2 | 0 |
 | [sorted-distinct-reads](GAPS.md#sorted-distinct-reads) | AshSQLite, then AshSQL | implementation | 2 | 0 |

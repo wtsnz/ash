@@ -39,10 +39,15 @@ inherited gap, not accepting observations from a neighboring checkout.
 checkout. The AshSQL override forces both adapters to the same unreleased commit
 instead of their Hex version constraints. The adapters are pinned Git dependencies;
 all transitive versions are in `mix.lock`. CI never reads adjacent worktrees.
-For a local adapter experiment, edit the isolated project's dependency to a path
-with `override: true`, run the suite, and revert only that intentional dependency
-edit before proposing reproducible pins. There are no implicit environment-based
-local path substitutions in this project.
+For a local adapter experiment, set `CONFORMANCE_ASH_SQL_PATH`,
+`CONFORMANCE_ASH_SQLITE_PATH` or `CONFORMANCE_ASH_POSTGRES_PATH` to a checkout.
+The dependency then becomes a path with `override: true`. Nothing is substituted
+unless a variable is set, CI sets none, and each report lists any override that
+was active. Pins change only by editing `mix.exs` and the lock.
+
+The SQLite repo enables `write_transactions?`. AshSQLite defaults it to false for
+existing apps but recommends it, and its installer enables it. With it off,
+AshSQLite advertises no transactions and Ash runs actions without one.
 
 No new third-party benchmark or reporting library was added. The migrated suite
 already used the maintained adapter stack, ExUnit, Jason, Credo, Dialyxir and

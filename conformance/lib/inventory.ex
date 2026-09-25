@@ -10,17 +10,17 @@ defmodule Ash.Conformance.Inventory do
       {:reads, :implemented, "Filtering, expression calculations, selection, deterministic sort",
        "read.,use.,filter."},
       {:aggregates, :implemented,
-       "169 scenarios ported from the AshSQL suite; all nine kinds, owners per gap",
-       "loaded.,root.,path.,values.,field.,bounds.,ordering.,identity.,context."},
+       "169 scenarios ported from the AshSQL suite, seeded generated cases; owners per gap",
+       "loaded.,root.,path.,values.,field.,bounds.,ordering.,identity.,context.,generated."},
       {:calculations, :implemented,
-       "Expression and aggregate fields; runtime calculation combinations planned",
-       "field.calculation,use.calculation,read.selection_expression"},
+       "Expression and aggregate fields; in-memory Ash.calculate with fallback evidence",
+       "field.calculation,use.calculation,read.selection_expression,calc."},
       {:relationships, :implemented,
-       "Direct, multi-hop, many-to-many, manual, bounds and from_many",
-       "path.,bounds.,tenant.bounds,auth.bounds"},
+       "Direct, multi-hop, many-to-many, manual, through, bounds, per-parent load limits, from_many",
+       "path.,bounds.,load.,tenant.bounds,auth.bounds"},
       {:attribute_tenancy, :implemented,
        "Two tenants with overlapping local identities; actor/context interactions",
-       "tenant.,auth.tenant_interaction"},
+       "tenant.,auth.tenant_interaction,upsert."},
       {:context_tenancy, :implemented,
        "Separate Postgres provisioning profile; no SQLite schema requirement", "schema."},
       {:authorization, :implemented,
@@ -29,30 +29,29 @@ defmodule Ash.Conformance.Inventory do
       {:pagination, :implemented, "Static offset/keyset pages, aggregate ordering and counts",
        "tenant.aggregate_,auth.offset_page,auth.keyset_pages,use.pagination"},
       {:distinctness, :implemented,
-       "Aggregate uniqueness, composite identities, fanout controls; query DISTINCT planned",
-       "values.distinct_,identity.,filter.fanout"},
+       "Query distinct, aggregate uniqueness, composite identities and fanout controls",
+       "query.distinct,values.distinct_,identity.,filter.fanout"},
       {:writes, :implemented,
        "Create/update/destroy lifecycle; atomic bulk writes that filter by or read aggregates",
        "write."},
-      {:upsert, :planned, "Conflict targets, tenant-aware identities and skipped records",
-       "planned.upsert"},
-      {:bulk_atomic, :planned,
-       "Partial failure, return records, atomic changes and fallback strategies",
-       "planned.bulk_atomic"},
-      {:transactions_locking, :planned,
-       "Isolation, rollback and locks need a separate concurrency profile",
-       "planned.transactions_locking"},
+      {:upsert, :implemented,
+       "Tenant-scoped identities, bulk upserts, conditions and skipped records", "upsert."},
+      {:bulk_atomic, :implemented,
+       "Partial success, tenant-scoped atomic updates; stream strategy fallback planned",
+       "bulk.,write.atomic_update,write.bulk_"},
+      {:transactions_locking, :implemented,
+       "Rollback on hook failure, raise and explicit rollback, commit, row locks; isolation levels and concurrent locking planned",
+       "txn.,query.lock_for_update"},
       {:types_constraints, :implemented,
        "Constrained types, strings, decimals, dates, times and microsecond datetimes in aggregates",
        "values.,root.decimal_sum,root.datetime_max"},
-      {:query_combinations, :planned, "Union, union_all and intersection semantics by resource",
-       "planned.query_combinations"},
+      {:query_combinations, :implemented, "Union; union_all and intersection planned",
+       "query.union"},
       {:concurrent_pagination, :planned,
        "Mutating datasets and consistency guarantees need a decision",
        "planned.concurrent_pagination"},
-      {:generated_cases, :planned,
-       "Bounded deterministic generators after the static isolation corpus",
-       "planned.generated_cases"}
+      {:generated_cases, :implemented,
+       "24 seeded filtered-aggregate cases checked against an in-memory reference", "generated."}
     ]
   end
 
@@ -123,6 +122,12 @@ defmodule Ash.Conformance.Inventory do
           location: "../test/ash/data_layer/dispatch_contract_test.exs",
           scope:
             "Dedicated dispatch tests record actual single/batch callback execution; not adapter run evidence"
+        },
+        %{
+          id: "scenario.fallback",
+          location: "lib/scenario.ex",
+          scope:
+            "Scenarios that name a fallback record the data-layer query count of the operation in adapter runs"
         }
       ],
       meaning:
@@ -161,9 +166,10 @@ defmodule Ash.Conformance.Inventory do
     #{rows}
 
     The context-tenancy profile is Postgres-only. SQLite has no schema-provisioning obligation.
-    Missing profiles are not passing tests. Fallback evidence is limited to instrumented core
-    dispatch tests; adapter scenarios report `unobserved` unless instrumentation proves a path.
-    A false capability and a correct answer alone do not prove fallback execution.
+    Missing profiles are not passing tests. Fallback evidence comes from instrumented core
+    dispatch tests and from scenarios that name a fallback, which record the operation's
+    data-layer query count. Other adapter scenarios report `unobserved`. A false capability
+    and a correct answer alone do not prove fallback execution.
 
     #{length(Catalog.all())} executable scenarios are registered. See [MATRIX.md](MATRIX.md) for individual contracts.
     """
