@@ -3,7 +3,7 @@
 
 defmodule Ash.Conformance.Probe do
   @moduledoc "Observe one case during adapter bring-up; never assign or accept an expectation."
-  alias Ash.Conformance.{Capabilities, Report, Runner}
+  alias Ash.Conformance.{Contracts.Capabilities, Report, Runner}
 
   def run(scenario, adapter) do
     parent = self()
@@ -30,7 +30,7 @@ defmodule Ash.Conformance.Probe do
       profile: scenario.profile,
       classification: :unreviewed,
       semantic_pass: false,
-      intended: inspect(scenario.expected, limit: :infinity),
+      intended: Report.value(scenario.expected),
       observation: Report.observation(outcome),
       fallback: :unobserved,
       next_step:

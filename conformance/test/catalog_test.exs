@@ -4,7 +4,15 @@
 
 defmodule Ash.Conformance.CatalogTest do
   use ExUnit.Case, async: true
-  alias Ash.Conformance.{Adapter, Capabilities, Catalog, Expectations, Gaps, Report}
+
+  alias Ash.Conformance.{
+    Adapter,
+    Catalog,
+    Contracts.Capabilities,
+    Contracts.Expectations,
+    Contracts.Gaps,
+    Report
+  }
 
   test "every unique scenario has exactly one explicit status per adapter" do
     ids = Enum.map(Catalog.all(), & &1.id)
@@ -104,13 +112,16 @@ defmodule Ash.Conformance.CatalogTest do
     for scenario <- Catalog.all() do
       assert String.starts_with?(scenario.source.file, "lib/scenarios/")
 
-      line =
+      declaration =
         scenario.source.file
         |> File.read!()
         |> String.split("\n")
-        |> Enum.at(scenario.source.line - 1)
+        |> Enum.slice(scenario.source.line - 1, 3)
+        |> Enum.join("\n")
 
-      assert line =~ "new(", "#{scenario.id} source link must point to its declaration"
+      # The declaration names the scenario, unless its ID is generated in a loop.
+      assert declaration =~ ~s("#{scenario.id}") or declaration =~ ~r/^\s*new\(".*#\{/m,
+             "#{scenario.id} source link must point to its declaration:\n#{declaration}"
 
       assert matrix =~
                "[`#{scenario.id}`](#{scenario.source.file}#L#{scenario.source.line})"
@@ -118,7 +129,7 @@ defmodule Ash.Conformance.CatalogTest do
   end
 
   describe "feature catalog" do
-    alias Ash.Conformance.{FeatureReport, Features}
+    alias Ash.Conformance.{Contracts.Features, Report.FeatureReport}
 
     test "every scenario belongs to exactly one feature, and every listed scenario exists" do
       listed = Enum.flat_map(Features.all(), & &1.scenarios)

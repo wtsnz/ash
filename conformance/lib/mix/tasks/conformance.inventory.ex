@@ -8,12 +8,12 @@ defmodule Mix.Tasks.Conformance.Inventory do
   def run([]) do
     Mix.Task.run("app.start")
     File.mkdir_p!("results")
-    File.write!("CAPABILITIES.md", Ash.Conformance.Capabilities.markdown())
-    File.write!("COVERAGE.md", Ash.Conformance.Inventory.markdown())
+    File.write!("CAPABILITIES.md", Ash.Conformance.Contracts.Capabilities.markdown())
+    File.write!("COVERAGE.md", Ash.Conformance.Report.Inventory.markdown())
 
     File.write!(
       "results/inventory.json",
-      Jason.encode!(Ash.Conformance.Inventory.document(), pretty: true) <> "\n"
+      Jason.encode!(Ash.Conformance.Report.Inventory.document(), pretty: true) <> "\n"
     )
 
     Mix.shell().info("Wrote CAPABILITIES.md, COVERAGE.md and results/inventory.json")

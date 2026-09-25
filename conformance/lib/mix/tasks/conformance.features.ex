@@ -7,7 +7,7 @@ defmodule Mix.Tasks.Conformance.Features do
   @shortdoc "Generate the per-data-layer feature report from declared contracts"
   def run([]) do
     Mix.Task.run("compile")
-    File.write!("FEATURES.md", Ash.Conformance.FeatureReport.declared())
+    File.write!("FEATURES.md", Ash.Conformance.Report.FeatureReport.declared())
     Mix.shell().info("Wrote FEATURES.md")
   end
 end

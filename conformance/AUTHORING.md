@@ -6,8 +6,9 @@ Read when adding a scenario, adapter, expectation or execution profile.
 
 ## Add a scenario
 
-Add a declaration to an existing `Scenarios` module or register another module
-in `Catalog.all/0`. The runner does not change. For example:
+Add a declaration to the `Scenarios` module for its feature level, under
+`lib/scenarios/`, or register another module in `Catalog.all/0`, then list its
+ID under a feature in `lib/contracts/features.ex`. The runner does not change. For example:
 
 ```elixir
 new("tenant.my_read", :tenancy, [1, 2, 3], fn ctx ->
@@ -31,7 +32,7 @@ separate workload covers this operation. Use `fallback: "..."` to name an Ash
 fallback the operation should exercise, such as in-memory evaluation. The runner
 then records the operation's data-layer query count, through the adapter's
 instrumentation, beside the result; zero queries is the only positive
-observation. The count never changes the verdict. Add the ID to `Expectations` explicitly
+observation. The count never changes the verdict. Add the ID to `Contracts.Expectations` explicitly
 for every applicable adapter; there is no implicit supported default.
 
 Use `fixture: :aggregate`, `:isolation` or `:context_tenancy`. New fixture builders
@@ -52,7 +53,7 @@ from current output. A deliberate semantic change needs a decision and review.
 Run both adapters, inspect failures, update the local gap task only after
 understanding the cause, and regenerate the matrix/inventory. Every gap in
 `GAPS.md` names its owner (Ash, AshSQL, AshSQLite or AshPostgres) and has an
-entry in `lib/gaps.ex`. Use the failure's stack trace or a direct control to
+entry in `lib/contracts/gaps.ex`. Use the failure's stack trace or a direct control to
 find the owner. A gap is implementation work, a decision for Ash, or a
 limitation: something unsupported by design, where the documented rejection is
 the intended result. Tests reject
@@ -87,12 +88,15 @@ config :ash_conformance, unreviewed_adapters: [MyDataLayer.Conformance]
 | `identity_options/0` (optional) | Options for every shared identity, e.g. `[pre_check?: true]` when uniqueness is not enforced by storage. |
 
 To reuse the shared roles, implement `resource_config/1` and instantiate the
-resource macros with your adapter module, as `Ash.Conformance.Ets` does with
+resource macros with your adapter module, as `lib/adapters/ets.ex` does with
 `:ets`:
 
 ```elixir
 defmodule MyDataLayer.Conformance.Resources do
-  use Ash.Conformance.Resources, namespace: MyDataLayer.Conformance, adapter: MyDataLayer.Conformance
+  use Ash.Conformance.Resources.Aggregate, namespace: MyDataLayer.Conformance, adapter: MyDataLayer.Conformance
+  use Ash.Conformance.Resources.Records, namespace: MyDataLayer.Conformance, adapter: MyDataLayer.Conformance
+  use Ash.Conformance.Resources.Isolation, namespace: MyDataLayer.Conformance, adapter: MyDataLayer.Conformance
+  use Ash.Conformance.Resources.Writes, namespace: MyDataLayer.Conformance, adapter: MyDataLayer.Conformance
 end
 ```
 
@@ -113,7 +117,7 @@ no executable semantic-pass row. This is only for storage strategy differences;
 ordinary unsupported features within a supported profile must run and prove
 their specific rejection. Do not omit troublesome scenarios by narrowing profiles.
 
-Resource-role capability probes in `Capabilities` must be reviewed when adding
+Resource-role capability probes in `Contracts.Capabilities` must be reviewed when adding
 roles. Parameterized claims use the actual resource, relationship, expression
 or kind. The broader capability inventory is independent of scenario execution.
 Optional callback exports say nothing about whether they work.
@@ -140,12 +144,12 @@ merely because the adapter is SQL-based. The provisioning mechanism is separate
 from shared attribute-tenant semantics.
 
 The aggregate fixture requires these roles, all available as reference definitions
-in `Resources`: `parent`, `child`, `rating`, `tag`, `link`, `child_tag`, and `event`.
+in `Resources.Aggregate`: `parent`, `child`, `rating`, `tag`, `link`, `child_tag`, and `event`.
 Scenarios then introduce views/roles for `tenant_child`, `tenant_link`, and
 `authorized_child`, plus the integration's manual relationship. The isolation
 fixture persists only `tenant_parent` and `tenant_item`; authorization cases use
 `secure_parent`, `secure_item`, `context_parent`, and `context_item` over that data.
-`IsolationResources` documents their common attributes, identities and actions.
+`Resources.Isolation` documents their common attributes, identities and actions.
 The separate context profile uses `schema_parent` and `schema_item`.
 
 `Ash.Conformance.Ets` is a worked example using Ash's ETS data layer. It reuses

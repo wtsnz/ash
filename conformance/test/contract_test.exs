@@ -3,7 +3,16 @@
 
 defmodule Ash.Conformance.ContractTest do
   use ExUnit.Case, async: false
-  alias Ash.Conformance.{Adapter, Capabilities, Catalog, Expectations, Inventory, Report, Runner}
+
+  alias Ash.Conformance.{
+    Adapter,
+    Catalog,
+    Contracts.Capabilities,
+    Contracts.Expectations,
+    Report,
+    Report.Inventory,
+    Runner
+  }
 
   test "all dependencies use the parent Ash checkout" do
     assert Mix.Project.deps_paths()[:ash] == Path.expand("..")
@@ -74,7 +83,7 @@ defmodule Ash.Conformance.ContractTest do
     for %{status: :planned} = feature <- inventory.features do
       assert feature.scenarios == []
 
-      assert Ash.Conformance.FeatureReport.summarize(%{scenarios: []}, []).status ==
+      assert Ash.Conformance.Report.FeatureReport.summarize(%{scenarios: []}, []).status ==
                :untested
     end
 
@@ -103,8 +112,8 @@ defmodule Ash.Conformance.ContractTest do
       :ok = adapter.checkout!()
 
       try do
-        context = Ash.Conformance.Fixtures.seed!(adapter)
-        query = Ash.DataLayer.resource_to_query(context.parent, Ash.Conformance.Domain)
+        context = Ash.Conformance.Fixtures.Aggregate.seed!(adapter)
+        query = Ash.DataLayer.resource_to_query(context.parent, Ash.Conformance.Resources.Domain)
         assert {:ok, query} = Ash.DataLayer.set_context(context.parent, query, %{})
         assert {:ok, rows} = Ash.DataLayer.run_query(query, context.parent)
         assert Enum.sort(Enum.map(rows, & &1.id)) == [1, 2, 3]
@@ -138,8 +147,11 @@ defmodule Ash.Conformance.ContractTest do
     end
 
     test "can ask for identities to be pre-checked" do
-      assert Ash.Conformance.Resource.identity_options(ExternalAdapter) == [pre_check?: true]
-      assert Ash.Conformance.Resource.identity_options(:postgres) == []
+      assert Ash.Conformance.Resources.Base.identity_options(ExternalAdapter) == [
+               pre_check?: true
+             ]
+
+      assert Ash.Conformance.Resources.Base.identity_options(:postgres) == []
     end
   end
 end

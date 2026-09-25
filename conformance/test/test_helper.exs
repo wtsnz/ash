@@ -3,11 +3,11 @@
 # SPDX-License-Identifier: MIT
 Ash.Conformance.Catalog.validate!(
   Ash.Conformance.Catalog.all(),
-  Ash.Conformance.Expectations.all(),
+  Ash.Conformance.Contracts.Expectations.all(),
   Ash.Conformance.Adapter.all()
 )
 
-ExUnit.start(formatters: [ExUnit.CLIFormatter, Ash.Conformance.Formatter])
+ExUnit.start(formatters: [ExUnit.CLIFormatter, Ash.Conformance.Report.Formatter])
 
 for adapter <- Ash.Conformance.Adapter.selected() do
   adapter.setup!()

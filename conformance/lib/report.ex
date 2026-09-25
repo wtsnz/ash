@@ -4,7 +4,13 @@
 
 defmodule Ash.Conformance.Report do
   @moduledoc false
-  alias Ash.Conformance.{Adapter, Capabilities, Catalog, Expectations, Gaps}
+  alias Ash.Conformance.{
+    Adapter,
+    Catalog,
+    Contracts.Capabilities,
+    Contracts.Expectations,
+    Contracts.Gaps
+  }
 
   def declaration_rows do
     for adapter <- Adapter.all(), scenario <- Catalog.for_adapter(adapter) do
@@ -82,8 +88,16 @@ defmodule Ash.Conformance.Report do
   defp accepted(_, {_, {:error, exception, pattern}, _}),
     do: "#{inspect(exception)} matching #{inspect(pattern)}"
 
-  defp value(value),
-    do: inspect(value, charlists: :as_lists, limit: :infinity, printable_limit: :infinity)
+  # Maps print with sorted keys: small maps otherwise print in atom-creation
+  # order, which changes between builds and would look like a changed result.
+  def value(value),
+    do:
+      inspect(value,
+        charlists: :as_lists,
+        limit: :infinity,
+        printable_limit: :infinity,
+        custom_options: [sort_maps: true]
+      )
 
   def matrix do
     rows = Enum.group_by(declaration_rows(), & &1.scenario)
@@ -277,7 +291,7 @@ defmodule Ash.Conformance.Report do
 
     File.write!(
       Path.join(dir, "features-#{name}.md"),
-      Ash.Conformance.FeatureReport.markdown(rows, Adapter.selected(), :observed)
+      Ash.Conformance.Report.FeatureReport.markdown(rows, Adapter.selected(), :observed)
     )
 
     if path = summary_path(), do: File.write!(path, markdown, [:append])

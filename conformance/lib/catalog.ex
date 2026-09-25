@@ -18,7 +18,7 @@ defmodule Ash.Conformance.Catalog do
     for scenario <- scenarios, adapter <- adapters, scenario.profile in adapter.profiles() do
       case expectations |> Map.fetch!(scenario.id) |> Map.fetch!(adapter.id()) do
         {_status, _signature, "GAPS.md#" <> gap} ->
-          unless gap in Ash.Conformance.Gaps.ids(),
+          unless gap in Ash.Conformance.Contracts.Gaps.ids(),
             do: raise(ArgumentError, "#{scenario.id} links to unknown gap #{gap}")
 
         _ ->
@@ -31,21 +31,26 @@ defmodule Ash.Conformance.Catalog do
 
   def all do
     [
-      Scenarios.Operations,
-      Scenarios.Relationships,
-      Scenarios.Filters,
-      Scenarios.Bounds,
-      Scenarios.Context,
-      Scenarios.Values,
-      Scenarios.Writes,
       Scenarios.Records,
-      Scenarios.Loads,
-      Scenarios.Queries,
+      Scenarios.Types,
+      Scenarios.Querying,
+      Scenarios.Relationships,
+      Scenarios.Aggregates.Kinds,
+      Scenarios.Aggregates.Results,
+      Scenarios.Aggregates.Types,
+      Scenarios.Aggregates.Usage,
+      Scenarios.Aggregates.Filters,
+      Scenarios.Aggregates.Paths,
+      Scenarios.Aggregates.Bounds,
+      Scenarios.Aggregates.Context,
+      Scenarios.Aggregates.Writes,
+      Scenarios.Aggregates.Generated,
+      Scenarios.Writes,
       Scenarios.Transactions,
-      Scenarios.Upserts,
-      Scenarios.Generated,
-      Scenarios.Isolation,
-      Scenarios.Schema
+      Scenarios.Tenancy,
+      Scenarios.ContextTenancy,
+      Scenarios.Authorization,
+      Scenarios.Consistency
     ]
     |> Enum.flat_map(& &1.all())
     |> Enum.sort_by(& &1.id)

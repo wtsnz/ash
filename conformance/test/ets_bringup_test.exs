@@ -26,7 +26,7 @@ defmodule Ash.Conformance.EtsBringupTest do
 
       assert report.classification == :unreviewed
       assert report.semantic_pass == false
-      assert report.observation.actual == inspect_value(scenario.expected)
+      assert report.observation.actual == Ash.Conformance.Report.value(scenario.expected)
     end
   end
 
@@ -39,7 +39,4 @@ defmodule Ash.Conformance.EtsBringupTest do
     assert report.observation.actual == "{:raised, [2]}"
     assert report.semantic_pass == false
   end
-
-  defp inspect_value(value),
-    do: inspect(value, charlists: :as_lists, limit: :infinity, printable_limit: :infinity)
 end

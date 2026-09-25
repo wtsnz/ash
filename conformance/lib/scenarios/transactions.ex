@@ -11,6 +11,9 @@ defmodule Ash.Conformance.Scenarios.Transactions do
   configuration: AshSQLite enables it on the repo, as its installer does.
   """
   import Ash.Conformance.Scenario, only: [new: 5]
+  require Ash.Query
+
+  @query_docs "../lib/ash/query/query.ex"
 
   @opts [
     fixture: :empty,
@@ -85,6 +88,22 @@ defmodule Ash.Conformance.Scenarios.Transactions do
           {elem(result, 0), ids(ctx)}
         end,
         @opts
+      ),
+      new(
+        "query.lock_for_update",
+        :reads,
+        {:ok, [11]},
+        fn ctx ->
+          Ash.transact(ctx.child, fn ->
+            ctx.child
+            |> Ash.Query.lock(:for_update)
+            |> Ash.Query.filter(id == 11)
+            |> Ash.read!(authorize?: false)
+            |> Enum.map(& &1.id)
+          end)
+        end,
+        semantic_basis: @query_docs,
+        capabilities: [parent: {:lock, :for_update}, child: :transact]
       )
     ]
   end

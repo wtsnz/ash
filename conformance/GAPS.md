@@ -12,7 +12,7 @@ Each entry names the project that owns the fix, in the order the work is
 needed. Postgres defects belong to AshSQL when its lateral strategy produces
 them; no entry is currently owned by AshPostgres itself. Decisions are
 semantic questions for Ash to settle before an adapter implements them.
-`lib/gaps.ex` holds the same owners, and the matrix shows them.
+`lib/contracts/gaps.ex` holds the same owners, and the matrix shows them.
 
 ## Root kinds
 

@@ -1,153 +1,181 @@
-# SPDX-FileCopyrightText: 2026 ash_sql contributors <https://github.com/ash-project/ash_sql/graphs/contributors>
-#
+# SPDX-FileCopyrightText: 2026 ash contributors <https://github.com/ash-project/ash/graphs/contributors>
 # SPDX-License-Identifier: MIT
 
 defmodule Ash.Conformance.Scenarios.Relationships do
-  @moduledoc false
-  import Ash.Conformance.Scenario, only: [new: 4]
-  import Ash.Conformance.Scenarios.Helpers
-  require Ash.Query
+  @moduledoc """
+  Relationship loads with per-parent bounds, and `through` relationships.
+
+  A limit or offset on a load query applies to each parent separately, as in
+  Ash's own load tests. Parent 1's children, by value descending, are 13, 11,
+  12 and 14; parent 2 has only 21; parent 3 has none. Parent 1 links to tags
+  201 (value 3) and 202 (value 8); parent 2 links to 201.
+  """
+  import Ash.Conformance.Scenario, only: [new: 5]
+
+  @loads [semantic_basis: "../test/actions/load_test.exs"]
 
   def all do
     [
-      new("path.to_one", :relationships, %{11 => 3, 12 => 3, 13 => 3, 14 => 3, 21 => 5}, fn ctx ->
-        loaded(%{ctx | parent: ctx.child}, :sum, :parent, field: :threshold)
-      end),
-      # Each child reaches its siblings through its parent.
+      # Each relationship kind, loaded directly.
       new(
-        "path.to_one_to_many_sum",
+        "load.belongs_to",
         :relationships,
-        %{11 => 11, 12 => 11, 13 => 11, 14 => 11, 21 => 4},
+        %{11 => 1, 12 => 1, 13 => 1, 14 => 1, 21 => 2},
         fn ctx ->
-          loaded(%{ctx | parent: ctx.child}, :sum, [:parent, :children], field: :value)
-        end
+          ctx.child
+          |> Ash.Query.load(:parent)
+          |> Ash.read!(authorize?: false)
+          |> Map.new(&{&1.id, &1.parent.id})
+        end,
+        semantic_basis: "../documentation/topics/resources/relationships.md"
       ),
       new(
-        "path.to_one_to_many_first",
+        "load.has_one",
         :relationships,
-        %{11 => 7, 12 => 7, 13 => 7, 14 => 7, 21 => 4},
+        %{1 => 13, 2 => 21, 3 => nil},
         fn ctx ->
-          loaded(%{ctx | parent: ctx.child}, :first, [:parent, :children],
-            field: :value,
-            query: [sort: [value: :desc]]
-          )
-        end
+          ctx.parent
+          |> Ash.Query.load(:top_child)
+          |> Ash.read!(authorize?: false)
+          |> Map.new(&{&1.id, &1.top_child && &1.top_child.id})
+        end,
+        semantic_basis: "../documentation/topics/resources/relationships.md"
       ),
       new(
-        "path.to_one_to_many_list",
+        "load.has_many",
         :relationships,
-        %{11 => [2, 2, 7], 12 => [2, 2, 7], 13 => [2, 2, 7], 14 => [2, 2, 7], 21 => [4]},
-        fn ctx ->
-          loaded(%{ctx | parent: ctx.child}, :list, [:parent, :children],
-            field: :value,
-            query: [sort: [value: :asc]]
-          )
-        end
-      ),
-      new("path.multi_hop", :relationships, %{1 => 26, 2 => nil, 3 => nil}, fn ctx ->
-        loaded(ctx, :sum, [:children, :ratings], field: :score)
-      end),
-      new("path.many_to_many", :relationships, %{1 => 11, 2 => 3, 3 => nil}, fn ctx ->
-        loaded(ctx, :sum, :tags, field: :value)
-      end),
-      new("path.many_to_many_list", :relationships, %{1 => [3, 8], 2 => [3], 3 => []}, fn ctx ->
-        loaded(ctx, :list, :tags, field: :value, query: [sort: [value: :asc]])
-      end),
-      new("path.many_to_many_first", :relationships, %{1 => 8, 2 => 3, 3 => nil}, fn ctx ->
-        loaded(ctx, :first, :tags, field: :value, query: [sort: [value: :desc]])
-      end),
-      new(
-        "path.final_many_to_many_scalar",
-        :relationships,
-        %{1 => 11, 2 => nil, 3 => nil},
-        fn ctx ->
-          loaded(ctx, :sum, [:children, :tags], field: :value)
-        end
+        %{1 => [11, 12, 13, 14], 2 => [21], 3 => []},
+        fn ctx -> loaded_ids(ctx, :children, Ash.Query.sort(ctx.child, :id)) end,
+        semantic_basis: "../documentation/topics/resources/relationships.md"
       ),
       new(
-        "path.final_many_to_many_first",
+        "load.many_to_many",
         :relationships,
-        %{1 => 8, 2 => nil, 3 => nil},
-        fn ctx ->
-          loaded(ctx, :first, [:children, :tags], field: :value, query: [sort: [value: :desc]])
-        end
+        %{1 => [201, 202], 2 => [201], 3 => []},
+        fn ctx -> loaded_ids(ctx, :tags, Ash.Query.sort(ctx.adapter.resource(:tag), :id)) end,
+        semantic_basis: "../documentation/topics/resources/relationships.md"
       ),
       new(
-        "path.final_many_to_many_list",
+        "load.limit_per_parent",
         :relationships,
-        %{1 => [3, 8], 2 => [], 3 => []},
-        fn ctx ->
-          loaded(ctx, :list, [:children, :tags], field: :value, query: [sort: [value: :asc]])
-        end
+        %{1 => [13, 11], 2 => [21], 3 => []},
+        fn ctx -> loaded_ids(ctx, :children, children_by_value(ctx) |> Ash.Query.limit(2)) end,
+        @loads ++ [capabilities: [parent: :limit]]
       ),
       new(
-        "path.final_many_to_many_custom",
+        "load.offset_per_parent",
         :relationships,
-        %{1 => 11, 2 => nil, 3 => nil},
+        %{1 => [11, 12], 2 => [], 3 => []},
         fn ctx ->
-          loaded(ctx, :custom, [:children, :tags],
-            type: :integer,
-            implementation: {ctx.adapter.custom_aggregate(), field: :value}
-          )
-        end
+          query = children_by_value(ctx) |> Ash.Query.limit(2) |> Ash.Query.offset(1)
+          loaded_ids(ctx, :children, query)
+        end,
+        @loads ++ [capabilities: [parent: :limit, parent: :offset]]
       ),
-      new("path.intermediate_many_to_many", :relationships, %{1 => 4, 2 => 2, 3 => nil}, fn ctx ->
-        loaded(ctx, :sum, [:tags, :children], field: :value)
-      end),
-      new("path.repeated_many_to_many", :relationships, :unresolved, fn ctx ->
-        loaded(ctx, :count, [:tags, :parents])
-      end),
-      new("path.unrelated", :relationships, %{1 => 5, 2 => 5, 3 => 5}, fn ctx ->
-        loaded(ctx, :count, ctx.child)
-      end),
-      new("path.no_attributes", :relationships, %{1 => 5, 2 => 5, 3 => 5}, fn ctx ->
-        loaded(ctx, :count, :all_children)
-      end),
       new(
-        "path.no_attributes_control",
+        "load.many_to_many_limit_per_parent",
         :relationships,
-        %{1 => [11, 12, 13, 14, 21], 2 => [11, 12, 13, 14, 21], 3 => [11, 12, 13, 14, 21]},
+        %{1 => [202], 2 => [201], 3 => []},
         fn ctx ->
-          relationship_ids(ctx, :all_children)
-        end
+          query = ctx.adapter.resource(:tag) |> Ash.Query.sort(value: :desc) |> Ash.Query.limit(1)
+          loaded_ids(ctx, :tags, query)
+        end,
+        @loads ++ [capabilities: [parent: :limit]]
       ),
-      new("path.no_attributes_parent", :relationships, %{1 => 2, 2 => 1, 3 => 0}, fn ctx ->
-        loaded(ctx, :count, :matching_children)
-      end),
-      new("path.manual", :relationships, %{1 => 4, 2 => 1, 3 => 0}, fn ctx ->
-        loaded(ctx, :count, :manual_children)
-      end),
-      new("path.root_relationship", :relationships, 15, fn ctx ->
-        Ash.aggregate!(
-          ctx.parent,
-          [
-            {:result, :sum, path: [:children], field: :value}
-          ],
-          authorize?: false
-        ).result
-      end),
-      new("identity.composite_count", :identity, %{1 => 2, 2 => 1, 3 => 0}, fn ctx ->
-        loaded(ctx, :count, :links, uniq?: true)
-      end),
-      new("identity.keyless_distinct", :identity, :unresolved, fn ctx ->
-        loaded(ctx, :count, :events, uniq?: true)
-      end),
-      new("identity.keyless_count", :identity, %{1 => 2, 2 => 0, 3 => 0}, fn ctx ->
-        loaded(ctx, :count, :events)
-      end),
-      new("identity.root_composite_count", :identity, 3, fn ctx ->
-        root(%{ctx | child: ctx.adapter.resource(:link)}, :count, uniq?: true)
-      end),
-      new("identity.composite_fanout_count", :identity, %{1 => 2, 2 => 1, 3 => 0}, fn ctx ->
-        query = Ash.Query.filter(ctx.adapter.resource(:link), parent.children.value > 0)
-        loaded(ctx, :count, :links, query: query)
-      end),
-      new("identity.keyless_source", :identity, [3, 3], fn ctx ->
-        ctx.adapter.resource(:event)
-        |> Ash.Query.aggregate(:result, :sum, :parent, field: :threshold)
-        |> Ash.read!(authorize?: false)
-        |> Enum.map(& &1.aggregates.result)
-      end)
+      # The resource is compiled inside the operation, because Ash checks
+      # `:through_relationship` support when a resource is defined. The first
+      # element records whether that check warned.
+      new(
+        "load.through",
+        :relationships,
+        {false, %{1 => [101, 102, 103, 104], 2 => [], 3 => []}},
+        fn ctx -> through(ctx, :ratings, fn record -> Enum.map(record.ratings, & &1.id) end) end,
+        semantic_basis: "../documentation/topics/resources/relationships.md",
+        capabilities: [parent: :through_relationship]
+      ),
+      # The same relationship as an aggregate path, judged separately.
+      new(
+        "path.through_count",
+        :relationships,
+        {false, %{1 => 4, 2 => 0, 3 => 0}},
+        fn ctx -> through(ctx, :rating_count, & &1.rating_count) end,
+        semantic_basis: "../documentation/topics/resources/relationships.md",
+        capabilities: [parent: :through_relationship]
+      )
     ]
+  end
+
+  defp children_by_value(ctx), do: Ash.Query.sort(ctx.child, value: :desc_nils_last, id: :asc)
+
+  defp loaded_ids(ctx, relationship, query) do
+    ctx.parent
+    |> Ash.Query.sort(:id)
+    |> Ash.Query.load([{relationship, query}])
+    |> Ash.read!(authorize?: false)
+    |> Map.new(fn row -> {row.id, row |> Map.fetch!(relationship) |> Enum.map(& &1.id)} end)
+  end
+
+  defp through(ctx, load, project) do
+    {module, warned?} = through_resource(ctx.adapter)
+
+    loads =
+      module
+      |> Ash.Query.sort(:id)
+      |> Ash.Query.load(load)
+      |> Ash.read!(authorize?: false)
+      |> Map.new(&{&1.id, project.(&1)})
+
+    {warned?, loads}
+  end
+
+  # Compiled once per adapter and VM; the warning from the first compile is kept.
+  defp through_resource(adapter) do
+    module = Module.concat([adapter.resource(:parent), Through])
+    key = {__MODULE__, module}
+
+    case :persistent_term.get(key, nil) do
+      nil ->
+        # Capturing needs ExUnit's capture server, which mix tasks do not start.
+        {:ok, _} = Application.ensure_all_started(:ex_unit)
+
+        {_, output} =
+          ExUnit.CaptureIO.with_io(:stderr, fn ->
+            Code.compile_quoted(through_definition(module, adapter))
+          end)
+
+        warned? = output =~ "does not support `through` relationships"
+        :persistent_term.put(key, warned?)
+        {module, warned?}
+
+      warned? ->
+        {module, warned?}
+    end
+  end
+
+  defp through_definition(module, adapter) do
+    quote do
+      defmodule unquote(module) do
+        use Ash.Conformance.Resources.Base, adapter: unquote(adapter.id()), table: "ac_parents"
+
+        attributes do
+          attribute(:id, :integer, primary_key?: true, allow_nil?: false, public?: true)
+        end
+
+        relationships do
+          has_many(:children, unquote(adapter.resource(:child)),
+            destination_attribute: :parent_id
+          )
+
+          has_many(:ratings, unquote(adapter.resource(:rating)),
+            through: [:children, :ratings],
+            sort: [id: :asc]
+          )
+        end
+
+        aggregates do
+          count(:rating_count, :ratings)
+        end
+      end
+    end
   end
 end

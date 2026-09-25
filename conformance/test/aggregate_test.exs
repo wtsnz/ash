@@ -4,7 +4,7 @@
 
 defmodule Ash.Conformance.AggregateTest do
   use ExUnit.Case, async: false
-  alias Ash.Conformance.{Adapter, Catalog, Formatter, Runner}
+  alias Ash.Conformance.{Adapter, Catalog, Report.Formatter, Runner}
 
   for adapter <- Adapter.selected(), scenario <- Catalog.for_adapter(adapter) do
     @tag adapter: adapter.id(), scenario: scenario.id, area: scenario.area

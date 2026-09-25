@@ -48,7 +48,7 @@ defmodule Ash.Conformance.SurveyTest do
 
   test "the committed ETS survey report is current" do
     assert File.read!("surveys/features-ets.md") ==
-             Ash.Conformance.FeatureReport.markdown(
+             Ash.Conformance.Report.FeatureReport.markdown(
                Survey.run(Ash.Conformance.Ets),
                [Ash.Conformance.Ets],
                :unreviewed

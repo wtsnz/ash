@@ -11,7 +11,7 @@ sorting and pagination, through relationships, aggregates, writes and
 transactions, to multitenancy and authorization. For each data layer it shows
 whether the feature works, partly works, is not supported, is broken, awaits a
 semantic decision or is untested. Gap links say why, and who owns the fix. The
-catalog behind it is `lib/features.ex`; every scenario belongs to exactly one
+catalog behind it is `lib/contracts/features.ex`; every scenario belongs to exactly one
 feature.
 
 Data layers without reviewed expectations can still get a report.
@@ -181,13 +181,23 @@ Adapters own storage provisioning, fixture persistence, custom operations and
 instrumentation. Shared scenarios call public Ash read/load/aggregate/write APIs.
 They do not inspect Ecto queries, SQL or join strategies.
 
-- `Scenario`, `Catalog`, `Runner`, `Expectations`: small registry and strict contracts.
-- `Gaps` and `GAPS.md`: each gap's owner and kind (implementation, decision or limitation).
-- `scenarios/`: aggregate corpus and isolation/profile operations.
-- `Resources`, `IsolationResources`, `WriteResources`, fixtures: shared resource roles and literal data.
-- `Adapter`, `Database`, custom aggregate/manual implementations: SQL integrations.
-- `Capabilities`, `Inventory`, `Report`, `Formatter`: claims, coverage and observations.
-- `benchmark/`, `Benchmark`: independent larger fixtures, operations, oracles and timing.
+Module names follow paths under `lib/`:
+
+| Path | What lives there |
+| --- | --- |
+| `scenario.ex`, `runner.ex`, `catalog.ex`, `compare.ex` | Declaring scenarios, running them in three seed orders, strict comparison. |
+| `probe.ex`, `survey.ex` | Running scenarios without expectations: one case, or a whole adapter. |
+| `contracts/` | What is expected: the feature catalog, expectation records, gap owners, capability claims. |
+| `scenarios/` | One file per feature level: records, types, querying, relationships, writes, transactions, tenancy, authorization, consistency. `aggregates/` holds the aggregate scenarios by topic. |
+| `resources/` | Shared resource roles, as macros each adapter instantiates. |
+| `fixtures.ex`, `fixtures/` | Building a fixture in a seed order, and each fixture's literal rows. |
+| `adapter.ex`, `adapters/` | The adapter behaviour, and one file per adapter with its repo, custom aggregate, manual relationship and resource instances. |
+| `sql/` | Storage setup, migrations and query instrumentation shared by the SQL adapters. |
+| `report.ex`, `report/` | Results, the feature report, inventory, matrix and comparisons. |
+| `benchmark.ex`, `benchmark/` | Independent larger fixtures, workloads and timing. |
+
+Adapter modules keep short names such as `Ash.Conformance.Sqlite`, because
+their resource modules are named under them.
 
 See [AUTHORING.md](AUTHORING.md) for scenarios/adapters, [SEMANTICS.md](SEMANTICS.md)
 for normative sources and isolation answers, [BENCHMARKS.md](BENCHMARKS.md) for

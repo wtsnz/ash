@@ -18,7 +18,7 @@ defmodule Ash.Conformance.Survey do
   A rejection is recognised only from Ash's error classes and wording, so it
   can misclassify. Review each result before recording expectations.
   """
-  alias Ash.Conformance.{Catalog, FeatureReport, Report, Runner}
+  alias Ash.Conformance.{Catalog, Report, Report.FeatureReport, Runner}
 
   @rejection ~r/does not support|not supported|unsupported|cannot be done|Cannot set/i
 
@@ -36,7 +36,7 @@ defmodule Ash.Conformance.Survey do
         classification: classification,
         task: nil,
         execution: :matched,
-        expected: inspect(scenario.expected, limit: :infinity),
+        expected: Report.value(scenario.expected),
         actual: Report.outcome(outcome)
       }
     end

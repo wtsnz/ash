@@ -6,7 +6,7 @@ Read when updating dependencies or coordinating with adapter repositories.
 
 The starting corpus is `wtsnz/ash_sql`, branch `test/aggregate-conformance`,
 commit `0dfab5dbf4d1d5b978ba14d10b9afad60d698820`. Commits `4a4a7e9` to
-`4e328e2` on the same branch were ported later: gap owners (`lib/gaps.ex`),
+`4e328e2` on the same branch were ported later: gap owners (now `lib/contracts/gaps.ex`),
 23 scenarios for decimals, dates and times, aggregate-filtered bulk writes,
 to-one then to-many paths, calculation dependencies and nested `parent`
 references. At the time of porting those five commits existed only in the local
@@ -71,3 +71,21 @@ Future migration should first make both suites run the same pinned dependencies
 and compare by stable scenario IDs. Adapter repositories can then consume a
 versioned Ash suite revision. Do not delete the older project until its owners
 agree that the replacement covers their workflows.
+
+## Where the ported files went
+
+The source tree was reorganised by feature level after porting. Scenario IDs
+did not change, so results compare across the move.
+
+| AshSQL suite file | Here |
+| --- | --- |
+| `lib/scenarios/operations.ex` | `lib/scenarios/aggregates/kinds.ex`, `results.ex` and `usage.ex` |
+| `lib/scenarios/relationships.ex` | `lib/scenarios/aggregates/paths.ex` |
+| `lib/scenarios/filters.ex`, `bounds.ex`, `context.ex` | the same names under `lib/scenarios/aggregates/` |
+| `lib/scenarios/values.ex`, `writes.ex`, `helpers.ex` | `lib/scenarios/aggregates/types.ex`, `writes.ex` and `helpers.ex` |
+| `lib/expectations.ex`, `lib/gaps.ex` | `lib/contracts/` |
+| `lib/resources.ex`, `lib/resource.ex`, `lib/manual.ex` | `lib/resources/aggregate.ex`, `base.ex` and `manual.ex` |
+| `lib/fixtures.ex` | `lib/fixtures.ex` and `lib/fixtures/aggregate.ex` |
+| `lib/database.ex`, `lib/adapter.ex` | `lib/sql/`, `lib/adapter.ex` and `lib/adapters/` |
+| `lib/report.ex`, `lib/report/comparison.ex`, `lib/formatter.ex` | `lib/report.ex` and `lib/report/` |
+

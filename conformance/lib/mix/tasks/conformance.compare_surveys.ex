@@ -18,7 +18,7 @@ defmodule Mix.Tasks.Conformance.CompareSurveys do
   @shortdoc "Compare two surveys feature by feature"
   def run([base, current]) do
     Mix.Task.run("compile")
-    markdown = Ash.Conformance.SurveyComparison.markdown(read!(base), read!(current))
+    markdown = Ash.Conformance.Report.SurveyComparison.markdown(read!(base), read!(current))
     output = Path.join(Path.dirname(current), "compare-#{Path.basename(current, ".json")}.md")
     File.write!(output, markdown)
     Mix.shell().info(markdown)
