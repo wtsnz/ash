@@ -41,7 +41,14 @@ defmodule Ash.Conformance.MixProject do
       {:credo, "~> 1.7", only: [:dev, :test], runtime: false},
       {:dialyxir, "~> 1.4", only: [:dev, :test], runtime: false},
       adapter(:ash_sqlite, "CONFORMANCE_ASH_SQLITE_PATH", ash_sqlite_source()),
-      adapter(:ash_postgres, "CONFORMANCE_ASH_POSTGRES_PATH", ash_postgres_source())
+      adapter(:ash_postgres, "CONFORMANCE_ASH_POSTGRES_PATH", ash_postgres_source()),
+      # Ecosystem data layers, surveyed without reviewed expectations.
+      {:ash_csv, "~> 0.9.9"},
+      {:ash_clickhouse, "~> 0.7.3"},
+      adapter(:ash_mysql, "CONFORMANCE_ASH_MYSQL_PATH",
+        git: "https://github.com/ash-project/ash_mysql.git",
+        ref: "99684ca01850fb6c5e0606522411baf6387028aa"
+      )
     ]
   end
 

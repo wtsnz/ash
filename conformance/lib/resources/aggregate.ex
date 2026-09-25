@@ -19,7 +19,14 @@ defmodule Ash.Conformance.Resources.Aggregate do
     tenant_child = Module.concat(namespace, TenantChild)
     tenant_link = Module.concat(namespace, TenantLink)
     authorized_child = Module.concat(namespace, AuthorizedChild)
-    manual = Module.concat(namespace, Manual)
+    # Adapters with SQL-capable manual relationships define `<namespace>.Manual`;
+    # others get a manual relationship that loads in Elixir.
+    # `ensure_compiled` also sees modules from the current compilation.
+    manual =
+      case Code.ensure_compiled(Module.concat(namespace, Manual)) do
+        {:module, module} -> module
+        {:error, _} -> Ash.Conformance.Resources.PlainManual
+      end
 
     quote context: Elixir do
       defmodule unquote(parent) do

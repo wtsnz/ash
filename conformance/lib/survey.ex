@@ -13,6 +13,7 @@ defmodule Ash.Conformance.Survey do
   - `rejected`: an Ash error saying the feature is not supported;
   - `wrong`: a different value, or a value that changes with row order;
   - `crashed`: any other exception;
+  - `setup failed`: the fixture could not be stored, so the operation never ran;
   - `open question`: the scenario awaits a semantic decision.
 
   A rejection is recognised only from Ash's error classes and wording, so it
@@ -26,8 +27,16 @@ defmodule Ash.Conformance.Survey do
     adapter.setup!()
 
     for scenario <- Catalog.for_adapter(adapter), adapter.fixture?(scenario.fixture) do
-      outcome = Runner.observe_both_orders(scenario, adapter)
-      {classification, status} = classify(scenario, outcome)
+      {outcome, {classification, status}} =
+        try do
+          outcome = Runner.observe_both_orders(scenario, adapter)
+          {outcome, classify(scenario, outcome)}
+        rescue
+          # The operation's own errors are captured; this is fixture setup.
+          exception ->
+            {{:error, exception.__struct__, "Setup failed: " <> Exception.message(exception)},
+             {:setup_failed, :known_defect}}
+        end
 
       %{
         scenario: scenario.id,

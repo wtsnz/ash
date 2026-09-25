@@ -124,6 +124,48 @@ jobs:
         with:
           name: conformance-stacks
           path: conformance/results/
+  # Every registered data layer, surveyed side by side. The committed report
+  # must match what the data layers actually do.
+  ecosystem:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports: ['5432:5432']
+        options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
+    env:
+      MIX_ENV: test
+      CONFORMANCE_PG_DATABASE: ash_conformance_ecosystem_${{ github.run_id }}_${{ github.run_attempt }}
+    defaults:
+      run:
+        working-directory: conformance
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: erlef/setup-beam@54075bcc5e249e4758d363f27d099f55d843f124 # v1.24.1
+        with:
+          otp-version: '29.0.1'
+          elixir-version: '1.20.0'
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            conformance/deps
+            conformance/_build
+          key: conformance-ecosystem-${{ runner.os }}-29.0.1-1.20.0-${{ hashFiles('conformance/mix.lock', 'mix.exs') }}
+      - run: mix deps.get --check-locked
+      - run: mix conformance.ecosystem
+      - name: Verify the committed report
+        run: git diff --exit-code -- ECOSYSTEM.md surveys/
+      - name: Upload surveys
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: conformance-ecosystem
+          path: |
+            conformance/ECOSYSTEM.md
+            conformance/surveys/
   core-dispatch:
     runs-on: ubuntu-latest
     steps:

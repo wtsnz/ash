@@ -65,6 +65,13 @@ defmodule Ash.Conformance.Report.FeatureReport do
   end
 
   @doc "Whether an adapter's claims for a feature agree with its result."
+  # Nothing ran, or it awaits a decision, so there is nothing to compare; the
+  # adapter's resources may not even be defined.
+  def claim_check(feature, _adapter, summary)
+      when feature.claims == [] or
+             summary.status in [:untested, :not_applicable, :open_question],
+      do: nil
+
   def claim_check(feature, adapter, summary) do
     claims =
       Enum.map(feature.claims, fn {role, claim} -> Capabilities.probe(adapter, role, claim) end)
@@ -72,9 +79,6 @@ defmodule Ash.Conformance.Report.FeatureReport do
     advertised = Enum.count(claims, & &1.advertised)
 
     cond do
-      claims == [] or summary.status in [:untested, :not_applicable, :open_question] ->
-        nil
-
       advertised == length(claims) and summary.status in [:not_supported, :broken] ->
         {:advertised_but_fails, claims}
 
@@ -92,6 +96,55 @@ defmodule Ash.Conformance.Report.FeatureReport do
   end
 
   def markdown(rows, adapters, source) do
+    detail = if source == :unreviewed, do: :failing, else: :gaps
+    {sections, summaries} = feature_tables(rows, adapters, detail: detail)
+
+    """
+    <!-- SPDX-FileCopyrightText: 2026 ash contributors <https://github.com/ash-project/ash/graphs/contributors> -->
+    <!-- SPDX-License-Identifier: MIT -->
+    # What each data layer supports
+
+    #{intro(source)}
+
+    Feature catalog version #{Features.version()}: #{length(Features.all())} features and #{Features.all() |> Enum.flat_map(& &1.scenarios) |> length()} scenarios.
+
+    #{legend()}
+
+    Counts are passing scenarios out of those run. Gap links explain everything
+    that is not fully working, and who owns the fix.
+
+    #{sections}
+    #{claims_section(adapters, summaries)}
+    """
+  end
+
+  @doc "The table explaining each feature status."
+  def legend do
+    """
+    | Status | Meaning |
+    | --- | --- |
+    | #{label(:works)} | Every scenario returns the answer Ash defines. |
+    | #{label(:partial)} | Some scenarios work; others are rejected or wrong. |
+    | #{label(:not_supported)} | Every scenario is rejected with a documented error. |
+    | #{label(:broken)} | Nothing works, and at least one scenario gives a wrong answer or crashes. |
+    | #{label(:open_question)} | The remaining scenarios need a semantic decision in Ash. |
+    | #{label(:untested)} | Listed so the specification is complete; no scenario verifies it yet. |
+    | #{label(:not_applicable)} | The data layer does not provide this storage profile. |
+    | #{label(:changed)} | A result no longer matches its recorded contract. |
+    """
+    |> String.trim_trailing()
+  end
+
+  @doc """
+  One table per feature level, with a column per adapter.
+
+  Options: `detail:` adds a last column of `:gaps` (reviewed) or `:failing`
+  scenarios (unreviewed), or `:none`; `unavailable:` maps adapter IDs that
+  could not run to a reason, shown as not run.
+  """
+  def feature_tables(rows, adapters, opts \\ []) do
+    detail = Keyword.get(opts, :detail, :gaps)
+    unavailable = Keyword.get(opts, :unavailable, %{})
     ids = Enum.map(adapters, & &1.id())
     rows_by_adapter = Enum.group_by(rows, & &1.adapter)
 
@@ -107,60 +160,55 @@ defmodule Ash.Conformance.Report.FeatureReport do
 
         rows =
           Enum.map_join(features, "\n", fn feature ->
-            cells = Enum.map_join(ids, " | ", &cell(Map.fetch!(summaries, {feature.id, &1})))
+            cells =
+              Enum.map_join(ids, " | ", fn id ->
+                if Map.has_key?(unavailable, id),
+                  do: "➖ Not run",
+                  else: cell(Map.fetch!(summaries, {feature.id, id}))
+              end)
 
-            gaps =
-              if source == :unreviewed do
-                ids
-                |> Enum.flat_map(&Map.fetch!(summaries, {feature.id, &1}).failing)
-                |> Enum.map_join(", ", fn {scenario, classification} ->
-                  "`#{scenario}` #{String.replace(to_string(classification), "_", " ")}"
-                end)
-              else
-                ids
-                |> Enum.flat_map(&Map.fetch!(summaries, {feature.id, &1}).gaps)
-                |> Enum.uniq()
-                |> Enum.map_join(", ", &"[#{&1}](GAPS.md##{&1})")
-              end
-
-            "| #{feature.title} | #{cells} | #{gaps} |"
+            case detail_cell(detail, ids, feature, summaries) do
+              nil -> "| #{feature.title} | #{cells} |"
+              text -> "| #{feature.title} | #{cells} | #{text} |"
+            end
           end)
+
+        detail_header =
+          case detail do
+            :gaps -> " Gaps |"
+            :failing -> " Not working |"
+            :none -> ""
+          end
+
+        detail_rule = if detail == :none, do: "", else: " --- |"
 
         """
         ## #{level}. #{name}
 
-        | Feature | #{Enum.join(ids, " | ")} | #{if source == :unreviewed, do: "Not working", else: "Gaps"} |
-        | --- | #{Enum.map_join(ids, " | ", fn _ -> "---" end)} | --- |
+        | Feature | #{Enum.join(ids, " | ")} |#{detail_header}
+        | --- | #{Enum.map_join(ids, " | ", fn _ -> "---" end)} |#{detail_rule}
         #{rows}
         """
       end)
 
-    """
-    <!-- SPDX-FileCopyrightText: 2026 ash contributors <https://github.com/ash-project/ash/graphs/contributors> -->
-    <!-- SPDX-License-Identifier: MIT -->
-    # What each data layer supports
+    {sections, summaries}
+  end
 
-    #{intro(source)}
+  defp detail_cell(:none, _ids, _feature, _summaries), do: nil
 
-    Feature catalog version #{Features.version()}: #{length(Features.all())} features and #{Features.all() |> Enum.flat_map(& &1.scenarios) |> length()} scenarios.
+  defp detail_cell(:failing, ids, feature, summaries) do
+    ids
+    |> Enum.flat_map(&Map.fetch!(summaries, {feature.id, &1}).failing)
+    |> Enum.map_join(", ", fn {scenario, classification} ->
+      "`#{scenario}` #{String.replace(to_string(classification), "_", " ")}"
+    end)
+  end
 
-    | Status | Meaning |
-    | --- | --- |
-    | #{label(:works)} | Every scenario returns the answer Ash defines. |
-    | #{label(:partial)} | Some scenarios work; others are rejected or wrong. |
-    | #{label(:not_supported)} | Every scenario is rejected with a documented error. |
-    | #{label(:broken)} | Nothing works, and at least one scenario gives a wrong answer or crashes. |
-    | #{label(:open_question)} | The remaining scenarios need a semantic decision in Ash. |
-    | #{label(:untested)} | Listed so the specification is complete; no scenario verifies it yet. |
-    | #{label(:not_applicable)} | The data layer does not provide this storage profile. |
-    | #{label(:changed)} | A result no longer matches its recorded contract. |
-
-    Counts are passing scenarios out of those run. Gap links explain everything
-    that is not fully working, and who owns the fix.
-
-    #{sections}
-    #{claims_section(adapters, summaries)}
-    """
+  defp detail_cell(:gaps, ids, feature, summaries) do
+    ids
+    |> Enum.flat_map(&Map.fetch!(summaries, {feature.id, &1}).gaps)
+    |> Enum.uniq()
+    |> Enum.map_join(", ", &"[#{&1}](GAPS.md##{&1})")
   end
 
   defp intro(:declared),
@@ -179,7 +227,8 @@ defmodule Ash.Conformance.Report.FeatureReport do
 
   defp cell(summary), do: "#{label(summary.status)} #{summary.passing}/#{summary.total}"
 
-  defp claims_section(adapters, summaries) do
+  @doc "Features whose capability claims disagree with their results."
+  def claims_section(adapters, summaries) do
     mismatches =
       for feature <- Features.all(),
           adapter <- adapters,

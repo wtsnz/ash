@@ -4,14 +4,18 @@
 
 defmodule Ash.Conformance.Adapter do
   @moduledoc """
-  Database and resource configuration for the shared aggregate scenarios.
+  How a data layer joins the suite: its resources, storage lifecycle and records.
 
   Scenarios receive an adapter and ask it for a resource by role. They never
-  branch on the adapter ID. Other data layers can implement this contract and
-  provide the same fixture domain without depending on Ecto in the runner.
+  branch on the adapter ID. `use Ash.Conformance.Adapter` supplies defaults for
+  everything except storage and resource configuration; see `AUTHORING.md`.
   """
 
   @callback id() :: atom()
+  @doc "Display name for reports, such as `AshSqlite`."
+  @callback label() :: String.t()
+  @doc "The OTP application providing the data layer, for its version in reports."
+  @callback package() :: atom()
   @callback resource(atom()) :: module()
   @callback custom_aggregate() :: module()
   @callback setup!() :: term()
@@ -49,8 +53,26 @@ defmodule Ash.Conformance.Adapter do
   def unreviewed,
     do: [Ash.Conformance.Ets] ++ Application.get_env(:ash_conformance, :unreviewed_adapters, [])
 
+  @doc "Every registered adapter, reviewed first, as the ecosystem report lists them."
+  def every, do: all() ++ unreviewed()
+
+  def reviewed?(adapter), do: adapter in all()
+
+  @doc """
+  The shared resource roles, and for each shared table the role that has every
+  column. Adapters use these to provision and clear storage.
+  """
+  def roles,
+    do: ~w(parent child rating tag link child_tag event reading tenant_child tenant_link
+          authorized_child ledger record tenant_parent tenant_item secure_parent secure_item
+          context_parent context_item)a
+
+  def table_roles,
+    do: ~w(parent child rating tag link child_tag event reading ledger record tenant_parent
+          tenant_item)a
+
   def find!(name) do
-    Enum.find(all() ++ unreviewed(), &(to_string(&1.id()) == name)) ||
+    Enum.find(every(), &(to_string(&1.id()) == name)) ||
       raise ArgumentError, "Unknown adapter: #{inspect(name)}"
   end
 
@@ -63,5 +85,50 @@ defmodule Ash.Conformance.Adapter do
         raise ArgumentError, "Unknown adapter: #{inspect(name)}"
     end)
     |> Enum.uniq()
+  end
+
+  @doc """
+  Defaults for a new adapter. Only storage and resource configuration are left:
+
+      defmodule MyDataLayer.Conformance do
+        use Ash.Conformance.Adapter, id: :my_data_layer, label: "MyDataLayer", package: :my_data_layer
+
+        def resource_config(table), do: {MyDataLayer.DataLayer, quote(do: my_dl(do: table(unquote(table))))}
+        def setup!, do: Ash.Conformance.Resources.compile!(__MODULE__)
+      end
+  """
+  defmacro __using__(opts) do
+    id = Keyword.fetch!(opts, :id)
+    label = Keyword.fetch!(opts, :label)
+    package = Keyword.fetch!(opts, :package)
+
+    quote do
+      @behaviour Ash.Conformance.Adapter
+
+      def id, do: unquote(id)
+      def label, do: unquote(label)
+      def package, do: unquote(package)
+      def profiles, do: [:shared]
+      def resource(role), do: Module.concat(__MODULE__, Macro.camelize(to_string(role)))
+      def persist!(role, rows, opts), do: Ash.Seed.seed!(resource(role), rows, opts)
+      def benchmark_persist!(role, rows), do: persist!(role, rows, [])
+      def instrumentation, do: nil
+      def expectations, do: %{}
+      def fixture?(fixture), do: fixture != :context_tenancy
+      def custom_aggregate, do: Ash.Conformance.Resources.NoCustomAggregate
+      def checkout!, do: :ok
+      def checkin!, do: :ok
+
+      defoverridable profiles: 0,
+                     resource: 1,
+                     persist!: 3,
+                     benchmark_persist!: 2,
+                     instrumentation: 0,
+                     expectations: 0,
+                     fixture?: 1,
+                     custom_aggregate: 0,
+                     checkout!: 0,
+                     checkin!: 0
+    end
   end
 end

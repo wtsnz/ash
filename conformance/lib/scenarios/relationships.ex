@@ -155,7 +155,9 @@ defmodule Ash.Conformance.Scenarios.Relationships do
   defp through_definition(module, adapter) do
     quote do
       defmodule unquote(module) do
-        use Ash.Conformance.Resources.Base, adapter: unquote(adapter.id()), table: "ac_parents"
+        use Ash.Conformance.Resources.Base,
+          adapter: unquote(Ash.Conformance.Resources.Base.adapter_ref(adapter)),
+          table: "ac_parents"
 
         attributes do
           attribute(:id, :integer, primary_key?: true, allow_nil?: false, public?: true)

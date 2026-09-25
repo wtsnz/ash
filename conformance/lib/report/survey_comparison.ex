@@ -48,7 +48,10 @@ defmodule Ash.Conformance.Report.SurveyComparison do
         adapter: String.to_atom(row["adapter"]),
         status: known!(row["status"], ~w(supported unsupported known_defect unresolved)a),
         classification:
-          known!(row["classification"], ~w(works rejected wrong crashed open_question)a),
+          known!(
+            row["classification"],
+            ~w(works rejected wrong crashed setup_failed open_question)a
+          ),
         task: nil,
         execution: :matched
       }

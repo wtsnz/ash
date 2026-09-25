@@ -14,6 +14,11 @@ semantic decision or is untested. Gap links say why, and who owns the fix. The
 catalog behind it is `lib/contracts/features.ex`; every scenario belongs to exactly one
 feature.
 
+**[ECOSYSTEM.md](ECOSYSTEM.md) compares every registered data layer**, with a
+column each. `mix conformance.ecosystem` surveys them all and regenerates it;
+adding a data layer is one adapter file and one list entry (see
+[AUTHORING.md](AUTHORING.md)).
+
 Data layers without reviewed expectations can still get a report.
 `mix conformance.survey ADAPTER` runs every scenario the integration can host
 and classifies each result against the intended answer: works, rejected with a

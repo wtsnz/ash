@@ -6,6 +6,8 @@ defmodule Ash.Conformance.Postgres do
   @moduledoc false
   @behaviour Ash.Conformance.Adapter
   def id, do: :postgres
+  def label, do: "AshPostgres"
+  def package, do: :ash_postgres
   def expectations, do: Ash.Conformance.Contracts.Expectations.builtin(:postgres)
   def fixture?(_fixture), do: true
   def profiles, do: [:shared, :context_tenancy]

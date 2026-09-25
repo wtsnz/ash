@@ -6,10 +6,9 @@ defmodule Ash.Conformance.Resources.Base do
   @moduledoc false
 
   @doc """
-  Identity options for an adapter. ETS cannot enforce uniqueness itself, so
-  Ash checks identities first; other adapters may ask for the same.
+  Identity options for an adapter, from its `identity_options/0` if defined,
+  for example `[pre_check?: true]` where storage cannot enforce uniqueness.
   """
-  def identity_options(:ets), do: [pre_check?: true]
   def identity_options(adapter) when adapter in [:sqlite, :postgres], do: []
 
   def identity_options(module) do
@@ -18,6 +17,14 @@ defmodule Ash.Conformance.Resources.Base do
     if function_exported?(module, :identity_options, 0),
       do: module.identity_options(),
       else: []
+  end
+
+  @doc """
+  How resources refer to an adapter: SQLite and Postgres by atom, every other
+  adapter by its module, which supplies `resource_config/1`.
+  """
+  def adapter_ref(adapter) do
+    if function_exported?(adapter, :resource_config, 1), do: adapter, else: adapter.id()
   end
 
   defmacro __using__(opts) do
@@ -45,19 +52,8 @@ defmodule Ash.Conformance.Resources.Base do
              end
            end}
 
-        # Private tables belong to the calling process, which isolates each case.
-        # Roles that share a SQL table share an ETS table, as views do in SQL.
-        :ets ->
-          {Ash.DataLayer.Ets,
-           quote do
-             ets do
-               private?(true)
-               table(unquote(String.to_atom(table)))
-             end
-           end}
-
-        # An adapter from another repository supplies its own data layer and
-        # configuration block for each shared table.
+        # Any other adapter supplies its data layer and configuration block
+        # for each shared table.
         module ->
           module.resource_config(table)
       end

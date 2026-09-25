@@ -59,22 +59,63 @@ limitation: something unsupported by design, where the documented rejection is
 the intended result. Tests reject
 missing expectations, duplicate IDs, unexpected passes and changed signatures.
 
-## Add an adapter
+## Add a data layer
 
-Implement `Ash.Conformance.Adapter`. An adapter in this repository is added to
-`Adapter.all/0`; one in another repository is listed in config instead, so no
-shared file changes:
+A new data layer takes one file and one list entry. `lib/adapters/ets.ex` is the
+smallest complete example.
 
-```elixir
-# A reviewed adapter, with its own expectation records:
-config :ash_conformance, adapters: [MyDataLayer.Conformance]
-# Or one that only produces unreviewed surveys:
-config :ash_conformance, unreviewed_adapters: [MyDataLayer.Conformance]
-```
+1. **Depend on it.** Add the data layer to `mix.exs`, pinned to a release or a
+   Git commit.
+2. **Write `lib/adapters/<name>.ex`.**
+
+   ```elixir
+   defmodule Ash.Conformance.MyDataLayer do
+     use Ash.Conformance.Adapter, id: :my_dl, label: "AshMyDataLayer", package: :ash_my_data_layer
+
+     # The data layer and its configuration block for each shared table.
+     def resource_config(table),
+       do: {AshMyDataLayer.DataLayer, quote(do: my_dl(do: table(unquote(table))))}
+
+     # Create empty storage, then define the shared resources.
+     def setup! do
+       # ...start a repo, create tables...
+       Ash.Conformance.Resources.compile!(__MODULE__)
+     end
+
+     # Leave each case's storage empty for the next one.
+     def checkin!, do: :ok
+   end
+   ```
+
+   `use Ash.Conformance.Adapter` supplies every other callback. Override what
+   differs: `checkout!/0` to isolate a case, `identity_options/0` when storage
+   cannot enforce uniqueness, `custom_aggregate/0`, or define
+   `Ash.Conformance.MyDataLayer.Manual` for a manual relationship with a join
+   form. `Adapter.roles/0` and `Adapter.table_roles/0` list the resources and
+   tables to provision and clear.
+3. **Register it** in `Adapter.unreviewed/0`, or from another repository:
+
+   ```elixir
+   config :ash_conformance, unreviewed_adapters: [MyDataLayer.Conformance]
+   ```
+4. **Survey it.** `MIX_ENV=test mix conformance.ecosystem my_dl` adds its column
+   to `ECOSYSTEM.md` and writes `surveys/features-my_dl.md` with every failing
+   scenario. `Resources.compile!/1` defines the resources at setup, so what
+   Ash rejects at definition time appears as definition warnings instead of
+   breaking the build.
+5. **Review it, when you want strict contracts.** Record an expectation for
+   every scenario (supported, unsupported with the exact rejection, known
+   defect with the exact wrong answer, or unresolved), return them from
+   `expectations/0`, and move the adapter to `Adapter.all/0` or
+   `config :ash_conformance, adapters: [...]`. It then gets a column in
+   `FEATURES.md` and runs in `mix test`.
+
+## Adapter callbacks
 
 | Callback | Responsibility |
 | --- | --- |
-| `id/0`, `resource/1` | Stable adapter ID and resources for shared roles. |
+| `id/0`, `label/0`, `package/0` | Stable ID, display name, and the application whose version reports show. |
+| `resource/1` | The resource module for a shared role; defaults to one named under the adapter. |
 | `profiles/0` | Supported storage profiles. The shared profile is separate from context tenancy. |
 | `setup!/0` | Create isolated storage and provision the shared schema/data model. |
 | `checkout!/0`, `checkin!/0` | Isolate each case and clean up its data; these need not be SQL transactions. |
@@ -84,25 +125,8 @@ config :ash_conformance, unreviewed_adapters: [MyDataLayer.Conformance]
 | `instrumentation/0` | Optional module for untimed `measure/2` and `metadata/1`, or `nil`. |
 | `fixture?/1` | Whether the integration provides the resources for a fixture. |
 | `expectations/0` | Expectation records by scenario ID; `%{}` for a survey-only adapter. |
-| `resource_config/1` (optional) | `{data_layer, config_block}` for a shared table, so the shared resource roles work unchanged. |
+| `resource_config/1` | `{data_layer, config_block}` for a shared table; SQLite and Postgres use built-in blocks. |
 | `identity_options/0` (optional) | Options for every shared identity, e.g. `[pre_check?: true]` when uniqueness is not enforced by storage. |
-
-To reuse the shared roles, implement `resource_config/1` and instantiate the
-resource macros with your adapter module, as `lib/adapters/ets.ex` does with
-`:ets`:
-
-```elixir
-defmodule MyDataLayer.Conformance.Resources do
-  use Ash.Conformance.Resources.Aggregate, namespace: MyDataLayer.Conformance, adapter: MyDataLayer.Conformance
-  use Ash.Conformance.Resources.Records, namespace: MyDataLayer.Conformance, adapter: MyDataLayer.Conformance
-  use Ash.Conformance.Resources.Isolation, namespace: MyDataLayer.Conformance, adapter: MyDataLayer.Conformance
-  use Ash.Conformance.Resources.Writes, namespace: MyDataLayer.Conformance, adapter: MyDataLayer.Conformance
-end
-```
-
-Start with `mix conformance.survey`, review what it reports, then record
-expectations: supported, unsupported with the exact rejection, known defect with
-the exact wrong answer, or unresolved.
 
 The SQL adapters implement these with repositories and migrations. The runner,
 shared scenarios and benchmark harness never require a connection or an Ecto

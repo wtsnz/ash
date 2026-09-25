@@ -6,6 +6,8 @@ defmodule Ash.Conformance.Sqlite do
   @moduledoc false
   @behaviour Ash.Conformance.Adapter
   def id, do: :sqlite
+  def label, do: "AshSqlite"
+  def package, do: :ash_sqlite
   def expectations, do: Ash.Conformance.Contracts.Expectations.builtin(:sqlite)
   def fixture?(_fixture), do: true
   def profiles, do: [:shared]
