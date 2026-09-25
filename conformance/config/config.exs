@@ -12,7 +12,10 @@ config :ash_conformance, Ash.Conformance.SqliteRepo,
   database: Path.expand("../tmp/data_layer.sqlite3", __DIR__),
   pool: Ecto.Adapters.SQL.Sandbox,
   pool_size: 2,
-  migration_lock: false
+  migration_lock: false,
+  # Connections opening while the first creates the file wait instead of
+  # failing with "database is locked".
+  busy_timeout: 5_000
 
 config :ash_conformance, Ash.Conformance.PostgresRepo,
   hostname: System.get_env("PGHOST", "localhost"),

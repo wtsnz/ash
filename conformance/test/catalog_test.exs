@@ -99,6 +99,8 @@ defmodule Ash.Conformance.CatalogTest do
   end
 
   test "every scenario links to its declaration, including generated cases" do
+    matrix = Report.matrix()
+
     for scenario <- Catalog.all() do
       assert String.starts_with?(scenario.source.file, "lib/scenarios/")
 
@@ -110,7 +112,7 @@ defmodule Ash.Conformance.CatalogTest do
 
       assert line =~ "new(", "#{scenario.id} source link must point to its declaration"
 
-      assert Report.matrix() =~
+      assert matrix =~
                "[`#{scenario.id}`](#{scenario.source.file}#L#{scenario.source.line})"
     end
   end
@@ -131,11 +133,9 @@ defmodule Ash.Conformance.CatalogTest do
 
     test "every claim resolves on every adapter that runs the feature" do
       for adapter <- Adapter.all(),
+          ids = MapSet.new(Catalog.for_adapter(adapter), & &1.id),
           feature <- Features.all(),
-          Enum.any?(
-            feature.scenarios,
-            &(&1 in Enum.map(Catalog.for_adapter(adapter), fn s -> s.id end))
-          ),
+          Enum.any?(feature.scenarios, &MapSet.member?(ids, &1)),
           {role, claim} <- feature.claims do
         assert is_boolean(Capabilities.probe(adapter, role, claim).advertised)
       end
