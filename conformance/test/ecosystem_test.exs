@@ -9,18 +9,21 @@ defmodule Ash.Conformance.EcosystemTest do
   defmodule Minimal do
     @moduledoc false
     use Ash.Conformance.Adapter, id: :minimal, label: "Minimal", package: :ash
+    def resource_config(_table), do: raise("not used")
     def setup!, do: :ok
   end
 
   defmodule Offline do
     @moduledoc false
     use Ash.Conformance.Adapter, id: :offline, label: "Offline", package: :ash
+    def resource_config(_table), do: raise("not used")
     def setup!, do: raise("connection refused\nmore detail")
   end
 
   defmodule NoStorage do
     @moduledoc false
     use Ash.Conformance.Adapter, id: :no_storage, label: "NoStorage", package: :ash
+    def resource_config(_table), do: raise("not used")
     def setup!, do: :ok
     def fixture?(fixture), do: fixture == :empty
     def checkout!, do: raise("no storage")
@@ -66,10 +69,47 @@ defmodule Ash.Conformance.EcosystemTest do
     assert rows != []
     assert Enum.all?(rows, &(&1.classification == :setup_failed))
     assert Enum.all?(rows, &String.contains?(&1.actual, "Setup failed: no storage"))
+    assert Enum.all?(rows, &(&1.status == :unknown))
 
     markdown =
       Ecosystem.markdown([%{adapter: NoStorage, rows: rows, warnings: [], unavailable: nil}])
 
-    assert markdown =~ "| #{length(rows)} | no storage |"
+    assert markdown =~ "| #{length(rows)} | — | no storage |"
+    refute markdown =~ "❌ Broken 0/"
+    assert markdown =~ ~r/❔ Unknown \d+ not run/
+  end
+
+  defmodule RejectsFlags do
+    @moduledoc false
+    def persist!(:child, [%{visible: true}], _opts), do: raise("stored value could not be cast")
+    def persist!(_role, _rows, _opts), do: :ok
+  end
+
+  test "seeding names the role, row and reason of a row that cannot be stored" do
+    error =
+      assert_raise Ash.Conformance.Fixtures.SetupError, fn ->
+        Ash.Conformance.Fixtures.seed!(RejectsFlags, :child, [
+          %{id: 11, visible: false},
+          %{id: 12, visible: true}
+        ])
+      end
+
+    assert {error.role, error.row} == {:child, 12}
+
+    assert Exception.message(error) ==
+             "Could not store child row 12: stored value could not be cast"
+  end
+
+  test "scenarios that never ran make a feature unknown or incomplete, never broken" do
+    feature = %{scenarios: ["a", "b"]}
+    alias Ash.Conformance.Contracts.Features
+
+    assert Features.status(feature, [:unknown, :unknown]) == :unknown
+    assert Features.status(feature, [:supported, :unknown]) == :incomplete
+    assert Features.status(feature, [:known_defect, :unknown]) == :broken
+    assert Features.status(feature, [:supported, :supported]) == :works
+
+    summary = %{status: :incomplete, passing: 1, total: 1, unknown: 1}
+    assert Ash.Conformance.Report.FeatureReport.cell(summary) == "🔸 Incomplete 1/1 · 1 not run"
   end
 end

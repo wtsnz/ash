@@ -8,64 +8,67 @@ Feature catalog version 1: 80 features and 302 scenarios.
 
 | Status | Meaning |
 | --- | --- |
-| ✅ Works | Every scenario returns the answer Ash defines. |
+| ✅ Works | Every scenario ran and returns the answer Ash defines. |
+| 🔸 Incomplete | Everything that ran works, but some scenarios could not run. |
 | 🟡 Partial | Some scenarios work; others are rejected or wrong. |
-| ⛔ Not supported | Every scenario is rejected with a documented error. |
-| ❌ Broken | Nothing works, and at least one scenario gives a wrong answer or crashes. |
+| ⛔ Not supported | Every scenario that ran is rejected with a documented error. |
+| ❌ Broken | Nothing that ran works, and at least one scenario gives a wrong answer or crashes. |
 | ❓ Open question | The remaining scenarios need a semantic decision in Ash. |
+| ❔ Unknown | No scenario could run, usually because the data layer could not store its fixture. Never means not supported. |
 | ⚪ Untested | Listed so the specification is complete; no scenario verifies it yet. |
 | ➖ Not applicable | The data layer does not provide this storage profile. |
 | ⚠️ Changed | A result no longer matches its recorded contract. |
 
-Counts are passing scenarios out of those run. Gap links explain everything
-that is not fully working, and who owns the fix.
+Counts are passing scenarios out of those that ran, then how many could
+not run. Gap links explain everything that is not fully working, and who
+owns the fix.
 
 ## 1. Records
 
 | Feature | clickhouse | Not working |
 | --- | --- | --- |
-| Read records | ❌ Broken 0/1 | `record.read_all` setup failed |
-| Get one record by primary key or identity | ❌ Broken 0/2 | `record.get_identity` setup failed, `record.get_primary_key` setup failed |
-| Select only some attributes | ❌ Broken 0/2 | `read.selection_expression` crashed, `record.select` setup failed |
-| Create a record | ❌ Broken 0/1 | `record.create` setup failed |
-| Update a record, including to nil | ❌ Broken 0/2 | `record.update` setup failed, `record.update_to_nil` setup failed |
-| Destroy a record | ❌ Broken 0/1 | `record.destroy` setup failed |
-| Update a record atomically from its current value | ❌ Broken 0/1 | `record.atomic_update` setup failed |
-| Not found, invalid, missing and duplicate values are errors | ❌ Broken 0/4 | `record.identity_conflict` setup failed, `record.invalid_value` setup failed, `record.not_found` setup failed, `record.required` setup failed |
+| Read records | ❔ Unknown 1 not run | `record.read_all` setup failed |
+| Get one record by primary key or identity | ❔ Unknown 2 not run | `record.get_identity` setup failed, `record.get_primary_key` setup failed |
+| Select only some attributes | ❌ Broken 0/1 · 1 not run | `read.selection_expression` crashed, `record.select` setup failed |
+| Create a record | ❔ Unknown 1 not run | `record.create` setup failed |
+| Update a record, including to nil | ❔ Unknown 2 not run | `record.update` setup failed, `record.update_to_nil` setup failed |
+| Destroy a record | ❔ Unknown 1 not run | `record.destroy` setup failed |
+| Update a record atomically from its current value | ❔ Unknown 1 not run | `record.atomic_update` setup failed |
+| Not found, invalid, missing and duplicate values are errors | ❔ Unknown 4 not run | `record.identity_conflict` setup failed, `record.invalid_value` setup failed, `record.not_found` setup failed, `record.required` setup failed |
 
 ## 2. Types
 
 | Feature | clickhouse | Not working |
 | --- | --- | --- |
-| Strings, integers, booleans, atoms and nil round-trip | ❌ Broken 0/3 | `record.types_nil` setup failed, `record.types_scalar` setup failed, `record.types_strings` setup failed |
-| Large integers, floats and decimals round-trip | ❌ Broken 0/2 | `record.types_numeric` setup failed, `values.decimal_read_control` wrong |
-| Dates, microsecond datetimes and times round-trip | ❌ Broken 0/1 | `record.types_temporal` setup failed |
-| UUIDs round-trip | ❌ Broken 0/1 | `record.types_uuid` setup failed |
-| Arrays round-trip, keeping order and duplicates | ❌ Broken 0/1 | `record.types_array` setup failed |
-| Maps round-trip, including nested values | ❌ Broken 0/1 | `record.types_map` setup failed |
-| Embedded resources round-trip | ❌ Broken 0/1 | `record.types_embedded` setup failed |
+| Strings, integers, booleans, atoms and nil round-trip | ❔ Unknown 3 not run | `record.types_nil` setup failed, `record.types_scalar` setup failed, `record.types_strings` setup failed |
+| Large integers, floats and decimals round-trip | ❌ Broken 0/1 · 1 not run | `record.types_numeric` setup failed, `values.decimal_read_control` wrong |
+| Dates, microsecond datetimes and times round-trip | ❔ Unknown 1 not run | `record.types_temporal` setup failed |
+| UUIDs round-trip | ❔ Unknown 1 not run | `record.types_uuid` setup failed |
+| Arrays round-trip, keeping order and duplicates | ❔ Unknown 1 not run | `record.types_array` setup failed |
+| Maps round-trip, including nested values | ❔ Unknown 1 not run | `record.types_map` setup failed |
+| Embedded resources round-trip | ❔ Unknown 1 not run | `record.types_embedded` setup failed |
 
 ## 3. Querying
 
 | Feature | clickhouse | Not working |
 | --- | --- | --- |
-| Filter with comparisons on numbers, decimals and dates | ❌ Broken 0/6 | `record.filter_date` setup failed, `record.filter_datetime_precision` setup failed, `record.filter_decimal` setup failed, `record.filter_equal` setup failed, `record.filter_not_equal` setup failed, `record.filter_range` setup failed |
-| Nil behaves like SQL NULL in filters | ❌ Broken 0/5 | `record.filter_in_with_nil` setup failed, `record.filter_is_nil` setup failed, `record.filter_not` setup failed, `record.filter_not_nil` setup failed, `record.filter_true_or_nil` setup failed |
-| Filter booleans and atoms, including atoms as strings | ❌ Broken 0/3 | `record.filter_atom` setup failed, `record.filter_atom_as_string` setup failed, `record.filter_boolean` setup failed |
-| Filter strings: contains, case, unicode and empty | ❌ Broken 0/4 | `record.filter_case_insensitive` setup failed, `record.filter_contains` setup failed, `record.filter_empty_string` setup failed, `record.filter_unicode` setup failed |
-| Filter inside arrays, maps and embedded resources | ❌ Broken 0/3 | `record.filter_array_member` setup failed, `record.filter_embedded` setup failed, `record.filter_map_key` setup failed |
-| Filter by a calculation | ❌ Broken 0/1 | `record.filter_calculation` setup failed |
-| Sort by one or more fields, with explicit nil order | ❌ Broken 0/6 | `record.sort_asc_nils_first` setup failed, `record.sort_date` setup failed, `record.sort_decimal` setup failed, `record.sort_desc_nils_last` setup failed, `record.sort_string` setup failed, `record.sort_tie_break` setup failed |
-| Sort by a calculation | ❌ Broken 0/1 | `record.sort_calculation` setup failed |
-| Limit and offset a query | ❌ Broken 0/1 | `record.limit_offset` setup failed |
-| Count and check existence | ❌ Broken 0/1 | `record.count` setup failed |
-| Stream records in batches | ❌ Broken 0/1 | `record.stream` setup failed |
+| Filter with comparisons on numbers, decimals and dates | ❔ Unknown 6 not run | `record.filter_date` setup failed, `record.filter_datetime_precision` setup failed, `record.filter_decimal` setup failed, `record.filter_equal` setup failed, `record.filter_not_equal` setup failed, `record.filter_range` setup failed |
+| Nil behaves like SQL NULL in filters | ❔ Unknown 5 not run | `record.filter_in_with_nil` setup failed, `record.filter_is_nil` setup failed, `record.filter_not` setup failed, `record.filter_not_nil` setup failed, `record.filter_true_or_nil` setup failed |
+| Filter booleans and atoms, including atoms as strings | ❔ Unknown 3 not run | `record.filter_atom` setup failed, `record.filter_atom_as_string` setup failed, `record.filter_boolean` setup failed |
+| Filter strings: contains, case, unicode and empty | ❔ Unknown 4 not run | `record.filter_case_insensitive` setup failed, `record.filter_contains` setup failed, `record.filter_empty_string` setup failed, `record.filter_unicode` setup failed |
+| Filter inside arrays, maps and embedded resources | ❔ Unknown 3 not run | `record.filter_array_member` setup failed, `record.filter_embedded` setup failed, `record.filter_map_key` setup failed |
+| Filter by a calculation | ❔ Unknown 1 not run | `record.filter_calculation` setup failed |
+| Sort by one or more fields, with explicit nil order | ❔ Unknown 6 not run | `record.sort_asc_nils_first` setup failed, `record.sort_date` setup failed, `record.sort_decimal` setup failed, `record.sort_desc_nils_last` setup failed, `record.sort_string` setup failed, `record.sort_tie_break` setup failed |
+| Sort by a calculation | ❔ Unknown 1 not run | `record.sort_calculation` setup failed |
+| Limit and offset a query | ❔ Unknown 1 not run | `record.limit_offset` setup failed |
+| Count and check existence | ❔ Unknown 1 not run | `record.count` setup failed |
+| Stream records in batches | ❔ Unknown 1 not run | `record.stream` setup failed |
 | Distinct records by a field | ❌ Broken 0/1 | `query.distinct` crashed |
 | Combine queries with union | ⛔ Not supported 0/1 | `query.union` rejected |
 | Combine queries with union all and intersection | ⚪ Untested |  |
-| Load expression calculations, with arguments | 🟡 Partial 1/3 | `record.calculation_argument` setup failed, `record.calculation_load` setup failed |
-| Offset pagination with counts | ❌ Broken 0/1 | `record.offset_pages` setup failed |
-| Keyset pagination, forwards and backwards | ❌ Broken 0/1 | `record.keyset_pages` setup failed |
+| Load expression calculations, with arguments | 🔸 Incomplete 1/1 · 2 not run | `record.calculation_argument` setup failed, `record.calculation_load` setup failed |
+| Offset pagination with counts | ❔ Unknown 1 not run | `record.offset_pages` setup failed |
+| Keyset pagination, forwards and backwards | ❔ Unknown 1 not run | `record.keyset_pages` setup failed |
 | Pagination while records change | ⚪ Untested |  |
 
 ## 4. Relationships
@@ -161,35 +164,9 @@ whose claims disagree with the result:
 
 | Feature | Adapter | Mismatch |
 | --- | --- | --- |
-| Read records | clickhouse | Advertised, but ❌ Broken |
-| Get one record by primary key or identity | clickhouse | Advertised, but ❌ Broken |
 | Select only some attributes | clickhouse | Advertised, but ❌ Broken |
-| Create a record | clickhouse | Advertised, but ❌ Broken |
-| Update a record, including to nil | clickhouse | Advertised, but ❌ Broken |
-| Destroy a record | clickhouse | Advertised, but ❌ Broken |
-| Update a record atomically from its current value | clickhouse | Not advertising `record: {:atomic, :update}`, but not rejected either: wrong answers |
-| Not found, invalid, missing and duplicate values are errors | clickhouse | Advertised, but ❌ Broken |
-| Strings, integers, booleans, atoms and nil round-trip | clickhouse | Advertised, but ❌ Broken |
 | Large integers, floats and decimals round-trip | clickhouse | Advertised, but ❌ Broken |
-| Dates, microsecond datetimes and times round-trip | clickhouse | Advertised, but ❌ Broken |
-| UUIDs round-trip | clickhouse | Advertised, but ❌ Broken |
-| Arrays round-trip, keeping order and duplicates | clickhouse | Advertised, but ❌ Broken |
-| Maps round-trip, including nested values | clickhouse | Advertised, but ❌ Broken |
-| Embedded resources round-trip | clickhouse | Advertised, but ❌ Broken |
-| Filter with comparisons on numbers, decimals and dates | clickhouse | Advertised, but ❌ Broken |
-| Nil behaves like SQL NULL in filters | clickhouse | Advertised, but ❌ Broken |
-| Filter booleans and atoms, including atoms as strings | clickhouse | Advertised, but ❌ Broken |
-| Filter strings: contains, case, unicode and empty | clickhouse | Advertised, but ❌ Broken |
-| Filter inside arrays, maps and embedded resources | clickhouse | Advertised, but ❌ Broken |
-| Filter by a calculation | clickhouse | Advertised, but ❌ Broken |
-| Sort by one or more fields, with explicit nil order | clickhouse | Advertised, but ❌ Broken |
-| Sort by a calculation | clickhouse | Not advertising `record: :expression_calculation_sort`, but not rejected either: wrong answers |
-| Limit and offset a query | clickhouse | Advertised, but ❌ Broken |
-| Count and check existence | clickhouse | Not advertising `record: {:query_aggregate, :exists}`, but not rejected either: wrong answers |
-| Stream records in batches | clickhouse | Not advertising `record: :keyset`, but not rejected either: wrong answers |
 | Distinct records by a field | clickhouse | Not advertising `child: :distinct_sort`, but not rejected either: wrong answers |
-| Offset pagination with counts | clickhouse | Advertised, but ❌ Broken |
-| Keyset pagination, forwards and backwards | clickhouse | Not advertising `record: :keyset`, but not rejected either: wrong answers |
 | Filter across to-many relationships without duplicates | clickhouse | Not advertising `child: {:filter_relationship, :ratings}`, but not rejected either: wrong answers |
 | Limit and offset a has-many load for each parent | clickhouse | Works without advertising `parent: {:lateral_join, :children}` |
 | Limit a many-to-many load for each parent | clickhouse | Not advertising `parent: {:lateral_join, :tags}`, but not rejected either: wrong answers |

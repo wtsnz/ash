@@ -89,9 +89,8 @@ defmodule Ash.Conformance.Fixtures.Aggregate do
           child_tag: child_tags,
           event: events,
           reading: readings
-        ],
-        row <- Ash.Conformance.Fixtures.ordered(rows) do
-      adapter.persist!(role, [row], [])
+        ] do
+      Ash.Conformance.Fixtures.seed!(adapter, role, Ash.Conformance.Fixtures.ordered(rows))
     end
 
     %{adapter: adapter, parent: adapter.resource(:parent), child: adapter.resource(:child)}

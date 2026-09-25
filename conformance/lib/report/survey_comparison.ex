@@ -46,7 +46,7 @@ defmodule Ash.Conformance.Report.SurveyComparison do
       %{
         scenario: row["scenario"],
         adapter: String.to_atom(row["adapter"]),
-        status: known!(row["status"], ~w(supported unsupported known_defect unresolved)a),
+        status: known!(row["status"], ~w(supported unsupported known_defect unresolved unknown)a),
         classification:
           known!(
             row["classification"],
@@ -63,9 +63,5 @@ defmodule Ash.Conformance.Report.SurveyComparison do
       raise ArgumentError, "Unknown survey value: #{inspect(value)}"
   end
 
-  defp describe(%{status: status} = summary) when status in [:untested, :not_applicable],
-    do: FeatureReport.label(summary.status)
-
-  defp describe(summary),
-    do: "#{FeatureReport.label(summary.status)} #{summary.passing}/#{summary.total}"
+  defp describe(summary), do: FeatureReport.cell(summary)
 end

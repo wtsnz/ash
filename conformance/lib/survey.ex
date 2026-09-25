@@ -13,7 +13,8 @@ defmodule Ash.Conformance.Survey do
   - `rejected`: an Ash error saying the feature is not supported;
   - `wrong`: a different value, or a value that changes with row order;
   - `crashed`: any other exception;
-  - `setup failed`: the fixture could not be stored, so the operation never ran;
+  - `setup failed`: the fixture could not be stored, so the operation never
+    ran. Its status is `unknown`: it says nothing about the feature;
   - `open question`: the scenario awaits a semantic decision.
 
   A rejection is recognised only from Ash's error classes and wording, so it
@@ -27,15 +28,15 @@ defmodule Ash.Conformance.Survey do
     adapter.setup!()
 
     for scenario <- Catalog.for_adapter(adapter), adapter.fixture?(scenario.fixture) do
-      {outcome, {classification, status}} =
+      {outcome, {classification, status}, setup} =
         try do
           outcome = Runner.observe_both_orders(scenario, adapter)
-          {outcome, classify(scenario, outcome)}
+          {outcome, classify(scenario, outcome), nil}
         rescue
           # The operation's own errors are captured; this is fixture setup.
           exception ->
             {{:error, exception.__struct__, "Setup failed: " <> Exception.message(exception)},
-             {:setup_failed, :known_defect}}
+             {:setup_failed, :unknown}, setup_failure(exception)}
         end
 
       %{
@@ -46,10 +47,22 @@ defmodule Ash.Conformance.Survey do
         task: nil,
         execution: :matched,
         expected: Report.value(scenario.expected),
-        actual: Report.outcome(outcome)
+        actual: Report.outcome(outcome),
+        setup: setup
       }
     end
   end
+
+  # What could not be stored, for grouping setup failures by cause.
+  defp setup_failure(%Ash.Conformance.Fixtures.SetupError{} = error),
+    do: %{role: to_string(error.role), row: to_string(error.row), reason: error.reason}
+
+  defp setup_failure(exception),
+    do: %{
+      role: nil,
+      row: nil,
+      reason: exception |> Exception.message() |> String.split("\n") |> hd()
+    }
 
   def classify(%{expected: :unresolved}, _outcome), do: {:open_question, :unresolved}
 

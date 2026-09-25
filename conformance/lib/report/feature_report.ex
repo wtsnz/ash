@@ -19,10 +19,12 @@ defmodule Ash.Conformance.Report.FeatureReport do
 
   @labels %{
     works: "✅ Works",
+    incomplete: "🔸 Incomplete",
     partial: "🟡 Partial",
     not_supported: "⛔ Not supported",
     broken: "❌ Broken",
     open_question: "❓ Open question",
+    unknown: "❔ Unknown",
     untested: "⚪ Untested",
     not_applicable: "➖ Not applicable",
     changed: "⚠️ Changed"
@@ -49,7 +51,8 @@ defmodule Ash.Conformance.Report.FeatureReport do
     %{
       status: status,
       passing: Enum.count(statuses, &(&1 == :supported)),
-      total: length(rows),
+      total: Enum.count(statuses, &(&1 != :unknown)),
+      unknown: Enum.count(statuses, &(&1 == :unknown)),
       gaps:
         rows
         |> Enum.map(& &1.task)
@@ -69,7 +72,7 @@ defmodule Ash.Conformance.Report.FeatureReport do
   # adapter's resources may not even be defined.
   def claim_check(feature, _adapter, summary)
       when feature.claims == [] or
-             summary.status in [:untested, :not_applicable, :open_question],
+             summary.status in [:untested, :not_applicable, :open_question, :unknown, :incomplete],
       do: nil
 
   def claim_check(feature, adapter, summary) do
@@ -116,8 +119,9 @@ defmodule Ash.Conformance.Report.FeatureReport do
 
     #{legend()}
 
-    Counts are passing scenarios out of those run. Gap links explain everything
-    that is not fully working, and who owns the fix.
+    Counts are passing scenarios out of those that ran, then how many could
+    not run. Gap links explain everything that is not fully working, and who
+    owns the fix.
 
     #{sections}
     #{claims_section(adapters, summaries)}
@@ -129,11 +133,13 @@ defmodule Ash.Conformance.Report.FeatureReport do
     """
     | Status | Meaning |
     | --- | --- |
-    | #{label(:works)} | Every scenario returns the answer Ash defines. |
+    | #{label(:works)} | Every scenario ran and returns the answer Ash defines. |
+    | #{label(:incomplete)} | Everything that ran works, but some scenarios could not run. |
     | #{label(:partial)} | Some scenarios work; others are rejected or wrong. |
-    | #{label(:not_supported)} | Every scenario is rejected with a documented error. |
-    | #{label(:broken)} | Nothing works, and at least one scenario gives a wrong answer or crashes. |
+    | #{label(:not_supported)} | Every scenario that ran is rejected with a documented error. |
+    | #{label(:broken)} | Nothing that ran works, and at least one scenario gives a wrong answer or crashes. |
     | #{label(:open_question)} | The remaining scenarios need a semantic decision in Ash. |
+    | #{label(:unknown)} | No scenario could run, usually because the data layer could not store its fixture. Never means not supported. |
     | #{label(:untested)} | Listed so the specification is complete; no scenario verifies it yet. |
     | #{label(:not_applicable)} | The data layer does not provide this storage profile. |
     | #{label(:changed)} | A result no longer matches its recorded contract. |
@@ -228,10 +234,21 @@ defmodule Ash.Conformance.Report.FeatureReport do
     do:
       "Generated from an unreviewed run: each result was classified automatically against the intended answer. Nothing here has been reviewed."
 
-  defp cell(%{status: status} = summary) when status in [:untested, :not_applicable],
+  @doc "A feature's cell: its status, passing out of run, and how many could not run."
+  def cell(%{status: status} = summary) when status in [:untested, :not_applicable],
     do: label(summary.status)
 
-  defp cell(summary), do: "#{label(summary.status)} #{summary.passing}/#{summary.total}"
+  def cell(%{status: :unknown} = summary),
+    do: "#{label(:unknown)} #{Map.get(summary, :unknown, 0)} not run"
+
+  def cell(summary) do
+    base = "#{label(summary.status)} #{summary.passing}/#{summary.total}"
+
+    case Map.get(summary, :unknown, 0) do
+      0 -> base
+      unknown -> "#{base} · #{unknown} not run"
+    end
+  end
 
   @doc "Features whose capability claims disagree with their results."
   def claims_section(adapters, summaries) do

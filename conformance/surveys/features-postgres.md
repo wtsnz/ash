@@ -8,17 +8,20 @@ Feature catalog version 1: 80 features and 302 scenarios.
 
 | Status | Meaning |
 | --- | --- |
-| ✅ Works | Every scenario returns the answer Ash defines. |
+| ✅ Works | Every scenario ran and returns the answer Ash defines. |
+| 🔸 Incomplete | Everything that ran works, but some scenarios could not run. |
 | 🟡 Partial | Some scenarios work; others are rejected or wrong. |
-| ⛔ Not supported | Every scenario is rejected with a documented error. |
-| ❌ Broken | Nothing works, and at least one scenario gives a wrong answer or crashes. |
+| ⛔ Not supported | Every scenario that ran is rejected with a documented error. |
+| ❌ Broken | Nothing that ran works, and at least one scenario gives a wrong answer or crashes. |
 | ❓ Open question | The remaining scenarios need a semantic decision in Ash. |
+| ❔ Unknown | No scenario could run, usually because the data layer could not store its fixture. Never means not supported. |
 | ⚪ Untested | Listed so the specification is complete; no scenario verifies it yet. |
 | ➖ Not applicable | The data layer does not provide this storage profile. |
 | ⚠️ Changed | A result no longer matches its recorded contract. |
 
-Counts are passing scenarios out of those run. Gap links explain everything
-that is not fully working, and who owns the fix.
+Counts are passing scenarios out of those that ran, then how many could
+not run. Gap links explain everything that is not fully working, and who
+owns the fix.
 
 ## 1. Records
 

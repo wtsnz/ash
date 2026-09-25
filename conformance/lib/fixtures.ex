@@ -27,6 +27,51 @@ defmodule Ash.Conformance.Fixtures do
     end
   end
 
+  defmodule SetupError do
+    @moduledoc "A fixture row the data layer could not store or read back."
+    defexception [:role, :row, :reason]
+
+    @impl true
+    def message(%{role: role, row: row, reason: reason}),
+      do: "Could not store #{role} row #{row}: #{reason}"
+  end
+
+  @doc """
+  Persists `rows` for `role` one at a time, so a failure names the role, the
+  row and the reason instead of failing the whole batch anonymously.
+  """
+  def seed!(adapter, role, rows, opts \\ []) do
+    for row <- rows do
+      try do
+        adapter.persist!(role, [row], opts)
+      rescue
+        exception ->
+          reraise SetupError,
+                  [role: role, row: row_key(row), reason: reason(exception)],
+                  __STACKTRACE__
+      end
+    end
+
+    :ok
+  end
+
+  defp row_key(row), do: Map.get(row, :id) || inspect(row, limit: 3)
+
+  # The first informative line: Ash errors put the cause after a header.
+  defp reason(exception) do
+    exception
+    |> Exception.message()
+    |> String.split("\n")
+    |> Enum.map(&(&1 |> String.trim() |> String.trim_leading("* ")))
+    |> Enum.find(
+      "",
+      &(&1 not in ["", "Unknown Error", "Invalid Error"] and
+          not String.starts_with?(&1, ["Bread Crumbs", ">"]))
+    )
+    |> String.split(". This protocol", parts: 2)
+    |> hd()
+  end
+
   @doc "Rows in the order the current fixture build seeds them."
 
   def ordered(rows) do
@@ -55,18 +100,14 @@ defmodule Ash.Conformance.Fixtures do
   defp build_fixture!(adapter, :records), do: Ash.Conformance.Fixtures.Records.seed!(adapter)
 
   def prepare!(context, "values.string_constraints") do
-    context.adapter.persist!(
-      :child,
-      [
-        %{id: 15, parent_id: 1, label: ""},
-        %{id: 16, parent_id: 1, label: " padded "}
-      ],
-      []
-    )
+    seed!(context.adapter, :child, [
+      %{id: 15, parent_id: 1, label: ""},
+      %{id: 16, parent_id: 1, label: " padded "}
+    ])
   end
 
   def prepare!(context, "filter.fanout_avg"),
-    do: context.adapter.persist!(:rating, [%{id: 105, child_id: 13, score: 8}], [])
+    do: seed!(context.adapter, :rating, [%{id: 105, child_id: 13, score: 8}])
 
   def prepare!(_context, _id), do: :ok
 end

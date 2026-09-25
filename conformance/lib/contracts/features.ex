@@ -657,11 +657,16 @@ defmodule Ash.Conformance.Contracts.Features do
   @doc """
   A feature's status on one adapter, from its scenarios' contract statuses.
 
-  - `:works`: every scenario returns the intended answer.
+  Scenarios that never ran (`:unknown`, such as a fixture the data layer could
+  not store) say nothing about the feature, so the verdict comes from the rest:
+
+  - `:works`: every scenario ran and returns the intended answer.
+  - `:incomplete`: everything that ran works, but some scenarios could not run.
   - `:partial`: some work; others are unsupported or defective.
-  - `:not_supported`: every scenario is a documented rejection.
-  - `:broken`: nothing works and at least one scenario is defective.
+  - `:not_supported`: every scenario that ran is a documented rejection.
+  - `:broken`: nothing that ran works, and at least one scenario is defective.
   - `:open_question`: the only non-working scenarios await a semantic decision.
+  - `:unknown`: no scenario could run.
   - `:untested`: no scenario verifies it yet.
   - `:not_applicable`: the adapter does not provide this profile.
   """
@@ -669,6 +674,19 @@ defmodule Ash.Conformance.Contracts.Features do
   def status(_feature, []), do: :not_applicable
 
   def status(_feature, statuses) do
+    case Enum.reject(statuses, &(&1 == :unknown)) do
+      [] ->
+        :unknown
+
+      ran ->
+        case verdict(ran) do
+          :works when length(ran) < length(statuses) -> :incomplete
+          verdict -> verdict
+        end
+    end
+  end
+
+  defp verdict(statuses) do
     counts = Enum.frequencies(statuses)
     supported = Map.get(counts, :supported, 0)
     defects = Map.get(counts, :known_defect, 0)

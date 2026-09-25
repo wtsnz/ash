@@ -95,7 +95,7 @@ defmodule Ash.Conformance.Fixtures.Records do
   end
 
   def seed!(adapter) do
-    adapter.persist!(:record, Ash.Conformance.Fixtures.ordered(rows()), [])
+    Ash.Conformance.Fixtures.seed!(adapter, :record, Ash.Conformance.Fixtures.ordered(rows()))
     %{adapter: adapter, record: adapter.resource(:record)}
   end
 end

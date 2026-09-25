@@ -68,8 +68,10 @@ defmodule Ash.Conformance.Report.Ecosystem do
     ## Setup failures
 
     A setup failure means the data layer could not store or read back a
-    scenario's fixture, so the scenario never ran its operation. These are the
-    distinct reasons, with how many scenarios each stopped.
+    scenario's fixture, so the scenario never ran its operation; its result is
+    unknown, not broken. Rows are stored one at a time, so each reason names
+    the resource role that failed. These are the distinct causes, with how
+    many scenarios each stopped.
 
     #{Enum.map_join(results, "\n", &setup_failures_section/1)}
     ## Definition warnings
@@ -149,27 +151,24 @@ defmodule Ash.Conformance.Report.Ecosystem do
     do: "### #{adapter.label()}\n\nNot run: #{reason}\n"
 
   defp setup_failures_section(%{adapter: adapter, rows: rows}) do
-    reasons =
-      for %{classification: :setup_failed, actual: actual} <- rows do
-        actual
-        |> String.split("Setup failed:", parts: 2)
-        |> List.last()
-        |> String.split("\n")
-        |> Enum.map(&(&1 |> String.trim() |> String.trim_leading("* ")))
-        |> Enum.find("", &(&1 not in ["", "Unknown Error"]))
-        |> String.split(". ", parts: 2)
-        |> hd()
-        |> String.slice(0, 200)
-        |> String.replace("|", "\\|")
+    failures =
+      for %{classification: :setup_failed} = row <- rows do
+        setup = Map.get(row, :setup) || %{role: nil, reason: row.actual}
+        role = if setup.role, do: "`#{setup.role}`", else: "—"
+        {role, setup.reason |> String.slice(0, 200) |> String.replace("|", "\\|")}
       end
 
-    case reasons |> Enum.frequencies() |> Enum.sort_by(fn {r, n} -> {-n, r} end) do
+    case failures |> Enum.frequencies() |> Enum.sort_by(fn {key, n} -> {-n, key} end) do
       [] ->
         "### #{adapter.label()}\n\nNone.\n"
 
       counts ->
-        rows = Enum.map_join(counts, "\n", fn {reason, count} -> "| #{count} | #{reason} |" end)
-        "### #{adapter.label()}\n\n| Scenarios | Reason |\n| ---: | --- |\n#{rows}\n"
+        rows =
+          Enum.map_join(counts, "\n", fn {{role, reason}, count} ->
+            "| #{count} | #{role} | #{reason} |"
+          end)
+
+        "### #{adapter.label()}\n\n| Scenarios | Role | Reason |\n| ---: | --- | --- |\n#{rows}\n"
     end
   end
 
