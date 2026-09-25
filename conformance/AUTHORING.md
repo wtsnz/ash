@@ -227,3 +227,71 @@ then probe it on an existing adapter before classifying the outcome. Useful next
 cases are listed in `COVERAGE.md`. Exercise a direct read/load control when an
 aggregate is surprising, minimize the data, and verify the public API can express
 the requested semantics. Do not convert matching adapter outputs into a new rule.
+
+## Reference: results, contracts and evidence
+
+Ash owns the shared semantic answers, inventory and framework dispatch tests.
+Adapters own storage provisioning, fixture persistence, custom operations and
+instrumentation. Shared scenarios call public Ash read/load/aggregate/write APIs.
+They do not inspect Ecto queries, SQL or join strategies.
+
+Tests write `results/sqlite-postgres.json` and `.md`, or names for the selected
+adapter. They record intended answers, observed values, exact gap signatures,
+capability claims and execution status. Claims include the resource and any
+aggregate kind, relationship or expression being probed. No `can?/2` result
+skips an operation. A matching declaration alone proves no behavior.
+
+| Contract | Successful check means |
+| --- | --- |
+| supported | Returned the semantic answer, including an explicitly specified input rejection. |
+| unsupported | Rejected this operation with the recorded error class and narrow reason. |
+| known_defect | Returned exactly the recorded wrong answer or error. |
+| unresolved | Matched a characterization pending the linked semantic decision; never semantic conformance. |
+| planned | Has not run. Inventory only, never a passing check. |
+
+A newly correct result in an unsupported/defect case fails until explicitly
+promoted to supported. Changed wrong answers and unrelated errors fail too.
+Setup and fixture errors are outside operation-error capture. Unresolved
+semantics and implementation work have durable entries in [GAPS.md](GAPS.md).
+
+Fallback evidence has two sources. Dedicated tests in
+`test/ash/data_layer/dispatch_contract_test.exs` in the parent project record
+single and batch callback execution, validate results, and check optional
+callback defaults. In adapter runs, a scenario can name the Ash fallback it
+probes; the runner then counts the data-layer queries issued by the operation
+alone and records that beside a successful result. For example, `calc.in_memory`
+records zero queries: Ash evaluated the calculation itself. That shows who did
+the work, not whether the data layer could have. The count never changes
+whether a scenario passes. Other scenarios report `unobserved`. A negative
+claim plus a correct result is insufficient.
+
+Every scenario runs three times, with fixtures seeded forward, in reverse and
+rotated to start from the middle. The runs must agree. A result that depends on
+the order rows were stored in can never pass; a defect of that kind pins what
+each order returned. Results are compared strictly, so `2` and `2.0` differ.
+
+Each report also records the runtime, dependency revisions, database version and
+settings for every selected adapter, because claims and results can depend on
+them.
+
+Compare saved behavior reports by stable scenario ID:
+
+```sh
+MIX_ENV=test mise exec -- mix conformance.compare \
+  --base results/base.json --current results/sqlite-postgres.json
+```
+
+Current and migrated version-1 reports are accepted. This describes observations;
+it does not update expectations. Generated reports are ignored and CI uploads
+artifacts. The new workflow runs each adapter independently, plus core dispatch
+tests. It does not replace adapter regression suites.
+
+SQLite uses this project's ignored `tmp/data_layer.sqlite3`. Its repo enables
+`write_transactions?`, as AshSQLite recommends and its installer does. AshSQLite's
+`:transact` claim follows that repo setting, so capability claims are recorded
+per resource, not per adapter.
+
+The Postgres context-tenancy profile creates `dc_tenant_a` and `dc_tenant_b`
+schemas inside that database. Both contain the same record identities with
+different values. SQLite has no obligation to implement PostgreSQL schema
+provisioning; its inventory says this profile is not applicable.
