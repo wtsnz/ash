@@ -29,6 +29,7 @@ mise exec -- mix test --only area:authorization
 mise exec -- mix test test/runner_test.exs test/contract_test.exs test/benchmark_test.exs
 MIX_ENV=test mise exec -- mix conformance.matrix
 MIX_ENV=test mise exec -- mix conformance.inventory
+CONFORMANCE_ADAPTERS=sqlite MIX_ENV=test mise exec -- mix conformance.probe loaded.count
 MIX_ENV=test mise exec -- mix dialyzer
 ```
 
@@ -131,9 +132,9 @@ On the pinned revisions and Ash 3.33.11, the 186 scenario IDs produce these
 | SQLite | 132 | 36 | 9 | 4 |
 | PostgreSQL | 156 | 0 | 26 | 4 |
 
-The project runs 405 tests with both adapters, including runner, contract,
-reporting and benchmark-harness checks. The single-adapter commands run 218
-SQLite tests and 223 Postgres tests. The core dispatch additions and relevant
+The project runs 406 tests with both adapters, including runner, contract,
+reporting and benchmark-harness checks. The single-adapter commands run 219
+SQLite tests and 224 Postgres tests. The core dispatch additions and relevant
 Ash tests passed; the full Ash gate passed 4,233 tests and its other checks.
 REUSE passed on the staged source after retrying its tool installation.
 Both benchmark smoke runs validated seven workload/dataset combinations, ten

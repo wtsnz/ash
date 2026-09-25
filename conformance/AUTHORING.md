@@ -94,3 +94,47 @@ against their candidate adapter revision. The suite is not a published package
 or stable plugin API yet. A future release should version the inventory, resource
 roles, scenario IDs and expectation format together. Keep adapter planner and
 SQL-shape tests in adapter repositories.
+
+## Bring up a new data layer, such as MySQL
+
+Start with an adapter module that lists `[:shared]` in `profiles/0`, isolated
+storage, and the roles needed by one fixture. Register it in `Adapter.all/0`
+so `CONFORMANCE_ADAPTERS=mysql` selects it. Do not add a context/schema profile
+merely because the adapter is SQL-based. The provisioning mechanism is separate
+from shared attribute-tenant semantics.
+
+The aggregate fixture requires these roles, all available as reference definitions
+in `Resources`: `parent`, `child`, `rating`, `tag`, `link`, `child_tag`, and `event`.
+Scenarios then introduce views/roles for `tenant_child`, `tenant_link`, and
+`authorized_child`, plus the integration's manual relationship. The isolation
+fixture persists only `tenant_parent` and `tenant_item`; authorization cases use
+`secure_parent`, `secure_item`, `context_parent`, and `context_item` over that data.
+`IsolationResources` documents their common attributes, identities and actions.
+The separate context profile uses `schema_parent` and `schema_item`.
+
+You can work incrementally before every scenario has an expectation:
+
+```sh
+CONFORMANCE_ADAPTERS=mysql MIX_ENV=test mise exec -- mix conformance.probe loaded.count
+CONFORMANCE_ADAPTERS=mysql MIX_ENV=test mise exec -- mix conformance.probe tenant.read
+```
+
+`conformance.probe` needs only the selected scenario's fixtures/resources. It
+runs the public operation and shows the intended answer, actual result or error,
+and resource-specific capability claims. Setup failures still fail the command.
+Its output is explicitly unreviewed and reports zero semantic passes, including
+when the answer looks correct. Exit success only means the observation was
+captured. It never writes or accepts an expectation and is not a CI conformance
+result. Reports are isolated under `results/probes/`.
+
+Investigate each result against `semantic_basis` and the literal fixture. Then
+add an explicit supported, unsupported, known-defect or unresolved expectation.
+The regular test command requires a complete expectation map for every adapter
+in its advertised profiles; probes intentionally do not relax that requirement.
+This lets a new adapter progress case by case while the full suite remains strict.
+
+For edge-case discovery, add a scenario with the intended answer and fixture,
+then probe it on an existing adapter before classifying the outcome. Useful next
+cases are listed in `COVERAGE.md`. Exercise a direct read/load control when an
+aggregate is surprising, minimize the data, and verify the public API can express
+the requested semantics. Do not convert matching adapter outputs into a new rule.
