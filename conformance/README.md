@@ -70,7 +70,7 @@ provisioning; its inventory says this profile is not applicable.
 
 `MATRIX.md` is the declared per-scenario contract. Each ID links to its source.
 `CAPABILITIES.md` shows resource-specific claims and callback exports.
-`COVERAGE.md` is inventory version 1 and explicitly lists planned areas.
+`COVERAGE.md` is inventory version 2 and explicitly lists planned areas.
 `mix conformance.inventory` also writes `results/inventory.json`, containing
 Ash.DataLayer's feature typespec, callback groups, optional callback exports,
 resource-specific capabilities, supported profiles and scenario contracts.
@@ -173,9 +173,9 @@ On the pinned revisions and Ash 3.33.11, the 229 scenario IDs produce these
 | SQLite | 161 | 41 | 18 | 4 |
 | PostgreSQL | 196 | 0 | 29 | 4 |
 
-The project runs 497 tests with both adapters, including runner, contract,
-reporting and benchmark-harness checks. The single-adapter commands run 267
-SQLite tests and 272 Postgres tests. The core dispatch additions and relevant
+The project runs 514 tests with both adapters, including runner, contract,
+reporting, benchmark-harness and ETS bring-up checks. The single-adapter
+commands run 284 SQLite tests and 289 Postgres tests. The core dispatch additions and relevant
 Ash tests passed; the full Ash gate passed 4,233 tests and its other checks.
 REUSE passed on the staged source after retrying its tool installation.
 Both benchmark smoke runs validated seven workload/dataset combinations, ten

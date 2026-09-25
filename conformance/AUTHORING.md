@@ -121,6 +121,14 @@ fixture persists only `tenant_parent` and `tenant_item`; authorization cases use
 `IsolationResources` documents their common attributes, identities and actions.
 The separate context profile uses `schema_parent` and `schema_item`.
 
+`Ash.Conformance.Ets` is a worked example using Ash's ETS data layer. It reuses
+the shared resource roles through an `:ets` branch in `Resource`, uses private
+per-process tables for isolation, and implements the manual relationship without
+Ecto. It is not in `Adapter.all/0`, so it has no expectations;
+`test/ets_bringup_test.exs` probes it. Most aggregate scenarios observe the
+intended answer, and the transaction rollbacks show where ETS, which has no
+transactions, differs.
+
 You can work incrementally before every scenario has an expectation:
 
 ```sh

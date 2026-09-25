@@ -38,6 +38,15 @@ defmodule Ash.Conformance.Resource do
                repo(Ash.Conformance.PostgresRepo)
              end
            end}
+
+        # Private tables belong to the calling process, which isolates each case.
+        :ets ->
+          {Ash.DataLayer.Ets,
+           quote do
+             ets do
+               private?(true)
+             end
+           end}
       end
 
     quote do

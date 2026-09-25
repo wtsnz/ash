@@ -61,7 +61,9 @@ defmodule Ash.Conformance.SQLInstrumentation do
       settings: settings,
       transport: if(adapter.id() == :sqlite, do: "embedded", else: "TCP"),
       pool_size: adapter.repo().config()[:pool_size],
-      transaction: "SQL sandbox, one transaction per dataset"
+      transaction: "SQL sandbox, one transaction per dataset",
+      write_transactions?:
+        if(adapter.id() == :sqlite, do: adapter.repo().write_transactions?(), else: :always)
     }
   end
 end
