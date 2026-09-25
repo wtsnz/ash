@@ -54,6 +54,8 @@ jobs:
           key: conformance-${{ runner.os }}-29.0.1-1.20.0-${{ matrix.adapter }}-${{ hashFiles('conformance/mix.lock', 'mix.exs') }}
       - run: mix deps.get --check-locked
       - run: mix check
+      - run: mix dialyzer
+        if: matrix.adapter == 'postgres'
       - run: mix conformance.inventory
       - name: Verify generated documentation
         run: |
@@ -71,6 +73,57 @@ jobs:
           name: conformance-${{ matrix.adapter }}
           path: conformance/results/
           if-no-files-found: error
+  # What ash-project main supports compared with the pinned work, feature by
+  # feature. Informational: main moving must not fail this PR.
+  stacks:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports: ['5432:5432']
+        options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
+    env:
+      MIX_ENV: test
+      CONFORMANCE_PG_DATABASE: ash_conformance_stacks_${{ github.run_id }}_${{ github.run_attempt }}
+    defaults:
+      run:
+        working-directory: conformance
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: erlef/setup-beam@54075bcc5e249e4758d363f27d099f55d843f124 # v1.24.1
+        with:
+          otp-version: '29.0.1'
+          elixir-version: '1.20.0'
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            conformance/deps
+            conformance/_build
+            conformance/deps_upstream
+            conformance/_build_upstream
+          key: conformance-stacks-${{ runner.os }}-29.0.1-1.20.0-${{ hashFiles('conformance/mix.lock', 'conformance/mix.upstream.lock', 'mix.exs') }}
+      - run: mix deps.get --check-locked
+      - run: mix deps.get --check-locked
+        env:
+          CONFORMANCE_DEPS: upstream
+      - name: Survey and compare
+        run: |
+          for adapter in sqlite postgres; do
+            CONFORMANCE_DEPS=upstream mix conformance.survey "$adapter"
+            mix conformance.survey "$adapter"
+            mix conformance.compare_surveys "results/upstream/survey-$adapter.json" "results/survey-$adapter.json" > /dev/null
+            cat "results/compare-survey-$adapter.md" >> "$GITHUB_STEP_SUMMARY"
+          done
+      - name: Upload surveys
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: conformance-stacks
+          path: conformance/results/
   core-dispatch:
     runs-on: ubuntu-latest
     steps:
