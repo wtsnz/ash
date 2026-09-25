@@ -89,14 +89,14 @@ smallest complete example.
 
    `use Ash.Conformance.Adapter` supplies every other callback. Override what
    differs: `checkout!/0` to isolate a case, `identity_options/0` when storage
-   cannot enforce uniqueness, `custom_aggregate/0`, or define
-   `Ash.Conformance.MyDataLayer.Manual` for a manual relationship with a join
-   form. `Adapter.roles/0` and `Adapter.table_roles/0` list the resources and
+   cannot enforce uniqueness, `custom_aggregate/0`, or `manual_relationship/0`
+   for a manual relationship with a join form. `Adapter.roles/0` and `Adapter.table_roles/0` list the resources and
    tables to provision and clear.
-3. **Register it** in `Adapter.unreviewed/0`, or from another repository:
+3. **Register it** in config. The suite names no adapter itself: the shipped
+   ones are listed in `config/config.exs` the same way.
 
    ```elixir
-   config :ash_conformance, unreviewed_adapters: [MyDataLayer.Conformance]
+   config :ash_conformance, unreviewed_adapters: [Ash.Conformance.Ets, MyDataLayer.Conformance]
    ```
 4. **Survey it.** `MIX_ENV=test mix conformance.ecosystem my_dl` adds its column
    to `ECOSYSTEM.md` and writes `surveys/features-my_dl.md` with every failing
@@ -106,8 +106,7 @@ smallest complete example.
 5. **Review it, when you want strict contracts.** Record an expectation for
    every scenario (supported, unsupported with the exact rejection, known
    defect with the exact wrong answer, or unresolved), return them from
-   `expectations/0`, and move the adapter to `Adapter.all/0` or
-   `config :ash_conformance, adapters: [...]`. It then gets a column in
+   `expectations/0`, and move the adapter to `config :ash_conformance, adapters: [...]`. It then gets a column in
    `FEATURES.md` and runs in `mix test`.
 
 ## Adapter callbacks
@@ -122,11 +121,12 @@ smallest complete example.
 | `persist!/3` | Persist fixture maps by resource role, including tenant options. |
 | `benchmark_persist!/2` | Persist larger fixtures outside timing. May delegate to ordinary persistence. |
 | `custom_aggregate/0` | Adapter-specific custom aggregate implementation. |
+| `manual_relationship/0` | Manual relationship implementation; defaults to one that loads in Elixir. |
 | `instrumentation/0` | Optional module for untimed `measure/2` and `metadata/1`, or `nil`. |
 | `fixture?/1` | Whether the integration provides the resources for a fixture. |
 | `expectations/0` | Expectation records by scenario ID; `%{}` for a survey-only adapter. |
-| `resource_config/1` | `{data_layer, config_block}` for a shared table; SQLite and Postgres use built-in blocks. |
-| `identity_options/0` (optional) | Options for every shared identity, e.g. `[pre_check?: true]` when uniqueness is not enforced by storage. |
+| `resource_config/1` | `{data_layer, config_block}` for a shared table. |
+| `identity_options/0` | Options for every shared identity, e.g. `[pre_check?: true]` when uniqueness is not enforced by storage. |
 
 The SQL adapters implement these with repositories and migrations. The runner,
 shared scenarios and benchmark harness never require a connection or an Ecto
@@ -162,8 +162,9 @@ SQL-shape tests in adapter repositories.
 ## Bring up a new data layer, such as MySQL
 
 Start with an adapter module that lists `[:shared]` in `profiles/0`, isolated
-storage, and the roles needed by one fixture. Register it in `Adapter.all/0`
-so `CONFORMANCE_ADAPTERS=mysql` selects it. Do not add a context/schema profile
+storage, and the roles needed by one fixture. Register it under
+`unreviewed_adapters` in config so `CONFORMANCE_ADAPTERS=mysql` selects it for
+probes. Do not add a context/schema profile
 merely because the adapter is SQL-based. The provisioning mechanism is separate
 from shared attribute-tenant semantics.
 
@@ -177,9 +178,9 @@ fixture persists only `tenant_parent` and `tenant_item`; authorization cases use
 The separate context profile uses `schema_parent` and `schema_item`.
 
 `Ash.Conformance.Ets` is a worked example using Ash's ETS data layer. It reuses
-the shared resource roles through an `:ets` branch in `Resource`, uses private
-per-process tables for isolation, and implements the manual relationship without
-Ecto. It is not in `Adapter.all/0`, so it has no expectations;
+the shared resource roles through `resource_config/1`, uses private per-process
+tables for isolation, and uses the default manual relationship, which loads
+without Ecto. It is registered as unreviewed, so it has no expectations;
 `test/ets_bringup_test.exs` probes it. Most aggregate scenarios observe the
 intended answer, and the transaction rollbacks show where ETS, which has no
 transactions, differs.

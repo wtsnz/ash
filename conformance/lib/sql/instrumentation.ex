@@ -39,31 +39,15 @@ defmodule Ash.Conformance.SQL.Instrumentation do
     end
   end
 
+  @doc """
+  Environment facts for the benchmark report. The adapter's `server_info/0`
+  supplies the database-specific ones: version, settings, transport and
+  whether writes run in transactions.
+  """
   def metadata(adapter) do
-    version_sql =
-      if adapter.id() == :sqlite, do: "select sqlite_version()", else: "show server_version"
-
-    [[version]] = adapter.repo().query!(version_sql).rows
-
-    settings =
-      if adapter.id() == :sqlite do
-        Map.new(~w(journal_mode synchronous cache_size), fn name ->
-          {name, adapter.repo().query!("PRAGMA #{name}").rows}
-        end)
-      else
-        Map.new(~w(shared_buffers work_mem max_connections), fn name ->
-          {name, adapter.repo().query!("SHOW #{name}").rows}
-        end)
-      end
-
-    %{
-      version: version,
-      settings: settings,
-      transport: if(adapter.id() == :sqlite, do: "embedded", else: "TCP"),
+    Map.merge(adapter.server_info(), %{
       pool_size: adapter.repo().config()[:pool_size],
-      transaction: "SQL sandbox, one transaction per dataset",
-      write_transactions?:
-        if(adapter.id() == :sqlite, do: adapter.repo().write_transactions?(), else: :always)
-    }
+      transaction: "SQL sandbox, one transaction per dataset"
+    })
   end
 end

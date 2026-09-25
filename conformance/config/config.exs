@@ -8,6 +8,12 @@ config :ash, :validate_domain_config_inclusion?, false
 config :ash, :default_string_length_count, :codepoints
 config :logger, level: :warning
 
+# The data layers the suite runs. Reviewed adapters have expectation records
+# and gate CI; unreviewed ones run only as surveys in the ecosystem report.
+config :ash_conformance,
+  adapters: [Ash.Conformance.Sqlite, Ash.Conformance.Postgres],
+  unreviewed_adapters: [Ash.Conformance.Ets]
+
 config :ash_conformance, Ash.Conformance.SqliteRepo,
   database: Path.expand("../tmp/data_layer.sqlite3", __DIR__),
   pool: Ecto.Adapters.SQL.Sandbox,

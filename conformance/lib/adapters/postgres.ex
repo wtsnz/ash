@@ -4,21 +4,36 @@
 
 defmodule Ash.Conformance.Postgres do
   @moduledoc false
-  @behaviour Ash.Conformance.Adapter
-  def id, do: :postgres
-  def label, do: "AshPostgres"
-  def package, do: :ash_postgres
-  def expectations, do: Ash.Conformance.Contracts.Expectations.builtin(:postgres)
+  use Ash.Conformance.Adapter, id: :postgres, label: "AshPostgres", package: :ash_postgres
+
+  def expectations, do: Ash.Conformance.SQL.Expectations.for(:postgres)
   def fixture?(_fixture), do: true
   def profiles, do: [:shared, :context_tenancy]
   def instrumentation, do: Ash.Conformance.SQL.Instrumentation
   def repo, do: Ash.Conformance.PostgresRepo
-
-  def resource(role),
-    do: Module.concat(Ash.Conformance.Postgres, Macro.camelize(to_string(role)))
-
   def custom_aggregate, do: Ash.Conformance.PostgresSum
-  def setup!, do: Ash.Conformance.SQL.Database.setup!(repo())
+  def manual_relationship, do: Ash.Conformance.Postgres.Manual
+
+  def resource_config(table) do
+    {AshPostgres.DataLayer,
+     quote do
+       postgres do
+         table(unquote(table))
+         repo(Ash.Conformance.PostgresRepo)
+       end
+     end}
+  end
+
+  def setup! do
+    unless String.starts_with?(repo().config()[:database], "ash_conformance_") do
+      raise ArgumentError, "CONFORMANCE_PG_DATABASE must start with ash_conformance_"
+    end
+
+    Ash.Conformance.SQL.Database.setup!(repo(),
+      migrations: [{3, Ash.Conformance.SQL.Migrations.ContextTenancy}]
+    )
+  end
+
   def checkout!, do: Ecto.Adapters.SQL.Sandbox.checkout(repo())
   def checkin!, do: Ecto.Adapters.SQL.Sandbox.checkin(repo())
 
@@ -26,8 +41,18 @@ defmodule Ash.Conformance.Postgres do
     Enum.each(Enum.chunk_every(rows, 500), &repo().insert_all(resource(role), &1))
   end
 
-  def persist!(role, rows, opts) do
-    Ash.Seed.seed!(resource(role), rows, opts)
+  def server_info do
+    [[version]] = repo().query!("show server_version").rows
+
+    %{
+      version: version,
+      settings:
+        Map.new(~w(shared_buffers work_mem max_connections), fn name ->
+          {name, repo().query!("SHOW #{name}").rows}
+        end),
+      transport: "TCP",
+      write_transactions?: :always
+    }
   end
 end
 
@@ -49,20 +74,33 @@ end
 defmodule Ash.Conformance.Postgres.Manual do
   @moduledoc false
   use AshPostgres.ManualRelationship
-  use Ash.Conformance.Resources.Manual, prefix: :ash_postgres
+  use Ash.Conformance.SQL.Manual, prefix: :ash_postgres
 end
 
 defmodule Ash.Conformance.Postgres.Resources do
   @moduledoc "Every shared resource role, instantiated for PostgreSQL."
-  use Ash.Conformance.Resources.Aggregate, namespace: Ash.Conformance.Postgres, adapter: :postgres
-  use Ash.Conformance.Resources.Records, namespace: Ash.Conformance.Postgres, adapter: :postgres
-  use Ash.Conformance.Resources.Isolation, namespace: Ash.Conformance.Postgres, adapter: :postgres
-  use Ash.Conformance.Resources.Writes, namespace: Ash.Conformance.Postgres, adapter: :postgres
+  use Ash.Conformance.Resources.Aggregate,
+    namespace: Ash.Conformance.Postgres,
+    adapter: Ash.Conformance.Postgres
+
+  use Ash.Conformance.Resources.Records,
+    namespace: Ash.Conformance.Postgres,
+    adapter: Ash.Conformance.Postgres
+
+  use Ash.Conformance.Resources.Isolation,
+    namespace: Ash.Conformance.Postgres,
+    adapter: Ash.Conformance.Postgres
+
+  use Ash.Conformance.Resources.Writes,
+    namespace: Ash.Conformance.Postgres,
+    adapter: Ash.Conformance.Postgres
 end
 
 defmodule Ash.Conformance.Postgres.SchemaParent do
   @moduledoc false
-  use Ash.Conformance.Resources.Base, adapter: :postgres, table: "dc_schema_parents"
+  use Ash.Conformance.Resources.Base,
+    adapter: Ash.Conformance.Postgres,
+    table: "dc_schema_parents"
 
   attributes do
     attribute(:id, :integer, primary_key?: true, allow_nil?: false, public?: true)
@@ -94,7 +132,7 @@ end
 
 defmodule Ash.Conformance.Postgres.SchemaItem do
   @moduledoc false
-  use Ash.Conformance.Resources.Base, adapter: :postgres, table: "dc_schema_items"
+  use Ash.Conformance.Resources.Base, adapter: Ash.Conformance.Postgres, table: "dc_schema_items"
 
   attributes do
     attribute(:id, :integer, primary_key?: true, allow_nil?: false, public?: true)

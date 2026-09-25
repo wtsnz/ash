@@ -13,7 +13,8 @@ defmodule Mix.Tasks.Conformance.Probe do
       Enum.find(Ash.Conformance.Catalog.all(), &(&1.id == id)) ||
         Mix.raise("Unknown scenario #{inspect(id)}")
 
-    adapters = Ash.Conformance.Adapter.selected()
+    # Probes need no expectation records, so unreviewed adapters can be probed.
+    adapters = Ash.Conformance.Adapter.selected(Ash.Conformance.Adapter.every())
 
     for adapter <- adapters do
       unless scenario.profile in adapter.profiles(),

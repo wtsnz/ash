@@ -3,11 +3,11 @@
 # SPDX-License-Identifier: MIT
 
 defmodule Ash.Conformance.Resources.Aggregate do
-  @moduledoc "One resource definition per role, instantiated for each SQL adapter."
+  @moduledoc "One resource definition per role, instantiated for each adapter."
 
   defmacro __using__(opts) do
     namespace = opts |> Keyword.fetch!(:namespace) |> Macro.expand(__CALLER__)
-    adapter = Keyword.fetch!(opts, :adapter)
+    adapter = opts |> Keyword.fetch!(:adapter) |> Macro.expand(__CALLER__)
     parent = Module.concat(namespace, Parent)
     child = Module.concat(namespace, Child)
     rating = Module.concat(namespace, Rating)
@@ -19,14 +19,7 @@ defmodule Ash.Conformance.Resources.Aggregate do
     tenant_child = Module.concat(namespace, TenantChild)
     tenant_link = Module.concat(namespace, TenantLink)
     authorized_child = Module.concat(namespace, AuthorizedChild)
-    # Adapters with SQL-capable manual relationships define `<namespace>.Manual`;
-    # others get a manual relationship that loads in Elixir.
-    # `ensure_compiled` also sees modules from the current compilation.
-    manual =
-      case Code.ensure_compiled(Module.concat(namespace, Manual)) do
-        {:module, module} -> module
-        {:error, _} -> Ash.Conformance.Resources.PlainManual
-      end
+    manual = adapter.manual_relationship()
 
     quote context: Elixir do
       defmodule unquote(parent) do

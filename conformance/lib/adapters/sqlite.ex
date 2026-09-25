@@ -4,20 +4,25 @@
 
 defmodule Ash.Conformance.Sqlite do
   @moduledoc false
-  @behaviour Ash.Conformance.Adapter
-  def id, do: :sqlite
-  def label, do: "AshSqlite"
-  def package, do: :ash_sqlite
-  def expectations, do: Ash.Conformance.Contracts.Expectations.builtin(:sqlite)
+  use Ash.Conformance.Adapter, id: :sqlite, label: "AshSqlite", package: :ash_sqlite
+
+  def expectations, do: Ash.Conformance.SQL.Expectations.for(:sqlite)
   def fixture?(_fixture), do: true
-  def profiles, do: [:shared]
   def instrumentation, do: Ash.Conformance.SQL.Instrumentation
   def repo, do: Ash.Conformance.SqliteRepo
-
-  def resource(role),
-    do: Module.concat(Ash.Conformance.Sqlite, Macro.camelize(to_string(role)))
-
   def custom_aggregate, do: Ash.Conformance.SqliteSum
+  def manual_relationship, do: Ash.Conformance.Sqlite.Manual
+
+  def resource_config(table) do
+    {AshSqlite.DataLayer,
+     quote do
+       sqlite do
+         table(unquote(table))
+         repo(Ash.Conformance.SqliteRepo)
+       end
+     end}
+  end
+
   def setup!, do: Ash.Conformance.SQL.Database.setup!(repo())
   def checkout!, do: Ecto.Adapters.SQL.Sandbox.checkout(repo())
   def checkin!, do: Ecto.Adapters.SQL.Sandbox.checkin(repo())
@@ -26,8 +31,18 @@ defmodule Ash.Conformance.Sqlite do
     Enum.each(Enum.chunk_every(rows, 500), &repo().insert_all(resource(role), &1))
   end
 
-  def persist!(role, rows, opts) do
-    Ash.Seed.seed!(resource(role), rows, opts)
+  def server_info do
+    [[version]] = repo().query!("select sqlite_version()").rows
+
+    %{
+      version: version,
+      settings:
+        Map.new(~w(journal_mode synchronous cache_size), fn name ->
+          {name, repo().query!("PRAGMA #{name}").rows}
+        end),
+      transport: "embedded",
+      write_transactions?: repo().write_transactions?()
+    }
   end
 end
 
@@ -60,13 +75,24 @@ end
 defmodule Ash.Conformance.Sqlite.Manual do
   @moduledoc false
   use AshSqlite.ManualRelationship
-  use Ash.Conformance.Resources.Manual, prefix: :ash_sqlite
+  use Ash.Conformance.SQL.Manual, prefix: :ash_sqlite
 end
 
 defmodule Ash.Conformance.Sqlite.Resources do
   @moduledoc "Every shared resource role, instantiated for SQLite."
-  use Ash.Conformance.Resources.Aggregate, namespace: Ash.Conformance.Sqlite, adapter: :sqlite
-  use Ash.Conformance.Resources.Records, namespace: Ash.Conformance.Sqlite, adapter: :sqlite
-  use Ash.Conformance.Resources.Isolation, namespace: Ash.Conformance.Sqlite, adapter: :sqlite
-  use Ash.Conformance.Resources.Writes, namespace: Ash.Conformance.Sqlite, adapter: :sqlite
+  use Ash.Conformance.Resources.Aggregate,
+    namespace: Ash.Conformance.Sqlite,
+    adapter: Ash.Conformance.Sqlite
+
+  use Ash.Conformance.Resources.Records,
+    namespace: Ash.Conformance.Sqlite,
+    adapter: Ash.Conformance.Sqlite
+
+  use Ash.Conformance.Resources.Isolation,
+    namespace: Ash.Conformance.Sqlite,
+    adapter: Ash.Conformance.Sqlite
+
+  use Ash.Conformance.Resources.Writes,
+    namespace: Ash.Conformance.Sqlite,
+    adapter: Ash.Conformance.Sqlite
 end

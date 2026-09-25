@@ -156,7 +156,7 @@ defmodule Ash.Conformance.Scenarios.Relationships do
     quote do
       defmodule unquote(module) do
         use Ash.Conformance.Resources.Base,
-          adapter: unquote(Ash.Conformance.Resources.Base.adapter_ref(adapter)),
+          adapter: unquote(adapter),
           table: "ac_parents"
 
         attributes do

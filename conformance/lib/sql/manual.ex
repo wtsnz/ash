@@ -2,8 +2,8 @@
 #
 # SPDX-License-Identifier: MIT
 
-defmodule Ash.Conformance.Resources.Manual do
-  @moduledoc false
+defmodule Ash.Conformance.SQL.Manual do
+  @moduledoc "Ecto joins and subqueries for the manual relationship on SQL data layers."
   defmacro __using__(opts) do
     prefix = Keyword.fetch!(opts, :prefix)
     join_fun = String.to_atom("#{prefix}_join")
@@ -13,16 +13,7 @@ defmodule Ash.Conformance.Resources.Manual do
       use Ash.Resource.ManualRelationship
       import Ecto.Query
 
-      def load(parents, _opts, %{query: query, actor: actor, authorize?: authorize?}) do
-        ids = Enum.map(parents, & &1.id)
-
-        rows =
-          query
-          |> Ash.Query.do_filter(parent_id: [in: ids])
-          |> Ash.read!(actor: actor, authorize?: authorize?)
-
-        {:ok, Enum.group_by(rows, & &1.parent_id)}
-      end
+      defdelegate load(parents, opts, context), to: Ash.Conformance.Resources.PlainManual
 
       def unquote(join_fun)(query, _opts, parent_binding, child_binding, type, child_query) do
         {:ok,

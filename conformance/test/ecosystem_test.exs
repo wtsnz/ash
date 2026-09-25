@@ -34,6 +34,20 @@ defmodule Ash.Conformance.EcosystemTest do
     refute Minimal.fixture?(:context_tenancy)
     assert Minimal.custom_aggregate() == Ash.Conformance.Resources.NoCustomAggregate
     assert Minimal.instrumentation() == nil
+    assert Minimal.manual_relationship() == Ash.Conformance.Resources.PlainManual
+    assert Minimal.identity_options() == []
+  end
+
+  test "the shared suite names no adapter; config registers the shipped ones" do
+    shared =
+      Path.wildcard("lib/**/*.ex") -- Path.wildcard("lib/{adapters,sql}/**/*.ex")
+
+    for path <- shared, source = File.read!(path) do
+      refute source =~ ~r/Ash\.Conformance\.(Sqlite|Postgres|Ets)\b|adapter\.id\(\) *==/,
+             "#{path} refers to a specific adapter"
+    end
+
+    assert Ash.Conformance.Adapter.all() == Application.get_env(:ash_conformance, :adapters)
   end
 
   test "a data layer whose storage cannot start is reported as not run" do

@@ -18,6 +18,8 @@ defmodule Ash.Conformance.Adapter do
   @callback package() :: atom()
   @callback resource(atom()) :: module()
   @callback custom_aggregate() :: module()
+  @doc "The manual relationship implementation for the `manual_children` relationship."
+  @callback manual_relationship() :: module()
   @callback setup!() :: term()
   @callback checkout!() :: term()
   @callback checkin!() :: term()
@@ -30,28 +32,23 @@ defmodule Ash.Conformance.Adapter do
   @doc "Expectation records by scenario ID, for every scenario in the adapter's profiles."
   @callback expectations() :: %{String.t() => term()}
   @doc """
-  For an adapter from another repository: the data layer and its configuration
-  block for one of the shared tables, e.g. `{MyDataLayer, quote(do: my_dl do table(...) end)}`.
+  The data layer and its configuration block for one of the shared tables,
+  e.g. `{MyDataLayer, quote(do: my_dl do table(...) end)}`.
   """
   @callback resource_config(table :: String.t()) :: {module(), Macro.t()}
   @doc "Options added to every shared identity, such as `pre_check?: true`."
   @callback identity_options() :: keyword()
-  @optional_callbacks resource_config: 1, identity_options: 0
 
   @doc """
-  Reviewed adapters: the built-in ones, plus any listed in config, so an
-  adapter from another repository can join without editing this file:
+  Reviewed adapters, from config. The suite names no adapter itself, so the
+  shipped ones and one from another repository join the same way:
 
       config :ash_conformance, adapters: [MyApp.Conformance.Adapter]
   """
-  def all,
-    do:
-      [Ash.Conformance.Sqlite, Ash.Conformance.Postgres] ++
-        Application.get_env(:ash_conformance, :adapters, [])
+  def all, do: Application.get_env(:ash_conformance, :adapters, [])
 
-  @doc "Integrations with no expectation records; they run only as unreviewed surveys."
-  def unreviewed,
-    do: [Ash.Conformance.Ets] ++ Application.get_env(:ash_conformance, :unreviewed_adapters, [])
+  @doc "Adapters with no expectation records, from config; they run only as unreviewed surveys."
+  def unreviewed, do: Application.get_env(:ash_conformance, :unreviewed_adapters, [])
 
   @doc "Every registered adapter, reviewed first, as the ecosystem report lists them."
   def every, do: all() ++ unreviewed()
@@ -76,15 +73,26 @@ defmodule Ash.Conformance.Adapter do
       raise ArgumentError, "Unknown adapter: #{inspect(name)}"
   end
 
-  def selected do
-    requested = System.get_env("CONFORMANCE_ADAPTERS", "sqlite,postgres") |> String.split(",")
-    known = Map.new(all(), &{to_string(&1.id()), &1})
+  @doc """
+  Adapters to run, from `from` (the reviewed ones by default): all of them, or
+  those named in `CONFORMANCE_ADAPTERS`.
+  """
+  def selected(from \\ all()) do
+    case System.get_env("CONFORMANCE_ADAPTERS") do
+      nil ->
+        from
 
-    Enum.map(requested, fn name ->
-      Map.get(known, String.trim(name)) ||
-        raise ArgumentError, "Unknown adapter: #{inspect(name)}"
-    end)
-    |> Enum.uniq()
+      requested ->
+        known = Map.new(from, &{to_string(&1.id()), &1})
+
+        requested
+        |> String.split(",")
+        |> Enum.map(fn name ->
+          Map.get(known, String.trim(name)) ||
+            raise ArgumentError, "Unknown adapter: #{inspect(name)}"
+        end)
+        |> Enum.uniq()
+    end
   end
 
   @doc """
@@ -116,8 +124,10 @@ defmodule Ash.Conformance.Adapter do
       def expectations, do: %{}
       def fixture?(fixture), do: fixture != :context_tenancy
       def custom_aggregate, do: Ash.Conformance.Resources.NoCustomAggregate
+      def manual_relationship, do: Ash.Conformance.Resources.PlainManual
       def checkout!, do: :ok
       def checkin!, do: :ok
+      def identity_options, do: []
 
       defoverridable profiles: 0,
                      resource: 1,
@@ -127,8 +137,10 @@ defmodule Ash.Conformance.Adapter do
                      expectations: 0,
                      fixture?: 1,
                      custom_aggregate: 0,
+                     manual_relationship: 0,
                      checkout!: 0,
-                     checkin!: 0
+                     checkin!: 0,
+                     identity_options: 0
     end
   end
 end

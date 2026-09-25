@@ -128,18 +128,21 @@ defmodule Ash.Conformance.ContractTest do
 
   defmodule ExternalAdapter do
     @moduledoc false
-    def id, do: :external
+    use Ash.Conformance.Adapter, id: :external, label: "External", package: :ash
     def expectations, do: %{"record.read_all" => :supported}
     def identity_options, do: [pre_check?: true]
+    def resource_config(_table), do: raise("not used")
+    def setup!, do: :ok
   end
 
   describe "adapters from other repositories" do
     setup do
-      on_exit(fn -> Application.delete_env(:ash_conformance, :adapters) end)
+      shipped = Adapter.all()
+      on_exit(fn -> Application.put_env(:ash_conformance, :adapters, shipped) end)
     end
 
     test "join through config, with their own expectations, without editing shared code" do
-      Application.put_env(:ash_conformance, :adapters, [ExternalAdapter])
+      Application.put_env(:ash_conformance, :adapters, Adapter.all() ++ [ExternalAdapter])
 
       assert ExternalAdapter in Adapter.all()
       assert Expectations.for("record.read_all", :external) == :supported
@@ -151,7 +154,7 @@ defmodule Ash.Conformance.ContractTest do
                pre_check?: true
              ]
 
-      assert Ash.Conformance.Resources.Base.identity_options(:postgres) == []
+      assert Ash.Conformance.Resources.Base.identity_options(Ash.Conformance.Postgres) == []
     end
   end
 end
