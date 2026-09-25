@@ -64,6 +64,13 @@ defmodule Ash.Conformance.Report.Ecosystem do
 
     #{sections}
     #{FeatureReport.claims_section(adapters, summaries)}
+    ## Setup failures
+
+    A setup failure means the data layer could not store or read back a
+    scenario's fixture, so the scenario never ran its operation. These are the
+    distinct reasons, with how many scenarios each stopped.
+
+    #{Enum.map_join(results, "\n", &setup_failures_section/1)}
     ## Definition warnings
 
     Ash checks each shared resource against its data layer when the resource is
@@ -116,6 +123,34 @@ defmodule Ash.Conformance.Report.Ecosystem do
     case Map.get(Mix.Dep.Lock.read(), adapter.package()) do
       {:git, _url, ref, _opts} -> "#{vsn} (`#{String.slice(ref, 0, 7)}`)"
       _ -> vsn
+    end
+  end
+
+  defp setup_failures_section(%{adapter: adapter, unavailable: reason}) when is_binary(reason),
+    do: "### #{adapter.label()}\n\nNot run: #{reason}\n"
+
+  defp setup_failures_section(%{adapter: adapter, rows: rows}) do
+    reasons =
+      for %{classification: :setup_failed, actual: actual} <- rows do
+        actual
+        |> String.split("Setup failed:", parts: 2)
+        |> List.last()
+        |> String.split("\n")
+        |> Enum.map(&(&1 |> String.trim() |> String.trim_leading("* ")))
+        |> Enum.find("", &(&1 not in ["", "Unknown Error"]))
+        |> String.split(". ", parts: 2)
+        |> hd()
+        |> String.slice(0, 200)
+        |> String.replace("|", "\\|")
+      end
+
+    case reasons |> Enum.frequencies() |> Enum.sort_by(fn {r, n} -> {-n, r} end) do
+      [] ->
+        "### #{adapter.label()}\n\nNone.\n"
+
+      counts ->
+        rows = Enum.map_join(counts, "\n", fn {reason, count} -> "| #{count} | #{reason} |" end)
+        "### #{adapter.label()}\n\n| Scenarios | Reason |\n| ---: | --- |\n#{rows}\n"
     end
   end
 

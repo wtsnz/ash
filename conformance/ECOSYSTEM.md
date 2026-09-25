@@ -16,6 +16,7 @@ their results as observations. Each data layer's failing scenarios are listed in
 | sqlite | AshSqlite | 0.2.19 (`46a4b86`) | yes | 231 | 37 | 14 | 10 | 0 | 5 | 0 |
 | postgres | AshPostgres | 2.13.1 (`945073e`) | yes | 265 | 0 | 24 | 8 | 0 | 5 | 0 |
 | ets | Ash.DataLayer.Ets | 3.33.11 | no | 252 | 7 | 26 | 7 | 0 | 5 | 0 |
+| csv | AshCsv | 0.9.9 | no | 25 | 16 | 8 | 2 | 246 | 0 | 8 |
 
 | Status | Meaning |
 | --- | --- |
@@ -31,133 +32,133 @@ their results as observations. Each data layer's failing scenarios are listed in
 
 ## 1. Records
 
-| Feature | sqlite | postgres | ets |
-| --- | --- | --- | --- |
-| Read records | ✅ Works 1/1 | ✅ Works 1/1 | ✅ Works 1/1 |
-| Get one record by primary key or identity | ✅ Works 2/2 | ✅ Works 2/2 | ✅ Works 2/2 |
-| Select only some attributes | ✅ Works 2/2 | ✅ Works 2/2 | ✅ Works 2/2 |
-| Create a record | ✅ Works 1/1 | ✅ Works 1/1 | ✅ Works 1/1 |
-| Update a record, including to nil | ✅ Works 2/2 | ✅ Works 2/2 | ✅ Works 2/2 |
-| Destroy a record | ✅ Works 1/1 | ✅ Works 1/1 | ✅ Works 1/1 |
-| Update a record atomically from its current value | ✅ Works 1/1 | ✅ Works 1/1 | ✅ Works 1/1 |
-| Not found, invalid, missing and duplicate values are errors | ✅ Works 4/4 | ✅ Works 4/4 | 🟡 Partial 3/4 |
+| Feature | sqlite | postgres | ets | csv |
+| --- | --- | --- | --- | --- |
+| Read records | ✅ Works 1/1 | ✅ Works 1/1 | ✅ Works 1/1 | ❌ Broken 0/1 |
+| Get one record by primary key or identity | ✅ Works 2/2 | ✅ Works 2/2 | ✅ Works 2/2 | ❌ Broken 0/2 |
+| Select only some attributes | ✅ Works 2/2 | ✅ Works 2/2 | ✅ Works 2/2 | 🟡 Partial 1/2 |
+| Create a record | ✅ Works 1/1 | ✅ Works 1/1 | ✅ Works 1/1 | ❌ Broken 0/1 |
+| Update a record, including to nil | ✅ Works 2/2 | ✅ Works 2/2 | ✅ Works 2/2 | ❌ Broken 0/2 |
+| Destroy a record | ✅ Works 1/1 | ✅ Works 1/1 | ✅ Works 1/1 | ❌ Broken 0/1 |
+| Update a record atomically from its current value | ✅ Works 1/1 | ✅ Works 1/1 | ✅ Works 1/1 | ❌ Broken 0/1 |
+| Not found, invalid, missing and duplicate values are errors | ✅ Works 4/4 | ✅ Works 4/4 | 🟡 Partial 3/4 | ❌ Broken 0/4 |
 
 ## 2. Types
 
-| Feature | sqlite | postgres | ets |
-| --- | --- | --- | --- |
-| Strings, integers, booleans, atoms and nil round-trip | ✅ Works 3/3 | ✅ Works 3/3 | ✅ Works 3/3 |
-| Large integers, floats and decimals round-trip | 🟡 Partial 1/2 | ✅ Works 2/2 | ✅ Works 2/2 |
-| Dates, microsecond datetimes and times round-trip | ✅ Works 1/1 | ✅ Works 1/1 | ✅ Works 1/1 |
-| UUIDs round-trip | ✅ Works 1/1 | ✅ Works 1/1 | ✅ Works 1/1 |
-| Arrays round-trip, keeping order and duplicates | ✅ Works 1/1 | ✅ Works 1/1 | ✅ Works 1/1 |
-| Maps round-trip, including nested values | ✅ Works 1/1 | ✅ Works 1/1 | ✅ Works 1/1 |
-| Embedded resources round-trip | ✅ Works 1/1 | ✅ Works 1/1 | ✅ Works 1/1 |
+| Feature | sqlite | postgres | ets | csv |
+| --- | --- | --- | --- | --- |
+| Strings, integers, booleans, atoms and nil round-trip | ✅ Works 3/3 | ✅ Works 3/3 | ✅ Works 3/3 | ❌ Broken 0/3 |
+| Large integers, floats and decimals round-trip | 🟡 Partial 1/2 | ✅ Works 2/2 | ✅ Works 2/2 | ❌ Broken 0/2 |
+| Dates, microsecond datetimes and times round-trip | ✅ Works 1/1 | ✅ Works 1/1 | ✅ Works 1/1 | ❌ Broken 0/1 |
+| UUIDs round-trip | ✅ Works 1/1 | ✅ Works 1/1 | ✅ Works 1/1 | ❌ Broken 0/1 |
+| Arrays round-trip, keeping order and duplicates | ✅ Works 1/1 | ✅ Works 1/1 | ✅ Works 1/1 | ❌ Broken 0/1 |
+| Maps round-trip, including nested values | ✅ Works 1/1 | ✅ Works 1/1 | ✅ Works 1/1 | ❌ Broken 0/1 |
+| Embedded resources round-trip | ✅ Works 1/1 | ✅ Works 1/1 | ✅ Works 1/1 | ❌ Broken 0/1 |
 
 ## 3. Querying
 
-| Feature | sqlite | postgres | ets |
-| --- | --- | --- | --- |
-| Filter with comparisons on numbers, decimals and dates | ✅ Works 6/6 | ✅ Works 6/6 | ✅ Works 6/6 |
-| Nil behaves like SQL NULL in filters | ❓ Open question 4/5 | ❓ Open question 4/5 | ❓ Open question 4/5 |
-| Filter booleans and atoms, including atoms as strings | ✅ Works 3/3 | ✅ Works 3/3 | ✅ Works 3/3 |
-| Filter strings: contains, case, unicode and empty | ✅ Works 4/4 | ✅ Works 4/4 | ✅ Works 4/4 |
-| Filter inside arrays, maps and embedded resources | ✅ Works 3/3 | ✅ Works 3/3 | ✅ Works 3/3 |
-| Filter by a calculation | ✅ Works 1/1 | ✅ Works 1/1 | ✅ Works 1/1 |
-| Sort by one or more fields, with explicit nil order | ✅ Works 6/6 | ✅ Works 6/6 | ✅ Works 6/6 |
-| Sort by a calculation | ✅ Works 1/1 | ✅ Works 1/1 | ✅ Works 1/1 |
-| Limit and offset a query | ✅ Works 1/1 | ✅ Works 1/1 | ✅ Works 1/1 |
-| Count and check existence | ✅ Works 1/1 | ✅ Works 1/1 | ✅ Works 1/1 |
-| Stream records in batches | ✅ Works 1/1 | ✅ Works 1/1 | ✅ Works 1/1 |
-| Distinct records by a field | ⛔ Not supported 0/1 | ✅ Works 1/1 | ✅ Works 1/1 |
-| Combine queries with union | ⛔ Not supported 0/1 | ✅ Works 1/1 | ✅ Works 1/1 |
-| Combine queries with union all and intersection | ⚪ Untested | ⚪ Untested | ⚪ Untested |
-| Load expression calculations, with arguments | ✅ Works 3/3 | ✅ Works 3/3 | ✅ Works 3/3 |
-| Offset pagination with counts | ✅ Works 1/1 | ✅ Works 1/1 | ✅ Works 1/1 |
-| Keyset pagination, forwards and backwards | ✅ Works 1/1 | ✅ Works 1/1 | ✅ Works 1/1 |
-| Pagination while records change | ⚪ Untested | ⚪ Untested | ⚪ Untested |
+| Feature | sqlite | postgres | ets | csv |
+| --- | --- | --- | --- | --- |
+| Filter with comparisons on numbers, decimals and dates | ✅ Works 6/6 | ✅ Works 6/6 | ✅ Works 6/6 | ❌ Broken 0/6 |
+| Nil behaves like SQL NULL in filters | ❓ Open question 4/5 | ❓ Open question 4/5 | ❓ Open question 4/5 | ❌ Broken 0/5 |
+| Filter booleans and atoms, including atoms as strings | ✅ Works 3/3 | ✅ Works 3/3 | ✅ Works 3/3 | ❌ Broken 0/3 |
+| Filter strings: contains, case, unicode and empty | ✅ Works 4/4 | ✅ Works 4/4 | ✅ Works 4/4 | ❌ Broken 0/4 |
+| Filter inside arrays, maps and embedded resources | ✅ Works 3/3 | ✅ Works 3/3 | ✅ Works 3/3 | ❌ Broken 0/3 |
+| Filter by a calculation | ✅ Works 1/1 | ✅ Works 1/1 | ✅ Works 1/1 | ❌ Broken 0/1 |
+| Sort by one or more fields, with explicit nil order | ✅ Works 6/6 | ✅ Works 6/6 | ✅ Works 6/6 | ❌ Broken 0/6 |
+| Sort by a calculation | ✅ Works 1/1 | ✅ Works 1/1 | ✅ Works 1/1 | ❌ Broken 0/1 |
+| Limit and offset a query | ✅ Works 1/1 | ✅ Works 1/1 | ✅ Works 1/1 | ❌ Broken 0/1 |
+| Count and check existence | ✅ Works 1/1 | ✅ Works 1/1 | ✅ Works 1/1 | ❌ Broken 0/1 |
+| Stream records in batches | ✅ Works 1/1 | ✅ Works 1/1 | ✅ Works 1/1 | ❌ Broken 0/1 |
+| Distinct records by a field | ⛔ Not supported 0/1 | ✅ Works 1/1 | ✅ Works 1/1 | ❌ Broken 0/1 |
+| Combine queries with union | ⛔ Not supported 0/1 | ✅ Works 1/1 | ✅ Works 1/1 | ❌ Broken 0/1 |
+| Combine queries with union all and intersection | ⚪ Untested | ⚪ Untested | ⚪ Untested | ⚪ Untested |
+| Load expression calculations, with arguments | ✅ Works 3/3 | ✅ Works 3/3 | ✅ Works 3/3 | ❌ Broken 0/3 |
+| Offset pagination with counts | ✅ Works 1/1 | ✅ Works 1/1 | ✅ Works 1/1 | ❌ Broken 0/1 |
+| Keyset pagination, forwards and backwards | ✅ Works 1/1 | ✅ Works 1/1 | ✅ Works 1/1 | ❌ Broken 0/1 |
+| Pagination while records change | ⚪ Untested | ⚪ Untested | ⚪ Untested | ⚪ Untested |
 
 ## 4. Relationships
 
-| Feature | sqlite | postgres | ets |
-| --- | --- | --- | --- |
-| Filter across to-many relationships without duplicates | 🟡 Partial 1/3 | ✅ Works 3/3 | ✅ Works 3/3 |
-| Limit and offset a has-many load for each parent | ✅ Works 2/2 | ✅ Works 2/2 | ✅ Works 2/2 |
-| Limit a many-to-many load for each parent | ❌ Broken 0/1 | ✅ Works 1/1 | ✅ Works 1/1 |
-| Relationships through other relationships | ❌ Broken 0/1 | ✅ Works 1/1 | ✅ Works 1/1 |
-| Relationship default sort applies when loading | ✅ Works 1/1 | ✅ Works 1/1 | ✅ Works 1/1 |
-| Relationships with no attributes load everything | ✅ Works 1/1 | ✅ Works 1/1 | ✅ Works 1/1 |
-| Relationship context reaches the read action | 🟡 Partial 1/2 | 🟡 Partial 1/2 | 🟡 Partial 1/2 |
-| Parent references in nested and through relationship filters | ❌ Broken 0/2 | ❌ Broken 0/2 | ❌ Broken 0/2 |
-| Load belongs-to, has-one, has-many and many-to-many relationships | ✅ Works 4/4 | ✅ Works 4/4 | ✅ Works 4/4 |
-| Create and update related records with manage_relationship | ⚪ Untested | ⚪ Untested | ⚪ Untested |
+| Feature | sqlite | postgres | ets | csv |
+| --- | --- | --- | --- | --- |
+| Filter across to-many relationships without duplicates | 🟡 Partial 1/3 | ✅ Works 3/3 | ✅ Works 3/3 | ❌ Broken 0/3 |
+| Limit and offset a has-many load for each parent | ✅ Works 2/2 | ✅ Works 2/2 | ✅ Works 2/2 | ❌ Broken 0/2 |
+| Limit a many-to-many load for each parent | ❌ Broken 0/1 | ✅ Works 1/1 | ✅ Works 1/1 | ❌ Broken 0/1 |
+| Relationships through other relationships | ❌ Broken 0/1 | ✅ Works 1/1 | ✅ Works 1/1 | ❌ Broken 0/1 |
+| Relationship default sort applies when loading | ✅ Works 1/1 | ✅ Works 1/1 | ✅ Works 1/1 | ❌ Broken 0/1 |
+| Relationships with no attributes load everything | ✅ Works 1/1 | ✅ Works 1/1 | ✅ Works 1/1 | ❌ Broken 0/1 |
+| Relationship context reaches the read action | 🟡 Partial 1/2 | 🟡 Partial 1/2 | 🟡 Partial 1/2 | ❌ Broken 0/2 |
+| Parent references in nested and through relationship filters | ❌ Broken 0/2 | ❌ Broken 0/2 | ❌ Broken 0/2 | ❌ Broken 0/2 |
+| Load belongs-to, has-one, has-many and many-to-many relationships | ✅ Works 4/4 | ✅ Works 4/4 | ✅ Works 4/4 | ❌ Broken 0/4 |
+| Create and update related records with manage_relationship | ⚪ Untested | ⚪ Untested | ⚪ Untested | ⚪ Untested |
 
 ## 5. Aggregates
 
-| Feature | sqlite | postgres | ets |
-| --- | --- | --- | --- |
-| Load each aggregate kind on records | ✅ Works 9/9 | ✅ Works 9/9 | 🟡 Partial 8/9 |
-| Run each aggregate kind over a whole query | 🟡 Partial 9/15 | 🟡 Partial 13/15 | 🟡 Partial 10/15 |
-| Defaults, nils, uniqueness and field counts | ✅ Works 12/12 | 🟡 Partial 11/12 | 🟡 Partial 11/12 |
-| Aggregate decimals, dates, times and constrained types | 🟡 Partial 12/15 | ✅ Works 15/15 | 🟡 Partial 14/15 |
-| Order first and list aggregates, including nils and ties | ❓ Open question 8/9 | ❓ Open question 8/9 | ❓ Open question 8/9 |
-| Aggregate calculations and other aggregates | ✅ Works 3/3 | ✅ Works 3/3 | 🟡 Partial 2/3 |
-| Filter the records an aggregate uses | ✅ Works 6/6 | ✅ Works 6/6 | 🟡 Partial 5/6 |
-| Aggregate filters through to-many relationships count each record once | 🟡 Partial 3/11 | 🟡 Partial 2/11 | 🟡 Partial 10/11 |
-| Aggregate filters that use other aggregates | 🟡 Partial 1/5 | ✅ Works 5/5 | ✅ Works 5/5 |
-| Aggregate filters that reference the parent record | ⛔ Not supported 0/8 | 🟡 Partial 7/8 | 🟡 Partial 4/8 |
-| Aggregate over to-one, multi-hop and many-to-many paths | 🟡 Partial 10/17 | 🟡 Partial 15/17 | 🟡 Partial 14/17 |
-| Aggregate over manual and attribute-free relationships | ⛔ Not supported 0/3 | 🟡 Partial 2/3 | ✅ Works 3/3 |
-| Aggregate over limited, offset and from-many relationships | 🟡 Partial 5/9 | 🟡 Partial 6/9 | 🟡 Partial 6/9 |
-| Root aggregates over sorted, limited and offset queries | 🟡 Partial 5/7 | 🟡 Partial 2/7 | 🟡 Partial 6/7 |
-| Distinct counts over composite and missing keys | 🟡 Partial 1/5 | ❓ Open question 4/5 | 🟡 Partial 1/5 |
-| Filter, sort, paginate and calculate with aggregates | ✅ Works 10/10 | ✅ Works 10/10 | ✅ Works 10/10 |
-| Aggregates respect read actions, arguments, actor and context | 🟡 Partial 8/9 | 🟡 Partial 7/9 | 🟡 Partial 8/9 |
-| Seeded filtered aggregates match an in-memory reference | ✅ Works 1/1 | ✅ Works 1/1 | ✅ Works 1/1 |
+| Feature | sqlite | postgres | ets | csv |
+| --- | --- | --- | --- | --- |
+| Load each aggregate kind on records | ✅ Works 9/9 | ✅ Works 9/9 | 🟡 Partial 8/9 | ❌ Broken 0/9 |
+| Run each aggregate kind over a whole query | 🟡 Partial 9/15 | 🟡 Partial 13/15 | 🟡 Partial 10/15 | ❌ Broken 0/15 |
+| Defaults, nils, uniqueness and field counts | ✅ Works 12/12 | 🟡 Partial 11/12 | 🟡 Partial 11/12 | ❌ Broken 0/12 |
+| Aggregate decimals, dates, times and constrained types | 🟡 Partial 12/15 | ✅ Works 15/15 | 🟡 Partial 14/15 | ❌ Broken 0/15 |
+| Order first and list aggregates, including nils and ties | ❓ Open question 8/9 | ❓ Open question 8/9 | ❓ Open question 8/9 | ❌ Broken 0/9 |
+| Aggregate calculations and other aggregates | ✅ Works 3/3 | ✅ Works 3/3 | 🟡 Partial 2/3 | ❌ Broken 0/3 |
+| Filter the records an aggregate uses | ✅ Works 6/6 | ✅ Works 6/6 | 🟡 Partial 5/6 | ❌ Broken 0/6 |
+| Aggregate filters through to-many relationships count each record once | 🟡 Partial 3/11 | 🟡 Partial 2/11 | 🟡 Partial 10/11 | ❌ Broken 0/11 |
+| Aggregate filters that use other aggregates | 🟡 Partial 1/5 | ✅ Works 5/5 | ✅ Works 5/5 | ❌ Broken 0/5 |
+| Aggregate filters that reference the parent record | ⛔ Not supported 0/8 | 🟡 Partial 7/8 | 🟡 Partial 4/8 | ❌ Broken 0/8 |
+| Aggregate over to-one, multi-hop and many-to-many paths | 🟡 Partial 10/17 | 🟡 Partial 15/17 | 🟡 Partial 14/17 | ❌ Broken 0/17 |
+| Aggregate over manual and attribute-free relationships | ⛔ Not supported 0/3 | 🟡 Partial 2/3 | ✅ Works 3/3 | ❌ Broken 0/3 |
+| Aggregate over limited, offset and from-many relationships | 🟡 Partial 5/9 | 🟡 Partial 6/9 | 🟡 Partial 6/9 | ❌ Broken 0/9 |
+| Root aggregates over sorted, limited and offset queries | 🟡 Partial 5/7 | 🟡 Partial 2/7 | 🟡 Partial 6/7 | ❌ Broken 0/7 |
+| Distinct counts over composite and missing keys | 🟡 Partial 1/5 | ❓ Open question 4/5 | 🟡 Partial 1/5 | ❌ Broken 0/5 |
+| Filter, sort, paginate and calculate with aggregates | ✅ Works 10/10 | ✅ Works 10/10 | ✅ Works 10/10 | ❌ Broken 0/10 |
+| Aggregates respect read actions, arguments, actor and context | 🟡 Partial 8/9 | 🟡 Partial 7/9 | 🟡 Partial 8/9 | ❌ Broken 0/9 |
+| Seeded filtered aggregates match an in-memory reference | ✅ Works 1/1 | ✅ Works 1/1 | ✅ Works 1/1 | ❌ Broken 0/1 |
 
 ## 6. Writes
 
-| Feature | sqlite | postgres | ets |
-| --- | --- | --- | --- |
-| Upsert on an identity, in bulk, with conditions | 🟡 Partial 2/4 | 🟡 Partial 3/4 | ✅ Works 4/4 |
-| Bulk create with partial success | ✅ Works 1/1 | ✅ Works 1/1 | ✅ Works 1/1 |
-| Bulk update atomically | ✅ Works 1/1 | ✅ Works 1/1 | ✅ Works 1/1 |
-| Writes that filter by or read aggregates | ✅ Works 4/4 | ✅ Works 4/4 | ✅ Works 4/4 |
+| Feature | sqlite | postgres | ets | csv |
+| --- | --- | --- | --- | --- |
+| Upsert on an identity, in bulk, with conditions | 🟡 Partial 2/4 | 🟡 Partial 3/4 | ✅ Works 4/4 | 🟡 Partial 2/4 |
+| Bulk create with partial success | ✅ Works 1/1 | ✅ Works 1/1 | ✅ Works 1/1 | ❌ Broken 0/1 |
+| Bulk update atomically | ✅ Works 1/1 | ✅ Works 1/1 | ✅ Works 1/1 | ❌ Broken 0/1 |
+| Writes that filter by or read aggregates | ✅ Works 4/4 | ✅ Works 4/4 | ✅ Works 4/4 | ❌ Broken 0/4 |
 
 ## 7. Transactions and locks
 
-| Feature | sqlite | postgres | ets |
-| --- | --- | --- | --- |
-| Failed actions and transactions roll back | ✅ Works 4/4 | ✅ Works 4/4 | 🟡 Partial 1/4 |
-| Lock rows for update | ⛔ Not supported 0/1 | ✅ Works 1/1 | ⛔ Not supported 0/1 |
-| Isolation between concurrent transactions | ⚪ Untested | ⚪ Untested | ⚪ Untested |
+| Feature | sqlite | postgres | ets | csv |
+| --- | --- | --- | --- | --- |
+| Failed actions and transactions roll back | ✅ Works 4/4 | ✅ Works 4/4 | 🟡 Partial 1/4 | 🟡 Partial 1/4 |
+| Lock rows for update | ⛔ Not supported 0/1 | ✅ Works 1/1 | ⛔ Not supported 0/1 | ❌ Broken 0/1 |
+| Isolation between concurrent transactions | ⚪ Untested | ⚪ Untested | ⚪ Untested | ⚪ Untested |
 
 ## 8. Multitenancy
 
-| Feature | sqlite | postgres | ets |
-| --- | --- | --- | --- |
-| Attribute tenancy scopes reads and requires a tenant | ✅ Works 6/6 | ✅ Works 6/6 | 🟡 Partial 5/6 |
-| Tenancy scopes related records and their bounds | ✅ Works 4/4 | ✅ Works 4/4 | ✅ Works 4/4 |
-| Tenancy scopes aggregates, including explicit bypass | ✅ Works 8/8 | 🟡 Partial 5/8 | 🟡 Partial 6/8 |
-| Tenancy scopes pages and counts | ✅ Works 2/2 | ✅ Works 2/2 | ❌ Broken 0/2 |
-| Tenancy scopes creates, updates and destroys | ✅ Works 3/3 | ✅ Works 3/3 | ✅ Works 3/3 |
-| Schema-based (context) tenancy | ➖ Not applicable | ✅ Works 5/5 | ➖ Not applicable |
+| Feature | sqlite | postgres | ets | csv |
+| --- | --- | --- | --- | --- |
+| Attribute tenancy scopes reads and requires a tenant | ✅ Works 6/6 | ✅ Works 6/6 | 🟡 Partial 5/6 | 🟡 Partial 5/6 |
+| Tenancy scopes related records and their bounds | ✅ Works 4/4 | ✅ Works 4/4 | ✅ Works 4/4 | 🟡 Partial 3/4 |
+| Tenancy scopes aggregates, including explicit bypass | ✅ Works 8/8 | 🟡 Partial 5/8 | 🟡 Partial 6/8 | ❌ Broken 0/8 |
+| Tenancy scopes pages and counts | ✅ Works 2/2 | ✅ Works 2/2 | ❌ Broken 0/2 | ⛔ Not supported 0/2 |
+| Tenancy scopes creates, updates and destroys | ✅ Works 3/3 | ✅ Works 3/3 | ✅ Works 3/3 | ✅ Works 3/3 |
+| Schema-based (context) tenancy | ➖ Not applicable | ✅ Works 5/5 | ➖ Not applicable | ➖ Not applicable |
 
 ## 9. Authorization
 
-| Feature | sqlite | postgres | ets |
-| --- | --- | --- | --- |
-| Policies filter reads | ✅ Works 3/3 | ✅ Works 3/3 | ✅ Works 3/3 |
-| Policies filter related records before bounds | ✅ Works 5/5 | ✅ Works 5/5 | ✅ Works 5/5 |
-| Policies filter what aggregates count | 🟡 Partial 7/8 | 🟡 Partial 7/8 | 🟡 Partial 7/8 |
-| Policies filter pages and counts | ✅ Works 3/3 | ✅ Works 3/3 | 🟡 Partial 1/3 |
-| Policies filter and forbid writes | ✅ Works 4/4 | ✅ Works 4/4 | ✅ Works 4/4 |
+| Feature | sqlite | postgres | ets | csv |
+| --- | --- | --- | --- | --- |
+| Policies filter reads | ✅ Works 3/3 | ✅ Works 3/3 | ✅ Works 3/3 | ✅ Works 3/3 |
+| Policies filter related records before bounds | ✅ Works 5/5 | ✅ Works 5/5 | ✅ Works 5/5 | 🟡 Partial 4/5 |
+| Policies filter what aggregates count | 🟡 Partial 7/8 | 🟡 Partial 7/8 | 🟡 Partial 7/8 | ❌ Broken 0/8 |
+| Policies filter pages and counts | ✅ Works 3/3 | ✅ Works 3/3 | 🟡 Partial 1/3 | ⛔ Not supported 0/3 |
+| Policies filter and forbid writes | ✅ Works 4/4 | ✅ Works 4/4 | ✅ Works 4/4 | 🟡 Partial 3/4 |
 
 ## 10. Consistency checks
 
-| Feature | sqlite | postgres | ets |
-| --- | --- | --- | --- |
-| Counts match loads, and root sums match an in-memory reference | ✅ Works 2/2 | ✅ Works 2/2 | ✅ Works 2/2 |
+| Feature | sqlite | postgres | ets | csv |
+| --- | --- | --- | --- | --- |
+| Counts match loads, and root sums match an in-memory reference | ✅ Works 2/2 | ✅ Works 2/2 | ✅ Works 2/2 | ⛔ Not supported 0/2 |
 
 ## Claims versus results
 
@@ -170,27 +171,117 @@ whose claims disagree with the result:
 
 | Feature | Adapter | Mismatch |
 | --- | --- | --- |
+| Read records | csv | Advertised, but ❌ Broken |
+| Get one record by primary key or identity | csv | Advertised, but ❌ Broken |
 | Select only some attributes | ets | Works without advertising `record: :select` |
+| Create a record | csv | Advertised, but ❌ Broken |
+| Update a record, including to nil | csv | Advertised, but ❌ Broken |
+| Destroy a record | csv | Advertised, but ❌ Broken |
+| Update a record atomically from its current value | csv | Not advertising `record: {:atomic, :update}`, but not rejected either: wrong answers |
+| Not found, invalid, missing and duplicate values are errors | csv | Advertised, but ❌ Broken |
+| Strings, integers, booleans, atoms and nil round-trip | csv | Advertised, but ❌ Broken |
+| Large integers, floats and decimals round-trip | csv | Advertised, but ❌ Broken |
+| Dates, microsecond datetimes and times round-trip | csv | Advertised, but ❌ Broken |
+| UUIDs round-trip | csv | Advertised, but ❌ Broken |
+| Arrays round-trip, keeping order and duplicates | csv | Advertised, but ❌ Broken |
+| Maps round-trip, including nested values | csv | Advertised, but ❌ Broken |
+| Embedded resources round-trip | csv | Advertised, but ❌ Broken |
+| Filter with comparisons on numbers, decimals and dates | csv | Advertised, but ❌ Broken |
+| Nil behaves like SQL NULL in filters | csv | Advertised, but ❌ Broken |
+| Filter booleans and atoms, including atoms as strings | csv | Advertised, but ❌ Broken |
+| Filter strings: contains, case, unicode and empty | csv | Advertised, but ❌ Broken |
+| Filter inside arrays, maps and embedded resources | csv | Advertised, but ❌ Broken |
+| Filter by a calculation | csv | Not advertising `record: :expression_calculation`, but not rejected either: wrong answers |
+| Sort by one or more fields, with explicit nil order | csv | Advertised, but ❌ Broken |
+| Sort by a calculation | csv | Advertised, but ❌ Broken |
+| Limit and offset a query | csv | Advertised, but ❌ Broken |
+| Count and check existence | csv | Not advertising `record: {:query_aggregate, :count}`, `record: {:query_aggregate, :exists}`, but not rejected either: wrong answers |
 | Stream records in batches | sqlite | Works without advertising `record: :keyset` |
 | Stream records in batches | postgres | Works without advertising `record: :keyset` |
 | Stream records in batches | ets | Works without advertising `record: :keyset` |
+| Stream records in batches | csv | Not advertising `record: :keyset`, but not rejected either: wrong answers |
+| Distinct records by a field | csv | Not advertising `child: :distinct`, `child: :distinct_sort`, but not rejected either: wrong answers |
+| Combine queries with union | csv | Not advertising `child: :combine`, `parent: {:combine, :union}`, but not rejected either: wrong answers |
 | Load expression calculations, with arguments | sqlite | Works without advertising `record: :calculate` |
+| Load expression calculations, with arguments | csv | Not advertising `record: :expression_calculation`, `record: :calculate`, but not rejected either: wrong answers |
+| Offset pagination with counts | csv | Advertised, but ❌ Broken |
 | Keyset pagination, forwards and backwards | sqlite | Works without advertising `record: :keyset` |
 | Keyset pagination, forwards and backwards | postgres | Works without advertising `record: :keyset` |
 | Keyset pagination, forwards and backwards | ets | Works without advertising `record: :keyset` |
+| Keyset pagination, forwards and backwards | csv | Not advertising `record: :keyset`, but not rejected either: wrong answers |
+| Filter across to-many relationships without duplicates | csv | Not advertising `child: {:filter_relationship, :ratings}`, but not rejected either: wrong answers |
 | Limit and offset a has-many load for each parent | sqlite | Works without advertising `parent: {:lateral_join, :children}` |
+| Limit and offset a has-many load for each parent | csv | Not advertising `parent: {:lateral_join, :children}`, but not rejected either: wrong answers |
 | Limit a many-to-many load for each parent | sqlite | Not advertising `parent: {:lateral_join, :tags}`, but not rejected either: wrong answers |
+| Limit a many-to-many load for each parent | csv | Not advertising `parent: {:lateral_join, :tags}`, but not rejected either: wrong answers |
 | Relationships through other relationships | sqlite | Not advertising `parent: :through_relationship`, but not rejected either: wrong answers |
+| Relationships through other relationships | csv | Not advertising `parent: :through_relationship`, but not rejected either: wrong answers |
+| Relationship default sort applies when loading | csv | Advertised, but ❌ Broken |
+| Relationships with no attributes load everything | csv | Not advertising `parent: {:filter_relationship, :all_children}`, but not rejected either: wrong answers |
+| Relationship context reaches the read action | csv | Advertised, but ❌ Broken |
 | Parent references in nested and through relationship filters | sqlite | Advertised, but ❌ Broken |
 | Parent references in nested and through relationship filters | postgres | Advertised, but ❌ Broken |
 | Parent references in nested and through relationship filters | ets | Advertised, but ❌ Broken |
+| Parent references in nested and through relationship filters | csv | Not advertising `parent: {:filter_relationship, :same_tenant_tags}`, but not rejected either: wrong answers |
+| Load belongs-to, has-one, has-many and many-to-many relationships | csv | Not advertising `child: {:filter_relationship, :parent}`, `parent: {:filter_relationship, :tags}`, but not rejected either: wrong answers |
+| Load each aggregate kind on records | csv | Not advertising `parent: {:aggregate, :count}`, `parent: {:aggregate, :sum}`, `parent: {:aggregate, :avg}`, `parent: {:aggregate, :min}`, `parent: {:aggregate, :max}`, `parent: {:aggregate, :exists}`, `parent: {:aggregate, :first}`, `parent: {:aggregate, :list}`, `parent: {:aggregate, :custom}`, but not rejected either: wrong answers |
+| Run each aggregate kind over a whole query | csv | Not advertising `child: {:query_aggregate, :count}`, `child: {:query_aggregate, :sum}`, `child: {:query_aggregate, :avg}`, `child: {:query_aggregate, :min}`, `child: {:query_aggregate, :max}`, `child: {:query_aggregate, :exists}`, `child: {:query_aggregate, :first}`, `child: {:query_aggregate, :list}`, `child: {:query_aggregate, :custom}`, but not rejected either: wrong answers |
+| Defaults, nils, uniqueness and field counts | csv | Not advertising `parent: {:aggregate, :list}`, `parent: {:aggregate, :count}`, but not rejected either: wrong answers |
+| Aggregate decimals, dates, times and constrained types | csv | Not advertising `parent: {:aggregate, :sum}`, `parent: {:aggregate, :max}`, but not rejected either: wrong answers |
+| Order first and list aggregates, including nils and ties | csv | Not advertising `parent: {:aggregate, :first}`, `parent: {:aggregate, :list}`, but not rejected either: wrong answers |
+| Aggregate calculations and other aggregates | csv | Not advertising `parent: {:aggregate, :sum}`, but not rejected either: wrong answers |
+| Filter the records an aggregate uses | csv | Not advertising `parent: :aggregate_filter`, but not rejected either: wrong answers |
+| Aggregate filters through to-many relationships count each record once | csv | Not advertising `child: {:filter_relationship, :ratings}`, but not rejected either: wrong answers |
+| Aggregate filters that use other aggregates | csv | Not advertising `child: :aggregate_filter`, but not rejected either: wrong answers |
+| Aggregate filters that reference the parent record | csv | Not advertising `parent: {:aggregate_relationship, :above_threshold}`, but not rejected either: wrong answers |
+| Aggregate over to-one, multi-hop and many-to-many paths | csv | Not advertising `parent: {:aggregate_relationship, :tags}`, `parent: {:aggregate, :unrelated}`, but not rejected either: wrong answers |
+| Aggregate over manual and attribute-free relationships | csv | Not advertising `parent: {:aggregate_relationship, :manual_children}`, `parent: {:aggregate_relationship, :all_children}`, but not rejected either: wrong answers |
+| Aggregate over limited, offset and from-many relationships | csv | Not advertising `parent: {:aggregate_relationship, :top_children}`, but not rejected either: wrong answers |
+| Root aggregates over sorted, limited and offset queries | csv | Not advertising `child: {:query_aggregate, :sum}`, but not rejected either: wrong answers |
+| Distinct counts over composite and missing keys | csv | Not advertising `parent: :composite_primary_key`, but not rejected either: wrong answers |
+| Filter, sort, paginate and calculate with aggregates | csv | Not advertising `parent: :aggregate_filter`, `parent: :aggregate_sort`, but not rejected either: wrong answers |
+| Aggregates respect read actions, arguments, actor and context | csv | Not advertising `parent: {:aggregate_relationship, :children}`, but not rejected either: wrong answers |
+| Seeded filtered aggregates match an in-memory reference | csv | Not advertising `parent: {:aggregate, :count}`, `child: {:query_aggregate, :count}`, but not rejected either: wrong answers |
 | Upsert on an identity, in bulk, with conditions | ets | Works without advertising `tenant_item: :bulk_upsert_return_skipped` |
 | Bulk create with partial success | sqlite | Works without advertising `tenant_item: :bulk_create_with_partial_success` |
 | Bulk create with partial success | postgres | Works without advertising `tenant_item: :bulk_create_with_partial_success` |
 | Bulk create with partial success | ets | Works without advertising `tenant_item: :bulk_create_with_partial_success` |
+| Bulk create with partial success | csv | Not advertising `tenant_item: :bulk_create_with_partial_success`, but not rejected either: wrong answers |
+| Bulk update atomically | csv | Not advertising `tenant_item: :update_query`, `tenant_item: {:atomic, :update}`, but not rejected either: wrong answers |
+| Writes that filter by or read aggregates | csv | Not advertising `parent: :update_query`, `parent: :destroy_query`, but not rejected either: wrong answers |
+| Lock rows for update | csv | Not advertising `parent: {:lock, :for_update}`, but not rejected either: wrong answers |
+| Tenancy scopes aggregates, including explicit bypass | csv | Not advertising `tenant_parent: {:aggregate, :count}`, but not rejected either: wrong answers |
 | Tenancy scopes pages and counts | sqlite | Works without advertising `tenant_parent: :keyset` |
 | Tenancy scopes pages and counts | postgres | Works without advertising `tenant_parent: :keyset` |
 | Tenancy scopes pages and counts | ets | Not advertising `tenant_parent: :keyset`, but not rejected either: wrong answers |
+| Tenancy scopes creates, updates and destroys | csv | Works without advertising `tenant_item: :destroy_query` |
+| Policies filter what aggregates count | csv | Not advertising `secure_parent: {:aggregate, :count}`, but not rejected either: wrong answers |
+| Policies filter pages and counts | csv | Advertised, but ⛔ Not supported |
+
+## Setup failures
+
+A setup failure means the data layer could not store or read back a
+scenario's fixture, so the scenario never ran its operation. These are the
+distinct reasons, with how many scenarios each stopped.
+
+### AshSqlite
+
+None.
+
+### AshPostgres
+
+None.
+
+### Ash.DataLayer.Ets
+
+None.
+
+### AshCsv
+
+| Scenarios | Reason |
+| ---: | --- |
+| 188 | stored value for visible could not be casted from the stored value to type Ash.Type.Boolean: "true" |
+| 58 | protocol String.Chars not implemented for Map |
 
 ## Definition warnings
 
@@ -210,4 +301,15 @@ None.
 ### Ash.DataLayer.Ets
 
 None.
+
+### AshCsv
+
+| Resources | Warning |
+| ---: | --- |
+| 3 | Data layer does not support composite primary keys |
+| 1 | Ash.Conformance.Csv.Child.ratings is not aggregatable |
+| 1 | Ash.Conformance.Csv.ContextParent.items is not aggregatable |
+| 1 | Ash.Conformance.Csv.Parent.children is not aggregatable |
+| 1 | Ash.Conformance.Csv.SecureParent.items is not aggregatable |
+| 1 | Ash.Conformance.Csv.TenantParent.items is not aggregatable |
 

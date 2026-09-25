@@ -66,5 +66,10 @@ defmodule Ash.Conformance.EcosystemTest do
     assert rows != []
     assert Enum.all?(rows, &(&1.classification == :setup_failed))
     assert Enum.all?(rows, &String.contains?(&1.actual, "Setup failed: no storage"))
+
+    markdown =
+      Ecosystem.markdown([%{adapter: NoStorage, rows: rows, warnings: [], unavailable: nil}])
+
+    assert markdown =~ "| #{length(rows)} | no storage |"
   end
 end

@@ -60,8 +60,9 @@ defmodule Ash.Conformance.Resources do
   @doc "The definition warnings kept by `compile!/1`, or `[]` if it has not run."
   def warnings(adapter), do: :persistent_term.get({__MODULE__, adapter}, [])
 
-  # Spark prints each verifier failure as a DslError naming the resource,
-  # followed by the reason. Keep the reason, without the resource or stack.
+  # Spark prints each verifier failure as a DslError naming the resource, an
+  # optional `section -> entity defined in file:line:` location, then the
+  # reason. Keep the reason, without the resource, location or stack.
   defp definition_warnings(output) do
     output
     |> String.split(~r/warning: \*\* \(Spark\.Error\.DslError\)/)
@@ -70,7 +71,10 @@ defmodule Ash.Conformance.Resources do
       chunk
       |> String.split("\n")
       |> Enum.map(&String.trim/1)
-      |> Enum.reject(&(&1 == "" or String.starts_with?(&1, ["(", "[", "│", "└", "warning:"])))
+      |> Enum.reject(
+        &(&1 == "" or String.starts_with?(&1, ["(", "[", "│", "└", "warning:"]) or
+            &1 =~ ~r/ -> .* defined in \S*:\d*:$/)
+      )
       |> Enum.take(1)
       |> Enum.join()
     end)

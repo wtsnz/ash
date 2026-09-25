@@ -12,7 +12,7 @@ config :logger, level: :warning
 # and gate CI; unreviewed ones run only as surveys in the ecosystem report.
 config :ash_conformance,
   adapters: [Ash.Conformance.Sqlite, Ash.Conformance.Postgres],
-  unreviewed_adapters: [Ash.Conformance.Ets]
+  unreviewed_adapters: [Ash.Conformance.Ets, Ash.Conformance.Csv]
 
 config :ash_conformance, Ash.Conformance.SqliteRepo,
   database: Path.expand("../tmp/data_layer.sqlite3", __DIR__),

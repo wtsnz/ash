@@ -73,6 +73,12 @@ defmodule Ash.Conformance.Report.FeatureReport do
       do: nil
 
   def claim_check(feature, adapter, summary) do
+    # A data layer whose resources failed to compile has no claims to probe.
+    if Enum.all?(feature.claims, fn {role, _} -> Code.ensure_loaded?(adapter.resource(role)) end),
+      do: compare_claims(feature, adapter, summary)
+  end
+
+  defp compare_claims(feature, adapter, summary) do
     claims =
       Enum.map(feature.claims, fn {role, claim} -> Capabilities.probe(adapter, role, claim) end)
 

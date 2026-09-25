@@ -38,6 +38,8 @@ defmodule Ash.Conformance.Adapter do
   @callback resource_config(table :: String.t()) :: {module(), Macro.t()}
   @doc "Options added to every shared identity, such as `pre_check?: true`."
   @callback identity_options() :: keyword()
+  @doc "Options added to `use Ash.Resource` for every shared resource, such as `extensions`."
+  @callback resource_options() :: keyword()
 
   @doc """
   Reviewed adapters, from config. The suite names no adapter itself, so the
@@ -128,6 +130,7 @@ defmodule Ash.Conformance.Adapter do
       def checkout!, do: :ok
       def checkin!, do: :ok
       def identity_options, do: []
+      def resource_options, do: []
 
       defoverridable profiles: 0,
                      resource: 1,
@@ -140,7 +143,8 @@ defmodule Ash.Conformance.Adapter do
                      manual_relationship: 0,
                      checkout!: 0,
                      checkin!: 0,
-                     identity_options: 0
+                     identity_options: 0,
+                     resource_options: 0
     end
   end
 end

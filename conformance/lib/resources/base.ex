@@ -23,11 +23,15 @@ defmodule Ash.Conformance.Resources.Base do
     # shared table.
     {data_layer, config} = adapter.resource_config(table)
 
-    quote do
-      use Ash.Resource,
+    options =
+      [
         domain: Ash.Conformance.Resources.Domain,
-        data_layer: unquote(data_layer),
-        authorizers: unquote(authorizers)
+        data_layer: data_layer,
+        authorizers: authorizers
+      ] ++ adapter.resource_options()
+
+    quote do
+      use Ash.Resource, unquote(options)
 
       unquote(config)
 
