@@ -147,6 +147,7 @@ Elixir scenarios and expectations define the contract. CI runs each adapter inde
 | [`path.no_attributes_parent`](lib/scenarios/relationships.ex#L114) | [unsupported](GAPS.md#no-attributes) · AshSQL | supported |
 | [`path.repeated_many_to_many`](lib/scenarios/relationships.ex#L97) | [unresolved](GAPS.md#path-multiplicity) · Ash | [unresolved](GAPS.md#path-multiplicity) · Ash |
 | [`path.root_relationship`](lib/scenarios/relationships.ex#L120) | [unsupported](GAPS.md#root-relationship) · AshSQL | [known_defect](GAPS.md#root-relationship) · AshSQL |
+| [`path.through_count`](lib/scenarios/loads.ex#L58) | [known_defect](GAPS.md#through-fallback) · Ash | supported |
 | [`path.to_one`](lib/scenarios/relationships.ex#L13) | supported | supported |
 | [`path.to_one_to_many_first`](lib/scenarios/relationships.ex#L25) | supported | supported |
 | [`path.to_one_to_many_list`](lib/scenarios/relationships.ex#L36) | supported | supported |
@@ -321,7 +322,7 @@ The first owner is where the fix starts. Counts are scenarios linked to each gap
 | [unique-list-order](GAPS.md#unique-list-order) | Ash | decision | 1 | 1 |
 | [authorization-bounds](GAPS.md#authorization-bounds) | Ash, then AshSQL | implementation | 1 | 1 |
 | [many-to-many-load-limit](GAPS.md#many-to-many-load-limit) | Ash, then AshSQLite | implementation | 1 | 0 |
-| [through-fallback](GAPS.md#through-fallback) | Ash, then AshSQLite | implementation | 1 | 0 |
+| [through-fallback](GAPS.md#through-fallback) | Ash, then AshSQLite | implementation | 2 | 0 |
 | [skipped-upsert-tenant](GAPS.md#skipped-upsert-tenant) | AshPostgres | implementation | 0 | 1 |
 | [default-sort](GAPS.md#default-sort) | AshSQL | implementation | 1 | 1 |
 | [filter-dependencies](GAPS.md#filter-dependencies) | AshSQL | implementation | 4 | 0 |

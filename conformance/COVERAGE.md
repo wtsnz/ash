@@ -89,7 +89,7 @@ Claims never decide what runs.
 | `aggregates.fanout` | Aggregate filters through to-many relationships count each record once | implemented | 11 |
 | `aggregates.dependencies` | Aggregate filters that use other aggregates | implemented | 5 |
 | `aggregates.parent` | Aggregate filters that reference the parent record | implemented | 8 |
-| `aggregates.paths` | Aggregate over to-one, multi-hop and many-to-many paths | implemented | 16 |
+| `aggregates.paths` | Aggregate over to-one, multi-hop and many-to-many paths | implemented | 17 |
 | `aggregates.special_relationships` | Aggregate over manual and attribute-free relationships | implemented | 3 |
 | `aggregates.bounds` | Aggregate over limited, offset and from-many relationships | implemented | 9 |
 | `aggregates.root_bounds` | Root aggregates over sorted, limited and offset queries | implemented | 7 |
@@ -147,4 +147,4 @@ obligation. Fallback evidence comes from instrumented core dispatch tests and
 from scenarios that name a fallback. Other adapter scenarios report
 `unobserved`.
 
-297 executable scenarios are registered. See [MATRIX.md](MATRIX.md) for individual contracts.
+298 executable scenarios are registered. See [MATRIX.md](MATRIX.md) for individual contracts.

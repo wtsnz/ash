@@ -246,8 +246,19 @@ defmodule Ash.Conformance.Report do
     "<code>#{escaped}</code>"
   end
 
+  @doc "Results for the pinned set go in `results/`; other sets in `results/<set>/`."
+  def dependency_set, do: System.get_env("CONFORMANCE_DEPS", "pinned")
+
+  def results_dir do
+    case dependency_set() do
+      "pinned" -> "results"
+      set -> Path.join("results", set)
+    end
+  end
+
   def write_results!(rows) do
-    File.mkdir_p!("results")
+    dir = results_dir()
+    File.mkdir_p!(dir)
     name = Adapter.selected() |> Enum.map_join("-", & &1.id())
     rows = Enum.sort_by(rows, &{&1.scenario, &1.adapter})
     counts = Enum.frequencies_by(rows, &"#{&1.status}/#{&1.execution}")
@@ -261,11 +272,11 @@ defmodule Ash.Conformance.Report do
     }
 
     markdown = summary(rows, "")
-    File.write!("results/#{name}.json", Jason.encode!(report, pretty: true) <> "\n")
-    File.write!("results/#{name}.md", markdown)
+    File.write!(Path.join(dir, "#{name}.json"), Jason.encode!(report, pretty: true) <> "\n")
+    File.write!(Path.join(dir, "#{name}.md"), markdown)
 
     File.write!(
-      "results/features-#{name}.md",
+      Path.join(dir, "features-#{name}.md"),
       Ash.Conformance.FeatureReport.markdown(rows, Adapter.selected(), :observed)
     )
 
@@ -289,7 +300,8 @@ defmodule Ash.Conformance.Report do
         {adapter.id(),
          adapter
          |> Ash.Conformance.Benchmark.environment()
-         |> Map.put(:local_dependency_overrides, local_overrides())}
+         |> Map.put(:local_dependency_overrides, local_overrides())
+         |> Map.put(:dependency_set, dependency_set())}
       rescue
         exception ->
           {adapter.id(),

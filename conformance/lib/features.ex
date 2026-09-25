@@ -413,7 +413,7 @@ defmodule Ash.Conformance.Features do
            "#{@docs}/resources/aggregates.md",
            claims: [parent: {:aggregate_relationship, :tags}, parent: {:aggregate, :unrelated}],
            scenarios:
-             ~w(path.to_one path.multi_hop path.many_to_many path.many_to_many_first path.many_to_many_list path.final_many_to_many_scalar path.final_many_to_many_first path.final_many_to_many_list path.final_many_to_many_custom path.intermediate_many_to_many path.repeated_many_to_many path.to_one_to_many_sum path.to_one_to_many_first path.to_one_to_many_list path.unrelated path.root_relationship)
+             ~w(path.to_one path.through_count path.multi_hop path.many_to_many path.many_to_many_first path.many_to_many_list path.final_many_to_many_scalar path.final_many_to_many_first path.final_many_to_many_list path.final_many_to_many_custom path.intermediate_many_to_many path.repeated_many_to_many path.to_one_to_many_sum path.to_one_to_many_first path.to_one_to_many_list path.unrelated path.root_relationship)
          ),
          feature(
            "aggregates.special_relationships",

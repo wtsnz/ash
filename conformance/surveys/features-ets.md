@@ -4,7 +4,7 @@
 
 Generated from an unreviewed run: each result was classified automatically against the intended answer. Nothing here has been reviewed.
 
-Feature catalog version 1: 80 features and 297 scenarios.
+Feature catalog version 1: 80 features and 298 scenarios.
 
 | Status | Meaning |
 | --- | --- |
@@ -97,7 +97,7 @@ that is not fully working, and who owns the fix.
 | Aggregate filters through to-many relationships count each record once | 🟡 Partial 10/11 | `filter.fanout_custom` rejected |
 | Aggregate filters that use other aggregates | ✅ Works 5/5 |  |
 | Aggregate filters that reference the parent record | 🟡 Partial 4/8 | `filter.nested_parent` wrong, `filter.parent` wrong, `filter.parent_join` wrong, `filter.parent_through` wrong |
-| Aggregate over to-one, multi-hop and many-to-many paths | 🟡 Partial 13/16 | `path.final_many_to_many_custom` rejected, `path.repeated_many_to_many` open question, `path.root_relationship` wrong |
+| Aggregate over to-one, multi-hop and many-to-many paths | 🟡 Partial 14/17 | `path.final_many_to_many_custom` rejected, `path.repeated_many_to_many` open question, `path.root_relationship` wrong |
 | Aggregate over manual and attribute-free relationships | ✅ Works 3/3 |  |
 | Aggregate over limited, offset and from-many relationships | 🟡 Partial 6/9 | `bounds.filter_after_limit` wrong, `bounds.list_filter_after_limit` wrong, `bounds.many_to_many_query_limit` open question |
 | Root aggregates over sorted, limited and offset queries | 🟡 Partial 6/7 | `bounds.root_custom_limit` rejected |

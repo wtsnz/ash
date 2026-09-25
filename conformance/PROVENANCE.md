@@ -45,6 +45,11 @@ The dependency then becomes a path with `override: true`. Nothing is substituted
 unless a variable is set, CI sets none, and each report lists any override that
 was active. Pins change only by editing `mix.exs` and the lock.
 
+`CONFORMANCE_DEPS=upstream` swaps the three adapters for ash-project `main`,
+locked separately in `mix.upstream.lock` with its own deps and build
+directories. The suite compiles against both sets: the SQLite custom aggregate
+module has no SQL implementation where AshSQLite lacks custom aggregates.
+
 The SQLite repo enables `write_transactions?`. AshSQLite defaults it to false for
 existing apps but recommends it, and its installer enables it. With it off,
 AshSQLite advertises no transactions and Ash runs actions without one.

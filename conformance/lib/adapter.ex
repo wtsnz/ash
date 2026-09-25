@@ -135,12 +135,22 @@ defmodule Ash.Conformance.Postgres do
   end
 end
 
-defmodule Ash.Conformance.SqliteSum do
-  @moduledoc false
-  use Ash.Resource.Aggregate.CustomAggregate
-  use AshSqlite.CustomAggregate
-  import Ecto.Query
-  def dynamic(opts, binding), do: dynamic(sum(field(as(^binding), ^opts[:field])))
+# AshSQLite gained custom aggregates in the unreleased aggregate work. Against
+# a release without them, the module has no SQL implementation and the
+# custom-aggregate scenarios fail at runtime instead.
+if Code.ensure_loaded?(AshSqlite.CustomAggregate) do
+  defmodule Ash.Conformance.SqliteSum do
+    @moduledoc false
+    use Ash.Resource.Aggregate.CustomAggregate
+    use AshSqlite.CustomAggregate
+    import Ecto.Query
+    def dynamic(opts, binding), do: dynamic(sum(field(as(^binding), ^opts[:field])))
+  end
+else
+  defmodule Ash.Conformance.SqliteSum do
+    @moduledoc false
+    use Ash.Resource.Aggregate.CustomAggregate
+  end
 end
 
 defmodule Ash.Conformance.PostgresSum do

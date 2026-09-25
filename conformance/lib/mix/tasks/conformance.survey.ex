@@ -7,6 +7,7 @@ defmodule Mix.Tasks.Conformance.Survey do
 
       MIX_ENV=test mix conformance.survey ets
       MIX_ENV=test mix conformance.survey ets --output surveys
+      CONFORMANCE_DEPS=upstream MIX_ENV=test mix conformance.survey sqlite
 
   Writes `survey-ADAPTER.json` and an unreviewed `features-ADAPTER.md`.
   """
@@ -17,7 +18,8 @@ defmodule Mix.Tasks.Conformance.Survey do
     Mix.Task.run("app.start")
     adapter = Ash.Conformance.Adapter.find!(name)
     rows = Ash.Conformance.Survey.run(adapter)
-    counts = Ash.Conformance.Survey.write!(adapter, rows, opts[:output] || "results")
+    output = opts[:output] || Ash.Conformance.Report.results_dir()
+    counts = Ash.Conformance.Survey.write!(adapter, rows, output)
     Mix.shell().info("Unreviewed #{name} survey: #{inspect(counts)}")
   end
 end

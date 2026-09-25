@@ -62,13 +62,20 @@ defmodule Ash.Conformance.Survey do
 
   defp rejection?(_outcome), do: false
 
-  def write!(adapter, rows, dir \\ "results") do
+  def write!(adapter, rows, dir \\ Report.results_dir()) do
     File.mkdir_p!(dir)
     counts = Enum.frequencies_by(rows, & &1.classification)
 
     File.write!(
       Path.join(dir, "survey-#{adapter.id()}.json"),
-      Jason.encode!(%{adapter: adapter.id(), unreviewed: true, counts: counts, scenarios: rows},
+      Jason.encode!(
+        %{
+          adapter: adapter.id(),
+          dependency_set: Report.dependency_set(),
+          unreviewed: true,
+          counts: counts,
+          scenarios: rows
+        },
         pretty: true
       ) <> "\n"
     )

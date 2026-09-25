@@ -132,14 +132,13 @@ defmodule Ash.Conformance.Expectations do
         sqlite(
           defect_value(
             {true,
-             %{
-               1 => {[101, 102, 103, 104], 4},
-               2 => {[101, 102, 103, 104], 0},
-               3 => {[101, 102, 103, 104], 0}
-             }},
+             %{1 => [101, 102, 103, 104], 2 => [101, 102, 103, 104], 3 => [101, 102, 103, 104]}},
             "through-fallback"
           )
         ),
+      # The aggregate is correct; only the definition warning differs.
+      "path.through_count" =>
+        sqlite(defect_value({true, %{1 => 4, 2 => 0, 3 => 0}}, "through-fallback")),
       "upsert.condition" =>
         sqlite(
           defect_error(

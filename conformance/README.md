@@ -77,6 +77,30 @@ CONFORMANCE_ASH_SQLITE_PATH=../../ash_sqlite CONFORMANCE_ADAPTERS=sqlite mise ex
 ```
 
 `CONFORMANCE_ASH_SQL_PATH` and `CONFORMANCE_ASH_POSTGRES_PATH` work the same way.
+
+### Compare two dependency stacks
+
+`CONFORMANCE_DEPS` picks a dependency set. `pinned`, the default, is the
+unreleased aggregate work in `mix.lock`. `upstream` is ash-project `main` for
+AshSQL, AshSQLite and AshPostgres, locked in `mix.upstream.lock`; run
+`CONFORMANCE_DEPS=upstream mix deps.update ash_sql ash_sqlite ash_postgres` to
+move it forward. Each set has its own deps, build and results directories, so
+switching never rebuilds the other.
+
+A survey says what a stack actually supports, whatever its expectations, so
+compare surveys:
+
+```sh
+CONFORMANCE_DEPS=upstream mise exec -- mix deps.get
+CONFORMANCE_DEPS=upstream MIX_ENV=test mise exec -- mix conformance.survey sqlite
+MIX_ENV=test mise exec -- mix conformance.survey sqlite
+MIX_ENV=test mise exec -- mix conformance.compare_surveys \
+  results/upstream/survey-sqlite.json results/survey-sqlite.json
+```
+
+The comparison lists every feature and scenario whose result changed, and is
+written next to the current survey. Strict `mix test` runs describe the pinned
+set; on `upstream` they fail wherever main differs from the recorded contracts.
 Local paths bypass `mix.lock`, so `--check-locked` does not apply, and every
 report lists them under `local_dependency_overrides`. Unset the variable and run
 `mix deps.get` to return to the pins.

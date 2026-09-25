@@ -49,8 +49,17 @@ defmodule Ash.Conformance.Scenarios.Loads do
       new(
         "load.through",
         :relationships,
-        {false, %{1 => {[101, 102, 103, 104], 4}, 2 => {[], 0}, 3 => {[], 0}}},
-        &through/1,
+        {false, %{1 => [101, 102, 103, 104], 2 => [], 3 => []}},
+        fn ctx -> through(ctx, :ratings, fn record -> Enum.map(record.ratings, & &1.id) end) end,
+        semantic_basis: "../documentation/topics/resources/relationships.md",
+        capabilities: [parent: :through_relationship]
+      ),
+      # The same relationship as an aggregate path, judged separately.
+      new(
+        "path.through_count",
+        :relationships,
+        {false, %{1 => 4, 2 => 0, 3 => 0}},
+        fn ctx -> through(ctx, :rating_count, & &1.rating_count) end,
         semantic_basis: "../documentation/topics/resources/relationships.md",
         capabilities: [parent: :through_relationship]
       )
@@ -67,15 +76,15 @@ defmodule Ash.Conformance.Scenarios.Loads do
     |> Map.new(fn row -> {row.id, row |> Map.fetch!(relationship) |> Enum.map(& &1.id)} end)
   end
 
-  defp through(ctx) do
+  defp through(ctx, load, project) do
     {module, warned?} = through_resource(ctx.adapter)
 
     loads =
       module
       |> Ash.Query.sort(:id)
-      |> Ash.Query.load([:ratings, :rating_count])
+      |> Ash.Query.load(load)
       |> Ash.read!(authorize?: false)
-      |> Map.new(&{&1.id, {Enum.map(&1.ratings, fn rating -> rating.id end), &1.rating_count}})
+      |> Map.new(&{&1.id, project.(&1)})
 
     {warned?, loads}
   end
