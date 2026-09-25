@@ -4,7 +4,7 @@
 
 Generated from an unreviewed run: each result was classified automatically against the intended answer. Nothing here has been reviewed.
 
-Feature catalog version 1: 103 features and 367 scenarios.
+Feature catalog version 1: 118 features and 581 scenarios.
 
 | Status | Meaning |
 | --- | --- |
@@ -175,7 +175,27 @@ owns the fix.
 | Policies filter pages and counts | ❌ Broken 0/3 | `auth.keyset_pages` crashed, `auth.offset_page` crashed, `auth.tenant_interaction` wrong |
 | Policies filter and forbid writes | 🟡 Partial 3/4 | `auth.write_bulk_update_stream` wrong |
 
-## 11. Consistency checks
+## 11. Policies
+
+| Feature | clickhouse | Not working |
+| --- | --- | --- |
+| A filter policy on the actor | 🟡 Partial 10/16 | `policy.owner.aggregate_filter` crashed, `policy.owner.bulk_update` wrong, `policy.owner.exists_filter_input` crashed, `policy.owner.get_error` crashed, `policy.owner.loaded_count` wrong, `policy.owner.loaded_sum` wrong |
+| The same policy with no actor | 🟡 Partial 11/16 | `policy.owner_nil_actor.aggregate_filter` crashed, `policy.owner_nil_actor.bulk_destroy` wrong, `policy.owner_nil_actor.exists_filter_input` crashed, `policy.owner_nil_actor.loaded_count` wrong, `policy.owner_nil_actor.loaded_sum` wrong |
+| forbid_if before authorize_if | 🟡 Partial 10/16 | `policy.forbid.aggregate_filter` crashed, `policy.forbid.bulk_update` wrong, `policy.forbid.exists_filter_input` crashed, `policy.forbid.get_error` crashed, `policy.forbid.loaded_count` wrong, `policy.forbid.loaded_sum` wrong |
+| A bypass policy, for an actor it does not let through | 🟡 Partial 10/16 | `policy.bypass.aggregate_filter` crashed, `policy.bypass.bulk_update` wrong, `policy.bypass.exists_filter_input` crashed, `policy.bypass.get_error` crashed, `policy.bypass.loaded_count` wrong, `policy.bypass.loaded_sum` wrong |
+| A bypass policy, for an actor it lets through | 🟡 Partial 8/13 | `policy.bypass_admin.aggregate_filter` crashed, `policy.bypass_admin.bulk_update` wrong, `policy.bypass_admin.exists_filter_input` crashed, `policy.bypass_admin.loaded_count` wrong, `policy.bypass_admin.loaded_sum` wrong |
+| Two policies that must both pass | 🟡 Partial 10/16 | `policy.all_of.aggregate_filter` crashed, `policy.all_of.bulk_update` wrong, `policy.all_of.exists_filter_input` crashed, `policy.all_of.get_error` crashed, `policy.all_of.loaded_count` wrong, `policy.all_of.loaded_sum` wrong |
+| One policy whose checks either pass | 🟡 Partial 10/16 | `policy.any_of.aggregate_filter` crashed, `policy.any_of.bulk_update` wrong, `policy.any_of.exists_filter_input` crashed, `policy.any_of.get_error` crashed, `policy.any_of.loaded_count` wrong, `policy.any_of.loaded_sum` wrong |
+| A policy on a to-one relationship | 🟡 Partial 1/16 | `policy.related.aggregate_filter` crashed, `policy.related.bulk_destroy` crashed, `policy.related.bulk_update` wrong, `policy.related.count` crashed, `policy.related.exists_filter_input` crashed, `policy.related.get_error` crashed, `policy.related.get_hidden` crashed, `policy.related.keyset_pages` crashed, `policy.related.load` crashed, `policy.related.loaded_count` crashed, `policy.related.loaded_sum` crashed, `policy.related.offset_page` crashed, `policy.related.read` crashed, `policy.related.sum` crashed, `policy.related.update_hidden` crashed |
+| A policy on a multi-hop exists | 🟡 Partial 6/16 | `policy.member.aggregate_filter` crashed, `policy.member.bulk_destroy` crashed, `policy.member.bulk_update` crashed, `policy.member.count` crashed, `policy.member.exists_filter_input` crashed, `policy.member.get_error` crashed, `policy.member.loaded_count` wrong, `policy.member.loaded_sum` wrong, `policy.member.sum` crashed, `policy.member.update_hidden` crashed |
+| A policy composed with can_read | 🟡 Partial 6/16 | `policy.can_read.aggregate_filter` crashed, `policy.can_read.bulk_destroy` crashed, `policy.can_read.bulk_update` crashed, `policy.can_read.count` crashed, `policy.can_read.exists_filter_input` crashed, `policy.can_read.get_error` crashed, `policy.can_read.loaded_count` wrong, `policy.can_read.loaded_sum` wrong, `policy.can_read.sum` crashed, `policy.can_read.update_hidden` crashed |
+| A strict policy, for an actor it forbids | 🟡 Partial 11/16 | `policy.strict.aggregate_filter` crashed, `policy.strict.bulk_destroy` wrong, `policy.strict.exists_filter_input` crashed, `policy.strict.loaded_count` wrong, `policy.strict.loaded_sum` wrong |
+| A strict policy, for an actor it allows | 🟡 Partial 8/13 | `policy.strict_admin.aggregate_filter` crashed, `policy.strict_admin.bulk_update` wrong, `policy.strict_admin.exists_filter_input` crashed, `policy.strict_admin.loaded_count` wrong, `policy.strict_admin.loaded_sum` wrong |
+| Field policies hide values, in reads, filters and aggregates | ❌ Broken 0/4 | `policy.field.field_aggregate` wrong, `policy.field.field_filter` crashed, `policy.field.field_filter_input` crashed, `policy.field.field_read` crashed |
+| A filter check on create runs after the insert | ❌ Broken 0/2 | `policy.owner.create_other` wrong, `policy.owner.create_own` wrong |
+| Every policy path, without authorization | 🟡 Partial 16/22 | `policy.control.aggregate_filter` crashed, `policy.control.bulk_update` wrong, `policy.control.exists_filter_input` crashed, `policy.control.field_aggregate` wrong, `policy.control.loaded_count` wrong, `policy.control.loaded_sum` wrong |
+
+## 12. Consistency checks
 
 | Feature | clickhouse | Not working |
 | --- | --- | --- |
@@ -219,6 +239,7 @@ whose claims disagree with the result:
 | Writes that filter by or read aggregates | clickhouse | Advertised, but ❌ Broken |
 | Tenancy scopes pages and counts | clickhouse | Not advertising `tenant_parent: :keyset`, but not rejected either: wrong answers |
 | Policies filter pages and counts | clickhouse | Advertised, but ❌ Broken |
+| A filter check on create runs after the insert | clickhouse | Not advertising `policy_owner_note: :transact`, but not rejected either: wrong answers |
 
 
 ## Storage
@@ -254,3 +275,27 @@ values of that class.
 | Embedded resources | `—` | 🚫 | 🚫 | 🚫 | ordinary, table: ClickHouse does not support Nullable(Map(String, String)) because the inner type is a |
 | Arrays of embedded resources | `—` | 🚫 | 🚫 | 🚫 | ordinary, table: ClickHouse does not support Nullable(Array(String)) because the inner type is a |
 | Unions | `—` | 🚫 | – | 🚫 | ordinary, table: ClickHouse does not support Nullable(Map(String, String)) because the inner type is a |
+
+## Policies
+
+✅ returns the answer Ash's policy semantics define; ❌ does not, while the
+same path works without authorization; ◌ the path fails even without
+authorization, so the policy cannot be judged; ❔ did not run; – does not
+apply, such as getting a hidden record when the actor may read every note.
+
+| Case | `read` | `get_hidden` | `get_error` | `count` | `sum` | `offset_page` | `keyset_pages` | `load` | `loaded_count` | `loaded_sum` | `aggregate_filter` | `exists_filter` | `exists_filter_input` | `bulk_update` | `bulk_destroy` | `update_hidden` | `field_read` | `field_filter` | `field_filter_input` | `field_aggregate` | `create_own` | `create_other` |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| owner | ✅ | ✅ | ❌ | ✅ | ✅ | ✅ | ✅ | ✅ | ◌ | ◌ | ◌ | ✅ | ◌ | ◌ | ✅ | ✅ | – | – | – | – | ❌ | ❌ |
+| owner_nil_actor | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ◌ | ◌ | ◌ | ✅ | ◌ | ✅ | ❌ | ✅ | – | – | – | – | – | – |
+| forbid | ✅ | ✅ | ❌ | ✅ | ✅ | ✅ | ✅ | ✅ | ◌ | ◌ | ◌ | ✅ | ◌ | ◌ | ✅ | ✅ | – | – | – | – | – | – |
+| bypass | ✅ | ✅ | ❌ | ✅ | ✅ | ✅ | ✅ | ✅ | ◌ | ◌ | ◌ | ✅ | ◌ | ◌ | ✅ | ✅ | – | – | – | – | – | – |
+| bypass_admin | ✅ | – | – | ✅ | ✅ | ✅ | ✅ | ✅ | ◌ | ◌ | ◌ | ✅ | ◌ | ◌ | ✅ | – | – | – | – | – | – | – |
+| all_of | ✅ | ✅ | ❌ | ✅ | ✅ | ✅ | ✅ | ✅ | ◌ | ◌ | ◌ | ✅ | ◌ | ◌ | ✅ | ✅ | – | – | – | – | – | – |
+| any_of | ✅ | ✅ | ❌ | ✅ | ✅ | ✅ | ✅ | ✅ | ◌ | ◌ | ◌ | ✅ | ◌ | ◌ | ✅ | ✅ | – | – | – | – | – | – |
+| related | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ◌ | ◌ | ◌ | ✅ | ◌ | ◌ | ❌ | ❌ | – | – | – | – | – | – |
+| member | ✅ | ✅ | ❌ | ❌ | ❌ | ✅ | ✅ | ✅ | ◌ | ◌ | ◌ | ✅ | ◌ | ◌ | ❌ | ❌ | – | – | – | – | – | – |
+| can_read | ✅ | ✅ | ❌ | ❌ | ❌ | ✅ | ✅ | ✅ | ◌ | ◌ | ◌ | ✅ | ◌ | ◌ | ❌ | ❌ | – | – | – | – | – | – |
+| strict | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ◌ | ◌ | ◌ | ✅ | ◌ | ✅ | ❌ | ✅ | – | – | – | – | – | – |
+| strict_admin | ✅ | – | – | ✅ | ✅ | ✅ | ✅ | ✅ | ◌ | ◌ | ◌ | ✅ | ◌ | ◌ | ✅ | – | – | – | – | – | – | – |
+| field | – | – | – | – | – | – | – | – | – | – | – | – | – | – | – | – | ❌ | ❌ | ❌ | ◌ | – | – |
+| control (no authorization) | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ | ✅ | ❌ | ❌ | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ | ✅ | ✅ |

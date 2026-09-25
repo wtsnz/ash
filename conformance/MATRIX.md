@@ -157,6 +157,220 @@ Elixir scenarios and expectations define the contract. CI runs each adapter inde
 | [`path.to_one_to_many_list`](lib/scenarios/aggregates/paths.ex#L36) | supported | supported |
 | [`path.to_one_to_many_sum`](lib/scenarios/aggregates/paths.ex#L17) | supported | supported |
 | [`path.unrelated`](lib/scenarios/aggregates/paths.ex#L100) | supported | supported |
+| [`policy.all_of.aggregate_filter`](lib/scenarios/policies.ex#L22) | supported | supported |
+| [`policy.all_of.bulk_destroy`](lib/scenarios/policies.ex#L22) | supported | supported |
+| [`policy.all_of.bulk_update`](lib/scenarios/policies.ex#L22) | supported | supported |
+| [`policy.all_of.count`](lib/scenarios/policies.ex#L22) | supported | supported |
+| [`policy.all_of.exists_filter`](lib/scenarios/policies.ex#L22) | supported | supported |
+| [`policy.all_of.exists_filter_input`](lib/scenarios/policies.ex#L22) | supported | supported |
+| [`policy.all_of.get_error`](lib/scenarios/policies.ex#L22) | [unsupported](GAPS.md#error-expressions) · AshSQLite | supported |
+| [`policy.all_of.get_hidden`](lib/scenarios/policies.ex#L22) | supported | supported |
+| [`policy.all_of.keyset_pages`](lib/scenarios/policies.ex#L22) | supported | supported |
+| [`policy.all_of.load`](lib/scenarios/policies.ex#L22) | supported | supported |
+| [`policy.all_of.loaded_count`](lib/scenarios/policies.ex#L22) | supported | supported |
+| [`policy.all_of.loaded_sum`](lib/scenarios/policies.ex#L22) | supported | supported |
+| [`policy.all_of.offset_page`](lib/scenarios/policies.ex#L22) | supported | supported |
+| [`policy.all_of.read`](lib/scenarios/policies.ex#L22) | supported | supported |
+| [`policy.all_of.sum`](lib/scenarios/policies.ex#L22) | supported | supported |
+| [`policy.all_of.update_hidden`](lib/scenarios/policies.ex#L22) | supported | supported |
+| [`policy.any_of.aggregate_filter`](lib/scenarios/policies.ex#L22) | supported | supported |
+| [`policy.any_of.bulk_destroy`](lib/scenarios/policies.ex#L22) | supported | supported |
+| [`policy.any_of.bulk_update`](lib/scenarios/policies.ex#L22) | supported | supported |
+| [`policy.any_of.count`](lib/scenarios/policies.ex#L22) | supported | supported |
+| [`policy.any_of.exists_filter`](lib/scenarios/policies.ex#L22) | supported | supported |
+| [`policy.any_of.exists_filter_input`](lib/scenarios/policies.ex#L22) | supported | supported |
+| [`policy.any_of.get_error`](lib/scenarios/policies.ex#L22) | [unsupported](GAPS.md#error-expressions) · AshSQLite | supported |
+| [`policy.any_of.get_hidden`](lib/scenarios/policies.ex#L22) | supported | supported |
+| [`policy.any_of.keyset_pages`](lib/scenarios/policies.ex#L22) | supported | supported |
+| [`policy.any_of.load`](lib/scenarios/policies.ex#L22) | supported | supported |
+| [`policy.any_of.loaded_count`](lib/scenarios/policies.ex#L22) | supported | supported |
+| [`policy.any_of.loaded_sum`](lib/scenarios/policies.ex#L22) | supported | supported |
+| [`policy.any_of.offset_page`](lib/scenarios/policies.ex#L22) | supported | supported |
+| [`policy.any_of.read`](lib/scenarios/policies.ex#L22) | supported | supported |
+| [`policy.any_of.sum`](lib/scenarios/policies.ex#L22) | supported | supported |
+| [`policy.any_of.update_hidden`](lib/scenarios/policies.ex#L22) | supported | supported |
+| [`policy.bypass.aggregate_filter`](lib/scenarios/policies.ex#L22) | supported | supported |
+| [`policy.bypass.bulk_destroy`](lib/scenarios/policies.ex#L22) | supported | supported |
+| [`policy.bypass.bulk_update`](lib/scenarios/policies.ex#L22) | supported | supported |
+| [`policy.bypass.count`](lib/scenarios/policies.ex#L22) | supported | supported |
+| [`policy.bypass.exists_filter`](lib/scenarios/policies.ex#L22) | supported | supported |
+| [`policy.bypass.exists_filter_input`](lib/scenarios/policies.ex#L22) | supported | supported |
+| [`policy.bypass.get_error`](lib/scenarios/policies.ex#L22) | [unsupported](GAPS.md#error-expressions) · AshSQLite | supported |
+| [`policy.bypass.get_hidden`](lib/scenarios/policies.ex#L22) | supported | supported |
+| [`policy.bypass.keyset_pages`](lib/scenarios/policies.ex#L22) | supported | supported |
+| [`policy.bypass.load`](lib/scenarios/policies.ex#L22) | supported | supported |
+| [`policy.bypass.loaded_count`](lib/scenarios/policies.ex#L22) | supported | supported |
+| [`policy.bypass.loaded_sum`](lib/scenarios/policies.ex#L22) | supported | supported |
+| [`policy.bypass.offset_page`](lib/scenarios/policies.ex#L22) | supported | supported |
+| [`policy.bypass.read`](lib/scenarios/policies.ex#L22) | supported | supported |
+| [`policy.bypass.sum`](lib/scenarios/policies.ex#L22) | supported | supported |
+| [`policy.bypass.update_hidden`](lib/scenarios/policies.ex#L22) | supported | supported |
+| [`policy.bypass_admin.aggregate_filter`](lib/scenarios/policies.ex#L22) | supported | supported |
+| [`policy.bypass_admin.bulk_destroy`](lib/scenarios/policies.ex#L22) | supported | supported |
+| [`policy.bypass_admin.bulk_update`](lib/scenarios/policies.ex#L22) | supported | supported |
+| [`policy.bypass_admin.count`](lib/scenarios/policies.ex#L22) | supported | supported |
+| [`policy.bypass_admin.exists_filter`](lib/scenarios/policies.ex#L22) | supported | supported |
+| [`policy.bypass_admin.exists_filter_input`](lib/scenarios/policies.ex#L22) | [known_defect](GAPS.md#sorted-distinct-reads) · AshSQLite | supported |
+| [`policy.bypass_admin.keyset_pages`](lib/scenarios/policies.ex#L22) | supported | supported |
+| [`policy.bypass_admin.load`](lib/scenarios/policies.ex#L22) | supported | supported |
+| [`policy.bypass_admin.loaded_count`](lib/scenarios/policies.ex#L22) | supported | supported |
+| [`policy.bypass_admin.loaded_sum`](lib/scenarios/policies.ex#L22) | supported | supported |
+| [`policy.bypass_admin.offset_page`](lib/scenarios/policies.ex#L22) | supported | supported |
+| [`policy.bypass_admin.read`](lib/scenarios/policies.ex#L22) | supported | supported |
+| [`policy.bypass_admin.sum`](lib/scenarios/policies.ex#L22) | supported | supported |
+| [`policy.can_read.aggregate_filter`](lib/scenarios/policies.ex#L22) | supported | supported |
+| [`policy.can_read.bulk_destroy`](lib/scenarios/policies.ex#L22) | supported | supported |
+| [`policy.can_read.bulk_update`](lib/scenarios/policies.ex#L22) | supported | supported |
+| [`policy.can_read.count`](lib/scenarios/policies.ex#L22) | supported | supported |
+| [`policy.can_read.exists_filter`](lib/scenarios/policies.ex#L22) | supported | supported |
+| [`policy.can_read.exists_filter_input`](lib/scenarios/policies.ex#L22) | [known_defect](GAPS.md#sorted-distinct-reads) · AshSQLite | supported |
+| [`policy.can_read.get_error`](lib/scenarios/policies.ex#L22) | [unsupported](GAPS.md#error-expressions) · AshSQLite | supported |
+| [`policy.can_read.get_hidden`](lib/scenarios/policies.ex#L22) | supported | supported |
+| [`policy.can_read.keyset_pages`](lib/scenarios/policies.ex#L22) | supported | supported |
+| [`policy.can_read.load`](lib/scenarios/policies.ex#L22) | supported | supported |
+| [`policy.can_read.loaded_count`](lib/scenarios/policies.ex#L22) | supported | supported |
+| [`policy.can_read.loaded_sum`](lib/scenarios/policies.ex#L22) | supported | supported |
+| [`policy.can_read.offset_page`](lib/scenarios/policies.ex#L22) | supported | supported |
+| [`policy.can_read.read`](lib/scenarios/policies.ex#L22) | supported | supported |
+| [`policy.can_read.sum`](lib/scenarios/policies.ex#L22) | supported | supported |
+| [`policy.can_read.update_hidden`](lib/scenarios/policies.ex#L22) | supported | supported |
+| [`policy.control.aggregate_filter`](lib/scenarios/policies.ex#L47) | supported | supported |
+| [`policy.control.bulk_destroy`](lib/scenarios/policies.ex#L47) | supported | supported |
+| [`policy.control.bulk_update`](lib/scenarios/policies.ex#L47) | supported | supported |
+| [`policy.control.count`](lib/scenarios/policies.ex#L47) | supported | supported |
+| [`policy.control.create_other`](lib/scenarios/policies.ex#L61) | supported | supported |
+| [`policy.control.create_own`](lib/scenarios/policies.ex#L61) | supported | supported |
+| [`policy.control.exists_filter`](lib/scenarios/policies.ex#L47) | supported | supported |
+| [`policy.control.exists_filter_input`](lib/scenarios/policies.ex#L47) | [known_defect](GAPS.md#sorted-distinct-reads) · AshSQLite | supported |
+| [`policy.control.field_aggregate`](lib/scenarios/policies.ex#L54) | supported | supported |
+| [`policy.control.field_filter`](lib/scenarios/policies.ex#L54) | supported | supported |
+| [`policy.control.field_filter_input`](lib/scenarios/policies.ex#L54) | supported | supported |
+| [`policy.control.field_read`](lib/scenarios/policies.ex#L54) | supported | supported |
+| [`policy.control.get_error`](lib/scenarios/policies.ex#L47) | supported | supported |
+| [`policy.control.get_hidden`](lib/scenarios/policies.ex#L47) | supported | supported |
+| [`policy.control.keyset_pages`](lib/scenarios/policies.ex#L47) | supported | supported |
+| [`policy.control.load`](lib/scenarios/policies.ex#L47) | supported | supported |
+| [`policy.control.loaded_count`](lib/scenarios/policies.ex#L47) | supported | supported |
+| [`policy.control.loaded_sum`](lib/scenarios/policies.ex#L47) | supported | supported |
+| [`policy.control.offset_page`](lib/scenarios/policies.ex#L47) | supported | supported |
+| [`policy.control.read`](lib/scenarios/policies.ex#L47) | supported | supported |
+| [`policy.control.sum`](lib/scenarios/policies.ex#L47) | supported | supported |
+| [`policy.control.update_hidden`](lib/scenarios/policies.ex#L47) | supported | supported |
+| [`policy.field.field_aggregate`](lib/scenarios/policies.ex#L29) | supported | supported |
+| [`policy.field.field_filter`](lib/scenarios/policies.ex#L29) | supported | supported |
+| [`policy.field.field_filter_input`](lib/scenarios/policies.ex#L29) | supported | supported |
+| [`policy.field.field_read`](lib/scenarios/policies.ex#L29) | supported | supported |
+| [`policy.forbid.aggregate_filter`](lib/scenarios/policies.ex#L22) | supported | supported |
+| [`policy.forbid.bulk_destroy`](lib/scenarios/policies.ex#L22) | supported | supported |
+| [`policy.forbid.bulk_update`](lib/scenarios/policies.ex#L22) | supported | supported |
+| [`policy.forbid.count`](lib/scenarios/policies.ex#L22) | supported | supported |
+| [`policy.forbid.exists_filter`](lib/scenarios/policies.ex#L22) | supported | supported |
+| [`policy.forbid.exists_filter_input`](lib/scenarios/policies.ex#L22) | supported | supported |
+| [`policy.forbid.get_error`](lib/scenarios/policies.ex#L22) | [unsupported](GAPS.md#error-expressions) · AshSQLite | supported |
+| [`policy.forbid.get_hidden`](lib/scenarios/policies.ex#L22) | supported | supported |
+| [`policy.forbid.keyset_pages`](lib/scenarios/policies.ex#L22) | supported | supported |
+| [`policy.forbid.load`](lib/scenarios/policies.ex#L22) | supported | supported |
+| [`policy.forbid.loaded_count`](lib/scenarios/policies.ex#L22) | supported | supported |
+| [`policy.forbid.loaded_sum`](lib/scenarios/policies.ex#L22) | supported | supported |
+| [`policy.forbid.offset_page`](lib/scenarios/policies.ex#L22) | supported | supported |
+| [`policy.forbid.read`](lib/scenarios/policies.ex#L22) | supported | supported |
+| [`policy.forbid.sum`](lib/scenarios/policies.ex#L22) | supported | supported |
+| [`policy.forbid.update_hidden`](lib/scenarios/policies.ex#L22) | supported | supported |
+| [`policy.member.aggregate_filter`](lib/scenarios/policies.ex#L22) | supported | supported |
+| [`policy.member.bulk_destroy`](lib/scenarios/policies.ex#L22) | supported | supported |
+| [`policy.member.bulk_update`](lib/scenarios/policies.ex#L22) | supported | supported |
+| [`policy.member.count`](lib/scenarios/policies.ex#L22) | supported | supported |
+| [`policy.member.exists_filter`](lib/scenarios/policies.ex#L22) | supported | supported |
+| [`policy.member.exists_filter_input`](lib/scenarios/policies.ex#L22) | [known_defect](GAPS.md#sorted-distinct-reads) · AshSQLite | supported |
+| [`policy.member.get_error`](lib/scenarios/policies.ex#L22) | [unsupported](GAPS.md#error-expressions) · AshSQLite | supported |
+| [`policy.member.get_hidden`](lib/scenarios/policies.ex#L22) | supported | supported |
+| [`policy.member.keyset_pages`](lib/scenarios/policies.ex#L22) | supported | supported |
+| [`policy.member.load`](lib/scenarios/policies.ex#L22) | supported | supported |
+| [`policy.member.loaded_count`](lib/scenarios/policies.ex#L22) | supported | supported |
+| [`policy.member.loaded_sum`](lib/scenarios/policies.ex#L22) | supported | supported |
+| [`policy.member.offset_page`](lib/scenarios/policies.ex#L22) | supported | supported |
+| [`policy.member.read`](lib/scenarios/policies.ex#L22) | supported | supported |
+| [`policy.member.sum`](lib/scenarios/policies.ex#L22) | supported | supported |
+| [`policy.member.update_hidden`](lib/scenarios/policies.ex#L22) | supported | supported |
+| [`policy.owner.aggregate_filter`](lib/scenarios/policies.ex#L22) | supported | supported |
+| [`policy.owner.bulk_destroy`](lib/scenarios/policies.ex#L22) | supported | supported |
+| [`policy.owner.bulk_update`](lib/scenarios/policies.ex#L22) | supported | supported |
+| [`policy.owner.count`](lib/scenarios/policies.ex#L22) | supported | supported |
+| [`policy.owner.create_other`](lib/scenarios/policies.ex#L37) | supported | supported |
+| [`policy.owner.create_own`](lib/scenarios/policies.ex#L37) | supported | supported |
+| [`policy.owner.exists_filter`](lib/scenarios/policies.ex#L22) | supported | supported |
+| [`policy.owner.exists_filter_input`](lib/scenarios/policies.ex#L22) | supported | supported |
+| [`policy.owner.get_error`](lib/scenarios/policies.ex#L22) | [unsupported](GAPS.md#error-expressions) · AshSQLite | supported |
+| [`policy.owner.get_hidden`](lib/scenarios/policies.ex#L22) | supported | supported |
+| [`policy.owner.keyset_pages`](lib/scenarios/policies.ex#L22) | supported | supported |
+| [`policy.owner.load`](lib/scenarios/policies.ex#L22) | supported | supported |
+| [`policy.owner.loaded_count`](lib/scenarios/policies.ex#L22) | supported | supported |
+| [`policy.owner.loaded_sum`](lib/scenarios/policies.ex#L22) | supported | supported |
+| [`policy.owner.offset_page`](lib/scenarios/policies.ex#L22) | supported | supported |
+| [`policy.owner.read`](lib/scenarios/policies.ex#L22) | supported | supported |
+| [`policy.owner.sum`](lib/scenarios/policies.ex#L22) | supported | supported |
+| [`policy.owner.update_hidden`](lib/scenarios/policies.ex#L22) | supported | supported |
+| [`policy.owner_nil_actor.aggregate_filter`](lib/scenarios/policies.ex#L22) | supported | supported |
+| [`policy.owner_nil_actor.bulk_destroy`](lib/scenarios/policies.ex#L22) | [known_defect](GAPS.md#bulk-stream-forbidden) · Ash | supported |
+| [`policy.owner_nil_actor.bulk_update`](lib/scenarios/policies.ex#L22) | supported | supported |
+| [`policy.owner_nil_actor.count`](lib/scenarios/policies.ex#L22) | supported | supported |
+| [`policy.owner_nil_actor.exists_filter`](lib/scenarios/policies.ex#L22) | supported | supported |
+| [`policy.owner_nil_actor.exists_filter_input`](lib/scenarios/policies.ex#L22) | supported | supported |
+| [`policy.owner_nil_actor.get_error`](lib/scenarios/policies.ex#L22) | supported | supported |
+| [`policy.owner_nil_actor.get_hidden`](lib/scenarios/policies.ex#L22) | supported | supported |
+| [`policy.owner_nil_actor.keyset_pages`](lib/scenarios/policies.ex#L22) | supported | supported |
+| [`policy.owner_nil_actor.load`](lib/scenarios/policies.ex#L22) | supported | supported |
+| [`policy.owner_nil_actor.loaded_count`](lib/scenarios/policies.ex#L22) | supported | supported |
+| [`policy.owner_nil_actor.loaded_sum`](lib/scenarios/policies.ex#L22) | supported | supported |
+| [`policy.owner_nil_actor.offset_page`](lib/scenarios/policies.ex#L22) | supported | supported |
+| [`policy.owner_nil_actor.read`](lib/scenarios/policies.ex#L22) | supported | supported |
+| [`policy.owner_nil_actor.sum`](lib/scenarios/policies.ex#L22) | supported | supported |
+| [`policy.owner_nil_actor.update_hidden`](lib/scenarios/policies.ex#L22) | supported | supported |
+| [`policy.related.aggregate_filter`](lib/scenarios/policies.ex#L22) | supported | supported |
+| [`policy.related.bulk_destroy`](lib/scenarios/policies.ex#L22) | supported | supported |
+| [`policy.related.bulk_update`](lib/scenarios/policies.ex#L22) | supported | supported |
+| [`policy.related.count`](lib/scenarios/policies.ex#L22) | supported | supported |
+| [`policy.related.exists_filter`](lib/scenarios/policies.ex#L22) | supported | supported |
+| [`policy.related.exists_filter_input`](lib/scenarios/policies.ex#L22) | [known_defect](GAPS.md#sorted-distinct-reads) · AshSQLite | supported |
+| [`policy.related.get_error`](lib/scenarios/policies.ex#L22) | [unsupported](GAPS.md#error-expressions) · AshSQLite | supported |
+| [`policy.related.get_hidden`](lib/scenarios/policies.ex#L22) | supported | supported |
+| [`policy.related.keyset_pages`](lib/scenarios/policies.ex#L22) | supported | supported |
+| [`policy.related.load`](lib/scenarios/policies.ex#L22) | supported | supported |
+| [`policy.related.loaded_count`](lib/scenarios/policies.ex#L22) | supported | supported |
+| [`policy.related.loaded_sum`](lib/scenarios/policies.ex#L22) | supported | supported |
+| [`policy.related.offset_page`](lib/scenarios/policies.ex#L22) | supported | supported |
+| [`policy.related.read`](lib/scenarios/policies.ex#L22) | supported | supported |
+| [`policy.related.sum`](lib/scenarios/policies.ex#L22) | supported | supported |
+| [`policy.related.update_hidden`](lib/scenarios/policies.ex#L22) | supported | supported |
+| [`policy.strict.aggregate_filter`](lib/scenarios/policies.ex#L22) | supported | supported |
+| [`policy.strict.bulk_destroy`](lib/scenarios/policies.ex#L22) | [known_defect](GAPS.md#bulk-stream-forbidden) · Ash | supported |
+| [`policy.strict.bulk_update`](lib/scenarios/policies.ex#L22) | supported | supported |
+| [`policy.strict.count`](lib/scenarios/policies.ex#L22) | supported | supported |
+| [`policy.strict.exists_filter`](lib/scenarios/policies.ex#L22) | supported | supported |
+| [`policy.strict.exists_filter_input`](lib/scenarios/policies.ex#L22) | supported | supported |
+| [`policy.strict.get_error`](lib/scenarios/policies.ex#L22) | supported | supported |
+| [`policy.strict.get_hidden`](lib/scenarios/policies.ex#L22) | supported | supported |
+| [`policy.strict.keyset_pages`](lib/scenarios/policies.ex#L22) | supported | supported |
+| [`policy.strict.load`](lib/scenarios/policies.ex#L22) | supported | supported |
+| [`policy.strict.loaded_count`](lib/scenarios/policies.ex#L22) | supported | supported |
+| [`policy.strict.loaded_sum`](lib/scenarios/policies.ex#L22) | supported | supported |
+| [`policy.strict.offset_page`](lib/scenarios/policies.ex#L22) | supported | supported |
+| [`policy.strict.read`](lib/scenarios/policies.ex#L22) | supported | supported |
+| [`policy.strict.sum`](lib/scenarios/policies.ex#L22) | supported | supported |
+| [`policy.strict.update_hidden`](lib/scenarios/policies.ex#L22) | supported | supported |
+| [`policy.strict_admin.aggregate_filter`](lib/scenarios/policies.ex#L22) | supported | supported |
+| [`policy.strict_admin.bulk_destroy`](lib/scenarios/policies.ex#L22) | supported | supported |
+| [`policy.strict_admin.bulk_update`](lib/scenarios/policies.ex#L22) | supported | supported |
+| [`policy.strict_admin.count`](lib/scenarios/policies.ex#L22) | supported | supported |
+| [`policy.strict_admin.exists_filter`](lib/scenarios/policies.ex#L22) | supported | supported |
+| [`policy.strict_admin.exists_filter_input`](lib/scenarios/policies.ex#L22) | [known_defect](GAPS.md#sorted-distinct-reads) · AshSQLite | supported |
+| [`policy.strict_admin.keyset_pages`](lib/scenarios/policies.ex#L22) | supported | supported |
+| [`policy.strict_admin.load`](lib/scenarios/policies.ex#L22) | supported | supported |
+| [`policy.strict_admin.loaded_count`](lib/scenarios/policies.ex#L22) | supported | supported |
+| [`policy.strict_admin.loaded_sum`](lib/scenarios/policies.ex#L22) | supported | supported |
+| [`policy.strict_admin.offset_page`](lib/scenarios/policies.ex#L22) | supported | supported |
+| [`policy.strict_admin.read`](lib/scenarios/policies.ex#L22) | supported | supported |
+| [`policy.strict_admin.sum`](lib/scenarios/policies.ex#L22) | supported | supported |
 | [`query.distinct`](lib/scenarios/querying.ex#L157) | [unsupported](GAPS.md#query-distinct) · AshSQLite | supported |
 | [`query.lock_for_update`](lib/scenarios/transactions.ex#L92) | [unsupported](GAPS.md#row-locks) · AshSQLite | supported |
 | [`query.union`](lib/scenarios/querying.ex#L171) | [unsupported](GAPS.md#query-combinations) · AshSQLite | supported |
@@ -383,6 +597,7 @@ The first owner is where the fix starts. Counts are scenarios linked to each gap
 
 | Gap | Owner | Kind | sqlite | postgres |
 | --- | --- | --- | ---: | ---: |
+| [bulk-stream-forbidden](GAPS.md#bulk-stream-forbidden) | Ash | implementation | 2 | 0 |
 | [keyless-identity](GAPS.md#keyless-identity) | Ash | decision | 1 | 1 |
 | [many-to-many-bounds-api](GAPS.md#many-to-many-bounds-api) | Ash | decision | 1 | 1 |
 | [path-multiplicity](GAPS.md#path-multiplicity) | Ash | decision | 1 | 1 |
@@ -417,8 +632,9 @@ The first owner is where the fix starts. Counts are scenarios linked to each gap
 | [root-kinds](GAPS.md#root-kinds) | AshSQL, then AshSQLite | implementation | 8 | 0 |
 | [decimal-precision](GAPS.md#decimal-precision) | AshSQLite | implementation | 5 | 0 |
 | [duration-storage](GAPS.md#duration-storage) | AshSQLite | implementation | 2 | 0 |
+| [error-expressions](GAPS.md#error-expressions) | AshSQLite | limitation | 8 | 0 |
 | [query-combinations](GAPS.md#query-combinations) | AshSQLite | implementation | 1 | 0 |
 | [query-distinct](GAPS.md#query-distinct) | AshSQLite | implementation | 1 | 0 |
 | [row-locks](GAPS.md#row-locks) | AshSQLite | limitation | 1 | 0 |
 | [upsert-conditions](GAPS.md#upsert-conditions) | AshSQLite | implementation | 2 | 0 |
-| [sorted-distinct-reads](GAPS.md#sorted-distinct-reads) | AshSQLite, then AshSQL | implementation | 2 | 0 |
+| [sorted-distinct-reads](GAPS.md#sorted-distinct-reads) | AshSQLite, then AshSQL | implementation | 8 | 0 |

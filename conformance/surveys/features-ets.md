@@ -4,7 +4,7 @@
 
 Generated from an unreviewed run: each result was classified automatically against the intended answer. Nothing here has been reviewed.
 
-Feature catalog version 1: 103 features and 367 scenarios.
+Feature catalog version 1: 118 features and 581 scenarios.
 
 | Status | Meaning |
 | --- | --- |
@@ -175,7 +175,27 @@ owns the fix.
 | Policies filter pages and counts | 🟡 Partial 1/3 | `auth.keyset_pages` crashed, `auth.offset_page` crashed |
 | Policies filter and forbid writes | ✅ Works 4/4 |  |
 
-## 11. Consistency checks
+## 11. Policies
+
+| Feature | ets | Not working |
+| --- | --- | --- |
+| A filter policy on the actor | ✅ Works 16/16 |  |
+| The same policy with no actor | ✅ Works 16/16 |  |
+| forbid_if before authorize_if | ✅ Works 16/16 |  |
+| A bypass policy, for an actor it does not let through | ✅ Works 16/16 |  |
+| A bypass policy, for an actor it lets through | ✅ Works 13/13 |  |
+| Two policies that must both pass | ✅ Works 16/16 |  |
+| One policy whose checks either pass | ✅ Works 16/16 |  |
+| A policy on a to-one relationship | ✅ Works 16/16 |  |
+| A policy on a multi-hop exists | ✅ Works 16/16 |  |
+| A policy composed with can_read | ✅ Works 16/16 |  |
+| A strict policy, for an actor it forbids | ✅ Works 16/16 |  |
+| A strict policy, for an actor it allows | ✅ Works 13/13 |  |
+| Field policies hide values, in reads, filters and aggregates | ✅ Works 4/4 |  |
+| A filter check on create runs after the insert | ❌ Broken 0/2 | `policy.owner.create_other` wrong, `policy.owner.create_own` wrong |
+| Every policy path, without authorization | ✅ Works 22/22 |  |
+
+## 12. Consistency checks
 
 | Feature | ets | Not working |
 | --- | --- | --- |
@@ -199,6 +219,7 @@ whose claims disagree with the result:
 | Upsert on an identity, in bulk, with conditions | ets | Works without advertising `tenant_item: :bulk_upsert_return_skipped` |
 | Bulk create with partial success | ets | Works without advertising `tenant_item: :bulk_create_with_partial_success` |
 | Tenancy scopes pages and counts | ets | Not advertising `tenant_parent: :keyset`, but not rejected either: wrong answers |
+| A filter check on create runs after the insert | ets | Not advertising `policy_owner_note: :transact`, but not rejected either: wrong answers |
 
 
 ## Storage
@@ -234,3 +255,27 @@ values of that class.
 | Embedded resources | `—` | ✅ | ✅ | ✅ |  |
 | Arrays of embedded resources | `—` | ✅ | ✅ | ✅ |  |
 | Unions | `—` | ❌ | – | ✅ | ordinary, clear: %Ash.Union{value: nil, type: :text} |
+
+## Policies
+
+✅ returns the answer Ash's policy semantics define; ❌ does not, while the
+same path works without authorization; ◌ the path fails even without
+authorization, so the policy cannot be judged; ❔ did not run; – does not
+apply, such as getting a hidden record when the actor may read every note.
+
+| Case | `read` | `get_hidden` | `get_error` | `count` | `sum` | `offset_page` | `keyset_pages` | `load` | `loaded_count` | `loaded_sum` | `aggregate_filter` | `exists_filter` | `exists_filter_input` | `bulk_update` | `bulk_destroy` | `update_hidden` | `field_read` | `field_filter` | `field_filter_input` | `field_aggregate` | `create_own` | `create_other` |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| owner | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | – | – | – | – | ❌ | ❌ |
+| owner_nil_actor | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | – | – | – | – | – | – |
+| forbid | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | – | – | – | – | – | – |
+| bypass | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | – | – | – | – | – | – |
+| bypass_admin | ✅ | – | – | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | – | – | – | – | – | – | – |
+| all_of | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | – | – | – | – | – | – |
+| any_of | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | – | – | – | – | – | – |
+| related | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | – | – | – | – | – | – |
+| member | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | – | – | – | – | – | – |
+| can_read | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | – | – | – | – | – | – |
+| strict | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | – | – | – | – | – | – |
+| strict_admin | ✅ | – | – | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | – | – | – | – | – | – | – |
+| field | – | – | – | – | – | – | – | – | – | – | – | – | – | – | – | – | ✅ | ✅ | ✅ | ✅ | – | – |
+| control (no authorization) | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |

@@ -10,6 +10,22 @@ defmodule Ash.Conformance.Contracts.SharedGaps do
   def all do
     [
       %{
+        id: "bulk-stream-forbidden",
+        title: "Bulk stream forbidden",
+        kind: :implementation,
+        owners: [:ash],
+        body: ~S"""
+
+        Return a forbidden bulk destroy as an error result. `Ash.bulk_destroy/4`
+        with `return_errors?: true` raises `Ash.Error.Forbidden` when the stream
+        strategy's read is forbidden: a strict policy, or a filter check on the
+        actor with no actor. The raise comes from the read inside the strategy
+        (`Ash.Actions.Read.run/3`). Nothing is destroyed. Data layers that take
+        the atomic strategy, such as Postgres and ETS, return a `BulkResult` with
+        the forbidden error; SQLite falls back to streaming and raises.
+        """
+      },
+      %{
         id: "relationship-context",
         title: "Relationship context",
         kind: :implementation,

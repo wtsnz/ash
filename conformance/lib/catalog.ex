@@ -12,8 +12,14 @@ defmodule Ash.Conformance.Catalog do
     ids = Enum.map(scenarios, & &1.id)
     if length(ids) != length(Enum.uniq(ids)), do: raise(ArgumentError, "Duplicate scenario IDs")
 
-    if Enum.sort(ids) != Enum.sort(Map.keys(expectations)),
-      do: raise(ArgumentError, "Missing or stale expectation records")
+    if Enum.sort(ids) != Enum.sort(Map.keys(expectations)) do
+      missing = ids -- Map.keys(expectations)
+      stale = Map.keys(expectations) -- ids
+
+      raise ArgumentError,
+            "Missing or stale expectation records. Missing: #{inspect(Enum.take(missing, 10))}; " <>
+              "stale: #{inspect(Enum.take(stale, 10))}"
+    end
 
     for scenario <- scenarios, adapter <- adapters, scenario.profile in adapter.profiles() do
       case expectations |> Map.fetch!(scenario.id) |> Map.fetch!(adapter.id()) do
@@ -51,6 +57,7 @@ defmodule Ash.Conformance.Catalog do
       Scenarios.Tenancy,
       Scenarios.ContextTenancy,
       Scenarios.Authorization,
+      Scenarios.Policies,
       Scenarios.Consistency
     ]
     |> Enum.flat_map(& &1.all())

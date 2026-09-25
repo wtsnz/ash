@@ -74,13 +74,16 @@ defmodule Ash.Conformance.Adapter do
   tables are provisioned separately, one at a time (`Ash.Conformance.Storage`).
   """
   def roles,
-    do: ~w(parent child rating tag link child_tag event reading tenant_child tenant_link
+    do:
+      ~w(parent child rating tag link child_tag event reading tenant_child tenant_link
           authorized_child ledger record tenant_parent tenant_item secure_parent secure_item
-          context_parent context_item)a ++ Ash.Conformance.Storage.roles()
+          context_parent context_item)a ++
+        Ash.Conformance.Storage.roles() ++
+        Ash.Conformance.Policy.roles()
 
   def table_roles,
     do: ~w(parent child rating tag link child_tag event reading ledger record tenant_parent
-          tenant_item)a
+          tenant_item policy_doc policy_note policy_member)a
 
   def find!(name) do
     Enum.find(every(), &(to_string(&1.id()) == name)) ||

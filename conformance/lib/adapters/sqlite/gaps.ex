@@ -9,6 +9,21 @@ defmodule Ash.Conformance.Sqlite.Gaps do
   def all do
     [
       %{
+        id: "error-expressions",
+        title: "Error expressions",
+        kind: :limitation,
+        owners: [:ash_sqlite],
+        body: ~S"""
+        Limitation: AshSqlite has no error expressions.
+
+        Ash's policy guide lists `authorize_with: :error`, which reports a hidden
+        record as forbidden instead of not found, for "all of the core data layers
+        except AshSqlite". Reading with it raises a `RuntimeError` asking for the
+        `ash-functions` extension, which AshSqlite does not provide, instead of a
+        rejection from `can?/2`. Every `policy.*.get_error` scenario records it.
+        """
+      },
+      %{
         id: "root-kinds",
         title: "Root kinds",
         kind: :implementation,

@@ -18,6 +18,18 @@ adapter's `gaps/0`).
 
 # Ash
 
+## Bulk stream forbidden
+
+Owner: Ash.
+
+Return a forbidden bulk destroy as an error result. `Ash.bulk_destroy/4`
+with `return_errors?: true` raises `Ash.Error.Forbidden` when the stream
+strategy's read is forbidden: a strict policy, or a filter check on the
+actor with no actor. The raise comes from the read inside the strategy
+(`Ash.Actions.Read.run/3`). Nothing is destroyed. Data layers that take
+the atomic strategy, such as Postgres and ETS, return a `BulkResult` with
+the forbidden error; SQLite falls back to streaming and raises.
+
 ## Relationship context
 
 Owner: Ash.
@@ -207,6 +219,17 @@ Ash currently combines policy and aggregate filters, so this may require an
 Ash change to preserve their distinct ordering.
 
 # AshSqlite
+
+## Error expressions
+
+Limitation owner: AshSQLite.
+Limitation: AshSqlite has no error expressions.
+
+Ash's policy guide lists `authorize_with: :error`, which reports a hidden
+record as forbidden instead of not found, for "all of the core data layers
+except AshSqlite". Reading with it raises a `RuntimeError` asking for the
+`ash-functions` extension, which AshSqlite does not provide, instead of a
+rejection from `can?/2`. Every `policy.*.get_error` scenario records it.
 
 ## Root kinds
 

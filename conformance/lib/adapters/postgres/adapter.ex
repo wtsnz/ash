@@ -6,7 +6,13 @@ defmodule Ash.Conformance.Postgres do
   @moduledoc false
   use Ash.Conformance.Adapter, id: :postgres, label: "AshPostgres", package: :ash_postgres
 
-  def expectations, do: Ash.Conformance.Postgres.Expectations.all()
+  def expectations,
+    do:
+      Ash.Conformance.Contracts.Records.resolve(
+        __MODULE__,
+        Ash.Conformance.Postgres.Expectations.rules()
+      )
+
   def gaps, do: Ash.Conformance.Postgres.Gaps.all()
   def fixture?(_fixture), do: true
   def profiles, do: [:shared, :context_tenancy]
@@ -33,7 +39,8 @@ defmodule Ash.Conformance.Postgres do
     Ash.Conformance.SQL.Database.setup!(repo(),
       migrations: [
         {3, Ash.Conformance.SQL.Migrations.ContextTenancy},
-        {7, Ash.Conformance.Postgres.Citext}
+        {7, Ash.Conformance.Postgres.Citext},
+        {9, Ash.Conformance.Postgres.AshFunctions}
       ],
       storage: {__MODULE__, &Ash.Conformance.SQL.Columns.ash_sql/1}
     )
@@ -77,10 +84,24 @@ defmodule Ash.Conformance.Postgres.Citext do
   def change, do: execute("CREATE EXTENSION IF NOT EXISTS citext", "DROP EXTENSION citext")
 end
 
+# The SQL functions AshPostgres's migration generator installs for the
+# "ash-functions" extension: `||` and `&&` semantics and error expressions.
+defmodule Ash.Conformance.Postgres.AshFunctions do
+  @moduledoc false
+  use Ecto.Migration
+
+  def up do
+    Code.eval_string(AshPostgres.MigrationGenerator.AshFunctions.install(nil), [], __ENV__)
+  end
+
+  def down, do: :ok
+end
+
 defmodule Ash.Conformance.PostgresRepo do
   @moduledoc false
   use AshPostgres.Repo, otp_app: :ash_conformance, warn_on_missing_ash_functions?: false
-  def installed_extensions, do: []
+  # What AshPostgres's installer configures for a new application.
+  def installed_extensions, do: ["ash-functions", "citext"]
   def min_pg_version, do: %Version{major: 17, minor: 0, patch: 0}
 end
 

@@ -620,7 +620,8 @@ defmodule Ash.Conformance.Contracts.Features do
              ~w(auth.write_bulk_update_atomic auth.write_bulk_update_stream auth.write_bulk_destroy auth.write_forbidden)
          )
        ]},
-      {11, "Consistency checks",
+      {11, "Policies", policies()},
+      {12, "Consistency checks",
        [
          feature(
            "consistency.equivalences",
@@ -648,6 +649,61 @@ defmodule Ash.Conformance.Contracts.Features do
           )
       )
     end
+  end
+
+  @policy_titles %{
+    "owner" => "A filter policy on the actor",
+    "owner_nil_actor" => "The same policy with no actor",
+    "forbid" => "forbid_if before authorize_if",
+    "bypass" => "A bypass policy, for an actor it does not let through",
+    "bypass_admin" => "A bypass policy, for an actor it lets through",
+    "all_of" => "Two policies that must both pass",
+    "any_of" => "One policy whose checks either pass",
+    "related" => "A policy on a to-one relationship",
+    "member" => "A policy on a multi-hop exists",
+    "can_read" => "A policy composed with can_read",
+    "strict" => "A strict policy, for an actor it forbids",
+    "strict_admin" => "A strict policy, for an actor it allows"
+  }
+
+  # One feature per policy case, each on every path; then field policies,
+  # filter checks on create, and the paths without authorization.
+  defp policies do
+    ids = Enum.map(Ash.Conformance.Scenarios.Policies.all(), & &1.id)
+    with_prefix = fn prefix -> Enum.filter(ids, &String.starts_with?(&1, prefix)) end
+    basis = "#{@docs}/security/policies.md"
+
+    cases =
+      for {case_id, _shape, _actor} <- Ash.Conformance.Policy.cases() do
+        scenarios =
+          "policy.#{case_id}."
+          |> with_prefix.()
+          |> Enum.reject(&String.contains?(&1, ".create_"))
+
+        feature("policy.#{case_id}", Map.fetch!(@policy_titles, case_id), basis,
+          claims: [],
+          scenarios: scenarios
+        )
+      end
+
+    cases ++
+      [
+        feature(
+          "policy.field",
+          "Field policies hide values, in reads, filters and aggregates",
+          basis,
+          claims: [],
+          scenarios: with_prefix.("policy.field.")
+        ),
+        feature("policy.create", "A filter check on create runs after the insert", basis,
+          claims: [policy_owner_note: :transact],
+          scenarios: ~w(policy.owner.create_own policy.owner.create_other)
+        ),
+        feature("policy.controls", "Every policy path, without authorization", basis,
+          claims: [],
+          scenarios: with_prefix.("policy.control.")
+        )
+      ]
   end
 
   def all do

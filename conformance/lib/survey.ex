@@ -110,6 +110,8 @@ defmodule Ash.Conformance.Survey do
   @doc "An adapter's survey report: its features, then its storage grid."
   def markdown(adapter, rows) do
     FeatureReport.markdown(rows, [adapter], :unreviewed) <>
-      "\n" <> Ash.Conformance.Report.StorageGrid.detail(rows)
+      "\n" <>
+      Ash.Conformance.Report.StorageGrid.detail(rows) <>
+      "\n" <> Ash.Conformance.Report.PolicyGrid.detail(rows)
   end
 end

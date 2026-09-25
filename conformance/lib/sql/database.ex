@@ -32,7 +32,8 @@ defmodule Ash.Conformance.SQL.Database do
       {2, Ash.Conformance.SQL.Migrations.Isolation},
       {4, Ash.Conformance.SQL.Migrations.Values},
       {5, Ash.Conformance.SQL.Migrations.Ledger},
-      {6, Ash.Conformance.SQL.Migrations.Records}
+      {6, Ash.Conformance.SQL.Migrations.Records},
+      {8, Ash.Conformance.SQL.Migrations.Policy}
     ]
 
     migrations =

@@ -13,12 +13,12 @@ their results as observations. Each data layer's failing scenarios are listed in
 
 | Column | Data layer | Version | Reviewed | Works | Rejected | Wrong | Crashed | Setup failed | Open question | Definition warnings |
 | --- | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| sqlite | AshSqlite | 0.2.19 (`46a4b86`) | yes | 292 | 37 | 18 | 10 | 0 | 5 | 0 |
-| postgres | AshPostgres | 2.13.1 (`945073e`) | yes | 326 | 0 | 28 | 8 | 0 | 5 | 0 |
-| ets | Ash.DataLayer.Ets | 3.33.11 | no | 316 | 7 | 27 | 7 | 0 | 5 | 0 |
-| csv | AshCsv | 0.9.9 | no | 70 | 16 | 28 | 2 | 246 | 0 | 8 |
-| mysql | AshMysql | 0.1.0-dev (`99684ca`) | no | 137 | 148 | 27 | 45 | 0 | 5 | 5 |
-| clickhouse | AshClickhouse | 0.7.3 | no | 87 | 54 | 109 | 50 | 58 | 4 | 5 |
+| sqlite | AshSqlite | 0.2.19 (`46a4b86`) | yes | 490 | 37 | 26 | 18 | 0 | 5 | 0 |
+| postgres | AshPostgres | 2.13.1 (`945073e`) | yes | 540 | 0 | 28 | 8 | 0 | 5 | 0 |
+| ets | Ash.DataLayer.Ets | 3.33.11 | no | 528 | 7 | 29 | 7 | 0 | 5 | 0 |
+| csv | AshCsv | 0.9.9 | no | 167 | 87 | 43 | 33 | 246 | 0 | 19 |
+| mysql | AshMysql | 0.1.0-dev (`99684ca`) | no | 295 | 189 | 34 | 53 | 0 | 5 | 16 |
+| clickhouse | AshClickhouse | 0.7.3 | no | 204 | 54 | 148 | 108 | 58 | 4 | 16 |
 
 ### Setup notes
 
@@ -71,6 +71,36 @@ values of that class.
 | Embedded resources | ✅ ✅ ✅ | ✅ ✅ ✅ | ✅ ✅ ✅ | ❌ ❌ ✅ | ✅ ✅ ✅ | 🚫 no table |
 | Arrays of embedded resources | ✅ ✅ ✅ | ✅ ✅ ✅ | ✅ ✅ ✅ | ❌ ❌ ✅ | 🚫 no table | 🚫 no table |
 | Unions | ❌ – ✅ | ❌ – ✅ | ❌ – ✅ | ❌ – ✅ | ❌ – ✅ | 🚫 no table |
+
+## Policies
+
+Every policy shape Ash documents, on every path a data layer implements.
+Expected answers come from a reference model of Ash's policy semantics
+(`lib/policy.ex`). Counts are policy cells that work, out of those whose
+path works without authorization; ◌ counts the rest. Each data layer's
+survey file has the full case × path table.
+
+✅ returns the answer Ash's policy semantics define; ❌ does not, while the
+same path works without authorization; ◌ the path fails even without
+authorization, so the policy cannot be judged; ❔ did not run; – does not
+apply, such as getting a hidden record when the actor may read every note.
+
+| Case | sqlite | postgres | ets | csv | mysql | clickhouse |
+| --- | --- | --- | --- | --- | --- | --- |
+| owner | ❌ 17/18 | ✅ 18/18 | ❌ 16/18 | ❌ 8/10 · 8 ◌ | ❌ 12/15 · 3 ◌ | ❌ 10/13 · 5 ◌ |
+| owner_nil_actor | ❌ 15/16 | ✅ 16/16 | ✅ 16/16 | ❌ 10/11 · 5 ◌ | ❌ 11/13 · 3 ◌ | ❌ 11/12 · 4 ◌ |
+| forbid | ❌ 15/16 | ✅ 16/16 | ✅ 16/16 | ❌ 7/8 · 8 ◌ | ❌ 12/13 · 3 ◌ | ❌ 10/11 · 5 ◌ |
+| bypass | ❌ 15/16 | ✅ 16/16 | ✅ 16/16 | ❌ 7/8 · 8 ◌ | ❌ 12/13 · 3 ◌ | ❌ 10/11 · 5 ◌ |
+| bypass_admin | ◌ 12/12 · 1 ◌ | ✅ 13/13 | ✅ 13/13 | ◌ 5/5 · 8 ◌ | ◌ 10/10 · 3 ◌ | ◌ 8/8 · 5 ◌ |
+| all_of | ❌ 15/16 | ✅ 16/16 | ✅ 16/16 | ❌ 7/8 · 8 ◌ | ❌ 12/13 · 3 ◌ | ❌ 10/11 · 5 ◌ |
+| any_of | ❌ 15/16 | ✅ 16/16 | ✅ 16/16 | ❌ 7/8 · 8 ◌ | ❌ 12/13 · 3 ◌ | ❌ 10/11 · 5 ◌ |
+| related | ❌ 14/15 · 1 ◌ | ✅ 16/16 | ✅ 16/16 | ❌ 1/8 · 8 ◌ | ❌ 12/13 · 3 ◌ | ❌ 1/11 · 5 ◌ |
+| member | ❌ 14/15 · 1 ◌ | ✅ 16/16 | ✅ 16/16 | ❌ 7/8 · 8 ◌ | ❌ 12/13 · 3 ◌ | ❌ 6/11 · 5 ◌ |
+| can_read | ❌ 14/15 · 1 ◌ | ✅ 16/16 | ✅ 16/16 | ❌ 7/8 · 8 ◌ | ❌ 12/13 · 3 ◌ | ❌ 6/11 · 5 ◌ |
+| strict | ❌ 15/16 | ✅ 16/16 | ✅ 16/16 | ❌ 10/11 · 5 ◌ | ❌ 11/13 · 3 ◌ | ❌ 11/12 · 4 ◌ |
+| strict_admin | ◌ 12/12 · 1 ◌ | ✅ 13/13 | ✅ 13/13 | ◌ 5/5 · 8 ◌ | ◌ 10/10 · 3 ◌ | ◌ 8/8 · 5 ◌ |
+| field | ✅ 4/4 | ✅ 4/4 | ✅ 4/4 | ◌ 3/3 · 1 ◌ | ❌ 2/3 · 1 ◌ | ❌ 0/3 · 1 ◌ |
+| control (no authorization) | ❌ 21/22 | ✅ 22/22 | ✅ 22/22 | ❌ 13/22 | ❌ 18/22 | ❌ 16/22 |
 
 | Status | Meaning |
 | --- | --- |
@@ -238,7 +268,27 @@ values of that class.
 | Policies filter pages and counts | ✅ Works 3/3 | ✅ Works 3/3 | 🟡 Partial 1/3 | ⛔ Not supported 0/3 | ⛔ Not supported 0/3 | ❌ Broken 0/3 |
 | Policies filter and forbid writes | ✅ Works 4/4 | ✅ Works 4/4 | ✅ Works 4/4 | 🟡 Partial 3/4 | 🟡 Partial 2/4 | 🟡 Partial 3/4 |
 
-## 11. Consistency checks
+## 11. Policies
+
+| Feature | sqlite | postgres | ets | csv | mysql | clickhouse |
+| --- | --- | --- | --- | --- | --- | --- |
+| A filter policy on the actor | 🟡 Partial 15/16 | ✅ Works 16/16 | ✅ Works 16/16 | 🟡 Partial 7/16 | 🟡 Partial 12/16 | 🟡 Partial 10/16 |
+| The same policy with no actor | 🟡 Partial 15/16 | ✅ Works 16/16 | ✅ Works 16/16 | 🟡 Partial 10/16 | 🟡 Partial 11/16 | 🟡 Partial 11/16 |
+| forbid_if before authorize_if | 🟡 Partial 15/16 | ✅ Works 16/16 | ✅ Works 16/16 | 🟡 Partial 7/16 | 🟡 Partial 12/16 | 🟡 Partial 10/16 |
+| A bypass policy, for an actor it does not let through | 🟡 Partial 15/16 | ✅ Works 16/16 | ✅ Works 16/16 | 🟡 Partial 7/16 | 🟡 Partial 12/16 | 🟡 Partial 10/16 |
+| A bypass policy, for an actor it lets through | 🟡 Partial 12/13 | ✅ Works 13/13 | ✅ Works 13/13 | 🟡 Partial 5/13 | 🟡 Partial 10/13 | 🟡 Partial 8/13 |
+| Two policies that must both pass | 🟡 Partial 15/16 | ✅ Works 16/16 | ✅ Works 16/16 | 🟡 Partial 7/16 | 🟡 Partial 12/16 | 🟡 Partial 10/16 |
+| One policy whose checks either pass | 🟡 Partial 15/16 | ✅ Works 16/16 | ✅ Works 16/16 | 🟡 Partial 7/16 | 🟡 Partial 12/16 | 🟡 Partial 10/16 |
+| A policy on a to-one relationship | 🟡 Partial 14/16 | ✅ Works 16/16 | ✅ Works 16/16 | 🟡 Partial 1/16 | 🟡 Partial 12/16 | 🟡 Partial 1/16 |
+| A policy on a multi-hop exists | 🟡 Partial 14/16 | ✅ Works 16/16 | ✅ Works 16/16 | 🟡 Partial 7/16 | 🟡 Partial 12/16 | 🟡 Partial 6/16 |
+| A policy composed with can_read | 🟡 Partial 14/16 | ✅ Works 16/16 | ✅ Works 16/16 | 🟡 Partial 7/16 | 🟡 Partial 12/16 | 🟡 Partial 6/16 |
+| A strict policy, for an actor it forbids | 🟡 Partial 15/16 | ✅ Works 16/16 | ✅ Works 16/16 | 🟡 Partial 10/16 | 🟡 Partial 11/16 | 🟡 Partial 11/16 |
+| A strict policy, for an actor it allows | 🟡 Partial 12/13 | ✅ Works 13/13 | ✅ Works 13/13 | 🟡 Partial 5/13 | 🟡 Partial 10/13 | 🟡 Partial 8/13 |
+| Field policies hide values, in reads, filters and aggregates | ✅ Works 4/4 | ✅ Works 4/4 | ✅ Works 4/4 | 🟡 Partial 3/4 | 🟡 Partial 2/4 | ❌ Broken 0/4 |
+| A filter check on create runs after the insert | ✅ Works 2/2 | ✅ Works 2/2 | ❌ Broken 0/2 | 🟡 Partial 1/2 | ❌ Broken 0/2 | ❌ Broken 0/2 |
+| Every policy path, without authorization | 🟡 Partial 21/22 | ✅ Works 22/22 | ✅ Works 22/22 | 🟡 Partial 13/22 | 🟡 Partial 18/22 | 🟡 Partial 16/22 |
+
+## 12. Consistency checks
 
 | Feature | sqlite | postgres | ets | csv | mysql | clickhouse |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -324,6 +374,9 @@ whose claims disagree with the result:
 | Policies filter pages and counts | csv | Advertised, but ⛔ Not supported |
 | Policies filter pages and counts | mysql | Advertised, but ⛔ Not supported |
 | Policies filter pages and counts | clickhouse | Advertised, but ❌ Broken |
+| A filter check on create runs after the insert | ets | Not advertising `policy_owner_note: :transact`, but not rejected either: wrong answers |
+| A filter check on create runs after the insert | mysql | Not advertising `policy_owner_note: :transact`, but not rejected either: wrong answers |
+| A filter check on create runs after the insert | clickhouse | Not advertising `policy_owner_note: :transact`, but not rejected either: wrong answers |
 
 ## Setup failures
 
@@ -389,6 +442,17 @@ None.
 | 1 | Ash.Conformance.Csv.Child.ratings is not aggregatable |
 | 1 | Ash.Conformance.Csv.ContextParent.items is not aggregatable |
 | 1 | Ash.Conformance.Csv.Parent.children is not aggregatable |
+| 1 | Ash.Conformance.Csv.PolicyAllOfDoc.notes is not aggregatable |
+| 1 | Ash.Conformance.Csv.PolicyAnyOfDoc.notes is not aggregatable |
+| 1 | Ash.Conformance.Csv.PolicyBypassDoc.notes is not aggregatable |
+| 1 | Ash.Conformance.Csv.PolicyCanReadDoc.notes is not aggregatable |
+| 1 | Ash.Conformance.Csv.PolicyDoc.notes is not aggregatable |
+| 1 | Ash.Conformance.Csv.PolicyFieldDoc.notes is not aggregatable |
+| 1 | Ash.Conformance.Csv.PolicyForbidDoc.notes is not aggregatable |
+| 1 | Ash.Conformance.Csv.PolicyMemberDoc.notes is not aggregatable |
+| 1 | Ash.Conformance.Csv.PolicyOwnerDoc.notes is not aggregatable |
+| 1 | Ash.Conformance.Csv.PolicyRelatedDoc.notes is not aggregatable |
+| 1 | Ash.Conformance.Csv.PolicyStrictDoc.notes is not aggregatable |
 | 1 | Ash.Conformance.Csv.SecureParent.items is not aggregatable |
 | 1 | Ash.Conformance.Csv.TenantParent.items is not aggregatable |
 
@@ -399,6 +463,17 @@ None.
 | 1 | Ash.Conformance.Mysql.Child.ratings is not aggregatable |
 | 1 | Ash.Conformance.Mysql.ContextParent.items is not aggregatable |
 | 1 | Ash.Conformance.Mysql.Parent.children is not aggregatable |
+| 1 | Ash.Conformance.Mysql.PolicyAllOfDoc.notes is not aggregatable |
+| 1 | Ash.Conformance.Mysql.PolicyAnyOfDoc.notes is not aggregatable |
+| 1 | Ash.Conformance.Mysql.PolicyBypassDoc.notes is not aggregatable |
+| 1 | Ash.Conformance.Mysql.PolicyCanReadDoc.notes is not aggregatable |
+| 1 | Ash.Conformance.Mysql.PolicyDoc.notes is not aggregatable |
+| 1 | Ash.Conformance.Mysql.PolicyFieldDoc.notes is not aggregatable |
+| 1 | Ash.Conformance.Mysql.PolicyForbidDoc.notes is not aggregatable |
+| 1 | Ash.Conformance.Mysql.PolicyMemberDoc.notes is not aggregatable |
+| 1 | Ash.Conformance.Mysql.PolicyOwnerDoc.notes is not aggregatable |
+| 1 | Ash.Conformance.Mysql.PolicyRelatedDoc.notes is not aggregatable |
+| 1 | Ash.Conformance.Mysql.PolicyStrictDoc.notes is not aggregatable |
 | 1 | Ash.Conformance.Mysql.SecureParent.items is not aggregatable |
 | 1 | Ash.Conformance.Mysql.TenantParent.items is not aggregatable |
 
@@ -409,6 +484,17 @@ None.
 | 1 | Ash.Conformance.Clickhouse.Child.ratings is not aggregatable |
 | 1 | Ash.Conformance.Clickhouse.ContextParent.items is not aggregatable |
 | 1 | Ash.Conformance.Clickhouse.Parent.children is not aggregatable |
+| 1 | Ash.Conformance.Clickhouse.PolicyAllOfDoc.notes is not aggregatable |
+| 1 | Ash.Conformance.Clickhouse.PolicyAnyOfDoc.notes is not aggregatable |
+| 1 | Ash.Conformance.Clickhouse.PolicyBypassDoc.notes is not aggregatable |
+| 1 | Ash.Conformance.Clickhouse.PolicyCanReadDoc.notes is not aggregatable |
+| 1 | Ash.Conformance.Clickhouse.PolicyDoc.notes is not aggregatable |
+| 1 | Ash.Conformance.Clickhouse.PolicyFieldDoc.notes is not aggregatable |
+| 1 | Ash.Conformance.Clickhouse.PolicyForbidDoc.notes is not aggregatable |
+| 1 | Ash.Conformance.Clickhouse.PolicyMemberDoc.notes is not aggregatable |
+| 1 | Ash.Conformance.Clickhouse.PolicyOwnerDoc.notes is not aggregatable |
+| 1 | Ash.Conformance.Clickhouse.PolicyRelatedDoc.notes is not aggregatable |
+| 1 | Ash.Conformance.Clickhouse.PolicyStrictDoc.notes is not aggregatable |
 | 1 | Ash.Conformance.Clickhouse.SecureParent.items is not aggregatable |
 | 1 | Ash.Conformance.Clickhouse.TenantParent.items is not aggregatable |
 

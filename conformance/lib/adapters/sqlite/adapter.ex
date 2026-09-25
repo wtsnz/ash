@@ -6,7 +6,13 @@ defmodule Ash.Conformance.Sqlite do
   @moduledoc false
   use Ash.Conformance.Adapter, id: :sqlite, label: "AshSqlite", package: :ash_sqlite
 
-  def expectations, do: Ash.Conformance.Sqlite.Expectations.all()
+  def expectations,
+    do:
+      Ash.Conformance.Contracts.Records.resolve(
+        __MODULE__,
+        Ash.Conformance.Sqlite.Expectations.rules()
+      )
+
   def gaps, do: Ash.Conformance.Sqlite.Gaps.all()
   def fixture?(_fixture), do: true
   def instrumentation, do: Ash.Conformance.SQL.Instrumentation

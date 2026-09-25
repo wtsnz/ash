@@ -32,9 +32,13 @@ separate workload covers this operation. Use `fallback: "..."` to name an Ash
 fallback the operation should exercise, such as in-memory evaluation. The runner
 then records the operation's data-layer query count, through the adapter's
 instrumentation, beside the result; zero queries is the only positive
-observation. The count never changes the verdict. Add the ID to each reviewed
-adapter's own `expectations.ex` (for example `lib/adapters/sqlite/expectations.ex`)
-explicitly; there is no implicit supported default.
+observation. The count never changes the verdict. Each reviewed adapter's
+`expectations.ex` (for example `lib/adapters/sqlite/expectations.ex`) holds
+rules: `supported("*")` claims the rest are supported, and each
+`expect(pattern, record)` records a gap, with `*` matching any part of an ID.
+A scenario matched by two `expect` rules, or a rule that matches nothing,
+fails. `supported` is a claim, not an acceptance: a new scenario it covers
+must still pass, or the run fails and the scenario needs a reviewed record.
 
 Use `fixture: :aggregate`, `:isolation` or `:context_tenancy`. New fixture builders
 are selected in `Fixtures.build!/2`. Scenario-specific extra setup belongs in
@@ -113,8 +117,8 @@ is the smallest complete example.
 5. **Review it, when you want strict contracts.** Record an expectation for
    every scenario (supported, unsupported with the exact rejection, known
    defect with the exact wrong answer, or unresolved), return them from
-   `expectations/0` (kept in `lib/adapters/<name>/expectations.ex`, built with
-   `Ash.Conformance.Contracts.Records`), return the gaps only it shows from
+   `expectations/0` (rules in `lib/adapters/<name>/expectations.ex`, resolved
+   with `Ash.Conformance.Contracts.Records.resolve/2`), return the gaps only it shows from
    `gaps/0`, and move the adapter to `config :ash_conformance, adapters: [...]`.
    It then gets a column in `FEATURES.md` and runs in `mix test`.
 
