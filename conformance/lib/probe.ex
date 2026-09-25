@@ -11,9 +11,19 @@ defmodule Ash.Conformance.Probe do
     try do
       context = Fixtures.build!(adapter, scenario.fixture)
       Fixtures.prepare!(context, scenario.id)
-      outcome = Runner.capture(fn -> scenario.run.(context) end)
+      parent = self()
+      observe = Runner.observer(scenario, adapter, &send(parent, {:fallback, &1}))
+      outcome = observe.(fn -> Runner.capture(fn -> scenario.run.(context) end) end)
+
+      fallback =
+        receive do
+          {:fallback, evidence} -> evidence
+        after
+          0 -> :unobserved
+        end
 
       observation(scenario, outcome)
+      |> Map.put(:fallback, fallback)
       |> Map.put(:adapter, adapter.id())
       |> Map.put(:capabilities, Capabilities.for_scenario(adapter, scenario))
     after

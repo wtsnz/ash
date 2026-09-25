@@ -16,6 +16,7 @@ defmodule Ash.Conformance.Scenario do
     profile: :shared,
     capabilities: [],
     benchmark: false,
+    fallback: nil,
     semantic_basis: "../documentation/topics/resources/aggregates.md"
   ]
 
@@ -37,6 +38,7 @@ defmodule Ash.Conformance.Scenario do
         profile: Keyword.get(unquote(opts), :profile, :shared),
         capabilities: Keyword.get(unquote(opts), :capabilities, []),
         benchmark: Keyword.get(unquote(opts), :benchmark, false),
+        fallback: Keyword.get(unquote(opts), :fallback),
         semantic_basis:
           Keyword.get(
             unquote(opts),
@@ -59,7 +61,12 @@ defmodule Ash.Conformance.Runner do
   """
   import ExUnit.Assertions
 
-  def execute!(scenario, adapter, record_result \\ fn _ -> :ok end) do
+  def execute!(
+        scenario,
+        adapter,
+        record_result \\ fn _ -> :ok end,
+        record_fallback \\ fn _ -> :ok end
+      ) do
     expectation = Ash.Conformance.Expectations.for(scenario.id, adapter.id())
     :ok = adapter.checkout!()
 
@@ -72,23 +79,63 @@ defmodule Ash.Conformance.Runner do
           Ash.Conformance.Fixtures.prepare!(context, scenario.id)
           context
         end,
-        record_result
+        record_result,
+        observer(scenario, adapter, record_fallback)
       )
     after
       adapter.checkin!()
     end
   end
 
-  def run_with_setup!(scenario, expectation, setup, record_result \\ fn _ -> :ok end) do
+  def run_with_setup!(
+        scenario,
+        expectation,
+        setup,
+        record_result \\ fn _ -> :ok end,
+        observe \\ & &1.()
+      ) do
     context = setup.()
-    run!(scenario, expectation, context, record_result)
+    run!(scenario, expectation, context, record_result, observe)
   end
 
-  def run!(scenario, expectation, context, record_result \\ fn _ -> :ok end) do
-    outcome = capture(fn -> scenario.run.(context) end)
+  def run!(scenario, expectation, context, record_result \\ fn _ -> :ok end, observe \\ & &1.()) do
+    outcome = observe.(fn -> capture(fn -> scenario.run.(context) end) end)
     record_result.(outcome)
     assert_outcome!(scenario, expectation, outcome)
   end
+
+  @doc """
+  Wraps only the operation when a scenario names an Ash fallback to observe.
+
+  The evidence is the number of data-layer queries the operation issued. It is
+  recorded beside the result and never changes whether the scenario passes.
+  """
+  def observer(%{fallback: nil}, _adapter, _record), do: & &1.()
+
+  def observer(%{fallback: fallback}, adapter, record) do
+    case adapter.instrumentation() do
+      nil ->
+        fn operation ->
+          record.(%{probe: fallback, observed: :unavailable})
+          operation.()
+        end
+
+      instrumentation ->
+        fn operation ->
+          {outcome, measurements} = instrumentation.measure(adapter, operation)
+          record.(fallback_evidence(fallback, measurements.query_count))
+          outcome
+        end
+    end
+  end
+
+  def fallback_evidence(probe, query_count),
+    do: %{
+      probe: probe,
+      query_count: query_count,
+      observed: query_count == 0,
+      rule: "Ash handled the operation without any data-layer query"
+    }
 
   def assert_outcome!(
         %{expected: {:error, exception, pattern}} = scenario,

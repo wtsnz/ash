@@ -11,10 +11,18 @@ defmodule Ash.Conformance.Formatter do
     GenServer.call(__MODULE__, {:result, {id, adapter}, outcome})
   end
 
+  def record_fallback(id, adapter, evidence) do
+    GenServer.call(__MODULE__, {:fallback, {id, adapter}, evidence})
+  end
+
   def init(_opts) do
     Process.register(self(), __MODULE__)
     declarations = Map.new(Report.declaration_rows(), &{{&1.scenario, &1.adapter}, &1})
-    {:ok, %{rows: [], outcomes: %{}, declarations: declarations}}
+    {:ok, %{rows: [], outcomes: %{}, fallbacks: %{}, declarations: declarations}}
+  end
+
+  def handle_call({:fallback, key, evidence}, _from, state) do
+    {:reply, :ok, put_in(state, [:fallbacks, key], evidence)}
   end
 
   def handle_call({:result, key, outcome}, _from, state) do
@@ -39,6 +47,12 @@ defmodule Ash.Conformance.Formatter do
       state.declarations
       |> Map.fetch!(key)
       |> Map.put(:execution, execution)
+      |> then(fn row ->
+        case Map.fetch(state.fallbacks, key) do
+          {:ok, evidence} -> Map.put(row, :fallback, evidence)
+          :error -> row
+        end
+      end)
       |> Map.merge(
         Map.get(state.outcomes, key, %{actual: "No operation result recorded", details: nil})
       )

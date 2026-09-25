@@ -12,9 +12,12 @@ defmodule Ash.Conformance.AggregateTest do
       adapter = unquote(adapter)
       scenario = Enum.find(Catalog.all(), &(&1.id == unquote(scenario.id)))
 
-      Runner.execute!(scenario, adapter, fn outcome ->
-        Formatter.record(scenario.id, adapter.id(), outcome)
-      end)
+      Runner.execute!(
+        scenario,
+        adapter,
+        &Formatter.record(scenario.id, adapter.id(), &1),
+        &Formatter.record_fallback(scenario.id, adapter.id(), &1)
+      )
     end
   end
 end

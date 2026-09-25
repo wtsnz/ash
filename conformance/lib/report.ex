@@ -18,7 +18,7 @@ defmodule Ash.Conformance.Report do
         semantic_basis: scenario.semantic_basis,
         benchmark: scenario.benchmark,
         capabilities: Capabilities.for_scenario(adapter, scenario),
-        fallback: :unobserved,
+        fallback: if(scenario.fallback, do: %{probe: scenario.fallback}, else: :unobserved),
         area: scenario.area,
         adapter: adapter.id(),
         status: status(expectation),
@@ -230,6 +230,7 @@ defmodule Ash.Conformance.Report do
 
     report = %{
       schema_version: 2,
+      environment: environment(),
       counts: counts,
       scenarios: rows,
       meaning: "A matched gap expectation is not feature conformance."
@@ -243,6 +244,37 @@ defmodule Ash.Conformance.Report do
 
     IO.puts("\n" <> console(rows))
     IO.puts("\nData-layer contracts: #{inspect(counts)}\nReport: results/#{name}.md")
+  end
+
+  @doc """
+  Runtime, dependency and database versions for each selected adapter.
+
+  Capabilities and results can depend on these, as they can on repo settings
+  such as AshSQLite's write transactions.
+  """
+  def environment do
+    Map.new(Adapter.selected(), fn adapter ->
+      :ok = adapter.checkout!()
+
+      try do
+        {adapter.id(),
+         adapter
+         |> Ash.Conformance.Benchmark.environment()
+         |> Map.put(:local_dependency_overrides, local_overrides())}
+      after
+        adapter.checkin!()
+      end
+    end)
+  end
+
+  @doc "Adapter dependencies replaced by local checkouts for this run."
+  def local_overrides do
+    for variable <-
+          ~w(CONFORMANCE_ASH_SQL_PATH CONFORMANCE_ASH_SQLITE_PATH CONFORMANCE_ASH_POSTGRES_PATH),
+        path = System.get_env(variable),
+        path not in [nil, ""],
+        into: %{},
+        do: {variable, path}
   end
 
   def summary_path do

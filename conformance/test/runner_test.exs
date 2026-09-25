@@ -104,4 +104,41 @@ defmodule Ash.Conformance.RunnerTest do
       Runner.run!(scenario(), expectation, %{}, record)
     end
   end
+
+  defmodule CountingInstrumentation do
+    def measure(_adapter, operation), do: {operation.(), %{query_count: 2}}
+  end
+
+  defmodule InstrumentedAdapter do
+    def instrumentation, do: CountingInstrumentation
+  end
+
+  defmodule UninstrumentedAdapter do
+    def instrumentation, do: nil
+  end
+
+  test "fallback evidence is recorded separately and never changes the verdict" do
+    record = fn evidence -> send(self(), {:fallback, evidence}) end
+    probed = %{scenario() | fallback: "Ash evaluates in memory"}
+
+    observe = Runner.observer(probed, InstrumentedAdapter, record)
+    assert Runner.run!(probed, :supported, %{}, fn _ -> :ok end, observe)
+
+    assert_received {:fallback,
+                     %{probe: "Ash evaluates in memory", query_count: 2, observed: false}}
+
+    observe = Runner.observer(probed, UninstrumentedAdapter, record)
+    assert Runner.run!(probed, :supported, %{}, fn _ -> :ok end, observe)
+    assert_received {:fallback, %{observed: :unavailable}}
+  end
+
+  test "scenarios without a fallback probe are not instrumented" do
+    observe = Runner.observer(scenario(), InstrumentedAdapter, fn _ -> flunk("recorded") end)
+    assert Runner.run!(scenario(), :supported, %{}, fn _ -> :ok end, observe)
+  end
+
+  test "zero data-layer queries is the only positive fallback observation" do
+    assert %{observed: true} = Runner.fallback_evidence("probe", 0)
+    assert %{observed: false} = Runner.fallback_evidence("probe", 1)
+  end
 end
