@@ -4,7 +4,7 @@
 
 defmodule Ash.Conformance.CatalogTest do
   use ExUnit.Case, async: true
-  alias Ash.Conformance.{Adapter, Catalog, Expectations, Report}
+  alias Ash.Conformance.{Adapter, Catalog, Expectations, Gaps, Report}
 
   test "every unique scenario has exactly one explicit status per adapter" do
     ids = Enum.map(Catalog.all(), & &1.id)
@@ -61,6 +61,32 @@ defmodule Ash.Conformance.CatalogTest do
     for %{task: task} <- Report.declaration_rows(), not is_nil(task) do
       assert "GAPS.md#" <> anchor = task
       assert anchor in headings, "Missing task: #{task}"
+    end
+  end
+
+  test "every gap has an owner that matches GAPS.md" do
+    sections =
+      File.read!("GAPS.md")
+      |> String.split(~r/^## /m, trim: true)
+      |> Enum.drop(1)
+      |> Map.new(fn section ->
+        [heading | body] = String.split(section, "\n")
+        {heading |> String.downcase() |> String.replace(" ", "-"), Enum.join(body, "\n")}
+      end)
+
+    assert Enum.sort(Map.keys(sections)) == Enum.sort(Gaps.ids())
+
+    for {id, body} <- sections do
+      assert body =~ ~r/^#{Regex.escape(Gaps.owner_line(id))}$/m,
+             "#{id} must state: #{Gaps.owner_line(id)}"
+
+      assert Gaps.owners(id) != []
+      assert Enum.uniq(Gaps.owners(id)) == Gaps.owners(id)
+      assert Gaps.kind(id) == :implementation or body =~ "Decision:"
+    end
+
+    for %{task: task, owners: owners} <- Report.declaration_rows(), task do
+      assert owners == task |> Gaps.id() |> Gaps.names()
     end
   end
 

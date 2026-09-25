@@ -37,10 +37,16 @@ defmodule Ash.Conformance.Expectations do
     ordering.asc_nils_first ordering.asc_nils_last ordering.desc_nils_first ordering.desc_nils_last
     ordering.expression_first ordering.expression_list ordering.ties
     path.final_many_to_many_scalar path.many_to_many path.many_to_many_first path.many_to_many_list
+    path.to_one_to_many_first path.to_one_to_many_list path.to_one_to_many_sum
     path.multi_hop path.no_attributes_control path.to_one path.unrelated
     root.avg root.count root.exists root.first root.max root.min root.sum
     use.calculation use.fanout_count use.filter use.keyset_pagination use.nested_limited_load
     use.pagination use.related_exists use.related_filter use.sort use.to_one_filter use.to_one_sort
+    root.datetime_max
+    values.date_list values.date_max values.date_min values.datetime_first values.datetime_max
+    values.datetime_min values.decimal_avg values.time_min
+    write.atomic_update write.bulk_destroy_filter write.bulk_update_filter
+    write.single_atomic_update
     values.constrained_scalar values.distinct_count values.distinct_list values.field_count
     values.filtered_first_default values.include_nil_first values.include_nil_list values.list_default
     values.root_empty values.same_name_distinct_definitions values.scalar_default
@@ -61,6 +67,25 @@ defmodule Ash.Conformance.Expectations do
 
   defp gaps do
     %{
+      "values.decimal_read_control" =>
+        sqlite(
+          defect_value(
+            %{301 => "0.1", 302 => "0.2", 303 => "12345678901234568", 304 => "0.01"},
+            "decimal-precision"
+          )
+        ),
+      "values.decimal_sum" =>
+        sqlite(
+          defect_value(
+            %{1 => "0.30000000000000004", 2 => "12345678901234568", 3 => nil},
+            "decimal-precision"
+          )
+        ),
+      "values.decimal_max" =>
+        sqlite(
+          defect_value(%{1 => "0.2", 2 => "12345678901234568", 3 => nil}, "decimal-precision")
+        ),
+      "root.decimal_sum" => sqlite(defect_value("12345678901234568", "decimal-precision")),
       "root.custom" => sqlite(root_unsupported()),
       "root.list" => sqlite(root_unsupported()),
       "root.list_empty" => sqlite(root_unsupported()),
@@ -147,6 +172,17 @@ defmodule Ash.Conformance.Expectations do
       "filter.aggregate_dependency" => sqlite(filter_dependency()),
       "filter.aggregate_dependency_many_to_many" => sqlite(filter_dependency()),
       "filter.aggregate_dependency_filtered" => sqlite(filter_dependency()),
+      "filter.aggregate_dependency_calculation" => sqlite(filter_dependency()),
+      "filter.nested_parent" => %{
+        sqlite: parent_filter(),
+        postgres:
+          defect_error(
+            ~r/Unsupported expression in Elixir\.AshPostgres\.SqlImplementation query/,
+            "nested-parent"
+          )
+      },
+      "filter.nested_parent_control" =>
+        both(defect_error(~r/\*\* \(KeyError\) key :parent_bindings not found/, "nested-parent")),
       "filter.fanout_sum" => fanout(6),
       "filter.fanout_avg" => fanout(3.25),
       "filter.fanout_count" => fanout(3),

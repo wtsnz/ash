@@ -4,7 +4,7 @@
 
 defmodule Ash.Conformance.Report do
   @moduledoc false
-  alias Ash.Conformance.{Adapter, Capabilities, Catalog, Expectations}
+  alias Ash.Conformance.{Adapter, Capabilities, Catalog, Expectations, Gaps}
 
   def declaration_rows do
     for adapter <- Adapter.all(), scenario <- Catalog.for_adapter(adapter) do
@@ -23,6 +23,7 @@ defmodule Ash.Conformance.Report do
         adapter: adapter.id(),
         status: status(expectation),
         task: task(expectation),
+        owners: owners(expectation),
         expected: expected(scenario),
         accepted: accepted(scenario, expectation)
       }
@@ -33,6 +34,8 @@ defmodule Ash.Conformance.Report do
   def status({status, _, _}), do: status
   def task(:supported), do: nil
   def task({_, _, task}), do: task
+  def owners(:supported), do: []
+  def owners({_, _, task}), do: task |> Gaps.id() |> Gaps.names()
 
   def outcome({:ok, actual}), do: value(actual)
 
@@ -85,7 +88,7 @@ defmodule Ash.Conformance.Report do
             case row do
               nil -> "profile unavailable"
               %{task: nil} -> to_string(row.status)
-              _ -> "[#{row.status}](#{row.task})"
+              _ -> "[#{row.status}](#{row.task}) · #{hd(row.owners)}"
             end
           end)
 
@@ -93,7 +96,35 @@ defmodule Ash.Conformance.Report do
         "| [`#{scenario.id}`](#{source}) | #{Enum.join(cells, " | ")} |"
       end)
 
-    header <> body <> "\n"
+    header <> body <> "\n" <> owner_table(rows |> Map.values() |> List.flatten())
+  end
+
+  defp owner_table(rows) do
+    adapters = Enum.map(Adapter.all(), & &1.id())
+
+    counts =
+      rows
+      |> Enum.filter(& &1.task)
+      |> Enum.frequencies_by(&{Gaps.id(&1.task), &1.adapter})
+
+    body =
+      Gaps.ids()
+      |> Enum.sort_by(&{Gaps.names(&1), &1})
+      |> Enum.map_join("\n", fn id ->
+        "| [#{id}](GAPS.md##{id}) | #{Enum.join(Gaps.names(id), ", then ")} | #{Gaps.kind(id)} | " <>
+          Enum.map_join(adapters, " | ", &Map.get(counts, {id, &1}, 0)) <> " |"
+      end)
+
+    """
+
+    ## Gaps by owner
+
+    The first owner is where the fix starts. Counts are scenarios linked to each gap.
+
+    | Gap | Owner | Kind | #{Enum.join(adapters, " | ")} |
+    | --- | --- | --- | #{Enum.map_join(adapters, " | ", fn _ -> "---:" end)} |
+    #{body}
+    """
   end
 
   def console(rows) do

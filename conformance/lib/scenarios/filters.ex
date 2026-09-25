@@ -51,6 +51,30 @@ defmodule Ash.Conformance.Scenarios.Filters do
           )
         end
       ),
+      # `well_rated` is a calculation over the child's `rating_count` aggregate.
+      new(
+        "filter.aggregate_dependency_calculation",
+        :filters,
+        %{1 => 1, 2 => 0, 3 => 0},
+        fn ctx ->
+          loaded(ctx, :count, :children, query: Ash.Query.filter(ctx.child, well_rated))
+        end
+      ),
+      # Inside `exists`, `parent` is the child, so `parent(parent(...))` is the
+      # aggregate's source. Parent 1 has children rated at least 3; parent 2's
+      # only child has no ratings.
+      new("filter.nested_parent", :filters, %{1 => 2, 2 => 0, 3 => 0}, fn ctx ->
+        loaded(ctx, :count, :children,
+          query: Ash.Query.filter(ctx.child, exists(ratings, score >= parent(parent(threshold))))
+        )
+      end),
+      new("filter.nested_parent_control", :filters, [1], fn ctx ->
+        ctx.parent
+        |> Ash.Query.filter(exists(children, exists(ratings, score >= parent(parent(threshold)))))
+        |> Ash.Query.sort(:id)
+        |> Ash.read!(authorize?: false)
+        |> Enum.map(& &1.id)
+      end),
       new("filter.parent", :filters, %{1 => 7, 2 => nil, 3 => nil}, fn ctx ->
         loaded(ctx, :sum, :children,
           field: :value,

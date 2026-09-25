@@ -29,6 +29,8 @@ defmodule Ash.Conformance.Catalog do
       Scenarios.Filters,
       Scenarios.Bounds,
       Scenarios.Context,
+      Scenarios.Values,
+      Scenarios.Writes,
       Scenarios.Isolation,
       Scenarios.Schema
     ]

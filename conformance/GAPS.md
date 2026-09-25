@@ -8,7 +8,16 @@ implied. The matrix links each nonconforming expectation to an entry below.
 Unless marked as a decision, the shared scenario contains the intended result.
 An observed Postgres result never replaces that result automatically.
 
+Each entry names the project that owns the fix, in the order the work is
+needed. Postgres defects belong to AshSQL when its lateral strategy produces
+them; no entry is currently owned by AshPostgres itself. Decisions are
+semantic questions for Ash to settle before an adapter implements them.
+`lib/gaps.ex` holds the same owners, and the matrix shows them.
+
 ## Root kinds
+
+Owner: AshSQL, then AshSQLite.
+AshSQLite enables the kinds in `can?({:query_aggregate, kind})`.
 
 Add root SQLite custom and list aggregates. Reuse bounded root inputs,
 custom expressions, windowed JSON lists, result types and defaults. An empty
@@ -17,6 +26,8 @@ each kind with its empty, default and bounded scenarios.
 
 ## Root relationship
 
+Owner: AshSQL.
+
 Implement root aggregation over relationship paths, preserving root scope and
 endpoint fields. SQLite rejects this explicitly. The Postgres comparator also
 fails the tested public `Ash.aggregate` call by resolving `value` against the
@@ -24,11 +35,16 @@ parent instead of the child. Do not assume this gap is SQLite-only.
 
 ## Root first
 
+Owner: AshSQL.
+The crash is in AshSQL's lateral `add_subquery_aggregate_select/6`.
+
 Postgres root `first` without an explicit sort dereferences a missing first
 relationship. The empty-input scenario should return nil. Explicitly sorted
 first and empty-input controls already pass.
 
 ## Many-to-many paths
+
+Owner: AshSQL.
 
 Generalize grouped input construction for intermediate many-to-many hops and
 first/list/custom at the end of a multi-hop path. Carry attachment identity
@@ -36,6 +52,10 @@ through each prepared through and destination input. Scalar final-hop,
 single-hop list/first, empty-parent and shared-destination controls pass.
 
 ## Parent correlation
+
+Owner: AshSQL, then AshSQLite.
+AshSQLite's `can?` gates reject parent-dependent relationships, so they change
+too.
 
 Support parent values in grouped relationship, aggregate, join and unrelated
 filters. Prototype correlated scalar queries or parent-inclusive grouped input.
@@ -48,13 +68,36 @@ both.
 
 ## Parent through load
 
+Owner: AshSQL, then Ash.
+The `KeyError` comes from AshSQL's parent expression handling while Ash loads
+the join relationship. Ash may need to supply the parent context.
+
 Load many-to-many relationships whose join relationship filter uses `parent`.
 Loading `same_tenant_tags` directly raises `KeyError` for `:parent_bindings`
 on both adapters, and on AshSQL main. The Postgres aggregate over the same
 relationship returns the intended sum, so the failure is in relationship
 loading rather than aggregation.
 
+## Nested parent
+
+Owner: AshSQL, then Ash.
+The control's `KeyError` is raised in AshSQL's parent expression handling. In
+the aggregate, the nested reference reaches AshSQL without a resource, so Ash
+may also need to resolve it.
+
+Support `parent(parent(...))` inside nested `exists`. A plain read filtering
+parents by `exists(children, exists(ratings, score >= parent(parent(threshold))))`
+raises `KeyError` for `:parent_bindings` on both adapters, and on AshSQL main.
+The Postgres aggregate with the same inner filter raises an unsupported
+expression error. SQLite rejects parent-dependent aggregate filters. AshPostgres's
+own tests use `parent(parent(...))` in a relationship filter, so the feature is
+supported by Ash in that context. The same `KeyError` appears under
+[Parent through load](#parent-through-load); one fix may cover both.
+
 ## Manual
+
+Owner: AshSQL, then AshSQLite.
+AshSQLite's `can?` gate and manual relationship callbacks change too.
 
 Support SQL-capable manual relationships using existing adapter join/subquery
 callbacks where possible. The shared fixture is a normal foreign-key manual
@@ -63,6 +106,10 @@ scenarios before broader support is advertised.
 
 ## No attributes
 
+Owner: AshSQL, then AshSQLite.
+AshSQLite's `can?` gate changes too. The Postgres error also comes from AshSQL's
+lateral query.
+
 Support grouped attribute-free relationships, separating independent inputs
 from parent-dependent ones. Postgres's independent ad hoc count currently
 errors on a missing selected field, while the parent-dependent count passes.
@@ -70,13 +117,18 @@ The direct relationship-load control returns all five children for each parent.
 
 ## Filter dependencies
 
+Owner: AshSQL.
+
 Attach aggregate dependencies to the endpoint input before compiling its filter.
 The scenarios count children with more than one rating or with any tag, and
-sum children with two ratings above five. A dependency on the parent's
-aggregate, through a to-one relationship, already works on SQLite. Add alias
+sum children with two ratings above five. A calculation over an aggregate is
+also a dependency. A dependency on the parent's aggregate, through a to-one
+relationship, already works on SQLite. Add alias
 and cycle cases as the implementation expands.
 
 ## Filter fanout
+
+Owner: AshSQL.
 
 Use membership EXISTS or row-identity deduplication so filter joins do not
 multiply records being aggregated. Two children with equal value 2 and three
@@ -99,6 +151,8 @@ Composite-key count coverage also exposes Postgres's filter multiplication.
 
 ## Record identity
 
+Owner: AshSQL.
+
 Support distinct record counts with all components of a composite key. Grouped
 counts currently reject them explicitly. Include attachment keys in the
 deduplication subquery. Loading aggregates on keyless source resources is also
@@ -107,6 +161,10 @@ which require an explicit row identity. Ordinary keyless destination counts
 already work.
 
 ## Sorted distinct reads
+
+Owner: AshSQLite, then AshSQL.
+The regression enters through AshSQLite #232. The fix may belong in
+`AshSql.Query.return_query/2`, which both adapters use.
 
 Keep sorted SQLite reads distinct when a filter joins a to-many relationship.
 This is a regression in AshSQLite #232, not an aggregate gap: upstream
@@ -118,7 +176,25 @@ with `DISTINCT ON`, which the row number does not affect. SQLite's plain
 twice and omits child 12 while the page count is two. Unsorted reads and
 `Ash.count` are unaffected.
 
+## Decimal precision
+
+Owner: AshSQLite.
+
+Keep decimal values and sums exact on SQLite. A `DECIMAL` column has numeric
+affinity, so SQLite stores 12345678901234567.89 as the float
+12345678901234568 even though ecto_sqlite3 writes decimals as text. The direct
+read control shows the loss happens on write, before any aggregate runs. Sums
+are also floating point: 0.1 and 0.2 sum to 0.30000000000000004. Postgres
+returns the exact values.
+
+SQLite has no exact decimal arithmetic built in. Options include storing
+decimals as text and using SQLite's optional decimal extension, or documenting
+the limit. Averages are floats in Ash, so they match after rounding. Dates,
+times and microsecond datetimes aggregate correctly on both adapters.
+
 ## From many
+
+Owner: AshSQL.
 
 Respect the implicit one-row bound of `from_many?`. Both extraction strategies
 currently count four children for the first parent. The separately stacked fix
@@ -127,17 +203,25 @@ pass until the expectation is promoted.
 
 ## Default sort
 
+Owner: AshSQL.
+Ash applies `default_sort` only when loading relationships directly. Both AshSQL
+strategies read only the relationship's `sort`.
+
 Apply relationship `default_sort` when there is no explicit sort. Both
 aggregate paths currently choose 2 instead of 7. Direct relationship loading
 returns the expected child with value 7 on both adapters.
 
 ## Unsorted bounds
 
+Owner: AshSQL.
+
 Avoid an empty `ORDER BY` in grouped relationship windows. The bounded count
 must be one regardless of which child is chosen; the fixture does not depend
 on an unspecified ordering. SQLite currently raises a syntax error.
 
 ## Root bounds
+
+Owner: AshSQL.
 
 Preserve root ordering when materializing a limited aggregate input. The
 Postgres comparator discards the ordering and aggregates value 2 instead of 7.
@@ -149,6 +233,8 @@ ordering distinct from a first/list aggregate's own ordering.
 
 ## Relationship context
 
+Owner: Ash.
+
 Make relationship context available before read preparation and avoid retaining
 an earlier filter prepared without it. Both the aggregate and direct
 relationship-load controls return no rows. An explicitly prepared child query
@@ -156,6 +242,10 @@ with the same context returns the two intended records, and parent shared
 context also works. This needs Ash-level investigation as well as adapter work.
 
 ## Authorization bounds
+
+Owner: Ash, then AshSQL.
+Ash orders the policy and aggregate filters. AshSQL then applies them around the
+bound.
 
 Apply destination authorization before choosing limited relationship rows.
 The aggregate's own predicate must remain after the bound. Both adapters return
@@ -166,11 +256,19 @@ Ash change to preserve their distinct ordering.
 
 ## Prepared query
 
+Owner: AshSQL.
+The crash is in AshSQL's lateral `add_aggregates/6`, which reduces over an error
+from reading the prepared query.
+
 Retain a prepared endpoint query's action and arguments. SQLite returns the
 correct count; the Postgres comparator crashes in `Enumerable.List.reduce/3`.
 Configured-action and intermediate-action controls pass on both adapters.
 
 ## Tenant bypass
+
+Owner: AshSQL.
+AshSQL's lateral strategy applies attribute tenancy without the aggregate's read
+action. The grouped strategy passes it and returns the intended results.
 
 Honor explicit aggregate tenancy bypass on endpoints and through resources,
 without changing a scoped sibling. The SQLite cases pass. Postgres returns
@@ -179,12 +277,16 @@ tenant predicates before changing adapter behavior.
 
 ## Path multiplicity
 
+Decision owner: Ash.
+
 Decision: when a destination is reached through two different relationship
 paths, does a fieldless count count path occurrences or distinct destinations?
 The repeated many-to-many scenario currently returns three and two in Postgres;
 SQLite rejects the path. These are strict observations, not accepted semantics.
 
 ## Keyless identity
+
+Decision owner: Ash.
 
 Decision: define distinct-record semantics when the destination has no primary
 key. PostgreSQL currently counts rows and SQLite rejects the operation. Do not
@@ -193,6 +295,8 @@ for every resource.
 
 ## Many-to-many bounds API
 
+Decision owner: Ash.
+
 Decision: expose relationship limits/offsets for many-to-many aggregates in Ash.
 The current many-to-many DSL has no `limit` option and `Ash.Query.aggregate`
 rejects a limited target query before either adapter runs. This corrects the
@@ -200,6 +304,8 @@ earlier assumption that the grouped guard alone was blocking a public feature.
 Add the API and settle per-parent ordering before a conformance result is fixed.
 
 ## Unique list order
+
+Decision owner: Ash.
 
 Decision: choose which occurrence supplies the ordering value when duplicate
 list values have different sort keys. SQLite rejects this shape; Postgres

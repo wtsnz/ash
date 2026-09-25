@@ -10,7 +10,7 @@ Per-scenario results in `results/` distinguish semantic passes, matched gaps and
 | Area | Coverage | Boundary |
 | --- | --- | --- |
 | reads | implemented | Filtering, expression calculations, selection, deterministic sort |
-| aggregates | implemented | 146 inherited semantic and gap contracts; all nine kinds |
+| aggregates | implemented | 169 scenarios ported from the AshSQL suite; all nine kinds, owners per gap |
 | calculations | implemented | Expression and aggregate fields; runtime calculation combinations planned |
 | relationships | implemented | Direct, multi-hop, many-to-many, manual, bounds and from_many |
 | attribute_tenancy | implemented | Two tenants with overlapping local identities; actor/context interactions |
@@ -18,11 +18,11 @@ Per-scenario results in `results/` distinguish semantic passes, matched gaps and
 | authorization | implemented | Actor policy, relationships, aggregates, pages, shared context |
 | pagination | implemented | Static offset/keyset pages, aggregate ordering and counts |
 | distinctness | implemented | Aggregate uniqueness, composite identities, fanout controls; query DISTINCT planned |
-| writes | implemented | Create/update/destroy lifecycle with attribute tenancy |
+| writes | implemented | Create/update/destroy lifecycle; atomic bulk writes that filter by or read aggregates |
 | upsert | planned | Conflict targets, tenant-aware identities and skipped records |
 | bulk_atomic | planned | Partial failure, return records, atomic changes and fallback strategies |
 | transactions_locking | planned | Isolation, rollback and locks need a separate concurrency profile |
-| types_constraints | implemented | Constrained aggregate types, nils and strings; broader persistence planned |
+| types_constraints | implemented | Constrained types, strings, decimals, dates, times and microsecond datetimes in aggregates |
 | query_combinations | planned | Union, union_all and intersection semantics by resource |
 | concurrent_pagination | planned | Mutating datasets and consistency guarantees need a decision |
 | generated_cases | planned | Bounded deterministic generators after the static isolation corpus |
@@ -32,4 +32,4 @@ Missing profiles are not passing tests. Fallback evidence is limited to instrume
 dispatch tests; adapter scenarios report `unobserved` unless instrumentation proves a path.
 A false capability and a correct answer alone do not prove fallback execution.
 
-186 executable scenarios are registered. See [MATRIX.md](MATRIX.md) for individual contracts.
+209 executable scenarios are registered. See [MATRIX.md](MATRIX.md) for individual contracts.

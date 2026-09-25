@@ -15,6 +15,7 @@ defmodule Ash.Conformance.Resources do
     link = Module.concat(namespace, Link)
     child_tag = Module.concat(namespace, ChildTag)
     event = Module.concat(namespace, Event)
+    reading = Module.concat(namespace, Reading)
     tenant_child = Module.concat(namespace, TenantChild)
     tenant_link = Module.concat(namespace, TenantLink)
     authorized_child = Module.concat(namespace, AuthorizedChild)
@@ -38,6 +39,16 @@ defmodule Ash.Conformance.Resources do
 
           read :keyset do
             pagination(keyset?: true, required?: false)
+          end
+
+          destroy(:destroy)
+
+          update :relabel do
+            accept([:label])
+          end
+
+          update :record_child_count do
+            change(atomic_update(:threshold, expr(child_count)))
           end
         end
 
@@ -135,6 +146,7 @@ defmodule Ash.Conformance.Resources do
 
           has_many(:tenant_links, unquote(tenant_link), destination_attribute: :parent_id)
           has_many(:events, unquote(event), destination_attribute: :parent_id)
+          has_many(:readings, unquote(reading), destination_attribute: :parent_id)
 
           many_to_many :tags, unquote(tag) do
             through(unquote(link))
@@ -248,6 +260,7 @@ defmodule Ash.Conformance.Resources do
 
         calculations do
           calculate(:double_value, :integer, expr(value * 2), public?: true)
+          calculate(:well_rated, :boolean, expr(rating_count > 1), public?: true)
         end
       end
 
@@ -334,6 +347,19 @@ defmodule Ash.Conformance.Resources do
 
         relationships do
           belongs_to(:parent, unquote(parent), define_attribute?: false)
+        end
+      end
+
+      defmodule unquote(reading) do
+        use Ash.Conformance.Resource, adapter: unquote(adapter), table: "ac_readings"
+
+        attributes do
+          attribute(:id, :integer, primary_key?: true, allow_nil?: false, public?: true)
+          attribute(:parent_id, :integer, public?: true)
+          attribute(:amount, :decimal, public?: true)
+          attribute(:taken_on, :date, public?: true)
+          attribute(:taken_at, :utc_datetime_usec, public?: true)
+          attribute(:taken_time, :time, public?: true)
         end
       end
 

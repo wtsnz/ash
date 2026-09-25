@@ -13,6 +13,37 @@ defmodule Ash.Conformance.Scenarios.Relationships do
       new("path.to_one", :relationships, %{11 => 3, 12 => 3, 13 => 3, 14 => 3, 21 => 5}, fn ctx ->
         loaded(%{ctx | parent: ctx.child}, :sum, :parent, field: :threshold)
       end),
+      # Each child reaches its siblings through its parent.
+      new(
+        "path.to_one_to_many_sum",
+        :relationships,
+        %{11 => 11, 12 => 11, 13 => 11, 14 => 11, 21 => 4},
+        fn ctx ->
+          loaded(%{ctx | parent: ctx.child}, :sum, [:parent, :children], field: :value)
+        end
+      ),
+      new(
+        "path.to_one_to_many_first",
+        :relationships,
+        %{11 => 7, 12 => 7, 13 => 7, 14 => 7, 21 => 4},
+        fn ctx ->
+          loaded(%{ctx | parent: ctx.child}, :first, [:parent, :children],
+            field: :value,
+            query: [sort: [value: :desc]]
+          )
+        end
+      ),
+      new(
+        "path.to_one_to_many_list",
+        :relationships,
+        %{11 => [2, 2, 7], 12 => [2, 2, 7], 13 => [2, 2, 7], 14 => [2, 2, 7], 21 => [4]},
+        fn ctx ->
+          loaded(%{ctx | parent: ctx.child}, :list, [:parent, :children],
+            field: :value,
+            query: [sort: [value: :asc]]
+          )
+        end
+      ),
       new("path.multi_hop", :relationships, %{1 => 26, 2 => nil, 3 => nil}, fn ctx ->
         loaded(ctx, :sum, [:children, :ratings], field: :score)
       end),

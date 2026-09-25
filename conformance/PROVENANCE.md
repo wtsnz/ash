@@ -5,7 +5,12 @@
 Read when updating dependencies or coordinating with adapter repositories.
 
 The starting corpus is `wtsnz/ash_sql`, branch `test/aggregate-conformance`,
-commit `0dfab5dbf4d1d5b978ba14d10b9afad60d698820`. Its `conformance/` directory
+commit `0dfab5dbf4d1d5b978ba14d10b9afad60d698820`. Commits `4a4a7e9` to
+`4e328e2` on the same branch were ported later: gap owners (`lib/gaps.ex`),
+23 scenarios for decimals, dates and times, aggregate-filtered bulk writes,
+to-one then to-many paths, calculation dependencies and nested `parent`
+references. At the time of porting those five commits existed only in the local
+AshSQL worktree; this project carries its own copy. Its `conformance/` directory
 contained 146 scenarios, fixtures, resource factories, explicit expectations,
 report/comparison tooling and local gap tasks. This project copies that tracked
 source, preserving IDs and MIT attribution, and renames the namespace to

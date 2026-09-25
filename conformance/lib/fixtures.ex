@@ -58,6 +58,42 @@ defmodule Ash.Conformance.Fixtures do
     child_tags = [%{child_id: 11, tag_id: 201}, %{child_id: 12, tag_id: 202}]
     events = [%{parent_id: 1, value: 2}, %{parent_id: 1, value: 3}]
 
+    # Exact decimals and sub-second times expose float or text storage.
+    readings = [
+      %{
+        id: 301,
+        parent_id: 1,
+        amount: Decimal.new("0.1"),
+        taken_on: ~D[2024-01-09],
+        taken_at: ~U[2024-01-01 09:59:59.999999Z],
+        taken_time: ~T[09:30:00]
+      },
+      %{
+        id: 302,
+        parent_id: 1,
+        amount: Decimal.new("0.2"),
+        taken_on: ~D[2024-01-10],
+        taken_at: ~U[2024-01-01 10:00:00.000000Z],
+        taken_time: ~T[10:15:00]
+      },
+      %{
+        id: 303,
+        parent_id: 2,
+        amount: Decimal.new("12345678901234567.89"),
+        taken_on: ~D[2023-12-31],
+        taken_at: ~U[2023-12-31 23:59:59.000001Z],
+        taken_time: ~T[23:59:59]
+      },
+      %{
+        id: 304,
+        parent_id: 2,
+        amount: Decimal.new("0.01"),
+        taken_on: ~D[2024-02-01],
+        taken_at: ~U[2024-02-01 00:00:00.000000Z],
+        taken_time: ~T[00:00:00]
+      }
+    ]
+
     for {role, rows} <- [
           parent: parents,
           child: children,
@@ -65,7 +101,8 @@ defmodule Ash.Conformance.Fixtures do
           tag: tags,
           link: links,
           child_tag: child_tags,
-          event: events
+          event: events,
+          reading: readings
         ],
         row <- rows do
       adapter.persist!(role, [row], [])

@@ -14,6 +14,19 @@ defmodule Ash.Conformance.Scenarios.Helpers do
     |> Map.new(&{&1.id, normalize(Map.fetch!(&1.aggregates, :result))})
   end
 
+  @doc "Like `loaded/5`, but compares decimals exactly instead of as rounded floats."
+  def loaded_exact(context, kind, path, opts) do
+    context.parent
+    |> Ash.Query.build(aggregate: {:result, kind, path, opts})
+    |> Ash.Query.sort(:id)
+    |> Ash.read!(authorize?: false)
+    |> Map.new(&{&1.id, exact(Map.fetch!(&1.aggregates, :result))})
+  end
+
+  def exact(%Decimal{} = value), do: value |> Decimal.normalize() |> Decimal.to_string(:normal)
+  def exact(value) when is_list(value), do: Enum.map(value, &exact/1)
+  def exact(value), do: value
+
   def root(context, kind, opts \\ []) do
     Ash.aggregate!(context.child, [{:result, kind, opts}], authorize?: false)
     |> Map.fetch!(:result)
