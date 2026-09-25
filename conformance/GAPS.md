@@ -267,6 +267,15 @@ Return the skipped record from the upsert's own tenant. With
 skips the write returns record 2001 from tenant 2, with its value 700. The
 intended record is tenant 1's record 1001. This exposes another tenant's data.
 
+The recorded wrong record depends on row order. The lookup runs
+`WHERE local_id = 1` with no tenant filter and matches both 1001 and 2001.
+AshPostgres keys the results by `local_id`, so whichever row comes back last
+wins. In the fresh fixture tenant 1's rows are inserted first, so 2001 wins,
+but Postgres does not guarantee that order. If 1001 came back last, the
+scenario would report an unexpected pass while the bug remained. Before
+promoting it, confirm the lookup includes `tenant_id`, not just that 1001 was
+returned.
+
 ## From many
 
 Owner: AshSQL.
