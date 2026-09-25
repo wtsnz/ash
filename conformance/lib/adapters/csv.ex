@@ -28,6 +28,12 @@ defmodule Ash.Conformance.Csv do
 
   def resource_options, do: [extensions: [Ash.Conformance.Csv.Extension]]
 
+  def notes,
+    do: [
+      "Each resource's `columns` are set to its own attributes. A role over a shared table with " <>
+        "other columns gets its own file, and seeded rows are copied into it."
+    ]
+
   # AshCsv does not enforce uniqueness in storage.
   def identity_options, do: [pre_check?: true]
 

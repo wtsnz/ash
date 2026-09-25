@@ -40,6 +40,11 @@ defmodule Ash.Conformance.Adapter do
   @callback identity_options() :: keyword()
   @doc "Options added to `use Ash.Resource` for every shared resource, such as `extensions`."
   @callback resource_options() :: keyword()
+  @doc """
+  What the integration does differently from a plain application of the data
+  layer, such as a column type chosen for the database, so reports can say so.
+  """
+  @callback notes() :: [String.t()]
 
   @doc """
   Reviewed adapters, from config. The suite names no adapter itself, so the
@@ -131,6 +136,7 @@ defmodule Ash.Conformance.Adapter do
       def checkin!, do: :ok
       def identity_options, do: []
       def resource_options, do: []
+      def notes, do: []
 
       defoverridable profiles: 0,
                      resource: 1,
@@ -144,7 +150,8 @@ defmodule Ash.Conformance.Adapter do
                      checkout!: 0,
                      checkin!: 0,
                      identity_options: 0,
-                     resource_options: 0
+                     resource_options: 0,
+                     notes: 0
     end
   end
 end

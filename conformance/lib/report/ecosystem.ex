@@ -59,6 +59,7 @@ defmodule Ash.Conformance.Report.Ecosystem do
     | --- | --- | --- | --- | #{Enum.map_join(@classifications, " | ", fn _ -> "---:" end)} | ---: |
     #{Enum.map_join(results, "\n", &summary_row/1)}
 
+    #{notes_section(adapters)}
     #{FeatureReport.legend()}
     | ➖ Not run | The data layer's storage could not be set up for this run. |
 
@@ -90,6 +91,24 @@ defmodule Ash.Conformance.Report.Ecosystem do
     end
 
     :ok
+  end
+
+  defp notes_section(adapters) do
+    notes =
+      for adapter <- adapters, note <- adapter.notes(), do: "- **#{adapter.label()}:** #{note}"
+
+    if notes == [] do
+      ""
+    else
+      """
+      ### Setup notes
+
+      Where the suite had to do something other than configure the data layer
+      as an application would, and why:
+
+      #{Enum.join(notes, "\n")}
+      """
+    end
   end
 
   defp heading(classification),

@@ -142,6 +142,13 @@ jobs:
           MYSQL_ROOT_PASSWORD: mysql
         ports: ['3306:3306']
         options: --health-cmd "mysqladmin ping -pmysql" --health-interval 10s --health-timeout 5s --health-retries 10
+      clickhouse:
+        image: clickhouse/clickhouse-server:25.8
+        env:
+          # AshClickhouse does not pass credentials to its client.
+          CLICKHOUSE_SKIP_USER_SETUP: '1'
+        ports: ['8123:8123']
+        options: --health-cmd "wget -qO- http://localhost:8123/ping" --health-interval 10s --health-timeout 5s --health-retries 10
     env:
       MIX_ENV: test
       CONFORMANCE_PG_DATABASE: ash_conformance_ecosystem_${{ github.run_id }}_${{ github.run_attempt }}

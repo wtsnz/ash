@@ -127,6 +127,7 @@ smallest complete example.
 | `expectations/0` | Expectation records by scenario ID; `%{}` for a survey-only adapter. |
 | `resource_config/1` | `{data_layer, config_block}` for a shared table. |
 | `resource_options/0` | Extra `use Ash.Resource` options for every shared resource, such as an extension that derives data layer settings from the attributes. |
+| `notes/0` | What the integration does differently from a plain application, such as a workaround for a data layer defect; listed in `ECOSYSTEM.md`. |
 | `identity_options/0` | Options for every shared identity, e.g. `[pre_check?: true]` when uniqueness is not enforced by storage. |
 
 The SQL adapters implement these with repositories and migrations. The runner,

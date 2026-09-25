@@ -15,6 +15,15 @@ defmodule Ash.Conformance.Mysql do
   use Ash.Conformance.Adapter, id: :mysql, label: "AshMysql", package: :ash_mysql
 
   def repo, do: Ash.Conformance.MysqlRepo
+
+  def notes,
+    do: [
+      "The records table stores `tags` as JSON and `code` as a `VARCHAR`, since MySQL has no array " <>
+        "column and cannot index `TEXT` without a key length.",
+      "Decimals are `DECIMAL(30,10)`: a bare `DECIMAL` is `DECIMAL(10,0)`, and wider columns return " <>
+        "values past the 34 digits Decimal parses by default. Values read back with ten decimal places."
+    ]
+
   def manual_relationship, do: Ash.Conformance.Mysql.Manual
 
   def resource_config(table) do

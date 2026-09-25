@@ -12,7 +12,12 @@ config :logger, level: :warning
 # and gate CI; unreviewed ones run only as surveys in the ecosystem report.
 config :ash_conformance,
   adapters: [Ash.Conformance.Sqlite, Ash.Conformance.Postgres],
-  unreviewed_adapters: [Ash.Conformance.Ets, Ash.Conformance.Csv, Ash.Conformance.Mysql]
+  unreviewed_adapters: [
+    Ash.Conformance.Ets,
+    Ash.Conformance.Csv,
+    Ash.Conformance.Mysql,
+    Ash.Conformance.Clickhouse
+  ]
 
 config :ash_conformance, Ash.Conformance.SqliteRepo,
   database: Path.expand("../tmp/data_layer.sqlite3", __DIR__),
@@ -39,4 +44,11 @@ config :ash_conformance, Ash.Conformance.MysqlRepo,
   password: System.get_env("MYSQL_PASSWORD", "mysql"),
   database: "ash_conformance_local",
   pool: Ecto.Adapters.SQL.Sandbox,
+  pool_size: 2
+
+# AshClickhouse 0.7.3 does not pass credentials to its client; see
+# Ash.Conformance.Clickhouse.notes/0.
+config :ash_conformance, Ash.Conformance.ClickhouseRepo,
+  url: System.get_env("CLICKHOUSE_URL", "http://localhost:8123"),
+  database: "ash_conformance_local",
   pool_size: 2
