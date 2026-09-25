@@ -37,4 +37,4 @@ dispatch tests and from scenarios that name a fallback, which record the operati
 data-layer query count. Other adapter scenarios report `unobserved`. A false capability
 and a correct answer alone do not prove fallback execution.
 
-229 executable scenarios are registered. See [MATRIX.md](MATRIX.md) for individual contracts.
+233 executable scenarios are registered. See [MATRIX.md](MATRIX.md) for individual contracts.

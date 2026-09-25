@@ -96,6 +96,21 @@ defmodule Ash.Conformance.Scenarios.Operations do
       new("values.list_default", :results, %{1 => [2, 2, 7], 2 => [4], 3 => [99]}, fn ctx ->
         loaded(ctx, :list, :children, field: :value, default: [99], query: [sort: [value: :asc]])
       end),
+      # With no sort the list order is unspecified, so it is sorted before
+      # comparing. `include_nil?` defaults to false, so nil must not appear.
+      new("values.list_unsorted", :results, %{1 => [2, 2, 7], 2 => [4], 3 => []}, fn ctx ->
+        ctx
+        |> loaded(:list, :children, field: :value)
+        |> Map.new(fn {id, values} -> {id, Enum.sort(values)} end)
+      end),
+      new("root.list_unsorted", :operations, [2, 2, 4, 7], fn ctx ->
+        ctx |> root(:list, field: :value) |> Enum.sort()
+      end),
+      # Descending order differs from both ID and insertion order, so a
+      # dropped sort fails on every adapter.
+      new("ordering.list_desc", :ordering, %{1 => [7, 2, 2], 2 => [4], 3 => []}, fn ctx ->
+        loaded(ctx, :list, :children, field: :value, query: [sort: [value: :desc]])
+      end),
       new("values.filtered_first_default", :results, %{1 => 99, 2 => 99, 3 => 99}, fn ctx ->
         loaded(ctx, :first, :children,
           field: :value,

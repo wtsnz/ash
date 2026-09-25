@@ -270,11 +270,11 @@ intended record is tenant 1's record 1001. This exposes another tenant's data.
 The recorded wrong record depends on row order. The lookup runs
 `WHERE local_id = 1` with no tenant filter and matches both 1001 and 2001.
 AshPostgres keys the results by `local_id`, so whichever row comes back last
-wins. In the fresh fixture tenant 1's rows are inserted first, so 2001 wins,
-but Postgres does not guarantee that order. If 1001 came back last, the
-scenario would report an unexpected pass while the bug remained. Before
-promoting it, confirm the lookup includes `tenant_id`, not just that 1001 was
-returned.
+wins. The suite seeds rows in three orders: forward gives 2001, while reverse
+and rotated give 1001. Because the wrong record depends on order, all three
+observations are pinned, and the scenario can pass only when every order
+returns 1001. Before promoting it, also confirm the lookup includes
+`tenant_id`.
 
 ## From many
 
@@ -291,9 +291,10 @@ Owner: AshSQL.
 Ash applies `default_sort` only when loading relationships directly. Both AshSQL
 strategies read only the relationship's `sort`.
 
-Apply relationship `default_sort` when there is no explicit sort. Both
-aggregate paths currently choose 2 instead of 7. Direct relationship loading
-returns the expected child with value 7 on both adapters.
+Apply relationship `default_sort` when there is no explicit sort. SQLite
+chooses 2 instead of 7. Postgres takes whichever child is stored first: 2 when
+rows are seeded forward, 7 in reverse or rotated order. Direct relationship
+loading returns the expected child with value 7 on both adapters.
 
 ## Unsorted bounds
 
@@ -311,9 +312,29 @@ Preserve root ordering when materializing a limited aggregate input. The
 Postgres comparator discards the ordering and aggregates value 2 instead of 7.
 A list's own sort also replaces the root ordering: the two highest IDs have
 values 4 and nil, but Postgres lists `[2, 2]`. The unsorted custom aggregate
-over the same input is correct.
+over the same input only looks correct: the limit takes whichever rows are
+stored first, which happens to give 4 when rows are seeded forward or in
+reverse, and 7 when seeding starts from the middle.
+
+These Postgres results depend on row order, so the suite pins the observation
+for each seeding order. The fix must make every order return the intended
+answer.
 An offset-only root count also raises instead of returning three. Keep root
 ordering distinct from a first/list aggregate's own ordering.
+
+## Unsorted list nil
+
+Owner: AshSQL.
+In the lateral strategy, a list aggregate with no sort, either on the
+aggregate or on the relationship, is built as a plain `array_agg(?)`. Only
+the sorted branch adds `FILTER (WHERE ? IS NOT NULL)`.
+
+Exclude nils from list aggregates unless `include_nil?` is true, which is
+Ash's default, whether or not the list is sorted. Postgres lists
+`[2, 2, 7, nil]` for parent 1 and `[2, 2, 4, 7, nil]` at the root. The
+comparison sorts the lists because their order is unspecified. The same
+happens with AshSQL main `e3c9d26`, so it predates the extraction. SQLite
+excludes the nil. Every other list scenario sorts, which is why none caught it.
 
 ## Relationship context
 

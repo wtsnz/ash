@@ -87,6 +87,14 @@ defmodule Ash.Conformance.Scenarios.Values do
         end
       ),
       new(
+        "values.date_list_desc",
+        :results,
+        %{1 => [~D[2024-01-10], ~D[2024-01-09]], 2 => [~D[2024-02-01], ~D[2023-12-31]], 3 => []},
+        fn ctx ->
+          loaded(ctx, :list, :readings, field: :taken_on, query: [sort: [taken_on: :desc]])
+        end
+      ),
+      new(
         "values.datetime_min",
         :results,
         %{1 => ~U[2024-01-01 09:59:59.999999Z], 2 => ~U[2023-12-31 23:59:59.000001Z], 3 => nil},

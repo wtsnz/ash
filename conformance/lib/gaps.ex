@@ -43,6 +43,7 @@ defmodule Ash.Conformance.Gaps do
     "default-sort" => {:implementation, [:ash_sql]},
     "unsorted-bounds" => {:implementation, [:ash_sql]},
     "root-bounds" => {:implementation, [:ash_sql]},
+    "unsorted-list-nil" => {:implementation, [:ash_sql]},
     "relationship-context" => {:implementation, [:ash]},
     "authorization-bounds" => {:implementation, [:ash, :ash_sql]},
     "prepared-query" => {:implementation, [:ash_sql]},

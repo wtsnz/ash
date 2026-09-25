@@ -141,4 +141,68 @@ defmodule Ash.Conformance.RunnerTest do
     assert %{observed: true} = Runner.fallback_evidence("probe", 0)
     assert %{observed: false} = Runner.fallback_evidence("probe", 1)
   end
+
+  describe "strict comparison" do
+    alias Ash.Conformance.Compare
+
+    test "integers and floats are different results" do
+      refute Compare.equal?(2, 2.0)
+      refute Compare.equal?(%{1 => 2}, %{1 => 2.0})
+      refute Compare.equal?([2, 2, 7], [2.0, 2.0, 7.0])
+      assert Compare.equal?(%{1 => [2, {3, "a"}]}, %{1 => [2, {3, "a"}]})
+    end
+
+    test "structs compare every field, including precision" do
+      refute Compare.equal?(Decimal.new("0.3"), Decimal.new("0.30"))
+      refute Compare.equal?(~U[2024-01-01 00:00:00Z], ~U[2024-01-01 00:00:00.000000Z])
+      assert Compare.equal?(~D[2024-01-01], ~D[2024-01-01])
+    end
+
+    test "a supported scenario fails when only the numeric type changed" do
+      assert_raise ExUnit.AssertionError, ~r/expected 7, got 7.0/, fn ->
+        Runner.assert_outcome!(scenario(), :supported, {:ok, 7.0})
+      end
+    end
+  end
+
+  describe "seed order" do
+    test "matching outcomes in every order combine to one outcome" do
+      assert Runner.combine(forward: {:ok, 7}, reverse: {:ok, 7}, rotated: {:ok, 7}) == {:ok, 7}
+    end
+
+    test "an order-dependent outcome never passes, even when one order is right" do
+      outcome = Runner.combine(forward: {:ok, 7}, reverse: {:ok, 7}, rotated: {:ok, 4})
+      assert {:order_dependent, %{rotated: {:ok, 4}}} = outcome
+
+      assert_raise ExUnit.AssertionError, ~r/depends on row order/, fn ->
+        Runner.assert_outcome!(scenario(), :supported, outcome)
+      end
+    end
+
+    test "an order-dependent defect must match every order" do
+      signature =
+        {:order_dependent, %{forward: {:value, 7}, reverse: {:value, 7}, rotated: {:value, 4}}}
+
+      status = {:known_defect, signature, "GAPS.md#example"}
+      outcome = {:order_dependent, %{forward: {:ok, 7}, reverse: {:ok, 7}, rotated: {:ok, 4}}}
+      assert Runner.assert_outcome!(scenario(), status, outcome)
+
+      changed = {:order_dependent, %{forward: {:ok, 7}, reverse: {:ok, 5}, rotated: {:ok, 4}}}
+
+      assert_raise ExUnit.AssertionError, ~r/signature changed/, fn ->
+        Runner.assert_outcome!(scenario(), status, changed)
+      end
+
+      assert_raise ExUnit.AssertionError, ~r/signature changed/, fn ->
+        Runner.assert_outcome!(scenario(), status, {:ok, 5})
+      end
+    end
+
+    test "rotation starts from the middle so it differs from both ends" do
+      Process.put({Ash.Conformance.Fixtures, :order}, :rotated)
+      assert Ash.Conformance.Fixtures.ordered([1, 2, 3, 4, 5]) == [3, 4, 5, 1, 2]
+    after
+      Process.delete({Ash.Conformance.Fixtures, :order})
+    end
+  end
 end

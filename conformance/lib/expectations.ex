@@ -51,6 +51,7 @@ defmodule Ash.Conformance.Expectations do
     txn.after_action_rollback txn.raise_rollback txn.explicit_rollback txn.commit
     upsert.tenant_identity upsert.bulk bulk.partial_success bulk.atomic_increment
     generated.filtered_aggregates
+    ordering.list_desc values.date_list_desc
     values.constrained_scalar values.distinct_count values.distinct_list values.field_count
     values.filtered_first_default values.include_nil_first values.include_nil_list values.list_default
     values.root_empty values.same_name_distinct_definitions values.scalar_default
@@ -111,7 +112,15 @@ defmodule Ash.Conformance.Expectations do
             ~r/\*\* \(Exqlite\.Error\) unsupported type: upsert_conflict\(:value\)/,
             "upsert-conditions"
           ),
-        postgres: defect_value([{2001, 2, 1, 700, true}], "skipped-upsert-tenant")
+        postgres:
+          defect_orders(
+            %{
+              forward: [{2001, 2, 1, 700, true}],
+              reverse: [{1001, 1, 1, 2, true}],
+              rotated: [{1001, 1, 1, 2, true}]
+            },
+            "skipped-upsert-tenant"
+          )
       },
       "values.decimal_read_control" =>
         sqlite(
@@ -133,19 +142,28 @@ defmodule Ash.Conformance.Expectations do
         ),
       "root.decimal_sum" => sqlite(defect_value("12345678901234568", "decimal-precision")),
       "root.custom" => sqlite(root_unsupported()),
+      "values.list_unsorted" =>
+        postgres(defect_value(%{1 => [2, 2, 7, nil], 2 => [4], 3 => []}, "unsorted-list-nil")),
+      "root.list_unsorted" => %{
+        sqlite: root_unsupported(),
+        postgres: defect_value([2, 2, 4, 7, nil], "unsorted-list-nil")
+      },
       "root.list" => sqlite(root_unsupported()),
       "root.list_empty" => sqlite(root_unsupported()),
       "root.list_default_empty" => sqlite(root_unsupported()),
       "root.custom_empty" => sqlite(root_unsupported()),
-      "bounds.root_custom_limit" => sqlite(root_unsupported()),
+      "bounds.root_custom_limit" => %{
+        sqlite: root_unsupported(),
+        postgres: defect_orders(%{forward: 4, reverse: 4, rotated: 7}, "root-bounds")
+      },
       "bounds.root_list_limit" => %{
         sqlite: root_unsupported(),
-        postgres: defect_value([2, 2], "root-bounds")
+        postgres: defect_orders(%{forward: [2, 2], reverse: [4], rotated: [7]}, "root-bounds")
       },
       "root.unsorted_first_empty" =>
         postgres(
           defect_error(
-            ~r/\*\* \(BadMapError\) expected a map, got:\n\n    nil\n/,
+            ~r/\*\* \(BadMapError\) expected a map, got:\n\n    nil\n\n  \(ash_sql [^)]+\) lib\/aggregate\/lateral\.ex:\d+: AshSql\.Aggregate\.Lateral\.add_subquery_aggregate_select\/6\n/,
             "root-first"
           )
         ),
@@ -262,16 +280,32 @@ defmodule Ash.Conformance.Expectations do
         postgres: unresolved_value(%{1 => 2, 2 => 0, 3 => 0}, "keyless-identity")
       },
       "bounds.from_many" => both(defect_value(%{1 => 4, 2 => 1, 3 => 0}, "from-many")),
-      "bounds.default_sort" => both(defect_value(%{1 => 2, 2 => 4, 3 => nil}, "default-sort")),
+      "bounds.default_sort" => %{
+        sqlite: defect_value(%{1 => 2, 2 => 4, 3 => nil}, "default-sort"),
+        postgres:
+          defect_orders(
+            %{
+              forward: %{1 => 2, 2 => 4, 3 => nil},
+              reverse: %{1 => 7, 2 => 4, 3 => nil},
+              rotated: %{1 => 7, 2 => 4, 3 => nil}
+            },
+            "default-sort"
+          )
+      },
       "bounds.unsorted_limit" =>
         sqlite(
           defect_error(~r/\*\* \(Exqlite.Error\) near "\)": syntax error/, "unsorted-bounds")
         ),
-      "bounds.root_order_then_limit" => postgres(defect_value(2, "root-bounds")),
-      "bounds.root_first_distinct_sort" => postgres(defect_value(2, "root-bounds")),
+      "bounds.root_order_then_limit" =>
+        postgres(defect_orders(%{forward: 2, reverse: 4, rotated: 7}, "root-bounds")),
+      "bounds.root_first_distinct_sort" =>
+        postgres(defect_orders(%{forward: 2, reverse: 4, rotated: 7}, "root-bounds")),
       "bounds.root_offset_only" =>
         postgres(
-          defect_error(~r/\*\* \(BadMapError\) expected a map, got:\n\n    nil\n/, "root-bounds")
+          defect_error(
+            ~r/\*\* \(BadMapError\) expected a map, got:\n\n    nil\n\n  \(stdlib [^)]+\) :maps\.merge\(%\{\}, nil\)\n  \(ash_sql [^)]+\) lib\/aggregate\/lateral\/query\.ex:\d+: anonymous fn\/5 in AshSql\.Aggregate\.Lateral\.Query\.add_single_aggs\/5\n/,
+            "root-bounds"
+          )
         ),
       "bounds.many_to_many_query_limit" =>
         both(unresolved_error(~r/Cannot set limit on aggregate query/, "many-to-many-bounds-api")),
@@ -296,7 +330,7 @@ defmodule Ash.Conformance.Expectations do
       "context.prepared_query_arguments" =>
         postgres(
           defect_error(
-            ~r/no function clause matching in Enumerable.List.reduce\/3/,
+            ~r/no function clause matching in Enumerable\.List\.reduce\/3\n.*\{:error, \[%Ash\.Error\.Query\.Required\{field: :label, type: :argument.*in AshSql\.Aggregate\.Lateral\.add_aggregates\/6/s,
             "prepared-query"
           )
         ),
@@ -320,6 +354,14 @@ defmodule Ash.Conformance.Expectations do
     do: {:known_defect, {:error, Ash.Error.Unknown, pattern}, task(id)}
 
   defp defect_value(value, id), do: {:known_defect, {:value, value}, task(id)}
+
+  # A wrong answer that changes with the order rows were stored in. Each seed
+  # order's observation is pinned, so any change still fails.
+  defp defect_orders(values, id),
+    do:
+      {:known_defect,
+       {:order_dependent, Map.new(values, fn {order, value} -> {order, {:value, value}} end)},
+       task(id)}
 
   defp unresolved_error(pattern, id),
     do: {:unresolved, {:error, Ash.Error.Unknown, pattern}, task(id)}

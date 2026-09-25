@@ -101,10 +101,16 @@ Fallback evidence has two sources. Dedicated tests in
 single and batch callback execution, validate results, and check optional
 callback defaults. In adapter runs, a scenario can name the Ash fallback it
 probes; the runner then counts the data-layer queries issued by the operation
-alone and records that beside the result, for example zero queries for
-`calc.in_memory`. The count never changes whether a scenario passes. Other
-scenarios report `unobserved`. A negative claim plus a correct result is
-insufficient.
+alone and records that beside a successful result. For example, `calc.in_memory`
+records zero queries: Ash evaluated the calculation itself. That shows who did
+the work, not whether the data layer could have. The count never changes
+whether a scenario passes. Other scenarios report `unobserved`. A negative
+claim plus a correct result is insufficient.
+
+Every scenario runs three times, with fixtures seeded forward, in reverse and
+rotated to start from the middle. The runs must agree. A result that depends on
+the order rows were stored in can never pass; a defect of that kind pins what
+each order returned. Results are compared strictly, so `2` and `2.0` differ.
 
 Each report also records the runtime, dependency revisions, database version and
 settings for every selected adapter, because claims and results can depend on

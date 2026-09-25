@@ -44,7 +44,7 @@ defmodule Ash.Conformance.IsolationFixtures do
 
   def seed!(adapter) do
     for {role, rows} <- [tenant_parent: parents(), tenant_item: items()] do
-      adapter.persist!(role, rows, [])
+      adapter.persist!(role, Ash.Conformance.Fixtures.ordered(rows), [])
     end
 
     %{adapter: adapter}

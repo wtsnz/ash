@@ -78,7 +78,8 @@ defmodule Ash.Conformance.Scenarios.Queries do
         semantic_basis: "../lib/ash/query/aggregate.ex"
       ),
       # Ash evaluates an expression calculation with explicit references in
-      # memory before asking the data layer.
+      # memory before it would ask the data layer, on every data layer. The
+      # evidence shows Ash did the work; it does not compare capabilities.
       new(
         "calc.in_memory",
         :calculations,
@@ -86,7 +87,7 @@ defmodule Ash.Conformance.Scenarios.Queries do
         fn ctx -> Ash.calculate!(ctx.child, :double_value, refs: %{value: 21}) end,
         semantic_basis: "../lib/ash/actions/read/calculations.ex",
         capabilities: [child: :calculate, child: :expression_calculation],
-        fallback: "Ash evaluates the calculation in memory"
+        fallback: "Ash evaluates the calculation itself, without the data layer"
       )
     ]
   end

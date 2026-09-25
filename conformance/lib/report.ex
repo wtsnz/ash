@@ -39,6 +39,15 @@ defmodule Ash.Conformance.Report do
 
   def outcome({:ok, actual}), do: value(actual)
 
+  def outcome({:order_dependent, outcomes}) do
+    seeds =
+      Enum.map_join(Ash.Conformance.Runner.orders(), ". ", fn order ->
+        "#{order} seed: #{outcome(Map.fetch!(outcomes, order))}"
+      end)
+
+    "Order-dependent. #{seeds}"
+  end
+
   def outcome({:error, exception, message}) do
     # Stack frames contain source line numbers and function hashes, not result semantics.
     reason = message |> String.split(~r/\n\s+\([^)]+\) [^\n]*:\d+: /, parts: 2) |> hd()
@@ -47,6 +56,12 @@ defmodule Ash.Conformance.Report do
 
   def observation({:ok, _} = result), do: %{actual: outcome(result), details: nil}
 
+  def observation({:order_dependent, outcomes} = result),
+    do: %{
+      actual: outcome(result),
+      details: Map.new(outcomes, fn {order, outcome} -> {order, observation(outcome)} end)
+    }
+
   def observation({:error, exception, message} = result),
     do: %{actual: outcome(result), details: "#{inspect(exception)}: #{message}"}
 
@@ -54,6 +69,15 @@ defmodule Ash.Conformance.Report do
   defp expected(scenario), do: value(scenario.expected)
   defp accepted(scenario, :supported), do: expected(scenario)
   defp accepted(_, {_, {:value, actual}, _}), do: value(actual)
+
+  defp accepted(scenario, {status, {:order_dependent, signatures}, task}) do
+    seeds =
+      Enum.map_join(Ash.Conformance.Runner.orders(), ". ", fn order ->
+        "#{order} seed: #{accepted(scenario, {status, Map.fetch!(signatures, order), task})}"
+      end)
+
+    "Order-dependent. #{seeds}"
+  end
 
   defp accepted(_, {_, {:error, exception, pattern}, _}),
     do: "#{inspect(exception)} matching #{inspect(pattern)}"

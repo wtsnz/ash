@@ -61,6 +61,19 @@ defmodule Ash.Conformance.Runner do
   """
   import ExUnit.Assertions
 
+  @orders [:forward, :reverse, :rotated]
+
+  @doc """
+  Runs a scenario three times, with its fixtures seeded forward, in reverse and
+  rotated to start from the middle, and asserts the combined outcome against
+  the adapter's expectation.
+
+  Seeding order changes the physical row order on some data layers. A result
+  that relies on unspecified order therefore differs between the runs and is
+  recorded as `{:order_dependent, %{forward: ..., reverse: ..., rotated: ...}}`,
+  which can never pass. Two orders are not enough: a query that takes the first
+  rows unsorted can return the intended answer from both ends of the data.
+  """
   def execute!(
         scenario,
         adapter,
@@ -68,24 +81,50 @@ defmodule Ash.Conformance.Runner do
         record_fallback \\ fn _ -> :ok end
       ) do
     expectation = Ash.Conformance.Expectations.for(scenario.id, adapter.id())
+    outcome = observe_both_orders(scenario, adapter, record_fallback)
+    record_result.(outcome)
+    assert_outcome!(scenario, expectation, outcome)
+  end
+
+  def orders, do: @orders
+
+  def observe_both_orders(scenario, adapter, record_fallback \\ fn _ -> :ok end) do
+    @orders
+    |> Enum.map(fn order ->
+      observe =
+        if order == :forward, do: observer(scenario, adapter, record_fallback), else: & &1.()
+
+      {order, observe_once(scenario, adapter, order, observe)}
+    end)
+    |> combine()
+  end
+
+  defp observe_once(scenario, adapter, order, observe) do
     :ok = adapter.checkout!()
 
     try do
-      run_with_setup!(
-        scenario,
-        expectation,
-        fn ->
-          context = Ash.Conformance.Fixtures.build!(adapter, scenario.fixture)
-          Ash.Conformance.Fixtures.prepare!(context, scenario.id)
-          context
-        end,
-        record_result,
-        observer(scenario, adapter, record_fallback)
-      )
+      context = Ash.Conformance.Fixtures.build!(adapter, scenario.fixture, order)
+      Ash.Conformance.Fixtures.prepare!(context, scenario.id)
+      observe.(fn -> capture(fn -> scenario.run.(context) end) end)
     after
       adapter.checkin!()
     end
   end
+
+  def combine([{_, first} | rest] = outcomes) do
+    if Enum.all?(rest, fn {_, outcome} -> same_outcome?(first, outcome) end),
+      do: first,
+      else: {:order_dependent, Map.new(outcomes)}
+  end
+
+  defp same_outcome?({:ok, left}, {:ok, right}), do: Ash.Conformance.Compare.equal?(left, right)
+
+  defp same_outcome?({:error, exception, left}, {:error, exception, right}),
+    do:
+      Ash.Conformance.Report.outcome({:error, exception, left}) ==
+        Ash.Conformance.Report.outcome({:error, exception, right})
+
+  defp same_outcome?(_, _), do: false
 
   def run_with_setup!(
         scenario,
@@ -120,10 +159,14 @@ defmodule Ash.Conformance.Runner do
           operation.()
         end
 
+      # Evidence is only meaningful when the operation succeeded.
       instrumentation ->
         fn operation ->
           {outcome, measurements} = instrumentation.measure(adapter, operation)
-          record.(fallback_evidence(fallback, measurements.query_count))
+
+          if match?({:ok, _}, outcome),
+            do: record.(fallback_evidence(fallback, measurements.query_count))
+
           outcome
         end
     end
@@ -146,8 +189,12 @@ defmodule Ash.Conformance.Runner do
            "#{scenario.id}: rejection signature changed: #{message}"
   end
 
+  def assert_outcome!(scenario, :supported, {:order_dependent, _} = outcome) do
+    flunk("#{scenario.id}: result depends on row order: #{format(outcome)}")
+  end
+
   def assert_outcome!(scenario, :supported, {:ok, actual}) do
-    assert actual == scenario.expected,
+    assert Ash.Conformance.Compare.equal?(actual, scenario.expected),
            "#{scenario.id}: expected #{format(scenario.expected)}, got #{format(actual)}"
   end
 
@@ -162,7 +209,7 @@ defmodule Ash.Conformance.Runner do
     assert is_binary(task) and byte_size(task) > 0,
            "A gap must link to an implementation task or decision"
 
-    if status != :unresolved and outcome == {:ok, scenario.expected} do
+    if status != :unresolved and passes?(scenario, outcome) do
       flunk(
         "#{scenario.id}: unexpected pass; promote this #{status} expectation to :supported (#{task})"
       )
@@ -179,7 +226,20 @@ defmodule Ash.Conformance.Runner do
     exception -> {:error, exception.__struct__, Exception.message(exception)}
   end
 
-  defp matches?({:value, expected}, {:ok, actual}), do: expected == actual
+  defp passes?(scenario, {:ok, actual}),
+    do: Ash.Conformance.Compare.equal?(actual, scenario.expected)
+
+  defp passes?(_scenario, _outcome), do: false
+
+  defp matches?({:value, expected}, {:ok, actual}),
+    do: Ash.Conformance.Compare.equal?(expected, actual)
+
+  defp matches?({:order_dependent, signatures}, {:order_dependent, outcomes}),
+    do:
+      Enum.sort(Map.keys(signatures)) == Enum.sort(Map.keys(outcomes)) and
+        Enum.all?(signatures, fn {order, signature} ->
+          matches?(signature, Map.fetch!(outcomes, order))
+        end)
 
   defp matches?({:error, exception, pattern}, {:error, exception, message}),
     do: Regex.match?(pattern, message)

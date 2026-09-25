@@ -5,10 +5,44 @@
 defmodule Ash.Conformance.Fixtures do
   @moduledoc "Small asymmetric data sets shared by every adapter."
 
-  def build!(adapter, :context_tenancy), do: Ash.Conformance.ContextFixtures.seed!(adapter)
-  def build!(adapter, :aggregate), do: seed!(adapter)
-  def build!(adapter, :isolation), do: Ash.Conformance.IsolationFixtures.seed!(adapter)
-  def build!(adapter, :empty), do: %{adapter: adapter}
+  @doc """
+  Builds a fixture, seeding each role's rows in `order`.
+
+  The runner seeds every scenario forward and in reverse. Where the data layer
+  keeps rows in insertion order, a result that depends on unspecified order
+  then differs between the runs.
+  """
+  def build!(adapter, fixture, order \\ :forward) do
+    Process.put({__MODULE__, :order}, order)
+
+    try do
+      build_fixture!(adapter, fixture)
+    after
+      Process.delete({__MODULE__, :order})
+    end
+  end
+
+  @doc "Rows in the order the current fixture build seeds them."
+  def ordered(rows) do
+    case Process.get({__MODULE__, :order}, :forward) do
+      :forward ->
+        rows
+
+      :reverse ->
+        Enum.reverse(rows)
+
+      :rotated ->
+        {head, tail} = Enum.split(rows, div(length(rows), 2))
+        tail ++ head
+    end
+  end
+
+  defp build_fixture!(adapter, :context_tenancy),
+    do: Ash.Conformance.ContextFixtures.seed!(adapter)
+
+  defp build_fixture!(adapter, :aggregate), do: seed!(adapter)
+  defp build_fixture!(adapter, :isolation), do: Ash.Conformance.IsolationFixtures.seed!(adapter)
+  defp build_fixture!(adapter, :empty), do: %{adapter: adapter}
 
   def prepare!(context, "values.string_constraints") do
     context.adapter.persist!(
@@ -110,7 +144,7 @@ defmodule Ash.Conformance.Fixtures do
           event: events,
           reading: readings
         ],
-        row <- rows do
+        row <- ordered(rows) do
       adapter.persist!(role, [row], [])
     end
 
