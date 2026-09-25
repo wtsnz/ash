@@ -56,6 +56,7 @@ defmodule Ash.Conformance.Expectations do
     upsert.tenant_identity upsert.bulk bulk.partial_success bulk.atomic_increment
     generated.filtered_aggregates
     ordering.list_desc values.date_list_desc
+    load.belongs_to load.has_one load.has_many load.many_to_many
     record.read_all record.get_primary_key record.get_identity record.select record.create record.update
     record.update_to_nil record.destroy record.atomic_update record.types_scalar record.types_numeric
     record.types_temporal record.types_uuid record.types_strings record.types_array record.types_map

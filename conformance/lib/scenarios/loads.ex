@@ -16,6 +16,45 @@ defmodule Ash.Conformance.Scenarios.Loads do
 
   def all do
     [
+      # Each relationship kind, loaded directly.
+      new(
+        "load.belongs_to",
+        :relationships,
+        %{11 => 1, 12 => 1, 13 => 1, 14 => 1, 21 => 2},
+        fn ctx ->
+          ctx.child
+          |> Ash.Query.load(:parent)
+          |> Ash.read!(authorize?: false)
+          |> Map.new(&{&1.id, &1.parent.id})
+        end,
+        semantic_basis: "../documentation/topics/resources/relationships.md"
+      ),
+      new(
+        "load.has_one",
+        :relationships,
+        %{1 => 13, 2 => 21, 3 => nil},
+        fn ctx ->
+          ctx.parent
+          |> Ash.Query.load(:top_child)
+          |> Ash.read!(authorize?: false)
+          |> Map.new(&{&1.id, &1.top_child && &1.top_child.id})
+        end,
+        semantic_basis: "../documentation/topics/resources/relationships.md"
+      ),
+      new(
+        "load.has_many",
+        :relationships,
+        %{1 => [11, 12, 13, 14], 2 => [21], 3 => []},
+        fn ctx -> loaded_ids(ctx, :children, Ash.Query.sort(ctx.child, :id)) end,
+        semantic_basis: "../documentation/topics/resources/relationships.md"
+      ),
+      new(
+        "load.many_to_many",
+        :relationships,
+        %{1 => [201, 202], 2 => [201], 3 => []},
+        fn ctx -> loaded_ids(ctx, :tags, Ash.Query.sort(ctx.adapter.resource(:tag), :id)) end,
+        semantic_basis: "../documentation/topics/resources/relationships.md"
+      ),
       new(
         "load.limit_per_parent",
         :relationships,

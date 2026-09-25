@@ -304,11 +304,11 @@ defmodule Ash.Conformance.Features do
            scenarios: ~w(filter.parent_through_control filter.nested_parent_control)
          ),
          feature(
-           "relationships.to_one_load",
-           "Load belongs-to and has-one relationships",
+           "relationships.load",
+           "Load belongs-to, has-one, has-many and many-to-many relationships",
            "#{@docs}/resources/relationships.md",
-           claims: [child: {:filter_relationship, :parent}],
-           scenarios: []
+           claims: [child: {:filter_relationship, :parent}, parent: {:filter_relationship, :tags}],
+           scenarios: ~w(load.belongs_to load.has_one load.has_many load.many_to_many)
          ),
          feature(
            "relationships.manage",

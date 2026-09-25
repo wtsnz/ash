@@ -110,10 +110,14 @@ Elixir scenarios and expectations define the contract. CI runs each adapter inde
 | [`identity.keyless_distinct`](lib/scenarios/relationships.ex#L132) | [unresolved](GAPS.md#keyless-identity) · Ash | [unresolved](GAPS.md#keyless-identity) · Ash |
 | [`identity.keyless_source`](lib/scenarios/relationships.ex#L145) | [unsupported](GAPS.md#record-identity) · AshSQL | supported |
 | [`identity.root_composite_count`](lib/scenarios/relationships.ex#L138) | [unsupported](GAPS.md#record-identity) · AshSQL | supported |
-| [`load.limit_per_parent`](lib/scenarios/loads.ex#L19) | supported | supported |
-| [`load.many_to_many_limit_per_parent`](lib/scenarios/loads.ex#L36) | [known_defect](GAPS.md#many-to-many-load-limit) · Ash | supported |
-| [`load.offset_per_parent`](lib/scenarios/loads.ex#L26) | supported | supported |
-| [`load.through`](lib/scenarios/loads.ex#L49) | [known_defect](GAPS.md#through-fallback) · Ash | supported |
+| [`load.belongs_to`](lib/scenarios/loads.ex#L20) | supported | supported |
+| [`load.has_many`](lib/scenarios/loads.ex#L44) | supported | supported |
+| [`load.has_one`](lib/scenarios/loads.ex#L32) | supported | supported |
+| [`load.limit_per_parent`](lib/scenarios/loads.ex#L58) | supported | supported |
+| [`load.many_to_many`](lib/scenarios/loads.ex#L51) | supported | supported |
+| [`load.many_to_many_limit_per_parent`](lib/scenarios/loads.ex#L75) | [known_defect](GAPS.md#many-to-many-load-limit) · Ash | supported |
+| [`load.offset_per_parent`](lib/scenarios/loads.ex#L65) | supported | supported |
+| [`load.through`](lib/scenarios/loads.ex#L88) | [known_defect](GAPS.md#through-fallback) · Ash | supported |
 | [`loaded.avg`](lib/scenarios/operations.ex#L29) | supported | supported |
 | [`loaded.count`](lib/scenarios/operations.ex#L29) | supported | supported |
 | [`loaded.custom`](lib/scenarios/operations.ex#L29) | supported | supported |
@@ -147,7 +151,7 @@ Elixir scenarios and expectations define the contract. CI runs each adapter inde
 | [`path.no_attributes_parent`](lib/scenarios/relationships.ex#L114) | [unsupported](GAPS.md#no-attributes) · AshSQL | supported |
 | [`path.repeated_many_to_many`](lib/scenarios/relationships.ex#L97) | [unresolved](GAPS.md#path-multiplicity) · Ash | [unresolved](GAPS.md#path-multiplicity) · Ash |
 | [`path.root_relationship`](lib/scenarios/relationships.ex#L120) | [unsupported](GAPS.md#root-relationship) · AshSQL | [known_defect](GAPS.md#root-relationship) · AshSQL |
-| [`path.through_count`](lib/scenarios/loads.ex#L58) | [known_defect](GAPS.md#through-fallback) · Ash | supported |
+| [`path.through_count`](lib/scenarios/loads.ex#L97) | [known_defect](GAPS.md#through-fallback) · Ash | supported |
 | [`path.to_one`](lib/scenarios/relationships.ex#L13) | supported | supported |
 | [`path.to_one_to_many_first`](lib/scenarios/relationships.ex#L25) | supported | supported |
 | [`path.to_one_to_many_list`](lib/scenarios/relationships.ex#L36) | supported | supported |

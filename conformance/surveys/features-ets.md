@@ -4,7 +4,7 @@
 
 Generated from an unreviewed run: each result was classified automatically against the intended answer. Nothing here has been reviewed.
 
-Feature catalog version 1: 80 features and 298 scenarios.
+Feature catalog version 1: 80 features and 302 scenarios.
 
 | Status | Meaning |
 | --- | --- |
@@ -80,7 +80,7 @@ that is not fully working, and who owns the fix.
 | Relationships with no attributes load everything | ✅ Works 1/1 |  |
 | Relationship context reaches the read action | 🟡 Partial 1/2 | `context.relationship_context_control` wrong |
 | Parent references in nested and through relationship filters | ❌ Broken 0/2 | `filter.nested_parent_control` wrong, `filter.parent_through_control` wrong |
-| Load belongs-to and has-one relationships | ⚪ Untested |  |
+| Load belongs-to, has-one, has-many and many-to-many relationships | ✅ Works 4/4 |  |
 | Create and update related records with manage_relationship | ⚪ Untested |  |
 
 ## 5. Aggregates
