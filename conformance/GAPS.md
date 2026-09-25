@@ -10,7 +10,7 @@ An observed Postgres result never replaces that result automatically.
 
 Each entry names the project that owns the fix, in the order the work is
 needed. Postgres defects belong to AshSQL when its lateral strategy produces
-them; no entry is currently owned by AshPostgres itself. Decisions are
+them. Decisions are
 semantic questions for Ash to settle before an adapter implements them.
 `lib/contracts/gaps.ex` holds the same owners, and the matrix shows them.
 
@@ -427,3 +427,47 @@ Decision: choose which occurrence supplies the ordering value when duplicate
 list values have different sort keys. SQLite rejects this shape; Postgres
 raises its DISTINCT/ORDER BY restriction. A representative-row rule would need
 to be defined and implemented for both adapters.
+
+## Duration storage
+
+Owner: AshSQLite.
+
+Store `:duration` attributes on SQLite. AshSqlite's migration generator gives
+them a `duration` column, but Exqlite cannot bind a `%Duration{}`, so every
+create fails with "unsupported type: %Duration{...}" before anything is
+stored. AshPostgres stores them once the repo decodes intervals as `Duration`,
+which its documentation requires.
+
+## Value representation
+
+Decision owner: Ash.
+
+Decision: does a value that reads back equal by its type, but in a different
+representation, count as stored unchanged? Postgres returns a `Duration` of
+1 hour 30 minutes with microsecond precision `{0, 6}` added, which is the same
+duration by `Duration`'s own fields but not the same struct. The same question
+covers decimals read back with extra scale (`1.5` as `1.5000000000`) and
+second-precision datetimes read back with microseconds. The storage grid
+reports these as "changed", separately from lost values. The cell is recorded
+as a known defect, linked here, until Ash decides.
+
+## NUL in text
+
+Limitation owner: AshPostgres.
+Limitation: PostgreSQL's `text` cannot contain the NUL character.
+
+A string with `\0` is rejected with "invalid byte sequence for encoding UTF8:
+0x00". Ash's string type accepts it and SQLite stores it. The rejection is the
+intended result unless AshPostgres chooses to reject such strings earlier with
+a clearer error.
+
+## Union nil
+
+Owner: Ash.
+
+Setting a union attribute to nil stores a union that wraps nil. Updating a
+value of `%Ash.Union{type: :text, value: "five"}` to nil reads back as
+`%Ash.Union{type: :text, value: nil}` on every data layer, ETS included. The
+cause is `Ash.Type.Union.handle_change/3` (`lib/ash/type/union.ex`), whose
+clause for a change from a union to nil keeps the old member type. Creating a
+record with nil stores nil.

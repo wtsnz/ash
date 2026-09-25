@@ -48,7 +48,8 @@ defmodule Ash.Conformance.Survey do
         execution: :matched,
         expected: Report.value(scenario.expected),
         actual: Report.outcome(outcome),
-        setup: setup
+        setup: setup,
+        detail: if(scenario.detail && !setup, do: scenario.detail.(adapter, outcome))
       }
     end
   end
@@ -102,11 +103,13 @@ defmodule Ash.Conformance.Survey do
       ) <> "\n"
     )
 
-    File.write!(
-      Path.join(dir, "features-#{adapter.id()}.md"),
-      FeatureReport.markdown(rows, [adapter], :unreviewed)
-    )
-
+    File.write!(Path.join(dir, "features-#{adapter.id()}.md"), markdown(adapter, rows))
     counts
+  end
+
+  @doc "An adapter's survey report: its features, then its storage grid."
+  def markdown(adapter, rows) do
+    FeatureReport.markdown(rows, [adapter], :unreviewed) <>
+      "\n" <> Ash.Conformance.Report.StorageGrid.detail(rows)
   end
 end

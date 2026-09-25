@@ -39,6 +39,12 @@ defmodule Ash.Conformance.CatalogTest do
             refute scenario.expected == :unresolved
             assert is_atom(exception) and is_binary(task)
 
+          # A rejection captured inside a step-by-step observation.
+          {:unsupported, {:value, value}, task} ->
+            refute scenario.expected == :unresolved
+            refute value == scenario.expected
+            assert is_binary(task)
+
           {:known_defect, signature, task} ->
             refute scenario.expected == :unresolved
             refute signature == {:value, scenario.expected}

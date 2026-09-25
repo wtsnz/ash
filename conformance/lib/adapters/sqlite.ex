@@ -23,7 +23,12 @@ defmodule Ash.Conformance.Sqlite do
      end}
   end
 
-  def setup!, do: Ash.Conformance.SQL.Database.setup!(repo())
+  def setup! do
+    Ash.Conformance.SQL.Database.setup!(repo(),
+      storage: {__MODULE__, &Ash.Conformance.SQL.Columns.ash_sql/1}
+    )
+  end
+
   def checkout!, do: Ecto.Adapters.SQL.Sandbox.checkout(repo())
   def checkin!, do: Ecto.Adapters.SQL.Sandbox.checkin(repo())
 
@@ -80,19 +85,7 @@ end
 
 defmodule Ash.Conformance.Sqlite.Resources do
   @moduledoc "Every shared resource role, instantiated for SQLite."
-  use Ash.Conformance.Resources.Aggregate,
-    namespace: Ash.Conformance.Sqlite,
-    adapter: Ash.Conformance.Sqlite
-
-  use Ash.Conformance.Resources.Records,
-    namespace: Ash.Conformance.Sqlite,
-    adapter: Ash.Conformance.Sqlite
-
-  use Ash.Conformance.Resources.Isolation,
-    namespace: Ash.Conformance.Sqlite,
-    adapter: Ash.Conformance.Sqlite
-
-  use Ash.Conformance.Resources.Writes,
+  use Ash.Conformance.Resources,
     namespace: Ash.Conformance.Sqlite,
     adapter: Ash.Conformance.Sqlite
 end

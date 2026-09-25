@@ -52,7 +52,11 @@ defmodule Ash.Conformance.Contracts.Gaps do
     "keyless-identity" => {:decision, [:ash]},
     "many-to-many-bounds-api" => {:decision, [:ash]},
     "unique-list-order" => {:decision, [:ash]},
-    "true-or-nil" => {:decision, [:ash]}
+    "true-or-nil" => {:decision, [:ash]},
+    "duration-storage" => {:implementation, [:ash_sqlite]},
+    "value-representation" => {:decision, [:ash]},
+    "nul-in-text" => {:limitation, [:ash_postgres]},
+    "union-nil" => {:implementation, [:ash]}
   }
 
   def all, do: @gaps

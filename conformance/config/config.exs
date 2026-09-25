@@ -34,6 +34,7 @@ config :ash_conformance, Ash.Conformance.PostgresRepo,
   username: System.get_env("PGUSER", "postgres"),
   password: System.get_env("PGPASSWORD", "postgres"),
   database: System.get_env("CONFORMANCE_PG_DATABASE", "ash_conformance_local"),
+  types: Ash.Conformance.PostgrexTypes,
   pool: Ecto.Adapters.SQL.Sandbox,
   pool_size: 2
 

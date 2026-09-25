@@ -81,7 +81,9 @@ defmodule Ash.Conformance.SQL.Expectations do
   end
 
   defp table do
-    Map.merge(Map.new(@supported_both, &{&1, both(:supported)}), gaps())
+    Map.new(@supported_both, &{&1, both(:supported)})
+    |> Map.merge(storage())
+    |> Map.merge(gaps())
     |> Map.merge(
       Map.new(
         ~w(schema.direct schema.relationships schema.loaded_aggregates schema.root_aggregate schema.filtered_page),
@@ -360,6 +362,70 @@ defmodule Ash.Conformance.SQL.Expectations do
       "context.through_bypass" =>
         postgres(defect_value(%{1 => 3, 2 => 3, 3 => nil}, "tenant-bypass"))
     }
+  end
+
+  # Tier 1: every storage cell is supported unless recorded below.
+  defp storage do
+    skipped = [update: :skipped, clear: :skipped]
+
+    cells =
+      for type <- Ash.Conformance.Storage.types(),
+          class <- Ash.Conformance.Storage.cells(type),
+          into: %{},
+          do: {Ash.Conformance.Storage.scenario_id(type.name, class), both(:supported)}
+
+    union_nil =
+      defect_value(
+        [
+          create: :ok,
+          read: :ok,
+          update: :ok,
+          clear: {:lost, %Ash.Union{type: :text, value: nil}}
+        ],
+        "union-nil"
+      )
+
+    duration = fn text ->
+      {:known_defect,
+       {:value,
+        [create: {:error, "** (Exqlite.Error) unsupported type: #{text}"}, read: :skipped] ++
+          skipped}, task("duration-storage")}
+    end
+
+    # Recorded as a defect until Ash decides whether a changed representation
+    # of an equal value counts as stored unchanged.
+    changed = fn duration ->
+      defect_value([create: :ok, read: {:changed, duration}] ++ skipped, "value-representation")
+    end
+
+    Map.merge(cells, %{
+      "storage.decimal.edge" =>
+        sqlite(
+          defect_value(
+            [create: :ok, read: {:lost, Decimal.new("12345678901234568")}] ++ skipped,
+            "decimal-precision"
+          )
+        ),
+      "storage.duration.ordinary" => %{
+        sqlite: duration.("%Duration{hour: 1, minute: 30}"),
+        postgres: changed.(%Duration{hour: 1, minute: 30, microsecond: {0, 6}})
+      },
+      "storage.duration.edge" => %{
+        sqlite: duration.("%Duration{year: 1, month: 2, day: 3, hour: 4}"),
+        postgres: changed.(%Duration{year: 1, month: 2, day: 3, hour: 4, microsecond: {0, 6}})
+      },
+      "storage.string.edge" =>
+        postgres(
+          {:unsupported,
+           {:value,
+            [
+              create: {:error, "invalid byte sequence for encoding \"UTF8\": 0x00"},
+              read: :skipped
+            ] ++
+              skipped}, task("nul-in-text")}
+        ),
+      "storage.union.ordinary" => both(union_nil)
+    })
   end
 
   defp both(status), do: %{sqlite: status, postgres: status}

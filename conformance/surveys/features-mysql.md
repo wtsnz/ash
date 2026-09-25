@@ -4,7 +4,7 @@
 
 Generated from an unreviewed run: each result was classified automatically against the intended answer. Nothing here has been reviewed.
 
-Feature catalog version 1: 80 features and 302 scenarios.
+Feature catalog version 1: 103 features and 367 scenarios.
 
 | Status | Meaning |
 | --- | --- |
@@ -23,7 +23,35 @@ Counts are passing scenarios out of those that ran, then how many could
 not run. Gap links explain everything that is not fully working, and who
 owns the fix.
 
-## 1. Records
+## 1. Storage
+
+| Feature | mysql | Not working |
+| --- | --- | --- |
+| Integers | ✅ Works 3/3 |  |
+| Floats | ✅ Works 3/3 |  |
+| Decimals | 🟡 Partial 1/3 | `storage.decimal.edge` wrong, `storage.decimal.ordinary` wrong |
+| Strings | 🟡 Partial 2/3 | `storage.string.edge` wrong |
+| Case-insensitive strings | ✅ Works 3/3 |  |
+| Binaries | ✅ Works 3/3 |  |
+| Booleans | ✅ Works 2/2 |  |
+| Atoms with one_of | ✅ Works 2/2 |  |
+| Dates | ✅ Works 3/3 |  |
+| Times | ✅ Works 3/3 |  |
+| Microsecond times | ✅ Works 3/3 |  |
+| UTC datetimes | ✅ Works 3/3 |  |
+| Microsecond UTC datetimes | ✅ Works 3/3 |  |
+| Naive datetimes | ✅ Works 3/3 |  |
+| Durations | ❌ Broken 0/3 | `storage.duration.edge` wrong, `storage.duration.null` wrong, `storage.duration.ordinary` wrong |
+| UUIDs | ✅ Works 3/3 |  |
+| UUIDv7s | ✅ Works 2/2 |  |
+| Maps | ✅ Works 3/3 |  |
+| Arrays of strings | ❌ Broken 0/3 | `storage.strings.edge` wrong, `storage.strings.null` wrong, `storage.strings.ordinary` wrong |
+| Arrays of integers | ❌ Broken 0/3 | `storage.integers.edge` wrong, `storage.integers.null` wrong, `storage.integers.ordinary` wrong |
+| Embedded resources | ✅ Works 3/3 |  |
+| Arrays of embedded resources | ❌ Broken 0/3 | `storage.embeddeds.edge` wrong, `storage.embeddeds.null` wrong, `storage.embeddeds.ordinary` wrong |
+| Unions | 🟡 Partial 1/2 | `storage.union.ordinary` wrong |
+
+## 2. Records
 
 | Feature | mysql | Not working |
 | --- | --- | --- |
@@ -36,7 +64,7 @@ owns the fix.
 | Update a record atomically from its current value | ✅ Works 1/1 |  |
 | Not found, invalid, missing and duplicate values are errors | ✅ Works 4/4 |  |
 
-## 2. Types
+## 3. Types
 
 | Feature | mysql | Not working |
 | --- | --- | --- |
@@ -48,7 +76,7 @@ owns the fix.
 | Maps round-trip, including nested values | ✅ Works 1/1 |  |
 | Embedded resources round-trip | ✅ Works 1/1 |  |
 
-## 3. Querying
+## 4. Querying
 
 | Feature | mysql | Not working |
 | --- | --- | --- |
@@ -71,7 +99,7 @@ owns the fix.
 | Keyset pagination, forwards and backwards | ✅ Works 1/1 |  |
 | Pagination while records change | ⚪ Untested |  |
 
-## 4. Relationships
+## 5. Relationships
 
 | Feature | mysql | Not working |
 | --- | --- | --- |
@@ -86,7 +114,7 @@ owns the fix.
 | Load belongs-to, has-one, has-many and many-to-many relationships | 🟡 Partial 3/4 | `load.has_one` crashed |
 | Create and update related records with manage_relationship | ⚪ Untested |  |
 
-## 5. Aggregates
+## 6. Aggregates
 
 | Feature | mysql | Not working |
 | --- | --- | --- |
@@ -109,7 +137,7 @@ owns the fix.
 | Aggregates respect read actions, arguments, actor and context | ⛔ Not supported 0/9 | `context.actor` rejected, `context.arguments` rejected, `context.intermediate_action` rejected, `context.intermediate_actor` rejected, `context.prepared_query_arguments` rejected, `context.read_action` rejected, `context.relationship_context` rejected, `context.shared` rejected, `context.through_arguments` rejected |
 | Seeded filtered aggregates match an in-memory reference | ⛔ Not supported 0/1 | `generated.filtered_aggregates` rejected |
 
-## 6. Writes
+## 7. Writes
 
 | Feature | mysql | Not working |
 | --- | --- | --- |
@@ -118,7 +146,7 @@ owns the fix.
 | Bulk update atomically | ❌ Broken 0/1 | `bulk.atomic_increment` crashed |
 | Writes that filter by or read aggregates | ❌ Broken 0/4 | `write.atomic_update` crashed, `write.bulk_destroy_filter` rejected, `write.bulk_update_filter` rejected, `write.single_atomic_update` crashed |
 
-## 7. Transactions and locks
+## 8. Transactions and locks
 
 | Feature | mysql | Not working |
 | --- | --- | --- |
@@ -126,7 +154,7 @@ owns the fix.
 | Lock rows for update | ⛔ Not supported 0/1 | `query.lock_for_update` rejected |
 | Isolation between concurrent transactions | ⚪ Untested |  |
 
-## 8. Multitenancy
+## 9. Multitenancy
 
 | Feature | mysql | Not working |
 | --- | --- | --- |
@@ -137,7 +165,7 @@ owns the fix.
 | Tenancy scopes creates, updates and destroys | 🟡 Partial 1/3 | `tenant.write_local_identity` crashed, `write.lifecycle` crashed |
 | Schema-based (context) tenancy | ➖ Not applicable |  |
 
-## 9. Authorization
+## 10. Authorization
 
 | Feature | mysql | Not working |
 | --- | --- | --- |
@@ -147,7 +175,7 @@ owns the fix.
 | Policies filter pages and counts | ⛔ Not supported 0/3 | `auth.keyset_pages` rejected, `auth.offset_page` rejected, `auth.tenant_interaction` rejected |
 | Policies filter and forbid writes | 🟡 Partial 2/4 | `auth.write_bulk_update_atomic` crashed, `auth.write_bulk_update_stream` crashed |
 
-## 10. Consistency checks
+## 11. Consistency checks
 
 | Feature | mysql | Not working |
 | --- | --- | --- |
@@ -182,3 +210,37 @@ whose claims disagree with the result:
 | Writes that filter by or read aggregates | mysql | Not advertising `parent: :update_query`, `parent: :destroy_query`, but not rejected either: wrong answers |
 | Policies filter pages and counts | mysql | Advertised, but ⛔ Not supported |
 
+
+## Storage
+
+Each cell shows the ordinary, edge and nil values, in that order. ✅ reads
+back unchanged; ≈ reads back equal but in another representation, such as
+`1.5` as `1.5000000000`; ❌ is lost or rejected; 🚫 the table could not be
+created; 🔀 differs between seed orders; ❔ did not run; – the type has no
+values of that class.
+
+| Type | Column | Ordinary | Edge | Nil | First problem |
+| --- | --- | --- | --- | --- | --- |
+| Integers | `:bigint` | ✅ | ✅ | ✅ |  |
+| Floats | `:float` | ✅ | ✅ | ✅ |  |
+| Decimals | `:decimal` | ❌ | ❌ | ✅ | ordinary, read: Decimal.new("2") |
+| Strings | `:string` | ✅ | ❌ | ✅ | edge, create: ** (MyXQL.Error) (1406) Data too long for column 'value' at row 1 |
+| Case-insensitive strings | `:"VARCHAR(255) COLLATE utf8mb4_0900_ai_ci"` | ✅ | ✅ | ✅ |  |
+| Binaries | `:binary` | ✅ | ✅ | ✅ |  |
+| Booleans | `:boolean` | ✅ | – | ✅ |  |
+| Atoms with one_of | `:string` | ✅ | – | ✅ |  |
+| Dates | `:date` | ✅ | ✅ | ✅ |  |
+| Times | `:time` | ✅ | ✅ | ✅ |  |
+| Microsecond times | `:time_usec` | ✅ | ✅ | ✅ |  |
+| UTC datetimes | `:utc_datetime` | ✅ | ✅ | ✅ |  |
+| Microsecond UTC datetimes | `:utc_datetime_usec` | ✅ | ✅ | ✅ |  |
+| Naive datetimes | `:naive_datetime` | ✅ | ✅ | ✅ |  |
+| Durations | `:duration` | 🚫 | 🚫 | 🚫 | ordinary, table: (1064) You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'duration, PRIMARY  |
+| UUIDs | `:uuid` | ✅ | ✅ | ✅ |  |
+| UUIDv7s | `:uuid` | ✅ | – | ✅ |  |
+| Maps | `:map` | ✅ | ✅ | ✅ |  |
+| Arrays of strings | `{:array, :string}` | 🚫 | 🚫 | 🚫 | ordinary, table: Array type is not supported by MySQL |
+| Arrays of integers | `{:array, :bigint}` | 🚫 | 🚫 | 🚫 | ordinary, table: Array type is not supported by MySQL |
+| Embedded resources | `:map` | ✅ | ✅ | ✅ |  |
+| Arrays of embedded resources | `{:array, :map}` | 🚫 | 🚫 | 🚫 | ordinary, table: Array type is not supported by MySQL |
+| Unions | `:map` | ❌ | – | ✅ | ordinary, clear: %Ash.Union{value: nil, type: :text} |

@@ -30,7 +30,11 @@ defmodule Ash.Conformance.Postgres do
     end
 
     Ash.Conformance.SQL.Database.setup!(repo(),
-      migrations: [{3, Ash.Conformance.SQL.Migrations.ContextTenancy}]
+      migrations: [
+        {3, Ash.Conformance.SQL.Migrations.ContextTenancy},
+        {7, Ash.Conformance.Postgres.Citext}
+      ],
+      storage: {__MODULE__, &Ash.Conformance.SQL.Columns.ash_sql/1}
     )
   end
 
@@ -56,6 +60,22 @@ defmodule Ash.Conformance.Postgres do
   end
 end
 
+# AshPostgres documents this for `:duration` attributes: intervals must decode
+# as `Duration`, which only a Postgrex types module can set.
+Postgrex.Types.define(
+  Ash.Conformance.PostgrexTypes,
+  Ecto.Adapters.Postgres.extensions(),
+  interval_decode_type: Duration
+)
+
+# AshPostgres stores case-insensitive strings as citext, which an application
+# using them installs.
+defmodule Ash.Conformance.Postgres.Citext do
+  @moduledoc false
+  use Ecto.Migration
+  def change, do: execute("CREATE EXTENSION IF NOT EXISTS citext", "DROP EXTENSION citext")
+end
+
 defmodule Ash.Conformance.PostgresRepo do
   @moduledoc false
   use AshPostgres.Repo, otp_app: :ash_conformance, warn_on_missing_ash_functions?: false
@@ -79,19 +99,7 @@ end
 
 defmodule Ash.Conformance.Postgres.Resources do
   @moduledoc "Every shared resource role, instantiated for PostgreSQL."
-  use Ash.Conformance.Resources.Aggregate,
-    namespace: Ash.Conformance.Postgres,
-    adapter: Ash.Conformance.Postgres
-
-  use Ash.Conformance.Resources.Records,
-    namespace: Ash.Conformance.Postgres,
-    adapter: Ash.Conformance.Postgres
-
-  use Ash.Conformance.Resources.Isolation,
-    namespace: Ash.Conformance.Postgres,
-    adapter: Ash.Conformance.Postgres
-
-  use Ash.Conformance.Resources.Writes,
+  use Ash.Conformance.Resources,
     namespace: Ash.Conformance.Postgres,
     adapter: Ash.Conformance.Postgres
 end

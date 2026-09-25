@@ -48,11 +48,7 @@ defmodule Ash.Conformance.SurveyTest do
 
   test "the committed ETS survey report is current" do
     assert File.read!("surveys/features-ets.md") ==
-             Ash.Conformance.Report.FeatureReport.markdown(
-               Survey.run(Ash.Conformance.Ets),
-               [Ash.Conformance.Ets],
-               :unreviewed
-             ),
+             Survey.markdown(Ash.Conformance.Ets, Survey.run(Ash.Conformance.Ets)),
            "Run MIX_ENV=test mix conformance.survey ets --output surveys"
   end
 end

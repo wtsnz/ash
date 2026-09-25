@@ -13,12 +13,12 @@ their results as observations. Each data layer's failing scenarios are listed in
 
 | Column | Data layer | Version | Reviewed | Works | Rejected | Wrong | Crashed | Setup failed | Open question | Definition warnings |
 | --- | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| sqlite | AshSqlite | 0.2.19 (`46a4b86`) | yes | 231 | 37 | 14 | 10 | 0 | 5 | 0 |
-| postgres | AshPostgres | 2.13.1 (`945073e`) | yes | 265 | 0 | 24 | 8 | 0 | 5 | 0 |
-| ets | Ash.DataLayer.Ets | 3.33.11 | no | 252 | 7 | 26 | 7 | 0 | 5 | 0 |
-| csv | AshCsv | 0.9.9 | no | 25 | 16 | 8 | 2 | 246 | 0 | 8 |
-| mysql | AshMysql | 0.1.0-dev (`99684ca`) | no | 88 | 148 | 11 | 45 | 0 | 5 | 5 |
-| clickhouse | AshClickhouse | 0.7.3 | no | 59 | 54 | 72 | 50 | 58 | 4 | 5 |
+| sqlite | AshSqlite | 0.2.19 (`46a4b86`) | yes | 292 | 37 | 18 | 10 | 0 | 5 | 0 |
+| postgres | AshPostgres | 2.13.1 (`945073e`) | yes | 326 | 0 | 28 | 8 | 0 | 5 | 0 |
+| ets | Ash.DataLayer.Ets | 3.33.11 | no | 316 | 7 | 27 | 7 | 0 | 5 | 0 |
+| csv | AshCsv | 0.9.9 | no | 70 | 16 | 28 | 2 | 246 | 0 | 8 |
+| mysql | AshMysql | 0.1.0-dev (`99684ca`) | no | 137 | 148 | 27 | 45 | 0 | 5 | 5 |
+| clickhouse | AshClickhouse | 0.7.3 | no | 87 | 54 | 109 | 50 | 58 | 4 | 5 |
 
 ### Setup notes
 
@@ -26,11 +26,51 @@ Where the suite had to do something other than configure the data layer
 as an application would, and why:
 
 - **AshCsv:** Each resource's `columns` are set to its own attributes. A role over a shared table with other columns gets its own file, and seeded rows are copied into it.
+- **AshMysql:** Tier-1 storage tables use the column types AshMysql's migration generator chooses, unlike the shared tables below.
 - **AshMysql:** The records table stores `tags` as JSON and `code` as a `VARCHAR`, since MySQL has no array column and cannot index `TEXT` without a key length.
 - **AshMysql:** Decimals are `DECIMAL(30,10)`: a bare `DECIMAL` is `DECIMAL(10,0)`, and wider columns return values past the 34 digits Decimal parses by default. Values read back with ten decimal places.
-- **AshClickhouse:** Tables are created from AshClickhouse's column types rather than its generator, which rejects the records table: ClickHouse cannot wrap an array or map in `Nullable`, so those columns are not nullable.
+- **AshClickhouse:** Shared tables are created from AshClickhouse's column types rather than its generator, which rejects the records table: ClickHouse cannot wrap an array or map in `Nullable`, so those columns are not nullable.
 - **AshClickhouse:** AshClickhouse 0.7.3 renders an unconstrained `:decimal` as `Decimal(arbitrary, arbitrary)`, which ClickHouse rejects, so the suite creates those columns as the `Decimal(38, 10)` it documents.
 - **AshClickhouse:** AshClickhouse 0.7.3 does not pass `:username` or `:password` to its client, so the server's default user has no password.
+
+## Storage
+
+Tier 1: every type has its own resource and table, so a type a data layer
+cannot store fails only its own row. Tables use the column type the data
+layer's migration generator chooses; each data layer's survey file lists
+them, with the first problem in each cell.
+
+Each cell shows the ordinary, edge and nil values, in that order. ✅ reads
+back unchanged; ≈ reads back equal but in another representation, such as
+`1.5` as `1.5000000000`; ❌ is lost or rejected; 🚫 the table could not be
+created; 🔀 differs between seed orders; ❔ did not run; – the type has no
+values of that class.
+
+| Type | sqlite | postgres | ets | csv | mysql | clickhouse |
+| --- | --- | --- | --- | --- | --- | --- |
+| Integers | ✅ ✅ ✅ | ✅ ✅ ✅ | ✅ ✅ ✅ | ✅ ✅ ✅ | ✅ ✅ ✅ | ✅ ✅ ✅ |
+| Floats | ✅ ✅ ✅ | ✅ ✅ ✅ | ✅ ✅ ✅ | ❌ ❌ ✅ | ✅ ✅ ✅ | ✅ ✅ ✅ |
+| Decimals | ✅ ❌ ✅ | ✅ ✅ ✅ | ✅ ✅ ✅ | ✅ ✅ ✅ | ❌ ❌ ✅ | 🚫 no table |
+| Strings | ✅ ✅ ✅ | ✅ ❌ ✅ | ✅ ✅ ✅ | ✅ ❌ ✅ | ✅ ❌ ✅ | ✅ ✅ ✅ |
+| Case-insensitive strings | ✅ ✅ ✅ | ✅ ✅ ✅ | ✅ ✅ ✅ | ✅ ❌ ✅ | ✅ ✅ ✅ | ≈ ≈ ✅ |
+| Binaries | ✅ ✅ ✅ | ✅ ✅ ✅ | ✅ ✅ ✅ | ❌ ❌ ✅ | ✅ ✅ ✅ | ✅ ❌ ✅ |
+| Booleans | ✅ – ✅ | ✅ – ✅ | ✅ – ✅ | ❌ – ✅ | ✅ – ✅ | ✅ – ✅ |
+| Atoms with one_of | ✅ – ✅ | ✅ – ✅ | ✅ – ✅ | ✅ – ✅ | ✅ – ✅ | ✅ – ✅ |
+| Dates | ✅ ✅ ✅ | ✅ ✅ ✅ | ✅ ✅ ✅ | ✅ ✅ ✅ | ✅ ✅ ✅ | ❌ ❌ ✅ |
+| Times | ✅ ✅ ✅ | ✅ ✅ ✅ | ✅ ✅ ✅ | ✅ ✅ ✅ | ✅ ✅ ✅ | ✅ ✅ ✅ |
+| Microsecond times | ✅ ✅ ✅ | ✅ ✅ ✅ | ✅ ✅ ✅ | ✅ ✅ ✅ | ✅ ✅ ✅ | ❌ ❌ ✅ |
+| UTC datetimes | ✅ ✅ ✅ | ✅ ✅ ✅ | ✅ ✅ ✅ | ✅ ✅ ✅ | ✅ ✅ ✅ | ≈ ≈ ✅ |
+| Microsecond UTC datetimes | ✅ ✅ ✅ | ✅ ✅ ✅ | ✅ ✅ ✅ | ✅ ✅ ✅ | ✅ ✅ ✅ | ❌ ❌ ✅ |
+| Naive datetimes | ✅ ✅ ✅ | ✅ ✅ ✅ | ✅ ✅ ✅ | ✅ ✅ ✅ | ✅ ✅ ✅ | ❌ ❌ ✅ |
+| Durations | ❌ ❌ ✅ | ≈ ≈ ✅ | ✅ ✅ ✅ | ❌ ❌ ✅ | 🚫 no table | ❌ ❌ ✅ |
+| UUIDs | ✅ ✅ ✅ | ✅ ✅ ✅ | ✅ ✅ ✅ | ✅ ✅ ✅ | ✅ ✅ ✅ | ❌ ❌ ✅ |
+| UUIDv7s | ✅ – ✅ | ✅ – ✅ | ✅ – ✅ | ✅ – ✅ | ✅ – ✅ | ✅ – ✅ |
+| Maps | ✅ ✅ ✅ | ✅ ✅ ✅ | ✅ ✅ ✅ | ❌ ❌ ✅ | ✅ ✅ ✅ | 🚫 no table |
+| Arrays of strings | ✅ ✅ ✅ | ✅ ✅ ✅ | ✅ ✅ ✅ | ❌ ❌ ✅ | 🚫 no table | 🚫 no table |
+| Arrays of integers | ✅ ✅ ✅ | ✅ ✅ ✅ | ✅ ✅ ✅ | ❌ ❌ ✅ | 🚫 no table | 🚫 no table |
+| Embedded resources | ✅ ✅ ✅ | ✅ ✅ ✅ | ✅ ✅ ✅ | ❌ ❌ ✅ | ✅ ✅ ✅ | 🚫 no table |
+| Arrays of embedded resources | ✅ ✅ ✅ | ✅ ✅ ✅ | ✅ ✅ ✅ | ❌ ❌ ✅ | 🚫 no table | 🚫 no table |
+| Unions | ❌ – ✅ | ❌ – ✅ | ❌ – ✅ | ❌ – ✅ | ❌ – ✅ | 🚫 no table |
 
 | Status | Meaning |
 | --- | --- |
@@ -46,7 +86,35 @@ as an application would, and why:
 | ⚠️ Changed | A result no longer matches its recorded contract. |
 | ➖ Not run | The data layer's storage could not be set up for this run. |
 
-## 1. Records
+## 1. Storage
+
+| Feature | sqlite | postgres | ets | csv | mysql | clickhouse |
+| --- | --- | --- | --- | --- | --- | --- |
+| Integers | ✅ Works 3/3 | ✅ Works 3/3 | ✅ Works 3/3 | ✅ Works 3/3 | ✅ Works 3/3 | ✅ Works 3/3 |
+| Floats | ✅ Works 3/3 | ✅ Works 3/3 | ✅ Works 3/3 | 🟡 Partial 1/3 | ✅ Works 3/3 | ✅ Works 3/3 |
+| Decimals | 🟡 Partial 2/3 | ✅ Works 3/3 | ✅ Works 3/3 | ✅ Works 3/3 | 🟡 Partial 1/3 | ❌ Broken 0/3 |
+| Strings | ✅ Works 3/3 | 🟡 Partial 2/3 | ✅ Works 3/3 | 🟡 Partial 2/3 | 🟡 Partial 2/3 | ✅ Works 3/3 |
+| Case-insensitive strings | ✅ Works 3/3 | ✅ Works 3/3 | ✅ Works 3/3 | 🟡 Partial 2/3 | ✅ Works 3/3 | 🟡 Partial 1/3 |
+| Binaries | ✅ Works 3/3 | ✅ Works 3/3 | ✅ Works 3/3 | 🟡 Partial 1/3 | ✅ Works 3/3 | 🟡 Partial 2/3 |
+| Booleans | ✅ Works 2/2 | ✅ Works 2/2 | ✅ Works 2/2 | 🟡 Partial 1/2 | ✅ Works 2/2 | ✅ Works 2/2 |
+| Atoms with one_of | ✅ Works 2/2 | ✅ Works 2/2 | ✅ Works 2/2 | ✅ Works 2/2 | ✅ Works 2/2 | ✅ Works 2/2 |
+| Dates | ✅ Works 3/3 | ✅ Works 3/3 | ✅ Works 3/3 | ✅ Works 3/3 | ✅ Works 3/3 | 🟡 Partial 1/3 |
+| Times | ✅ Works 3/3 | ✅ Works 3/3 | ✅ Works 3/3 | ✅ Works 3/3 | ✅ Works 3/3 | ✅ Works 3/3 |
+| Microsecond times | ✅ Works 3/3 | ✅ Works 3/3 | ✅ Works 3/3 | ✅ Works 3/3 | ✅ Works 3/3 | 🟡 Partial 1/3 |
+| UTC datetimes | ✅ Works 3/3 | ✅ Works 3/3 | ✅ Works 3/3 | ✅ Works 3/3 | ✅ Works 3/3 | 🟡 Partial 1/3 |
+| Microsecond UTC datetimes | ✅ Works 3/3 | ✅ Works 3/3 | ✅ Works 3/3 | ✅ Works 3/3 | ✅ Works 3/3 | 🟡 Partial 1/3 |
+| Naive datetimes | ✅ Works 3/3 | ✅ Works 3/3 | ✅ Works 3/3 | ✅ Works 3/3 | ✅ Works 3/3 | 🟡 Partial 1/3 |
+| Durations | 🟡 Partial 1/3 | 🟡 Partial 1/3 | ✅ Works 3/3 | 🟡 Partial 1/3 | ❌ Broken 0/3 | 🟡 Partial 1/3 |
+| UUIDs | ✅ Works 3/3 | ✅ Works 3/3 | ✅ Works 3/3 | ✅ Works 3/3 | ✅ Works 3/3 | 🟡 Partial 1/3 |
+| UUIDv7s | ✅ Works 2/2 | ✅ Works 2/2 | ✅ Works 2/2 | ✅ Works 2/2 | ✅ Works 2/2 | ✅ Works 2/2 |
+| Maps | ✅ Works 3/3 | ✅ Works 3/3 | ✅ Works 3/3 | 🟡 Partial 1/3 | ✅ Works 3/3 | ❌ Broken 0/3 |
+| Arrays of strings | ✅ Works 3/3 | ✅ Works 3/3 | ✅ Works 3/3 | 🟡 Partial 1/3 | ❌ Broken 0/3 | ❌ Broken 0/3 |
+| Arrays of integers | ✅ Works 3/3 | ✅ Works 3/3 | ✅ Works 3/3 | 🟡 Partial 1/3 | ❌ Broken 0/3 | ❌ Broken 0/3 |
+| Embedded resources | ✅ Works 3/3 | ✅ Works 3/3 | ✅ Works 3/3 | 🟡 Partial 1/3 | ✅ Works 3/3 | ❌ Broken 0/3 |
+| Arrays of embedded resources | ✅ Works 3/3 | ✅ Works 3/3 | ✅ Works 3/3 | 🟡 Partial 1/3 | ❌ Broken 0/3 | ❌ Broken 0/3 |
+| Unions | 🟡 Partial 1/2 | 🟡 Partial 1/2 | 🟡 Partial 1/2 | 🟡 Partial 1/2 | 🟡 Partial 1/2 | ❌ Broken 0/2 |
+
+## 2. Records
 
 | Feature | sqlite | postgres | ets | csv | mysql | clickhouse |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -59,7 +127,7 @@ as an application would, and why:
 | Update a record atomically from its current value | ✅ Works 1/1 | ✅ Works 1/1 | ✅ Works 1/1 | ❔ Unknown 1 not run | ✅ Works 1/1 | ❔ Unknown 1 not run |
 | Not found, invalid, missing and duplicate values are errors | ✅ Works 4/4 | ✅ Works 4/4 | 🟡 Partial 3/4 | ❔ Unknown 4 not run | ✅ Works 4/4 | ❔ Unknown 4 not run |
 
-## 2. Types
+## 3. Types
 
 | Feature | sqlite | postgres | ets | csv | mysql | clickhouse |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -71,7 +139,7 @@ as an application would, and why:
 | Maps round-trip, including nested values | ✅ Works 1/1 | ✅ Works 1/1 | ✅ Works 1/1 | ❔ Unknown 1 not run | ✅ Works 1/1 | ❔ Unknown 1 not run |
 | Embedded resources round-trip | ✅ Works 1/1 | ✅ Works 1/1 | ✅ Works 1/1 | ❔ Unknown 1 not run | ✅ Works 1/1 | ❔ Unknown 1 not run |
 
-## 3. Querying
+## 4. Querying
 
 | Feature | sqlite | postgres | ets | csv | mysql | clickhouse |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -94,7 +162,7 @@ as an application would, and why:
 | Keyset pagination, forwards and backwards | ✅ Works 1/1 | ✅ Works 1/1 | ✅ Works 1/1 | ❔ Unknown 1 not run | ✅ Works 1/1 | ❔ Unknown 1 not run |
 | Pagination while records change | ⚪ Untested | ⚪ Untested | ⚪ Untested | ⚪ Untested | ⚪ Untested | ⚪ Untested |
 
-## 4. Relationships
+## 5. Relationships
 
 | Feature | sqlite | postgres | ets | csv | mysql | clickhouse |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -109,7 +177,7 @@ as an application would, and why:
 | Load belongs-to, has-one, has-many and many-to-many relationships | ✅ Works 4/4 | ✅ Works 4/4 | ✅ Works 4/4 | ❔ Unknown 4 not run | 🟡 Partial 3/4 | ✅ Works 4/4 |
 | Create and update related records with manage_relationship | ⚪ Untested | ⚪ Untested | ⚪ Untested | ⚪ Untested | ⚪ Untested | ⚪ Untested |
 
-## 5. Aggregates
+## 6. Aggregates
 
 | Feature | sqlite | postgres | ets | csv | mysql | clickhouse |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -132,7 +200,7 @@ as an application would, and why:
 | Aggregates respect read actions, arguments, actor and context | 🟡 Partial 8/9 | 🟡 Partial 7/9 | 🟡 Partial 8/9 | ❔ Unknown 9 not run | ⛔ Not supported 0/9 | ❌ Broken 0/9 |
 | Seeded filtered aggregates match an in-memory reference | ✅ Works 1/1 | ✅ Works 1/1 | ✅ Works 1/1 | ❔ Unknown 1 not run | ⛔ Not supported 0/1 | ⛔ Not supported 0/1 |
 
-## 6. Writes
+## 7. Writes
 
 | Feature | sqlite | postgres | ets | csv | mysql | clickhouse |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -141,7 +209,7 @@ as an application would, and why:
 | Bulk update atomically | ✅ Works 1/1 | ✅ Works 1/1 | ✅ Works 1/1 | ❌ Broken 0/1 | ❌ Broken 0/1 | ❌ Broken 0/1 |
 | Writes that filter by or read aggregates | ✅ Works 4/4 | ✅ Works 4/4 | ✅ Works 4/4 | ❔ Unknown 4 not run | ❌ Broken 0/4 | ❌ Broken 0/4 |
 
-## 7. Transactions and locks
+## 8. Transactions and locks
 
 | Feature | sqlite | postgres | ets | csv | mysql | clickhouse |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -149,7 +217,7 @@ as an application would, and why:
 | Lock rows for update | ⛔ Not supported 0/1 | ✅ Works 1/1 | ⛔ Not supported 0/1 | ❔ Unknown 1 not run | ⛔ Not supported 0/1 | ⛔ Not supported 0/1 |
 | Isolation between concurrent transactions | ⚪ Untested | ⚪ Untested | ⚪ Untested | ⚪ Untested | ⚪ Untested | ⚪ Untested |
 
-## 8. Multitenancy
+## 9. Multitenancy
 
 | Feature | sqlite | postgres | ets | csv | mysql | clickhouse |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -160,7 +228,7 @@ as an application would, and why:
 | Tenancy scopes creates, updates and destroys | ✅ Works 3/3 | ✅ Works 3/3 | ✅ Works 3/3 | ✅ Works 3/3 | 🟡 Partial 1/3 | ✅ Works 3/3 |
 | Schema-based (context) tenancy | ➖ Not applicable | ✅ Works 5/5 | ➖ Not applicable | ➖ Not applicable | ➖ Not applicable | ➖ Not applicable |
 
-## 9. Authorization
+## 10. Authorization
 
 | Feature | sqlite | postgres | ets | csv | mysql | clickhouse |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -170,7 +238,7 @@ as an application would, and why:
 | Policies filter pages and counts | ✅ Works 3/3 | ✅ Works 3/3 | 🟡 Partial 1/3 | ⛔ Not supported 0/3 | ⛔ Not supported 0/3 | ❌ Broken 0/3 |
 | Policies filter and forbid writes | ✅ Works 4/4 | ✅ Works 4/4 | ✅ Works 4/4 | 🟡 Partial 3/4 | 🟡 Partial 2/4 | 🟡 Partial 3/4 |
 
-## 10. Consistency checks
+## 11. Consistency checks
 
 | Feature | sqlite | postgres | ets | csv | mysql | clickhouse |
 | --- | --- | --- | --- | --- | --- | --- |

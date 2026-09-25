@@ -21,7 +21,8 @@ defmodule Ash.Conformance.Contracts.Features do
 
   def sections do
     [
-      {1, "Records",
+      {1, "Storage", storage()},
+      {2, "Records",
        [
          feature("records.read", "Read records", "#{@docs}/actions/read-actions.md",
            claims: [record: :read],
@@ -72,7 +73,7 @@ defmodule Ash.Conformance.Contracts.Features do
              ~w(record.not_found record.invalid_value record.required record.identity_conflict)
          )
        ]},
-      {2, "Types",
+      {3, "Types",
        [
          feature(
            "types.scalar",
@@ -121,7 +122,7 @@ defmodule Ash.Conformance.Contracts.Features do
            scenarios: ~w(record.types_embedded)
          )
        ]},
-      {3, "Querying",
+      {4, "Querying",
        [
          feature(
            "filter.comparison",
@@ -245,7 +246,7 @@ defmodule Ash.Conformance.Contracts.Features do
            scenarios: []
          )
        ]},
-      {4, "Relationships",
+      {5, "Relationships",
        [
          feature(
            "relationships.filter_to_many",
@@ -318,7 +319,7 @@ defmodule Ash.Conformance.Contracts.Features do
            scenarios: []
          )
        ]},
-      {5, "Aggregates",
+      {6, "Aggregates",
        [
          feature(
            "aggregates.loaded",
@@ -473,7 +474,7 @@ defmodule Ash.Conformance.Contracts.Features do
            scenarios: ~w(generated.filtered_aggregates)
          )
        ]},
-      {6, "Writes",
+      {7, "Writes",
        [
          feature(
            "writes.upsert",
@@ -510,7 +511,7 @@ defmodule Ash.Conformance.Contracts.Features do
              ~w(write.bulk_update_filter write.bulk_destroy_filter write.atomic_update write.single_atomic_update)
          )
        ]},
-      {7, "Transactions and locks",
+      {8, "Transactions and locks",
        [
          feature(
            "transactions.rollback",
@@ -532,7 +533,7 @@ defmodule Ash.Conformance.Contracts.Features do
            scenarios: []
          )
        ]},
-      {8, "Multitenancy",
+      {9, "Multitenancy",
        [
          feature(
            "tenancy.reads",
@@ -581,7 +582,7 @@ defmodule Ash.Conformance.Contracts.Features do
              ~w(schema.direct schema.relationships schema.loaded_aggregates schema.root_aggregate schema.filtered_page)
          )
        ]},
-      {9, "Authorization",
+      {10, "Authorization",
        [
          feature(
            "authorization.reads",
@@ -619,7 +620,7 @@ defmodule Ash.Conformance.Contracts.Features do
              ~w(auth.write_bulk_update_atomic auth.write_bulk_update_stream auth.write_bulk_destroy auth.write_forbidden)
          )
        ]},
-      {10, "Consistency checks",
+      {11, "Consistency checks",
        [
          feature(
            "consistency.equivalences",
@@ -630,6 +631,23 @@ defmodule Ash.Conformance.Contracts.Features do
          )
        ]}
     ]
+  end
+
+  # One feature per tier-1 type: its values round-trip unchanged.
+  defp storage do
+    for type <- Ash.Conformance.Storage.types() do
+      feature(
+        "storage.#{type.name}",
+        type.label,
+        "../lib/ash/type/type.ex",
+        claims: [],
+        scenarios:
+          Enum.map(
+            Ash.Conformance.Storage.cells(type),
+            &Ash.Conformance.Storage.scenario_id(type.name, &1)
+          )
+      )
+    end
   end
 
   def all do

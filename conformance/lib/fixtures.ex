@@ -57,8 +57,8 @@ defmodule Ash.Conformance.Fixtures do
 
   defp row_key(row), do: Map.get(row, :id) || inspect(row, limit: 3)
 
-  # The first informative line: Ash errors put the cause after a header.
-  defp reason(exception) do
+  @doc "An exception's first informative line; Ash errors put the cause after a header."
+  def reason(exception) do
     exception
     |> Exception.message()
     |> String.split("\n")

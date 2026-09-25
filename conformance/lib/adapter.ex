@@ -64,12 +64,13 @@ defmodule Ash.Conformance.Adapter do
 
   @doc """
   The shared resource roles, and for each shared table the role that has every
-  column. Adapters use these to provision and clear storage.
+  column. Adapters use these to provision and clear storage. Tier-1 storage
+  tables are provisioned separately, one at a time (`Ash.Conformance.Storage`).
   """
   def roles,
     do: ~w(parent child rating tag link child_tag event reading tenant_child tenant_link
           authorized_child ledger record tenant_parent tenant_item secure_parent secure_item
-          context_parent context_item)a
+          context_parent context_item)a ++ Ash.Conformance.Storage.roles()
 
   def table_roles,
     do: ~w(parent child rating tag link child_tag event reading ledger record tenant_parent

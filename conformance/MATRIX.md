@@ -241,6 +241,71 @@ Elixir scenarios and expectations define the contract. CI runs each adapter inde
 | [`schema.loaded_aggregates`](lib/scenarios/context_tenancy.ex#L49) | profile unavailable | supported |
 | [`schema.relationships`](lib/scenarios/context_tenancy.ex#L33) | profile unavailable | supported |
 | [`schema.root_aggregate`](lib/scenarios/context_tenancy.ex#L65) | profile unavailable | supported |
+| [`storage.atom.null`](lib/scenarios/storage.ex#L24) | supported | supported |
+| [`storage.atom.ordinary`](lib/scenarios/storage.ex#L24) | supported | supported |
+| [`storage.binary.edge`](lib/scenarios/storage.ex#L24) | supported | supported |
+| [`storage.binary.null`](lib/scenarios/storage.ex#L24) | supported | supported |
+| [`storage.binary.ordinary`](lib/scenarios/storage.ex#L24) | supported | supported |
+| [`storage.boolean.null`](lib/scenarios/storage.ex#L24) | supported | supported |
+| [`storage.boolean.ordinary`](lib/scenarios/storage.ex#L24) | supported | supported |
+| [`storage.ci_string.edge`](lib/scenarios/storage.ex#L24) | supported | supported |
+| [`storage.ci_string.null`](lib/scenarios/storage.ex#L24) | supported | supported |
+| [`storage.ci_string.ordinary`](lib/scenarios/storage.ex#L24) | supported | supported |
+| [`storage.date.edge`](lib/scenarios/storage.ex#L24) | supported | supported |
+| [`storage.date.null`](lib/scenarios/storage.ex#L24) | supported | supported |
+| [`storage.date.ordinary`](lib/scenarios/storage.ex#L24) | supported | supported |
+| [`storage.decimal.edge`](lib/scenarios/storage.ex#L24) | [known_defect](GAPS.md#decimal-precision) · AshSQLite | supported |
+| [`storage.decimal.null`](lib/scenarios/storage.ex#L24) | supported | supported |
+| [`storage.decimal.ordinary`](lib/scenarios/storage.ex#L24) | supported | supported |
+| [`storage.duration.edge`](lib/scenarios/storage.ex#L24) | [known_defect](GAPS.md#duration-storage) · AshSQLite | [known_defect](GAPS.md#value-representation) · Ash |
+| [`storage.duration.null`](lib/scenarios/storage.ex#L24) | supported | supported |
+| [`storage.duration.ordinary`](lib/scenarios/storage.ex#L24) | [known_defect](GAPS.md#duration-storage) · AshSQLite | [known_defect](GAPS.md#value-representation) · Ash |
+| [`storage.embedded.edge`](lib/scenarios/storage.ex#L24) | supported | supported |
+| [`storage.embedded.null`](lib/scenarios/storage.ex#L24) | supported | supported |
+| [`storage.embedded.ordinary`](lib/scenarios/storage.ex#L24) | supported | supported |
+| [`storage.embeddeds.edge`](lib/scenarios/storage.ex#L24) | supported | supported |
+| [`storage.embeddeds.null`](lib/scenarios/storage.ex#L24) | supported | supported |
+| [`storage.embeddeds.ordinary`](lib/scenarios/storage.ex#L24) | supported | supported |
+| [`storage.float.edge`](lib/scenarios/storage.ex#L24) | supported | supported |
+| [`storage.float.null`](lib/scenarios/storage.ex#L24) | supported | supported |
+| [`storage.float.ordinary`](lib/scenarios/storage.ex#L24) | supported | supported |
+| [`storage.integer.edge`](lib/scenarios/storage.ex#L24) | supported | supported |
+| [`storage.integer.null`](lib/scenarios/storage.ex#L24) | supported | supported |
+| [`storage.integer.ordinary`](lib/scenarios/storage.ex#L24) | supported | supported |
+| [`storage.integers.edge`](lib/scenarios/storage.ex#L24) | supported | supported |
+| [`storage.integers.null`](lib/scenarios/storage.ex#L24) | supported | supported |
+| [`storage.integers.ordinary`](lib/scenarios/storage.ex#L24) | supported | supported |
+| [`storage.map.edge`](lib/scenarios/storage.ex#L24) | supported | supported |
+| [`storage.map.null`](lib/scenarios/storage.ex#L24) | supported | supported |
+| [`storage.map.ordinary`](lib/scenarios/storage.ex#L24) | supported | supported |
+| [`storage.naive_datetime.edge`](lib/scenarios/storage.ex#L24) | supported | supported |
+| [`storage.naive_datetime.null`](lib/scenarios/storage.ex#L24) | supported | supported |
+| [`storage.naive_datetime.ordinary`](lib/scenarios/storage.ex#L24) | supported | supported |
+| [`storage.string.edge`](lib/scenarios/storage.ex#L24) | supported | [unsupported](GAPS.md#nul-in-text) · AshPostgres |
+| [`storage.string.null`](lib/scenarios/storage.ex#L24) | supported | supported |
+| [`storage.string.ordinary`](lib/scenarios/storage.ex#L24) | supported | supported |
+| [`storage.strings.edge`](lib/scenarios/storage.ex#L24) | supported | supported |
+| [`storage.strings.null`](lib/scenarios/storage.ex#L24) | supported | supported |
+| [`storage.strings.ordinary`](lib/scenarios/storage.ex#L24) | supported | supported |
+| [`storage.time.edge`](lib/scenarios/storage.ex#L24) | supported | supported |
+| [`storage.time.null`](lib/scenarios/storage.ex#L24) | supported | supported |
+| [`storage.time.ordinary`](lib/scenarios/storage.ex#L24) | supported | supported |
+| [`storage.time_usec.edge`](lib/scenarios/storage.ex#L24) | supported | supported |
+| [`storage.time_usec.null`](lib/scenarios/storage.ex#L24) | supported | supported |
+| [`storage.time_usec.ordinary`](lib/scenarios/storage.ex#L24) | supported | supported |
+| [`storage.union.null`](lib/scenarios/storage.ex#L24) | supported | supported |
+| [`storage.union.ordinary`](lib/scenarios/storage.ex#L24) | [known_defect](GAPS.md#union-nil) · Ash | [known_defect](GAPS.md#union-nil) · Ash |
+| [`storage.utc_datetime.edge`](lib/scenarios/storage.ex#L24) | supported | supported |
+| [`storage.utc_datetime.null`](lib/scenarios/storage.ex#L24) | supported | supported |
+| [`storage.utc_datetime.ordinary`](lib/scenarios/storage.ex#L24) | supported | supported |
+| [`storage.utc_datetime_usec.edge`](lib/scenarios/storage.ex#L24) | supported | supported |
+| [`storage.utc_datetime_usec.null`](lib/scenarios/storage.ex#L24) | supported | supported |
+| [`storage.utc_datetime_usec.ordinary`](lib/scenarios/storage.ex#L24) | supported | supported |
+| [`storage.uuid.edge`](lib/scenarios/storage.ex#L24) | supported | supported |
+| [`storage.uuid.null`](lib/scenarios/storage.ex#L24) | supported | supported |
+| [`storage.uuid.ordinary`](lib/scenarios/storage.ex#L24) | supported | supported |
+| [`storage.uuid_v7.null`](lib/scenarios/storage.ex#L24) | supported | supported |
+| [`storage.uuid_v7.ordinary`](lib/scenarios/storage.ex#L24) | supported | supported |
 | [`tenant.aggregate_filter_sort`](lib/scenarios/tenancy.ex#L83) | supported | supported |
 | [`tenant.aggregate_keyset_pages`](lib/scenarios/tenancy.ex#L112) | supported | supported |
 | [`tenant.aggregate_offset_page`](lib/scenarios/tenancy.ex#L98) | supported | supported |
@@ -323,10 +388,13 @@ The first owner is where the fix starts. Counts are scenarios linked to each gap
 | [path-multiplicity](GAPS.md#path-multiplicity) | Ash | decision | 1 | 1 |
 | [relationship-context](GAPS.md#relationship-context) | Ash | implementation | 2 | 2 |
 | [true-or-nil](GAPS.md#true-or-nil) | Ash | decision | 1 | 1 |
+| [union-nil](GAPS.md#union-nil) | Ash | implementation | 1 | 1 |
 | [unique-list-order](GAPS.md#unique-list-order) | Ash | decision | 1 | 1 |
+| [value-representation](GAPS.md#value-representation) | Ash | decision | 0 | 2 |
 | [authorization-bounds](GAPS.md#authorization-bounds) | Ash, then AshSQL | implementation | 1 | 1 |
 | [many-to-many-load-limit](GAPS.md#many-to-many-load-limit) | Ash, then AshSQLite | implementation | 1 | 0 |
 | [through-fallback](GAPS.md#through-fallback) | Ash, then AshSQLite | implementation | 2 | 0 |
+| [nul-in-text](GAPS.md#nul-in-text) | AshPostgres | limitation | 0 | 1 |
 | [skipped-upsert-tenant](GAPS.md#skipped-upsert-tenant) | AshPostgres | implementation | 0 | 1 |
 | [default-sort](GAPS.md#default-sort) | AshSQL | implementation | 1 | 1 |
 | [filter-dependencies](GAPS.md#filter-dependencies) | AshSQL | implementation | 4 | 0 |
@@ -347,7 +415,8 @@ The first owner is where the fix starts. Counts are scenarios linked to each gap
 | [no-attributes](GAPS.md#no-attributes) | AshSQL, then AshSQLite | implementation | 2 | 1 |
 | [parent-correlation](GAPS.md#parent-correlation) | AshSQL, then AshSQLite | implementation | 8 | 0 |
 | [root-kinds](GAPS.md#root-kinds) | AshSQL, then AshSQLite | implementation | 8 | 0 |
-| [decimal-precision](GAPS.md#decimal-precision) | AshSQLite | implementation | 4 | 0 |
+| [decimal-precision](GAPS.md#decimal-precision) | AshSQLite | implementation | 5 | 0 |
+| [duration-storage](GAPS.md#duration-storage) | AshSQLite | implementation | 2 | 0 |
 | [query-combinations](GAPS.md#query-combinations) | AshSQLite | implementation | 1 | 0 |
 | [query-distinct](GAPS.md#query-distinct) | AshSQLite | implementation | 1 | 0 |
 | [row-locks](GAPS.md#row-locks) | AshSQLite | limitation | 1 | 0 |

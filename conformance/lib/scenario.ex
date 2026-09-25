@@ -17,6 +17,7 @@ defmodule Ash.Conformance.Scenario do
     capabilities: [],
     benchmark: false,
     fallback: nil,
+    detail: nil,
     semantic_basis: "../documentation/topics/resources/aggregates.md"
   ]
 
@@ -39,6 +40,7 @@ defmodule Ash.Conformance.Scenario do
         capabilities: Keyword.get(unquote(opts), :capabilities, []),
         benchmark: Keyword.get(unquote(opts), :benchmark, false),
         fallback: Keyword.get(unquote(opts), :fallback),
+        detail: Keyword.get(unquote(opts), :detail),
         semantic_basis:
           Keyword.get(
             unquote(opts),

@@ -4,7 +4,7 @@
 
 Generated from an unreviewed run: each result was classified automatically against the intended answer. Nothing here has been reviewed.
 
-Feature catalog version 1: 80 features and 302 scenarios.
+Feature catalog version 1: 103 features and 367 scenarios.
 
 | Status | Meaning |
 | --- | --- |
@@ -23,7 +23,35 @@ Counts are passing scenarios out of those that ran, then how many could
 not run. Gap links explain everything that is not fully working, and who
 owns the fix.
 
-## 1. Records
+## 1. Storage
+
+| Feature | clickhouse | Not working |
+| --- | --- | --- |
+| Integers | ✅ Works 3/3 |  |
+| Floats | ✅ Works 3/3 |  |
+| Decimals | ❌ Broken 0/3 | `storage.decimal.edge` wrong, `storage.decimal.null` wrong, `storage.decimal.ordinary` wrong |
+| Strings | ✅ Works 3/3 |  |
+| Case-insensitive strings | 🟡 Partial 1/3 | `storage.ci_string.edge` wrong, `storage.ci_string.ordinary` wrong |
+| Binaries | 🟡 Partial 2/3 | `storage.binary.edge` wrong |
+| Booleans | ✅ Works 2/2 |  |
+| Atoms with one_of | ✅ Works 2/2 |  |
+| Dates | 🟡 Partial 1/3 | `storage.date.edge` wrong, `storage.date.ordinary` wrong |
+| Times | ✅ Works 3/3 |  |
+| Microsecond times | 🟡 Partial 1/3 | `storage.time_usec.edge` wrong, `storage.time_usec.ordinary` wrong |
+| UTC datetimes | 🟡 Partial 1/3 | `storage.utc_datetime.edge` wrong, `storage.utc_datetime.ordinary` wrong |
+| Microsecond UTC datetimes | 🟡 Partial 1/3 | `storage.utc_datetime_usec.edge` wrong, `storage.utc_datetime_usec.ordinary` wrong |
+| Naive datetimes | 🟡 Partial 1/3 | `storage.naive_datetime.edge` wrong, `storage.naive_datetime.ordinary` wrong |
+| Durations | 🟡 Partial 1/3 | `storage.duration.edge` wrong, `storage.duration.ordinary` wrong |
+| UUIDs | 🟡 Partial 1/3 | `storage.uuid.edge` wrong, `storage.uuid.ordinary` wrong |
+| UUIDv7s | ✅ Works 2/2 |  |
+| Maps | ❌ Broken 0/3 | `storage.map.edge` wrong, `storage.map.null` wrong, `storage.map.ordinary` wrong |
+| Arrays of strings | ❌ Broken 0/3 | `storage.strings.edge` wrong, `storage.strings.null` wrong, `storage.strings.ordinary` wrong |
+| Arrays of integers | ❌ Broken 0/3 | `storage.integers.edge` wrong, `storage.integers.null` wrong, `storage.integers.ordinary` wrong |
+| Embedded resources | ❌ Broken 0/3 | `storage.embedded.edge` wrong, `storage.embedded.null` wrong, `storage.embedded.ordinary` wrong |
+| Arrays of embedded resources | ❌ Broken 0/3 | `storage.embeddeds.edge` wrong, `storage.embeddeds.null` wrong, `storage.embeddeds.ordinary` wrong |
+| Unions | ❌ Broken 0/2 | `storage.union.null` wrong, `storage.union.ordinary` wrong |
+
+## 2. Records
 
 | Feature | clickhouse | Not working |
 | --- | --- | --- |
@@ -36,7 +64,7 @@ owns the fix.
 | Update a record atomically from its current value | ❔ Unknown 1 not run | `record.atomic_update` setup failed |
 | Not found, invalid, missing and duplicate values are errors | ❔ Unknown 4 not run | `record.identity_conflict` setup failed, `record.invalid_value` setup failed, `record.not_found` setup failed, `record.required` setup failed |
 
-## 2. Types
+## 3. Types
 
 | Feature | clickhouse | Not working |
 | --- | --- | --- |
@@ -48,7 +76,7 @@ owns the fix.
 | Maps round-trip, including nested values | ❔ Unknown 1 not run | `record.types_map` setup failed |
 | Embedded resources round-trip | ❔ Unknown 1 not run | `record.types_embedded` setup failed |
 
-## 3. Querying
+## 4. Querying
 
 | Feature | clickhouse | Not working |
 | --- | --- | --- |
@@ -71,7 +99,7 @@ owns the fix.
 | Keyset pagination, forwards and backwards | ❔ Unknown 1 not run | `record.keyset_pages` setup failed |
 | Pagination while records change | ⚪ Untested |  |
 
-## 4. Relationships
+## 5. Relationships
 
 | Feature | clickhouse | Not working |
 | --- | --- | --- |
@@ -86,7 +114,7 @@ owns the fix.
 | Load belongs-to, has-one, has-many and many-to-many relationships | ✅ Works 4/4 |  |
 | Create and update related records with manage_relationship | ⚪ Untested |  |
 
-## 5. Aggregates
+## 6. Aggregates
 
 | Feature | clickhouse | Not working |
 | --- | --- | --- |
@@ -109,7 +137,7 @@ owns the fix.
 | Aggregates respect read actions, arguments, actor and context | ❌ Broken 0/9 | `context.actor` wrong, `context.arguments` wrong, `context.intermediate_action` wrong, `context.intermediate_actor` wrong, `context.prepared_query_arguments` wrong, `context.read_action` wrong, `context.relationship_context` wrong, `context.shared` wrong, `context.through_arguments` wrong |
 | Seeded filtered aggregates match an in-memory reference | ⛔ Not supported 0/1 | `generated.filtered_aggregates` rejected |
 
-## 6. Writes
+## 7. Writes
 
 | Feature | clickhouse | Not working |
 | --- | --- | --- |
@@ -118,7 +146,7 @@ owns the fix.
 | Bulk update atomically | ❌ Broken 0/1 | `bulk.atomic_increment` crashed |
 | Writes that filter by or read aggregates | ❌ Broken 0/4 | `write.atomic_update` crashed, `write.bulk_destroy_filter` crashed, `write.bulk_update_filter` crashed, `write.single_atomic_update` rejected |
 
-## 7. Transactions and locks
+## 8. Transactions and locks
 
 | Feature | clickhouse | Not working |
 | --- | --- | --- |
@@ -126,7 +154,7 @@ owns the fix.
 | Lock rows for update | ⛔ Not supported 0/1 | `query.lock_for_update` rejected |
 | Isolation between concurrent transactions | ⚪ Untested |  |
 
-## 8. Multitenancy
+## 9. Multitenancy
 
 | Feature | clickhouse | Not working |
 | --- | --- | --- |
@@ -137,7 +165,7 @@ owns the fix.
 | Tenancy scopes creates, updates and destroys | ✅ Works 3/3 |  |
 | Schema-based (context) tenancy | ➖ Not applicable |  |
 
-## 9. Authorization
+## 10. Authorization
 
 | Feature | clickhouse | Not working |
 | --- | --- | --- |
@@ -147,7 +175,7 @@ owns the fix.
 | Policies filter pages and counts | ❌ Broken 0/3 | `auth.keyset_pages` crashed, `auth.offset_page` crashed, `auth.tenant_interaction` wrong |
 | Policies filter and forbid writes | 🟡 Partial 3/4 | `auth.write_bulk_update_stream` wrong |
 
-## 10. Consistency checks
+## 11. Consistency checks
 
 | Feature | clickhouse | Not working |
 | --- | --- | --- |
@@ -192,3 +220,37 @@ whose claims disagree with the result:
 | Tenancy scopes pages and counts | clickhouse | Not advertising `tenant_parent: :keyset`, but not rejected either: wrong answers |
 | Policies filter pages and counts | clickhouse | Advertised, but ❌ Broken |
 
+
+## Storage
+
+Each cell shows the ordinary, edge and nil values, in that order. ✅ reads
+back unchanged; ≈ reads back equal but in another representation, such as
+`1.5` as `1.5000000000`; ❌ is lost or rejected; 🚫 the table could not be
+created; 🔀 differs between seed orders; ❔ did not run; – the type has no
+values of that class.
+
+| Type | Column | Ordinary | Edge | Nil | First problem |
+| --- | --- | --- | --- | --- | --- |
+| Integers | `Nullable(Int64)` | ✅ | ✅ | ✅ |  |
+| Floats | `Nullable(Float64)` | ✅ | ✅ | ✅ |  |
+| Decimals | `—` | 🚫 | 🚫 | 🚫 | ordinary, table: ["Code: 43. DB::Exception: Decimal argument precision is invalid. (ILLEGAL_TYPE_OF_ARGUMENT) (version 25.8.33.6 (official build))"] |
+| Strings | `Nullable(String)` | ✅ | ✅ | ✅ |  |
+| Case-insensitive strings | `Nullable(String)` | ≈ | ≈ | ✅ | ordinary, read: "Hello" |
+| Binaries | `Nullable(String)` | ✅ | ❌ | ✅ | edge, create: ** (Jason.EncodeError) invalid byte 0xFF in <<0, 255, 0, 128>> |
+| Booleans | `Nullable(UInt8)` | ✅ | – | ✅ |  |
+| Atoms with one_of | `Nullable(String)` | ✅ | – | ✅ |  |
+| Dates | `Nullable(Date)` | ❌ | ❌ | ✅ | ordinary, read: "2024-02-29" |
+| Times | `Nullable(String)` | ✅ | ✅ | ✅ |  |
+| Microsecond times | `Nullable(String)` | ❌ | ❌ | ✅ | ordinary, read: "12:34:56.123456" |
+| UTC datetimes | `Nullable(DateTime64(6))` | ≈ | ≈ | ✅ | ordinary, read: ~U[2024-02-29 12:34:56.000000Z] |
+| Microsecond UTC datetimes | `Nullable(DateTime64(6))` | ❌ | ❌ | ✅ | ordinary, update: ~U[2024-02-29 12:34:56.000000Z] |
+| Naive datetimes | `Nullable(DateTime64(6))` | ❌ | ❌ | ✅ | ordinary, read: ~U[2024-02-29 12:34:56.000000Z] |
+| Durations | `Nullable(String)` | ❌ | ❌ | ✅ | ordinary, create: ** (Protocol.UndefinedError) protocol Jason.Encoder not implemented for Duration (a struct), Jason.Encoder protocol must always be explicitly implemented. |
+| UUIDs | `Nullable(UUID)` | ❌ | ❌ | ✅ | ordinary, update: nil |
+| UUIDv7s | `Nullable(UUID)` | ✅ | – | ✅ |  |
+| Maps | `—` | 🚫 | 🚫 | 🚫 | ordinary, table: ClickHouse does not support Nullable(Map(String, String)) because the inner type is a |
+| Arrays of strings | `—` | 🚫 | 🚫 | 🚫 | ordinary, table: ClickHouse does not support Nullable(Array(String)) because the inner type is a |
+| Arrays of integers | `—` | 🚫 | 🚫 | 🚫 | ordinary, table: ClickHouse does not support Nullable(Array(Int64)) because the inner type is a |
+| Embedded resources | `—` | 🚫 | 🚫 | 🚫 | ordinary, table: ClickHouse does not support Nullable(Map(String, String)) because the inner type is a |
+| Arrays of embedded resources | `—` | 🚫 | 🚫 | 🚫 | ordinary, table: ClickHouse does not support Nullable(Array(String)) because the inner type is a |
+| Unions | `—` | 🚫 | – | 🚫 | ordinary, table: ClickHouse does not support Nullable(Map(String, String)) because the inner type is a |

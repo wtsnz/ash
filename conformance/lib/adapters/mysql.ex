@@ -18,6 +18,8 @@ defmodule Ash.Conformance.Mysql do
 
   def notes,
     do: [
+      "Tier-1 storage tables use the column types AshMysql's migration generator chooses, " <>
+        "unlike the shared tables below.",
       "The records table stores `tags` as JSON and `code` as a `VARCHAR`, since MySQL has no array " <>
         "column and cannot index `TEXT` without a key length.",
       "Decimals are `DECIMAL(30,10)`: a bare `DECIMAL` is `DECIMAL(10,0)`, and wider columns return " <>
@@ -37,11 +39,32 @@ defmodule Ash.Conformance.Mysql do
   end
 
   def setup! do
-    Ash.Conformance.SQL.Database.setup!(repo(),
-      replace: %{4 => Ash.Conformance.Mysql.Values, 6 => Ash.Conformance.Mysql.Records}
-    )
-
+    # Tier-1 tables are built from the resources, so they compile first.
     Ash.Conformance.Resources.compile!(__MODULE__)
+
+    Ash.Conformance.SQL.Database.setup!(repo(),
+      replace: %{4 => Ash.Conformance.Mysql.Values, 6 => Ash.Conformance.Mysql.Records},
+      storage: {__MODULE__, &column/1}
+    )
+  end
+
+  # Tier-1 columns follow AshMysql's migration generator (`migration_type/2`):
+  # strings are VARCHAR(255), case-insensitive strings a collated VARCHAR,
+  # integers bigint, and anything else, arrays included, is Ash's storage type.
+  def column(%{type: type, constraints: constraints}), do: column(type, constraints)
+
+  defp column({:array, type}, constraints),
+    do: {:array, column(type, Keyword.get(constraints, :items, []))}
+
+  defp column(Ash.Type.CiString, _), do: :"VARCHAR(255) COLLATE utf8mb4_0900_ai_ci"
+  defp column(Ash.Type.UUID, _), do: :uuid
+  defp column(Ash.Type.Integer, _), do: :bigint
+
+  defp column(type, constraints) do
+    case Ash.Type.storage_type(type, constraints) do
+      :ci_string -> :"VARCHAR(255) COLLATE utf8mb4_0900_ai_ci"
+      storage_type -> storage_type
+    end
   end
 
   def checkout!, do: Ecto.Adapters.SQL.Sandbox.checkout(repo())

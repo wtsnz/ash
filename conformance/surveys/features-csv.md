@@ -4,7 +4,7 @@
 
 Generated from an unreviewed run: each result was classified automatically against the intended answer. Nothing here has been reviewed.
 
-Feature catalog version 1: 80 features and 302 scenarios.
+Feature catalog version 1: 103 features and 367 scenarios.
 
 | Status | Meaning |
 | --- | --- |
@@ -23,7 +23,35 @@ Counts are passing scenarios out of those that ran, then how many could
 not run. Gap links explain everything that is not fully working, and who
 owns the fix.
 
-## 1. Records
+## 1. Storage
+
+| Feature | csv | Not working |
+| --- | --- | --- |
+| Integers | ✅ Works 3/3 |  |
+| Floats | 🟡 Partial 1/3 | `storage.float.edge` wrong, `storage.float.ordinary` wrong |
+| Decimals | ✅ Works 3/3 |  |
+| Strings | 🟡 Partial 2/3 | `storage.string.edge` wrong |
+| Case-insensitive strings | 🟡 Partial 2/3 | `storage.ci_string.edge` wrong |
+| Binaries | 🟡 Partial 1/3 | `storage.binary.edge` wrong, `storage.binary.ordinary` wrong |
+| Booleans | 🟡 Partial 1/2 | `storage.boolean.ordinary` wrong |
+| Atoms with one_of | ✅ Works 2/2 |  |
+| Dates | ✅ Works 3/3 |  |
+| Times | ✅ Works 3/3 |  |
+| Microsecond times | ✅ Works 3/3 |  |
+| UTC datetimes | ✅ Works 3/3 |  |
+| Microsecond UTC datetimes | ✅ Works 3/3 |  |
+| Naive datetimes | ✅ Works 3/3 |  |
+| Durations | 🟡 Partial 1/3 | `storage.duration.edge` wrong, `storage.duration.ordinary` wrong |
+| UUIDs | ✅ Works 3/3 |  |
+| UUIDv7s | ✅ Works 2/2 |  |
+| Maps | 🟡 Partial 1/3 | `storage.map.edge` wrong, `storage.map.ordinary` wrong |
+| Arrays of strings | 🟡 Partial 1/3 | `storage.strings.edge` wrong, `storage.strings.ordinary` wrong |
+| Arrays of integers | 🟡 Partial 1/3 | `storage.integers.edge` wrong, `storage.integers.ordinary` wrong |
+| Embedded resources | 🟡 Partial 1/3 | `storage.embedded.edge` wrong, `storage.embedded.ordinary` wrong |
+| Arrays of embedded resources | 🟡 Partial 1/3 | `storage.embeddeds.edge` wrong, `storage.embeddeds.ordinary` wrong |
+| Unions | 🟡 Partial 1/2 | `storage.union.ordinary` wrong |
+
+## 2. Records
 
 | Feature | csv | Not working |
 | --- | --- | --- |
@@ -36,7 +64,7 @@ owns the fix.
 | Update a record atomically from its current value | ❔ Unknown 1 not run | `record.atomic_update` setup failed |
 | Not found, invalid, missing and duplicate values are errors | ❔ Unknown 4 not run | `record.identity_conflict` setup failed, `record.invalid_value` setup failed, `record.not_found` setup failed, `record.required` setup failed |
 
-## 2. Types
+## 3. Types
 
 | Feature | csv | Not working |
 | --- | --- | --- |
@@ -48,7 +76,7 @@ owns the fix.
 | Maps round-trip, including nested values | ❔ Unknown 1 not run | `record.types_map` setup failed |
 | Embedded resources round-trip | ❔ Unknown 1 not run | `record.types_embedded` setup failed |
 
-## 3. Querying
+## 4. Querying
 
 | Feature | csv | Not working |
 | --- | --- | --- |
@@ -71,7 +99,7 @@ owns the fix.
 | Keyset pagination, forwards and backwards | ❔ Unknown 1 not run | `record.keyset_pages` setup failed |
 | Pagination while records change | ⚪ Untested |  |
 
-## 4. Relationships
+## 5. Relationships
 
 | Feature | csv | Not working |
 | --- | --- | --- |
@@ -86,7 +114,7 @@ owns the fix.
 | Load belongs-to, has-one, has-many and many-to-many relationships | ❔ Unknown 4 not run | `load.belongs_to` setup failed, `load.has_many` setup failed, `load.has_one` setup failed, `load.many_to_many` setup failed |
 | Create and update related records with manage_relationship | ⚪ Untested |  |
 
-## 5. Aggregates
+## 6. Aggregates
 
 | Feature | csv | Not working |
 | --- | --- | --- |
@@ -109,7 +137,7 @@ owns the fix.
 | Aggregates respect read actions, arguments, actor and context | ❔ Unknown 9 not run | `context.actor` setup failed, `context.arguments` setup failed, `context.intermediate_action` setup failed, `context.intermediate_actor` setup failed, `context.prepared_query_arguments` setup failed, `context.read_action` setup failed, `context.relationship_context` setup failed, `context.shared` setup failed, `context.through_arguments` setup failed |
 | Seeded filtered aggregates match an in-memory reference | ❔ Unknown 1 not run | `generated.filtered_aggregates` setup failed |
 
-## 6. Writes
+## 7. Writes
 
 | Feature | csv | Not working |
 | --- | --- | --- |
@@ -118,7 +146,7 @@ owns the fix.
 | Bulk update atomically | ❌ Broken 0/1 | `bulk.atomic_increment` wrong |
 | Writes that filter by or read aggregates | ❔ Unknown 4 not run | `write.atomic_update` setup failed, `write.bulk_destroy_filter` setup failed, `write.bulk_update_filter` setup failed, `write.single_atomic_update` setup failed |
 
-## 7. Transactions and locks
+## 8. Transactions and locks
 
 | Feature | csv | Not working |
 | --- | --- | --- |
@@ -126,7 +154,7 @@ owns the fix.
 | Lock rows for update | ❔ Unknown 1 not run | `query.lock_for_update` setup failed |
 | Isolation between concurrent transactions | ⚪ Untested |  |
 
-## 8. Multitenancy
+## 9. Multitenancy
 
 | Feature | csv | Not working |
 | --- | --- | --- |
@@ -137,7 +165,7 @@ owns the fix.
 | Tenancy scopes creates, updates and destroys | ✅ Works 3/3 |  |
 | Schema-based (context) tenancy | ➖ Not applicable |  |
 
-## 9. Authorization
+## 10. Authorization
 
 | Feature | csv | Not working |
 | --- | --- | --- |
@@ -147,7 +175,7 @@ owns the fix.
 | Policies filter pages and counts | ⛔ Not supported 0/3 | `auth.keyset_pages` rejected, `auth.offset_page` rejected, `auth.tenant_interaction` rejected |
 | Policies filter and forbid writes | 🟡 Partial 3/4 | `auth.write_bulk_update_stream` wrong |
 
-## 10. Consistency checks
+## 11. Consistency checks
 
 | Feature | csv | Not working |
 | --- | --- | --- |
@@ -169,3 +197,37 @@ whose claims disagree with the result:
 | Tenancy scopes creates, updates and destroys | csv | Works without advertising `tenant_item: :destroy_query` |
 | Policies filter pages and counts | csv | Advertised, but ⛔ Not supported |
 
+
+## Storage
+
+Each cell shows the ordinary, edge and nil values, in that order. ✅ reads
+back unchanged; ≈ reads back equal but in another representation, such as
+`1.5` as `1.5000000000`; ❌ is lost or rejected; 🚫 the table could not be
+created; 🔀 differs between seed orders; ❔ did not run; – the type has no
+values of that class.
+
+| Type | Column | Ordinary | Edge | Nil | First problem |
+| --- | --- | --- | --- | --- | --- |
+| Integers | `—` | ✅ | ✅ | ✅ |  |
+| Floats | `—` | ❌ | ❌ | ✅ | ordinary, create: stored value for value could not be casted from the stored value to type Ash.Type.Float: "1.5" |
+| Decimals | `—` | ✅ | ✅ | ✅ |  |
+| Strings | `—` | ✅ | ❌ | ✅ | edge, read: nil |
+| Case-insensitive strings | `—` | ✅ | ❌ | ✅ | edge, read: nil |
+| Binaries | `—` | ❌ | ❌ | ✅ | ordinary, update: "dGV4dA==" |
+| Booleans | `—` | ❌ | – | ✅ | ordinary, create: stored value for value could not be casted from the stored value to type Ash.Type.Boolean: "true" |
+| Atoms with one_of | `—` | ✅ | – | ✅ |  |
+| Dates | `—` | ✅ | ✅ | ✅ |  |
+| Times | `—` | ✅ | ✅ | ✅ |  |
+| Microsecond times | `—` | ✅ | ✅ | ✅ |  |
+| UTC datetimes | `—` | ✅ | ✅ | ✅ |  |
+| Microsecond UTC datetimes | `—` | ✅ | ✅ | ✅ |  |
+| Naive datetimes | `—` | ✅ | ✅ | ✅ |  |
+| Durations | `—` | ❌ | ❌ | ✅ | ordinary, create: ** (Protocol.UndefinedError) protocol String.Chars not implemented for Duration (a struct) |
+| UUIDs | `—` | ✅ | ✅ | ✅ |  |
+| UUIDv7s | `—` | ✅ | – | ✅ |  |
+| Maps | `—` | ❌ | ❌ | ✅ | ordinary, create: ** (Protocol.UndefinedError) protocol String.Chars not implemented for Map |
+| Arrays of strings | `—` | ❌ | ❌ | ✅ | ordinary, create: ** (Protocol.UndefinedError) protocol Enumerable not implemented for BitString |
+| Arrays of integers | `—` | ❌ | ❌ | ✅ | ordinary, create: ** (Protocol.UndefinedError) protocol Enumerable not implemented for BitString |
+| Embedded resources | `—` | ❌ | ❌ | ✅ | ordinary, create: ** (Protocol.UndefinedError) protocol String.Chars not implemented for Ash.Conformance.Resources.Address (a struct) |
+| Arrays of embedded resources | `—` | ❌ | ❌ | ✅ | ordinary, create: ** (ArgumentError) cannot convert the given list to a string. |
+| Unions | `—` | ❌ | – | ✅ | ordinary, create: ** (Protocol.UndefinedError) protocol String.Chars not implemented for Ash.Union (a struct) |

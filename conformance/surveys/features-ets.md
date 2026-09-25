@@ -4,7 +4,7 @@
 
 Generated from an unreviewed run: each result was classified automatically against the intended answer. Nothing here has been reviewed.
 
-Feature catalog version 1: 80 features and 302 scenarios.
+Feature catalog version 1: 103 features and 367 scenarios.
 
 | Status | Meaning |
 | --- | --- |
@@ -23,7 +23,35 @@ Counts are passing scenarios out of those that ran, then how many could
 not run. Gap links explain everything that is not fully working, and who
 owns the fix.
 
-## 1. Records
+## 1. Storage
+
+| Feature | ets | Not working |
+| --- | --- | --- |
+| Integers | ✅ Works 3/3 |  |
+| Floats | ✅ Works 3/3 |  |
+| Decimals | ✅ Works 3/3 |  |
+| Strings | ✅ Works 3/3 |  |
+| Case-insensitive strings | ✅ Works 3/3 |  |
+| Binaries | ✅ Works 3/3 |  |
+| Booleans | ✅ Works 2/2 |  |
+| Atoms with one_of | ✅ Works 2/2 |  |
+| Dates | ✅ Works 3/3 |  |
+| Times | ✅ Works 3/3 |  |
+| Microsecond times | ✅ Works 3/3 |  |
+| UTC datetimes | ✅ Works 3/3 |  |
+| Microsecond UTC datetimes | ✅ Works 3/3 |  |
+| Naive datetimes | ✅ Works 3/3 |  |
+| Durations | ✅ Works 3/3 |  |
+| UUIDs | ✅ Works 3/3 |  |
+| UUIDv7s | ✅ Works 2/2 |  |
+| Maps | ✅ Works 3/3 |  |
+| Arrays of strings | ✅ Works 3/3 |  |
+| Arrays of integers | ✅ Works 3/3 |  |
+| Embedded resources | ✅ Works 3/3 |  |
+| Arrays of embedded resources | ✅ Works 3/3 |  |
+| Unions | 🟡 Partial 1/2 | `storage.union.ordinary` wrong |
+
+## 2. Records
 
 | Feature | ets | Not working |
 | --- | --- | --- |
@@ -36,7 +64,7 @@ owns the fix.
 | Update a record atomically from its current value | ✅ Works 1/1 |  |
 | Not found, invalid, missing and duplicate values are errors | 🟡 Partial 3/4 | `record.identity_conflict` wrong |
 
-## 2. Types
+## 3. Types
 
 | Feature | ets | Not working |
 | --- | --- | --- |
@@ -48,7 +76,7 @@ owns the fix.
 | Maps round-trip, including nested values | ✅ Works 1/1 |  |
 | Embedded resources round-trip | ✅ Works 1/1 |  |
 
-## 3. Querying
+## 4. Querying
 
 | Feature | ets | Not working |
 | --- | --- | --- |
@@ -71,7 +99,7 @@ owns the fix.
 | Keyset pagination, forwards and backwards | ✅ Works 1/1 |  |
 | Pagination while records change | ⚪ Untested |  |
 
-## 4. Relationships
+## 5. Relationships
 
 | Feature | ets | Not working |
 | --- | --- | --- |
@@ -86,7 +114,7 @@ owns the fix.
 | Load belongs-to, has-one, has-many and many-to-many relationships | ✅ Works 4/4 |  |
 | Create and update related records with manage_relationship | ⚪ Untested |  |
 
-## 5. Aggregates
+## 6. Aggregates
 
 | Feature | ets | Not working |
 | --- | --- | --- |
@@ -109,7 +137,7 @@ owns the fix.
 | Aggregates respect read actions, arguments, actor and context | 🟡 Partial 8/9 | `context.relationship_context` wrong |
 | Seeded filtered aggregates match an in-memory reference | ✅ Works 1/1 |  |
 
-## 6. Writes
+## 7. Writes
 
 | Feature | ets | Not working |
 | --- | --- | --- |
@@ -118,7 +146,7 @@ owns the fix.
 | Bulk update atomically | ✅ Works 1/1 |  |
 | Writes that filter by or read aggregates | ✅ Works 4/4 |  |
 
-## 7. Transactions and locks
+## 8. Transactions and locks
 
 | Feature | ets | Not working |
 | --- | --- | --- |
@@ -126,7 +154,7 @@ owns the fix.
 | Lock rows for update | ⛔ Not supported 0/1 | `query.lock_for_update` rejected |
 | Isolation between concurrent transactions | ⚪ Untested |  |
 
-## 8. Multitenancy
+## 9. Multitenancy
 
 | Feature | ets | Not working |
 | --- | --- | --- |
@@ -137,7 +165,7 @@ owns the fix.
 | Tenancy scopes creates, updates and destroys | ✅ Works 3/3 |  |
 | Schema-based (context) tenancy | ➖ Not applicable |  |
 
-## 9. Authorization
+## 10. Authorization
 
 | Feature | ets | Not working |
 | --- | --- | --- |
@@ -147,7 +175,7 @@ owns the fix.
 | Policies filter pages and counts | 🟡 Partial 1/3 | `auth.keyset_pages` crashed, `auth.offset_page` crashed |
 | Policies filter and forbid writes | ✅ Works 4/4 |  |
 
-## 10. Consistency checks
+## 11. Consistency checks
 
 | Feature | ets | Not working |
 | --- | --- | --- |
@@ -172,3 +200,37 @@ whose claims disagree with the result:
 | Bulk create with partial success | ets | Works without advertising `tenant_item: :bulk_create_with_partial_success` |
 | Tenancy scopes pages and counts | ets | Not advertising `tenant_parent: :keyset`, but not rejected either: wrong answers |
 
+
+## Storage
+
+Each cell shows the ordinary, edge and nil values, in that order. ✅ reads
+back unchanged; ≈ reads back equal but in another representation, such as
+`1.5` as `1.5000000000`; ❌ is lost or rejected; 🚫 the table could not be
+created; 🔀 differs between seed orders; ❔ did not run; – the type has no
+values of that class.
+
+| Type | Column | Ordinary | Edge | Nil | First problem |
+| --- | --- | --- | --- | --- | --- |
+| Integers | `—` | ✅ | ✅ | ✅ |  |
+| Floats | `—` | ✅ | ✅ | ✅ |  |
+| Decimals | `—` | ✅ | ✅ | ✅ |  |
+| Strings | `—` | ✅ | ✅ | ✅ |  |
+| Case-insensitive strings | `—` | ✅ | ✅ | ✅ |  |
+| Binaries | `—` | ✅ | ✅ | ✅ |  |
+| Booleans | `—` | ✅ | – | ✅ |  |
+| Atoms with one_of | `—` | ✅ | – | ✅ |  |
+| Dates | `—` | ✅ | ✅ | ✅ |  |
+| Times | `—` | ✅ | ✅ | ✅ |  |
+| Microsecond times | `—` | ✅ | ✅ | ✅ |  |
+| UTC datetimes | `—` | ✅ | ✅ | ✅ |  |
+| Microsecond UTC datetimes | `—` | ✅ | ✅ | ✅ |  |
+| Naive datetimes | `—` | ✅ | ✅ | ✅ |  |
+| Durations | `—` | ✅ | ✅ | ✅ |  |
+| UUIDs | `—` | ✅ | ✅ | ✅ |  |
+| UUIDv7s | `—` | ✅ | – | ✅ |  |
+| Maps | `—` | ✅ | ✅ | ✅ |  |
+| Arrays of strings | `—` | ✅ | ✅ | ✅ |  |
+| Arrays of integers | `—` | ✅ | ✅ | ✅ |  |
+| Embedded resources | `—` | ✅ | ✅ | ✅ |  |
+| Arrays of embedded resources | `—` | ✅ | ✅ | ✅ |  |
+| Unions | `—` | ❌ | – | ✅ | ordinary, clear: %Ash.Union{value: nil, type: :text} |

@@ -35,7 +35,7 @@ defmodule Ash.Conformance.Clickhouse do
 
   def notes,
     do: [
-      "Tables are created from AshClickhouse's column types rather than its generator, which " <>
+      "Shared tables are created from AshClickhouse's column types rather than its generator, which " <>
         "rejects the records table: ClickHouse cannot wrap an array or map in `Nullable`, so those " <>
         "columns are not nullable.",
       "AshClickhouse 0.7.3 renders an unconstrained `:decimal` as `Decimal(arbitrary, arbitrary)`, " <>
@@ -66,6 +66,20 @@ defmodule Ash.Conformance.Clickhouse do
     for role <- Adapter.table_roles() do
       AshClickhouse.Connection.query!(repo(), create_table(resource(role)))
     end
+
+    # Tier-1 tables use AshClickhouse's own generator, without the workarounds
+    # above, so what it cannot create shows as that type's failure.
+    Ash.Conformance.Storage.provision(__MODULE__, fn type ->
+      ddl =
+        type.name
+        |> Ash.Conformance.Storage.role()
+        |> resource()
+        |> AshClickhouse.Migration.create_table_cql()
+
+      AshClickhouse.Connection.query!(repo(), ddl)
+      [_, column] = Regex.run(~r/^\s*`value` (.+?),?$/m, ddl)
+      {:ok, column}
+    end)
 
     :ok
   end
@@ -99,9 +113,9 @@ defmodule Ash.Conformance.Clickhouse do
   def checkout!, do: checkin!()
 
   def checkin! do
-    for role <- Adapter.table_roles() do
+    for role <- Adapter.table_roles() ++ Ash.Conformance.Storage.roles() do
       table = AshClickhouse.Identifier.quote_name(AshClickhouse.DataLayer.source(resource(role)))
-      AshClickhouse.Connection.query!(repo(), "TRUNCATE TABLE #{table}")
+      AshClickhouse.Connection.query!(repo(), "TRUNCATE TABLE IF EXISTS #{table}")
     end
 
     :ok
