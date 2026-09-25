@@ -13,7 +13,14 @@ defmodule Ash.Conformance.MixProject do
       elixirc_paths: ["lib"],
       deps: deps(),
       dialyzer: [plt_add_apps: [:ex_unit, :mix]],
-      aliases: [check: ["format --check-formatted", "credo --strict", "test"]]
+      aliases: [
+        check: [
+          "compile --warnings-as-errors",
+          "format --check-formatted",
+          "credo --strict",
+          "test"
+        ]
+      ]
     ]
   end
 

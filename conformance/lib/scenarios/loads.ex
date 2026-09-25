@@ -11,7 +11,6 @@ defmodule Ash.Conformance.Scenarios.Loads do
   201 (value 3) and 202 (value 8); parent 2 links to 201.
   """
   import Ash.Conformance.Scenario, only: [new: 5]
-  require Ash.Query
 
   @loads [semantic_basis: "../test/actions/load_test.exs"]
 

@@ -59,13 +59,37 @@ defmodule Ash.Conformance.Capabilities do
       resource: inspect(resource),
       role: role,
       feature: inspect(feature),
-      advertised: Ash.DataLayer.data_layer_can?(resource, feature)
+      advertised: Ash.DataLayer.data_layer_can?(resource, resolve(resource, feature))
     }
   end
 
+  # Claims can name a relationship; it is resolved on each adapter's resource.
+  defp resolve(resource, {type, name})
+       when type in [:aggregate_relationship, :filter_relationship] and is_atom(name) do
+    {type, relationship!(resource, name)}
+  end
+
+  defp resolve(resource, {:lateral_join, name}) when is_atom(name) do
+    relationship = relationship!(resource, name)
+    through = if relationship.type == :many_to_many, do: [relationship.through], else: []
+    {:lateral_join, [resource] ++ through ++ [relationship.destination]}
+  end
+
+  defp resolve(_resource, feature), do: feature
+
+  defp relationship!(resource, name) do
+    Ash.Resource.Info.relationship(resource, name) ||
+      raise ArgumentError, "#{inspect(resource)} has no relationship #{inspect(name)}"
+  end
+
+  @doc """
+  The claims recorded for a scenario: its own, plus those of its feature in the
+  catalog. Claims are reported beside results and never skip anything.
+  """
   def for_scenario(adapter, scenario) do
-    requests = if scenario.capabilities == [], do: defaults(scenario), else: scenario.capabilities
-    Enum.map(requests, fn {role, feature} -> probe(adapter, role, feature) end)
+    (scenario.capabilities ++ Ash.Conformance.Features.claims_for(scenario.id))
+    |> Enum.uniq()
+    |> Enum.map(fn {role, feature} -> probe(adapter, role, feature) end)
   end
 
   def matrix(adapter) do
@@ -207,64 +231,4 @@ defmodule Ash.Conformance.Capabilities do
     #{callback_rows}
     """
   end
-
-  defp defaults(%{fixture: :isolation, id: id}) do
-    role =
-      cond do
-        id in ["auth.context_root", "auth.context_read"] ->
-          :context_item
-
-        String.starts_with?(id, "auth.context_") ->
-          :context_parent
-
-        id in ["auth.root_aggregates", "auth.children", "equivalence.root_reference"] ->
-          :secure_item
-
-        String.starts_with?(id, "auth.") or id == "equivalence.visible_count_load" ->
-          :secure_parent
-
-        id == "tenant.root_aggregates" ->
-          :tenant_item
-
-        true ->
-          :tenant_parent
-      end
-
-    features =
-      cond do
-        id == "write.lifecycle" ->
-          [:create, :update, :destroy]
-
-        id == "read.selection_expression" ->
-          [:filter, :select, :expression_calculation]
-
-        id in [
-          "auth.root_aggregates",
-          "auth.context_root",
-          "tenant.root_aggregates",
-          "equivalence.root_reference"
-        ] ->
-          [{:query_aggregate, :count}, {:query_aggregate, :sum}]
-
-        String.contains?(id, "aggregate") ->
-          [{:aggregate, :count}, {:aggregate, :sum}]
-
-        String.contains?(id, "keyset") ->
-          [:keyset, :aggregate_sort]
-
-        true ->
-          [:read, :filter]
-      end
-
-    Enum.map(features, &{role, &1})
-  end
-
-  defp defaults(%{id: "loaded." <> kind}),
-    do: [{:parent, {:aggregate, String.to_existing_atom(kind)}}]
-
-  defp defaults(%{id: "root." <> kind})
-       when kind in ~w(count sum avg min max exists first list custom),
-       do: [{:child, {:query_aggregate, String.to_existing_atom(kind)}}]
-
-  defp defaults(_scenario), do: [{:parent, :read}]
 end

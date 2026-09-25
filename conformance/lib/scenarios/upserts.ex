@@ -46,12 +46,13 @@ defmodule Ash.Conformance.Scenarios.Upserts do
       new(
         "upsert.bulk",
         :writes,
-        {[{1001, 1, 2}, {9102, 20, 9}], [{1, 700}]},
+        {[{1001, 1, 3}, {9102, 20, 9}], [{1, 3}], [{1, 700}]},
         fn ctx ->
+          # The conflicting row brings value 3, so doing nothing on conflict fails.
           result =
-            Ash.bulk_create!([row(9101, 1, 2), row(9102, 20, 9)], item(ctx), :create, @upsert)
+            Ash.bulk_create!([row(9101, 1, 3), row(9102, 20, 9)], item(ctx), :create, @upsert)
 
-          {records(result), values(ctx, 2) |> Enum.take(1)}
+          {records(result), values(ctx, 1) |> Enum.take(1), values(ctx, 2) |> Enum.take(1)}
         end,
         @bulk ++ [capabilities: [tenant_item: :upsert, tenant_item: :bulk_create]]
       ),

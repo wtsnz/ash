@@ -408,6 +408,17 @@ rejects a limited target query before either adapter runs. This corrects the
 earlier assumption that the grouped guard alone was blocking a public feature.
 Add the API and settle per-parent ordering before a conformance result is fixed.
 
+## True or nil
+
+Decision owner: Ash.
+
+Decision: does `true or nil` evaluate to true, as in SQL, or to nil, as Ash's
+expression guide states? The guide says nil "poisons" `and`, `or` and `not`,
+so `true or nil` returns nil. SQL returns true for `TRUE OR NULL`. With the
+filter `active == true or quantity > 5`, record 7 (active, nil quantity) is
+included if the answer is true and excluded if it is nil. The current results
+are recorded as observations until Ash decides which answer is intended.
+
 ## Unique list order
 
 Decision owner: Ash.

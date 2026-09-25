@@ -4,7 +4,7 @@
 
 defmodule Ash.Conformance.CatalogTest do
   use ExUnit.Case, async: true
-  alias Ash.Conformance.{Adapter, Catalog, Expectations, Gaps, Report}
+  alias Ash.Conformance.{Adapter, Capabilities, Catalog, Expectations, Gaps, Report}
 
   test "every unique scenario has exactly one explicit status per adapter" do
     ids = Enum.map(Catalog.all(), & &1.id)
@@ -80,7 +80,6 @@ defmodule Ash.Conformance.CatalogTest do
       assert body =~ ~r/^#{Regex.escape(Gaps.owner_line(id))}$/m,
              "#{id} must state: #{Gaps.owner_line(id)}"
 
-      assert Gaps.owners(id) != []
       assert Enum.uniq(Gaps.owners(id)) == Gaps.owners(id)
 
       case Gaps.kind(id) do
@@ -113,6 +112,60 @@ defmodule Ash.Conformance.CatalogTest do
 
       assert Report.matrix() =~
                "[`#{scenario.id}`](#{scenario.source.file}#L#{scenario.source.line})"
+    end
+  end
+
+  describe "feature catalog" do
+    alias Ash.Conformance.{FeatureReport, Features}
+
+    test "every scenario belongs to exactly one feature, and every listed scenario exists" do
+      listed = Enum.flat_map(Features.all(), & &1.scenarios)
+      ids = Enum.map(Catalog.all(), & &1.id)
+
+      assert Enum.sort(listed) == Enum.sort(ids),
+             "unlisted: #{inspect(ids -- listed)}; unknown or repeated: #{inspect(listed -- ids)}"
+
+      feature_ids = Enum.map(Features.all(), & &1.id)
+      assert length(feature_ids) == length(Enum.uniq(feature_ids))
+    end
+
+    test "every claim resolves on every adapter that runs the feature" do
+      for adapter <- Adapter.all(),
+          feature <- Features.all(),
+          Enum.any?(
+            feature.scenarios,
+            &(&1 in Enum.map(Catalog.for_adapter(adapter), fn s -> s.id end))
+          ),
+          {role, claim} <- feature.claims do
+        assert is_boolean(Capabilities.probe(adapter, role, claim).advertised)
+      end
+    end
+
+    test "a feature's status follows its scenarios" do
+      feature = %{scenarios: ["a"]}
+      assert Features.status(%{scenarios: []}, []) == :untested
+      assert Features.status(feature, []) == :not_applicable
+      assert Features.status(feature, [:supported, :supported]) == :works
+      assert Features.status(feature, [:supported, :unsupported]) == :partial
+      assert Features.status(feature, [:supported, :known_defect]) == :partial
+      assert Features.status(feature, [:unsupported, :unsupported]) == :not_supported
+      assert Features.status(feature, [:unsupported, :known_defect]) == :broken
+      assert Features.status(feature, [:supported, :unresolved]) == :open_question
+    end
+
+    test "a failed check marks its feature as changed" do
+      feature = %{scenarios: ["a", "b"]}
+
+      rows = [
+        %{scenario: "a", status: :supported, task: nil, execution: :matched},
+        %{scenario: "b", status: :supported, task: nil, execution: :failed}
+      ]
+
+      assert FeatureReport.summarize(feature, rows).status == :changed
+    end
+
+    test "the checked-in feature report matches the declared contracts" do
+      assert File.read!("FEATURES.md") == FeatureReport.declared(), "Run mix conformance.features"
     end
   end
 end

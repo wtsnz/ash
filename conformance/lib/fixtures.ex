@@ -43,6 +43,7 @@ defmodule Ash.Conformance.Fixtures do
   defp build_fixture!(adapter, :aggregate), do: seed!(adapter)
   defp build_fixture!(adapter, :isolation), do: Ash.Conformance.IsolationFixtures.seed!(adapter)
   defp build_fixture!(adapter, :empty), do: %{adapter: adapter}
+  defp build_fixture!(adapter, :records), do: Ash.Conformance.RecordFixtures.seed!(adapter)
 
   def prepare!(context, "values.string_constraints") do
     context.adapter.persist!(

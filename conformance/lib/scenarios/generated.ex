@@ -11,7 +11,6 @@ defmodule Ash.Conformance.Scenarios.Generated do
   part of the scenario description and the result lists every failing case.
   """
   import Ash.Conformance.Scenario, only: [new: 5]
-  require Ash.Query
 
   @seed {2026, 9, 25}
   @count 24

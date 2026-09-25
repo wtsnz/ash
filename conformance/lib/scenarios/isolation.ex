@@ -5,6 +5,7 @@ defmodule Ash.Conformance.Scenarios.Isolation do
   @moduledoc "Tenant and actor isolation, with explicit static reference answers."
   import Ash.Conformance.Scenario, only: [new: 5]
   require Ash.Query
+  require Ash.Expr
 
   @tenancy [
     fixture: :isolation,
@@ -415,8 +416,130 @@ defmodule Ash.Conformance.Scenarios.Isolation do
            query(ctx, :tenant_parent, 1) |> Ash.Query.filter(local_id == 4) |> ids()}
         end,
         @tenancy
+      ),
+      # Updating by the tenant-scoped identity must touch only that tenant.
+      new(
+        "tenant.write_local_identity",
+        :writes,
+        {[{1, 2}], [{1, 5}]},
+        fn ctx ->
+          item = ctx.adapter.resource(:tenant_item)
+
+          item
+          |> Ash.get!([local_id: 1], tenant: 2)
+          |> Ash.Changeset.for_update(:update, %{value: 5})
+          |> Ash.update!()
+
+          {values(ctx, :tenant_item, 1, [1]), values(ctx, :tenant_item, 2, [1])}
+        end,
+        @tenancy
+      ),
+      new(
+        "tenant.write_bulk_destroy",
+        :writes,
+        {[1, 2, 3, 4, 5], [2, 3, 4]},
+        fn ctx ->
+          query(ctx, :tenant_item, 2)
+          |> Ash.Query.filter(local_id == 1)
+          |> Ash.bulk_destroy!(:destroy, %{}, strategy: :stream, tenant: 2)
+
+          {ids(query(ctx, :tenant_item, 1)), ids(query(ctx, :tenant_item, 2))}
+        end,
+        @tenancy
+      )
+    ] ++ authorized_writes()
+  end
+
+  # Actor 1 owns tenant 1's items 1, 2 and 4; actor 2 owns 3 and 5. With the
+  # default `authorize_with: :filter`, bulk writes skip rows the actor cannot
+  # change instead of failing.
+  defp authorized_writes do
+    unchanged = [{1, 700}, {2, 600}, {3, 900}, {4, 1000}]
+
+    [
+      new(
+        "auth.write_bulk_update_atomic",
+        :writes,
+        {[{1, 0}, {2, 0}, {3, 99}, {4, 0}, {5, 50}], unchanged},
+        fn ctx ->
+          authorized(ctx, :secure_item, 1)
+          |> Ash.bulk_update!(:update, %{value: 0},
+            strategy: :atomic,
+            actor: %{id: 1},
+            tenant: 1,
+            authorize?: true
+          )
+
+          {values(ctx, :secure_item, 1), values(ctx, :secure_item, 2)}
+        end,
+        @policy
+      ),
+      new(
+        "auth.write_bulk_update_stream",
+        :writes,
+        {[{1, 3}, {2, 4}, {3, 99}, {4, 9}, {5, 50}], unchanged},
+        fn ctx ->
+          authorized(ctx, :secure_item, 1)
+          |> Ash.bulk_update!(:update, %{},
+            atomic_update: %{value: Ash.Expr.expr(value + 1)},
+            strategy: :stream,
+            actor: %{id: 1},
+            tenant: 1,
+            authorize?: true
+          )
+
+          {values(ctx, :secure_item, 1), values(ctx, :secure_item, 2)}
+        end,
+        @policy
+      ),
+      new(
+        "auth.write_bulk_destroy",
+        :writes,
+        {[{3, 99}, {5, 50}], unchanged},
+        fn ctx ->
+          authorized(ctx, :secure_item, 1)
+          |> Ash.bulk_destroy!(:destroy, %{},
+            strategy: :atomic,
+            actor: %{id: 1},
+            tenant: 1,
+            authorize?: true
+          )
+
+          {values(ctx, :secure_item, 1), values(ctx, :secure_item, 2)}
+        end,
+        @policy
+      ),
+      new(
+        "auth.write_forbidden",
+        :writes,
+        {Ash.Error.Forbidden, 99},
+        fn ctx ->
+          item =
+            Ash.get!(ctx.adapter.resource(:secure_item), [local_id: 3],
+              tenant: 1,
+              authorize?: false
+            )
+
+          result =
+            item
+            |> Ash.Changeset.for_update(:update, %{value: 0}, actor: %{id: 1}, tenant: 1)
+            |> Ash.update(authorize?: true)
+
+          {elem(result, 1).__struct__, hd(values(ctx, :secure_item, 1, [3])) |> elem(1)}
+        end,
+        @policy
       )
     ]
+  end
+
+  defp values(ctx, role, tenant, local_ids \\ nil) do
+    query(ctx, role, tenant)
+    |> then(fn query ->
+      if local_ids, do: Ash.Query.filter(query, local_id in ^local_ids), else: query
+    end)
+    |> Ash.Query.sort(:local_id)
+    |> Ash.read!(authorize?: false)
+    |> Enum.map(&{&1.local_id, &1.value})
   end
 
   def query(ctx, role, tenant), do: ctx.adapter.resource(role) |> Ash.Query.set_tenant(tenant)
@@ -439,7 +562,7 @@ defmodule Ash.Conformance.Scenarios.Isolation do
     query
     |> Ash.Query.load(name)
     |> Ash.read!()
-    |> Map.new(fn row ->
+    |> unique_map(fn row ->
       {row.local_id, row |> Map.fetch!(name) |> List.wrap() |> Enum.map(& &1.id)}
     end)
   end
@@ -448,7 +571,20 @@ defmodule Ash.Conformance.Scenarios.Isolation do
     query
     |> Ash.Query.load([:item_count, :item_sum])
     |> Ash.read!()
-    |> Map.new(&{&1.local_id, {&1.item_count, &1.item_sum}})
+    |> unique_map(&{&1.local_id, {&1.item_count, &1.item_sum}})
+  end
+
+  # Local IDs repeat across tenants. A row leaked from another tenant would
+  # silently replace its namesake in a map, so a repeated key raises instead.
+  defp unique_map(rows, pair) do
+    Enum.reduce(rows, %{}, fn row, acc ->
+      {key, value} = pair.(row)
+
+      if Map.has_key?(acc, key),
+        do: raise("local ID #{inspect(key)} appears twice; a row leaked from another tenant")
+
+      Map.put(acc, key, value)
+    end)
   end
 
   def root(query), do: Ash.aggregate!(query, [{:count, :count}, {:sum, :sum, field: :value}])

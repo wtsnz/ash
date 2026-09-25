@@ -16,7 +16,14 @@ defmodule Ash.Conformance.Catalog do
       do: raise(ArgumentError, "Missing or stale expectation records")
 
     for scenario <- scenarios, adapter <- adapters, scenario.profile in adapter.profiles() do
-      _ = expectations |> Map.fetch!(scenario.id) |> Map.fetch!(adapter.id())
+      case expectations |> Map.fetch!(scenario.id) |> Map.fetch!(adapter.id()) do
+        {_status, _signature, "GAPS.md#" <> gap} ->
+          unless gap in Ash.Conformance.Gaps.ids(),
+            do: raise(ArgumentError, "#{scenario.id} links to unknown gap #{gap}")
+
+        _ ->
+          :ok
+      end
     end
 
     :ok
@@ -31,6 +38,7 @@ defmodule Ash.Conformance.Catalog do
       Scenarios.Context,
       Scenarios.Values,
       Scenarios.Writes,
+      Scenarios.Records,
       Scenarios.Loads,
       Scenarios.Queries,
       Scenarios.Transactions,

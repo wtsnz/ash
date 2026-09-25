@@ -21,6 +21,8 @@ defmodule Ash.Conformance.Expectations do
     auth.from_many auth.tenant_interaction auth.context_read auth.context_relationship
     auth.context_aggregates auth.context_root equivalence.visible_count_load
     equivalence.root_reference read.selection_expression write.lifecycle
+    tenant.write_local_identity tenant.write_bulk_destroy auth.write_bulk_update_atomic
+    auth.write_bulk_update_stream auth.write_bulk_destroy auth.write_forbidden
     bounds.default_sort_control bounds.filter_after_limit bounds.list_filter_after_limit
     bounds.relationship_limit bounds.relationship_offset bounds.relationship_offset_only
     bounds.root_limit bounds.root_zero
@@ -52,6 +54,20 @@ defmodule Ash.Conformance.Expectations do
     upsert.tenant_identity upsert.bulk bulk.partial_success bulk.atomic_increment
     generated.filtered_aggregates
     ordering.list_desc values.date_list_desc
+    record.read_all record.get_primary_key record.get_identity record.select record.create record.update
+    record.update_to_nil record.destroy record.atomic_update record.types_scalar record.types_numeric
+    record.types_temporal record.types_uuid record.types_strings record.types_array record.types_map
+    record.types_embedded record.types_nil record.not_found record.invalid_value record.required
+    record.identity_conflict record.filter_equal record.filter_not_equal record.filter_range
+    record.filter_in_with_nil record.filter_is_nil record.filter_not_nil record.filter_not
+    record.filter_boolean record.filter_atom record.filter_atom_as_string record.filter_decimal
+    record.filter_date record.filter_datetime_precision record.filter_contains
+    record.filter_case_insensitive record.filter_unicode record.filter_empty_string
+    record.filter_array_member record.filter_map_key record.filter_embedded record.filter_calculation
+    record.sort_desc_nils_last record.sort_asc_nils_first record.sort_tie_break record.sort_string
+    record.sort_decimal record.sort_date record.sort_calculation record.limit_offset record.count
+    record.stream record.offset_pages record.keyset_pages record.calculation_load
+    record.calculation_argument
     values.constrained_scalar values.distinct_count values.distinct_list values.field_count
     values.filtered_first_default values.include_nil_first values.include_nil_list values.list_default
     values.root_empty values.same_name_distinct_definitions values.scalar_default
@@ -72,6 +88,7 @@ defmodule Ash.Conformance.Expectations do
 
   defp gaps do
     %{
+      "record.filter_true_or_nil" => both(unresolved_value([1, 4, 5, 7], "true-or-nil")),
       "query.distinct" =>
         sqlite(unsupported(~r/Data layer does not support distincting/, "query-distinct")),
       "query.union" =>

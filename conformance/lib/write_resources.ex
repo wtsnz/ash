@@ -27,8 +27,15 @@ defmodule Ash.Conformance.WriteResources do
           create :create_then_fail do
             accept([:id, :amount])
 
+            # Records whether the insert was visible inside the transaction
+            # before failing, so a rollback is distinguishable from an insert
+            # that never happened.
             change(fn changeset, _context ->
-              Ash.Changeset.after_action(changeset, fn _changeset, _record ->
+              Ash.Changeset.after_action(changeset, fn changeset, record ->
+                visible? =
+                  match?({:ok, %{}}, Ash.get(changeset.resource, record.id, authorize?: false))
+
+                Process.put(:ash_conformance_ledger_visible, visible?)
                 {:error, "rejected after insert"}
               end)
             end)

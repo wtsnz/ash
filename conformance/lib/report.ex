@@ -264,6 +264,11 @@ defmodule Ash.Conformance.Report do
     File.write!("results/#{name}.json", Jason.encode!(report, pretty: true) <> "\n")
     File.write!("results/#{name}.md", markdown)
 
+    File.write!(
+      "results/features-#{name}.md",
+      Ash.Conformance.FeatureReport.markdown(rows, Adapter.selected(), :observed)
+    )
+
     if path = summary_path(), do: File.write!(path, markdown, [:append])
 
     IO.puts("\n" <> console(rows))

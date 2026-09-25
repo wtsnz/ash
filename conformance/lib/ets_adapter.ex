@@ -21,7 +21,7 @@ defmodule Ash.Conformance.Ets do
   def custom_aggregate, do: Ash.Conformance.EtsSum
   def setup!, do: :ok
 
-  @roles ~w(parent child rating tag link child_tag event reading tenant_child tenant_link authorized_child ledger)a
+  @roles ~w(parent child rating tag link child_tag event reading tenant_child tenant_link authorized_child ledger record)a
 
   def checkout!, do: checkin!()
 
@@ -47,7 +47,6 @@ end
 defmodule Ash.Conformance.Ets.Manual do
   @moduledoc false
   use Ash.Resource.ManualRelationship
-  require Ash.Query
 
   def load(parents, _opts, %{query: query, actor: actor, authorize?: authorize?}) do
     ids = Enum.map(parents, & &1.id)

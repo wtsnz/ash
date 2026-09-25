@@ -148,6 +148,10 @@ defmodule Ash.Conformance.IsolationResources do
                   authorize_if(expr(owner_id == ^actor(:id)))
                 end
 
+                policy action_type([:update, :destroy]) do
+                  authorize_if(expr(owner_id == ^actor(:id)))
+                end
+
                 if unquote(contextual?) do
                   policy action_type(:read) do
                     authorize_if(expr(department == ^context([:shared, :department])))

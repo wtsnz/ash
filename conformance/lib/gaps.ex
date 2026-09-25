@@ -51,7 +51,8 @@ defmodule Ash.Conformance.Gaps do
     "path-multiplicity" => {:decision, [:ash]},
     "keyless-identity" => {:decision, [:ash]},
     "many-to-many-bounds-api" => {:decision, [:ash]},
-    "unique-list-order" => {:decision, [:ash]}
+    "unique-list-order" => {:decision, [:ash]},
+    "true-or-nil" => {:decision, [:ash]}
   }
 
   def all, do: @gaps

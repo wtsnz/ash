@@ -23,15 +23,17 @@ defmodule Ash.Conformance.Scenarios.Transactions do
       new(
         "txn.after_action_rollback",
         :transactions,
-        {:error, []},
+        {:error, true, []},
         fn ctx ->
+          Process.delete(:ash_conformance_ledger_visible)
+
           result =
             Ash.create(ledger(ctx), %{id: 1, amount: 5},
               action: :create_then_fail,
               authorize?: false
             )
 
-          {elem(result, 0), ids(ctx)}
+          {elem(result, 0), Process.get(:ash_conformance_ledger_visible), ids(ctx)}
         end,
         @opts
       ),

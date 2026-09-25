@@ -2,10 +2,21 @@
 <!-- SPDX-License-Identifier: MIT -->
 # Ash data-layer conformance
 
-An executable specification of observable Ash behavior. Each scenario has one
-semantic answer and explicit adapter expectations. PostgreSQL is a comparison
-implementation, not the oracle. A green test suite can include matched defects;
-the report separates those from semantic passes.
+An executable specification of the behaviour an Ash data layer provides, and a
+report of what each data layer can actually do.
+
+**[FEATURES.md](FEATURES.md) is the place to start.** It lists every feature
+from the basics up, from reading and writing records, types, filtering,
+sorting and pagination, through relationships, aggregates, writes and
+transactions, to multitenancy and authorization. For each data layer it shows
+whether the feature works, partly works, is not supported, is broken, awaits a
+semantic decision or is untested. Gap links say why, and who owns the fix. The
+catalog behind it is `lib/features.ex`; every scenario belongs to exactly one
+feature.
+
+Each scenario has one semantic answer and explicit adapter expectations.
+PostgreSQL is a comparison implementation, not the oracle. A green test suite
+can include matched defects; the reports separate those from semantic passes.
 
 This independent Mix project uses the parent Ash checkout. Ash's production
 dependencies, Hex package and ordinary `mix test` do not acquire either adapter.
@@ -28,6 +39,7 @@ mise exec -- mix test --only scenario:tenant.aggregate_offset_page
 mise exec -- mix test --only area:authorization
 mise exec -- mix test test/runner_test.exs test/contract_test.exs test/benchmark_test.exs
 MIX_ENV=test mise exec -- mix conformance.matrix
+MIX_ENV=test mise exec -- mix conformance.features
 MIX_ENV=test mise exec -- mix conformance.inventory
 CONFORMANCE_ADAPTERS=sqlite MIX_ENV=test mise exec -- mix conformance.probe loaded.count
 MIX_ENV=test mise exec -- mix dialyzer
@@ -68,9 +80,11 @@ provisioning; its inventory says this profile is not applicable.
 
 ## Reports and coverage
 
-`MATRIX.md` is the declared per-scenario contract. Each ID links to its source.
-`CAPABILITIES.md` shows resource-specific claims and callback exports.
-`COVERAGE.md` is inventory version 2 and explicitly lists planned areas.
+`FEATURES.md` is the feature report from the declared contracts; `mix conformance.features`
+regenerates it, and every test run also writes `results/features-<adapters>.md` from
+its own results. `MATRIX.md` is the declared per-scenario contract. Each ID links to
+its source. `CAPABILITIES.md` shows resource-specific claims and callback exports.
+`COVERAGE.md` is inventory version 3: the feature catalog, with planned features.
 `mix conformance.inventory` also writes `results/inventory.json`, containing
 Ash.DataLayer's feature typespec, callback groups, optional callback exports,
 resource-specific capabilities, supported profiles and scenario contracts.

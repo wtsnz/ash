@@ -5,60 +5,27 @@ defmodule Ash.Conformance.Inventory do
   @moduledoc "Versioned coverage boundaries, including work that has never run."
   alias Ash.Conformance.{Adapter, Capabilities, Catalog, Report}
 
-  def areas do
-    [
-      {:reads, :implemented, "Filtering, expression calculations, selection, deterministic sort",
-       "read.,use.,filter."},
-      {:aggregates, :implemented,
-       "169 scenarios ported from the AshSQL suite, seeded generated cases; owners per gap",
-       "loaded.,root.,path.,values.,field.,bounds.,ordering.,identity.,context.,generated."},
-      {:calculations, :implemented,
-       "Expression and aggregate fields; in-memory Ash.calculate with fallback evidence",
-       "field.calculation,use.calculation,read.selection_expression,calc."},
-      {:relationships, :implemented,
-       "Direct, multi-hop, many-to-many, manual, through, bounds, per-parent load limits, from_many",
-       "path.,bounds.,load.,tenant.bounds,auth.bounds"},
-      {:attribute_tenancy, :implemented,
-       "Two tenants with overlapping local identities; actor/context interactions",
-       "tenant.,auth.tenant_interaction,upsert."},
-      {:context_tenancy, :implemented,
-       "Separate Postgres provisioning profile; no SQLite schema requirement", "schema."},
-      {:authorization, :implemented,
-       "Actor policy, relationships, aggregates, pages, shared context",
-       "auth.,context.authorization"},
-      {:pagination, :implemented, "Static offset/keyset pages, aggregate ordering and counts",
-       "tenant.aggregate_,auth.offset_page,auth.keyset_pages,use.pagination"},
-      {:distinctness, :implemented,
-       "Query distinct, aggregate uniqueness, composite identities and fanout controls",
-       "query.distinct,values.distinct_,identity.,filter.fanout"},
-      {:writes, :implemented,
-       "Create/update/destroy lifecycle; atomic bulk writes that filter by or read aggregates",
-       "write."},
-      {:upsert, :implemented,
-       "Tenant-scoped identities, bulk upserts, conditions and skipped records", "upsert."},
-      {:bulk_atomic, :implemented,
-       "Partial success, tenant-scoped atomic updates; stream strategy fallback planned",
-       "bulk.,write.atomic_update,write.bulk_"},
-      {:transactions_locking, :implemented,
-       "Rollback on hook failure, raise and explicit rollback, commit, row locks; isolation levels and concurrent locking planned",
-       "txn.,query.lock_for_update"},
-      {:types_constraints, :implemented,
-       "Constrained types, strings, decimals, dates, times and microsecond datetimes in aggregates",
-       "values.,root.decimal_sum,root.datetime_max"},
-      {:query_combinations, :implemented, "Union; union_all and intersection planned",
-       "query.union"},
-      {:concurrent_pagination, :planned,
-       "Mutating datasets and consistency guarantees need a decision",
-       "planned.concurrent_pagination"},
-      {:generated_cases, :implemented,
-       "24 seeded filtered-aggregate cases checked against an in-memory reference", "generated."}
-    ]
+  @doc "The coverage inventory is the feature catalog: implemented if verified, else planned."
+  def features do
+    Enum.map(Ash.Conformance.Features.all(), fn feature ->
+      %{
+        id: feature.id,
+        level: feature.level,
+        section: feature.section,
+        title: feature.title,
+        status: if(feature.scenarios == [], do: :planned, else: :implemented),
+        scenarios: feature.scenarios,
+        claims: Enum.map(feature.claims, fn {role, claim} -> "#{role}: #{inspect(claim)}" end),
+        semantic_basis: feature.semantic_basis
+      }
+    end)
   end
 
   def document do
     %{
       schema_version: 1,
-      inventory_version: 2,
+      inventory_version: 3,
+      feature_catalog_version: Ash.Conformance.Features.version(),
       contract: "../lib/ash/data_layer/data_layer.ex",
       feature_typespec: feature_typespec(),
       additional_callsite_capabilities: Capabilities.callsite_only(),
@@ -86,16 +53,7 @@ defmodule Ash.Conformance.Inventory do
         integration:
           ~w(can? functions source attribute_ecto_type default_bulk_batch_size data_layer_keyset_by_default?)
       },
-      areas:
-        Enum.map(areas(), fn {id, status, scope, scenarios} ->
-          %{
-            id: id,
-            status: status,
-            scope: scope,
-            scenario_ids_or_prefixes: scenarios,
-            execution: :see_run_report
-          }
-        end),
+      features: features(),
       profiles:
         Enum.map(
           Adapter.all(),
@@ -146,34 +104,46 @@ defmodule Ash.Conformance.Inventory do
   end
 
   def markdown do
-    rows =
-      Enum.map_join(areas(), "\n", fn {id, status, scope, _} ->
-        "| #{id} | #{status} | #{scope} |"
+    sections =
+      Enum.map_join(Ash.Conformance.Features.sections(), "\n", fn {level, name, _} ->
+        rows =
+          features()
+          |> Enum.filter(&(&1.level == level))
+          |> Enum.map_join("\n", fn feature ->
+            "| `#{feature.id}` | #{feature.title} | #{feature.status} | #{length(feature.scenarios)} |"
+          end)
+
+        """
+        ## #{level}. #{name}
+
+        | Feature | Description | Coverage | Scenarios |
+        | --- | --- | --- | ---: |
+        #{rows}
+        """
       end)
+
+    planned = Enum.count(features(), &(&1.status == :planned))
 
     """
     <!-- SPDX-FileCopyrightText: 2026 ash contributors <https://github.com/ash-project/ash/graphs/contributors> -->
     <!-- SPDX-License-Identifier: MIT -->
-    # Coverage inventory v2
+    # Coverage inventory v3
 
-    Generated by `mix conformance.inventory`. Version 2 moves upsert, bulk and atomic writes,
-    transactions and locks, query combinations, query distinct and generated cases from planned
-    to implemented, and adds per-parent loads, `through` relationships and fallback evidence.
+    Generated by `mix conformance.inventory`. Version 3 replaces the area list with
+    the feature catalog in `lib/features.ex`: #{length(features())} features, of which
+    #{planned} are planned and have no scenario yet. Implemented means scenarios
+    exist, not that any adapter passes them; see [FEATURES.md](FEATURES.md) for
+    results per data layer.
 
-    JSON includes the full current feature typespec,
-    callback groups, optional callback exports, resource-specific capability probes, profiles,
-    scenario expectations and evidence links. Claims are never used to skip operations.
-    Per-scenario results in `results/` distinguish semantic passes, matched gaps and failures.
+    JSON also includes the feature typespec, callback groups, optional callback
+    exports, resource-specific capability claims, profiles and scenario contracts.
+    Claims never decide what runs.
 
-    | Area | Coverage | Boundary |
-    | --- | --- | --- |
-    #{rows}
-
-    The context-tenancy profile is Postgres-only. SQLite has no schema-provisioning obligation.
-    Missing profiles are not passing tests. Fallback evidence comes from instrumented core
-    dispatch tests and from scenarios that name a fallback, which record the operation's
-    data-layer query count. Other adapter scenarios report `unobserved`. A false capability
-    and a correct answer alone do not prove fallback execution.
+    #{sections}
+    The context-tenancy profile is Postgres-only. SQLite has no schema-provisioning
+    obligation. Fallback evidence comes from instrumented core dispatch tests and
+    from scenarios that name a fallback. Other adapter scenarios report
+    `unobserved`.
 
     #{length(Catalog.all())} executable scenarios are registered. See [MATRIX.md](MATRIX.md) for individual contracts.
     """

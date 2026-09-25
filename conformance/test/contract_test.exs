@@ -53,7 +53,9 @@ defmodule Ash.Conformance.ContractTest do
         &(&1.scenario == "root.list" and &1.adapter == :sqlite)
       )
 
-    assert [%{advertised: false, resource: "Ash.Conformance.Sqlite.Child"}] = row.capabilities
+    assert %{advertised: false, resource: "Ash.Conformance.Sqlite.Child"} =
+             Enum.find(row.capabilities, &(&1.feature == "{:query_aggregate, :list}"))
+
     assert row.status == :unsupported
     assert row.fallback == :unobserved
     assert Report.verdict(Map.put(row, :execution, :matched)) == "GAP MATCHED"
@@ -64,16 +66,16 @@ defmodule Ash.Conformance.ContractTest do
     inventory = Inventory.document()
 
     assert Enum.any?(
-             inventory.areas,
-             &(&1.id == :concurrent_pagination and &1.status == :planned)
+             inventory.features,
+             &(&1.id == "pagination.concurrent" and &1.status == :planned)
            )
 
-    ids = Enum.map(Catalog.all(), & &1.id)
+    # A planned feature has no scenario, so it can only ever report untested.
+    for %{status: :planned} = feature <- inventory.features do
+      assert feature.scenarios == []
 
-    for %{status: :planned, scenario_ids_or_prefixes: prefixes} <- inventory.areas,
-        prefix <- String.split(prefixes, ",") do
-      refute Enum.any?(ids, &String.starts_with?(&1, prefix)),
-             "planned area #{prefix} has registered scenarios"
+      assert Ash.Conformance.FeatureReport.summarize(%{scenarios: []}, []).status ==
+               :untested
     end
 
     refute Enum.any?(

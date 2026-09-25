@@ -26,6 +26,7 @@ defmodule Ash.Conformance.Database do
     Ecto.Migrator.up(repo, 2, Ash.Conformance.IsolationSchema, log: false)
     Ecto.Migrator.up(repo, 4, Ash.Conformance.ValueSchema, log: false)
     Ecto.Migrator.up(repo, 5, Ash.Conformance.LedgerSchema, log: false)
+    Ecto.Migrator.up(repo, 6, Ash.Conformance.RecordSchema, log: false)
 
     if repo == Ash.Conformance.PostgresRepo do
       Ecto.Migrator.up(repo, 3, Ash.Conformance.ContextSchema, log: false)
@@ -101,6 +102,33 @@ defmodule Ash.Conformance.ValueSchema do
       add(:taken_at, :utc_datetime_usec)
       add(:taken_time, :time)
     end
+  end
+end
+
+defmodule Ash.Conformance.RecordSchema do
+  @moduledoc false
+  use Ecto.Migration
+
+  def change do
+    create table(:dc_records, primary_key: false) do
+      add(:id, :bigint, primary_key: true)
+      add(:code, :text, null: false)
+      add(:name, :text)
+      add(:quantity, :bigint)
+      add(:price, :decimal)
+      add(:ratio, :float)
+      add(:active, :boolean)
+      add(:status, :text)
+      add(:born_on, :date)
+      add(:seen_at, :utc_datetime_usec)
+      add(:opens_at, :time)
+      add(:external_id, :uuid)
+      add(:tags, {:array, :text})
+      add(:metadata, :map)
+      add(:address, :map)
+    end
+
+    create(unique_index(:dc_records, [:code], name: :dc_records_code_index))
   end
 end
 
