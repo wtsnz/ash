@@ -151,7 +151,12 @@ defmodule Ash.Conformance.Fixtures do
     do: Ash.Conformance.Fixtures.Combination.seed!(adapter)
 
   # Tier 2: one type's operation rows, in its tier-1 table.
-  defp build_fixture!(adapter, {:operations, name}) do
+  defp build_fixture!(adapter, {:operations, name}), do: operations!(adapter, name, :ordinary)
+
+  defp build_fixture!(adapter, {:operations, name, :edge}),
+    do: operations!(adapter, name, :edge)
+
+  defp operations!(adapter, name, set) do
     alias Ash.Conformance.Storage
     role = Storage.role(name)
 
@@ -162,7 +167,7 @@ defmodule Ash.Conformance.Fixtures do
     end
 
     try do
-      seed!(adapter, role, ordered(Ash.Conformance.Operations.rows(name)))
+      seed!(adapter, role, ordered(Ash.Conformance.Operations.rows(name, set)))
     rescue
       error in SetupError -> reraise %{error | own_table: true}, __STACKTRACE__
     end

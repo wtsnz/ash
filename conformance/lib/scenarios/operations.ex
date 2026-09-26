@@ -11,19 +11,21 @@ defmodule Ash.Conformance.Scenarios.Operations do
 
   def all do
     for type <- Storage.types(),
+        set <- Operations.sets(type.name),
         operation <- Operations.operations(),
         Operations.applies?(operation, type.name) do
       name = type.name
-      run = fn ctx -> Operations.run(ctx.adapter, name, operation) end
-      expected = Operations.expected(name, operation)
+      run = fn ctx -> Operations.run(ctx.adapter, name, operation, set) end
+      expected = Operations.expected(name, operation, set)
 
       opts = [
-        fixture: {:operations, name},
-        requires: Operations.requires(name, operation),
+        fixture: if(set == :edge, do: {:operations, name, :edge}, else: {:operations, name}),
+        requires: Operations.requires(name, operation, set),
         semantic_basis: "../documentation/topics/reference/expressions.md"
       ]
 
-      new("ops.#{name}.#{operation}", :operations, expected, run, opts)
+      suffix = if set == :edge, do: ".edge", else: ""
+      new("ops.#{name}.#{operation}#{suffix}", :operations, expected, run, opts)
     end
   end
 end

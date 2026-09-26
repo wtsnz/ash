@@ -44,26 +44,26 @@ Claims never decide what runs.
 
 | Feature | Description | Coverage | Scenarios |
 | --- | --- | --- | ---: |
-| `operations.integer` | Integers | implemented | 10 |
-| `operations.float` | Floats | implemented | 10 |
-| `operations.decimal` | Decimals | implemented | 10 |
-| `operations.string` | Strings | implemented | 9 |
-| `operations.ci_string` | Case-insensitive strings | implemented | 9 |
-| `operations.binary` | Binaries | implemented | 5 |
+| `operations.integer` | Integers | implemented | 20 |
+| `operations.float` | Floats | implemented | 20 |
+| `operations.decimal` | Decimals | implemented | 20 |
+| `operations.string` | Strings | implemented | 18 |
+| `operations.ci_string` | Case-insensitive strings | implemented | 18 |
+| `operations.binary` | Binaries | implemented | 10 |
 | `operations.boolean` | Booleans | implemented | 5 |
 | `operations.atom` | Atoms with one_of | implemented | 5 |
-| `operations.date` | Dates | implemented | 9 |
-| `operations.time` | Times | implemented | 9 |
-| `operations.time_usec` | Microsecond times | implemented | 9 |
-| `operations.utc_datetime` | UTC datetimes | implemented | 9 |
-| `operations.utc_datetime_usec` | Microsecond UTC datetimes | implemented | 9 |
-| `operations.naive_datetime` | Naive datetimes | implemented | 9 |
-| `operations.duration` | Durations | implemented | 5 |
-| `operations.uuid` | UUIDs | implemented | 5 |
+| `operations.date` | Dates | implemented | 18 |
+| `operations.time` | Times | implemented | 18 |
+| `operations.time_usec` | Microsecond times | implemented | 18 |
+| `operations.utc_datetime` | UTC datetimes | implemented | 18 |
+| `operations.utc_datetime_usec` | Microsecond UTC datetimes | implemented | 18 |
+| `operations.naive_datetime` | Naive datetimes | implemented | 18 |
+| `operations.duration` | Durations | implemented | 10 |
+| `operations.uuid` | UUIDs | implemented | 10 |
 | `operations.uuid_v7` | UUIDv7s | implemented | 5 |
-| `operations.map` | Maps | implemented | 3 |
-| `operations.strings` | Arrays of strings | implemented | 3 |
-| `operations.integers` | Arrays of integers | implemented | 3 |
+| `operations.map` | Maps | implemented | 6 |
+| `operations.strings` | Arrays of strings | implemented | 6 |
+| `operations.integers` | Arrays of integers | implemented | 6 |
 | `operations.embedded` | Embedded resources | implemented | 3 |
 | `operations.embeddeds` | Arrays of embedded resources | implemented | 3 |
 | `operations.union` | Unions | implemented | 3 |
@@ -248,4 +248,4 @@ obligation. Fallback evidence comes from instrumented core dispatch tests and
 from scenarios that name a fallback. Other adapter scenarios report
 `unobserved`.
 
-1007 executable scenarios are registered. See [MATRIX.md](MATRIX.md) for individual contracts.
+1133 executable scenarios are registered. See [MATRIX.md](MATRIX.md) for individual contracts.

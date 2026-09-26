@@ -802,9 +802,10 @@ defmodule Ash.Conformance.Contracts.Features do
         claims: [],
         scenarios:
           for(
+            set <- Ash.Conformance.Operations.sets(type.name),
             operation <- Ash.Conformance.Operations.operations(),
             Ash.Conformance.Operations.applies?(operation, type.name),
-            do: Ash.Conformance.Operations.scenario_id(type.name, operation)
+            do: Ash.Conformance.Operations.scenario_id(type.name, operation, set)
           )
       )
     end

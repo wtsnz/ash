@@ -448,6 +448,26 @@ defmodule Ash.Conformance.Sqlite.Expectations do
            ops.embeddeds.is_nil ops.union.is_nil),
         defect_value([], "json-null")
       ),
+      expect(
+        ~w(ops.map.count.edge ops.strings.count.edge ops.integers.count.edge),
+        defect_value(3, "json-null")
+      ),
+      expect(
+        ~w(ops.map.is_nil.edge ops.strings.is_nil.edge ops.integers.is_nil.edge),
+        defect_value([], "json-null")
+      ),
+      expect(
+        "ops.decimal.min.edge",
+        defect_value(Decimal.new("-12345678901234568"), "decimal-precision")
+      ),
+      expect(
+        "ops.decimal.sum.edge",
+        defect_value(Decimal.new("-12345678901234568"), "decimal-precision")
+      ),
+      expect(
+        "ops.binary.in.edge",
+        defect_error(~r/invalid keyword list in query/, "binary-in-lists")
+      ),
       expect("use.fanout_read_page", defect_value({[11, 11], 2}, "sorted-distinct-reads")),
       expect("read.join_to_many", defect_value([1, 1, 2], "sorted-distinct-reads")),
       expect(

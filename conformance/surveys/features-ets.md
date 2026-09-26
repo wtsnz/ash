@@ -4,7 +4,7 @@
 
 Generated from an unreviewed run: each result was classified automatically against the intended answer. Nothing here has been reviewed.
 
-Feature catalog version 1: 161 features and 1007 scenarios.
+Feature catalog version 1: 161 features and 1133 scenarios.
 
 | Status | Meaning |
 | --- | --- |
@@ -56,26 +56,26 @@ fix.
 
 | Feature | ets | Not working |
 | --- | --- | --- |
-| Integers | ✅ Works 10/10 |  |
-| Floats | ✅ Works 10/10 |  |
-| Decimals | ✅ Works 10/10 |  |
-| Strings | ✅ Works 9/9 |  |
-| Case-insensitive strings | ✅ Works 9/9 |  |
-| Binaries | ✅ Works 5/5 |  |
+| Integers | ✅ Works 20/20 |  |
+| Floats | ✅ Works 20/20 |  |
+| Decimals | ✅ Works 20/20 |  |
+| Strings | ✅ Works 18/18 |  |
+| Case-insensitive strings | ✅ Works 18/18 |  |
+| Binaries | ✅ Works 10/10 |  |
 | Booleans | ✅ Works 5/5 |  |
 | Atoms with one_of | ✅ Works 5/5 |  |
-| Dates | ✅ Works 9/9 |  |
-| Times | ✅ Works 9/9 |  |
-| Microsecond times | ✅ Works 9/9 |  |
-| UTC datetimes | ✅ Works 9/9 |  |
-| Microsecond UTC datetimes | ✅ Works 9/9 |  |
-| Naive datetimes | ✅ Works 9/9 |  |
-| Durations | ✅ Works 5/5 |  |
-| UUIDs | ✅ Works 5/5 |  |
+| Dates | ✅ Works 18/18 |  |
+| Times | ✅ Works 18/18 |  |
+| Microsecond times | ✅ Works 18/18 |  |
+| UTC datetimes | ✅ Works 18/18 |  |
+| Microsecond UTC datetimes | ✅ Works 18/18 |  |
+| Naive datetimes | ✅ Works 18/18 |  |
+| Durations | ✅ Works 10/10 |  |
+| UUIDs | ✅ Works 10/10 |  |
 | UUIDv7s | ✅ Works 5/5 |  |
-| Maps | ✅ Works 3/3 |  |
-| Arrays of strings | ✅ Works 3/3 |  |
-| Arrays of integers | ✅ Works 3/3 |  |
+| Maps | ✅ Works 6/6 |  |
+| Arrays of strings | ✅ Works 6/6 |  |
+| Arrays of integers | ✅ Works 6/6 |  |
 | Embedded resources | ✅ Works 3/3 |  |
 | Arrays of embedded resources | ✅ Works 3/3 |  |
 | Unions | ✅ Works 3/3 |  |

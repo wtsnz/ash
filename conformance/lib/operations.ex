@@ -28,6 +28,14 @@ defmodule Ash.Conformance.Operations do
   cell requires its operation's integer cell and its type's storage cells
   (`requires:`). A failing cell whose control or storage also fails is
   blocked, not blamed on the operation.
+
+  Each type with edge values runs every operation a second time on them
+  (`ops.<type>.<operation>.edge`): the extremes of its range, empty strings,
+  binaries and lists, decomposed Unicode, subnormal floats and microsecond
+  boundaries. They are chosen so every answer is defined: no sum overflows or
+  depends on addition order, and strings sort the same by bytes and by any
+  collation. An edge cell also requires the same operation's ordinary cell,
+  so it is only blamed on the values.
   """
   alias Ash.Conformance.Storage
 
@@ -69,6 +77,36 @@ defmodule Ash.Conformance.Operations do
     union: [%Ash.Union{type: :int, value: 5}, %Ash.Union{type: :text, value: "five"}]
   }
 
+  # Row values for the edge run, in row order, as `@values`.
+  @edge_values %{
+    integer: [0, -9_223_372_036_854_775_808, 9_223_372_036_854_775_807],
+    float: [0.2, 5.0e-324, 1.0e300],
+    decimal: [Decimal.new("0.1"), Decimal.new("-12345678901234567.89"), Decimal.new("0.000001")],
+    # "" is not nil, and "e\u0301" is "é" with a combining accent.
+    string: ["", "e\u0301", "z"],
+    ci_string: ["", "Mixed", "zeta"],
+    binary: [<<>>, <<0, 255>>, <<255>>],
+    date: [~D[2000-01-01], ~D[0001-01-01], ~D[9999-12-31]],
+    time: [~T[12:00:00], ~T[00:00:00], ~T[23:59:59]],
+    time_usec: [~T[12:00:00.500000], ~T[00:00:00.000001], ~T[23:59:59.999999]],
+    utc_datetime: [~U[2000-01-01 00:00:00Z], ~U[1970-01-01 00:00:00Z], ~U[2999-12-31 23:59:59Z]],
+    utc_datetime_usec: [
+      ~U[2000-01-01 00:00:00.500000Z],
+      ~U[1970-01-01 00:00:00.000001Z],
+      ~U[2999-12-31 23:59:59.999999Z]
+    ],
+    naive_datetime: [
+      ~N[2000-01-01 00:00:00],
+      ~N[0001-01-01 00:00:00],
+      ~N[9999-12-31 23:59:59]
+    ],
+    duration: [Duration.new!(second: -5), Duration.new!(year: 1, month: 2, day: 3, hour: 4)],
+    uuid: ["00000000-0000-0000-0000-000000000000", "ffffffff-ffff-ffff-ffff-ffffffffffff"],
+    map: [%{}, %{"k" => nil, "nested" => %{"list" => [1, "two", nil]}}],
+    strings: [[], ["", " x ", "✓"]],
+    integers: [[], [9_223_372_036_854_775_807]]
+  }
+
   @scalar ~w(integer float decimal string ci_string binary boolean atom date time time_usec
              utc_datetime utc_datetime_usec naive_datetime duration uuid uuid_v7)a
   @ordered ~w(integer float decimal string ci_string date time time_usec utc_datetime
@@ -98,12 +136,21 @@ defmodule Ash.Conformance.Operations do
     end
   end
 
-  def values(name), do: Map.fetch!(@values, name)
-  def scenario_id(name, operation), do: "ops.#{name}.#{operation}"
+  @doc "The value sets a type runs with: `:ordinary`, and `:edge` where it has edge values."
+  def sets(name),
+    do: if(Map.has_key?(@edge_values, name), do: [:ordinary, :edge], else: [:ordinary])
+
+  def values(name, set \\ :ordinary)
+  def values(name, :ordinary), do: Map.fetch!(@values, name)
+  def values(name, :edge), do: Map.fetch!(@edge_values, name)
+
+  def scenario_id(name, operation, set \\ :ordinary)
+  def scenario_id(name, operation, :ordinary), do: "ops.#{name}.#{operation}"
+  def scenario_id(name, operation, :edge), do: "ops.#{name}.#{operation}.edge"
 
   @doc "The fixture's rows for a type: its values, then nil."
-  def rows(name) do
-    values = values(name)
+  def rows(name, set \\ :ordinary) do
+    values = values(name, set)
     Enum.with_index(values ++ [nil], 1) |> Enum.map(fn {value, id} -> %{id: id, value: value} end)
   end
 
@@ -111,14 +158,24 @@ defmodule Ash.Conformance.Operations do
   What a cell builds on: the same operation on integers, and the type's
   ordinary and nil storage cells.
   """
-  def requires(name, operation) do
+  def requires(name, operation, set \\ :ordinary)
+
+  def requires(name, operation, :ordinary) do
     control = if name == :integer, do: [], else: [scenario_id(:integer, operation)]
     control ++ Storage.stored(name) ++ Storage.stored(name, :null)
   end
 
+  # The same operation on integer edge values, and on this type's ordinary values.
+  def requires(name, operation, :edge) do
+    control = if name == :integer, do: [], else: [scenario_id(:integer, operation, :edge)]
+
+    control ++
+      [scenario_id(name, operation)] ++ Storage.stored(name) ++ Storage.stored(name, :null)
+  end
+
   @doc "The answer Ash defines for an operation on a type's rows."
-  def expected(name, operation) do
-    values = values(name)
+  def expected(name, operation, set \\ :ordinary) do
+    values = values(name, set)
     nil_id = length(values) + 1
     [first | _] = values
 
@@ -168,9 +225,9 @@ defmodule Ash.Conformance.Operations do
   end
 
   @doc "Runs one cell on the type's resource."
-  def run(adapter, name, operation) do
+  def run(adapter, name, operation, set \\ :ordinary) do
     resource = adapter.resource(Storage.role(name))
-    values = values(name)
+    values = values(name, set)
 
     case operation do
       :eq ->
@@ -192,10 +249,10 @@ defmodule Ash.Conformance.Operations do
         aggregate(resource, :count)
 
       kind when kind in [:min, :max, :sum] ->
-        same(resource, name, kind, aggregate(resource, kind))
+        same(resource, name, kind, set, aggregate(resource, kind))
 
       :first ->
-        same(resource, name, :first, aggregate(resource, :first, query: [sort: [id: :asc]]))
+        same(resource, name, :first, set, aggregate(resource, :first, query: [sort: [id: :asc]]))
     end
   end
 
@@ -237,8 +294,8 @@ defmodule Ash.Conformance.Operations do
 
   # The expected value when the type considers them equal, so a failure shows
   # what came back and a pass does not depend on representation.
-  defp same(resource, name, operation, got) do
-    want = expected(name, operation)
+  defp same(resource, name, operation, set, got) do
+    want = expected(name, operation, set)
     attribute = Ash.Resource.Info.attribute(resource, :value)
     if Storage.same?(attribute, want, got), do: want, else: got
   end
