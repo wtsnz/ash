@@ -50,7 +50,7 @@ defmodule Ash.Conformance.Report.SurveyComparison do
         classification:
           known!(
             row["classification"],
-            ~w(works rejected wrong crashed setup_failed open_question)a
+            ~w(works rejected wrong crashed order_dependent setup_failed open_question)a
           ),
         task: nil,
         execution: :matched

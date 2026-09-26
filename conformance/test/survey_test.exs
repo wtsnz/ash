@@ -52,4 +52,26 @@ defmodule Ash.Conformance.SurveyTest do
              Survey.markdown(Ash.Conformance.Ets, Survey.run(Ash.Conformance.Ets)),
            "Run MIX_ENV=test mix conformance.survey ets --output surveys"
   end
+
+  test "survey comparison accepts every classification a survey can record" do
+    row = fn classification ->
+      %{
+        "scenario" => "values.decimal_avg",
+        "adapter" => "sqlite",
+        "status" => "known_defect",
+        "classification" => classification
+      }
+    end
+
+    base = %{
+      "adapter" => "sqlite",
+      "dependency_set" => "upstream",
+      "scenarios" => [row.("wrong")]
+    }
+
+    current = %{base | "dependency_set" => "pinned", "scenarios" => [row.("order_dependent")]}
+
+    assert Ash.Conformance.Report.SurveyComparison.markdown(base, current) =~
+             "| `values.decimal_avg` | wrong | order_dependent |"
+  end
 end
