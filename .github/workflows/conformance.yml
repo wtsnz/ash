@@ -1,0 +1,191 @@
+# SPDX-FileCopyrightText: 2026 ash contributors <https://github.com/ash-project/ash/graphs/contributors>
+# SPDX-License-Identifier: MIT
+name: Data-layer conformance
+on:
+  pull_request:
+    paths:
+      - 'conformance/**'
+      - 'lib/**'
+      - 'test/ash/data_layer/dispatch_contract_test.exs'
+      - '.github/workflows/conformance.yml'
+      - 'mix.exs'
+      - 'mix.lock'
+  workflow_dispatch:
+    inputs:
+      benchmark:
+        description: Run informational benchmark smoke profiles
+        type: boolean
+        default: false
+permissions:
+  contents: read
+jobs:
+  conformance:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        adapter: [sqlite, postgres]
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports: ['5432:5432']
+        options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
+    env:
+      MIX_ENV: test
+      CONFORMANCE_ADAPTERS: ${{ matrix.adapter }}
+      CONFORMANCE_PG_DATABASE: ash_conformance_ci_${{ github.run_id }}_${{ github.run_attempt }}
+    defaults:
+      run:
+        working-directory: conformance
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: erlef/setup-beam@54075bcc5e249e4758d363f27d099f55d843f124 # v1.24.1
+        with:
+          otp-version: '29.0.1'
+          elixir-version: '1.20.0'
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            conformance/deps
+            conformance/_build
+          key: conformance-${{ runner.os }}-29.0.1-1.20.0-${{ matrix.adapter }}-${{ hashFiles('conformance/mix.lock', 'mix.exs') }}
+      - run: mix deps.get --check-locked
+      - run: mix check
+      - run: mix dialyzer
+        if: matrix.adapter == 'postgres'
+      - run: mix conformance.inventory
+      - name: Verify generated documentation
+        run: |
+          mix conformance.matrix
+          mix conformance.features
+          mix conformance.survey ets --output surveys
+          git diff --exit-code -- MATRIX.md COVERAGE.md CAPABILITIES.md FEATURES.md surveys/
+      - name: Informational benchmark smoke
+        if: github.event_name == 'workflow_dispatch' && inputs.benchmark
+        run: mix conformance.bench
+      - name: Upload reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: conformance-${{ matrix.adapter }}
+          path: conformance/results/
+          if-no-files-found: error
+  # What ash-project main supports compared with the pinned work, feature by
+  # feature. Informational: main moving must not fail this PR.
+  stacks:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports: ['5432:5432']
+        options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
+    env:
+      MIX_ENV: test
+      CONFORMANCE_PG_DATABASE: ash_conformance_stacks_${{ github.run_id }}_${{ github.run_attempt }}
+    defaults:
+      run:
+        working-directory: conformance
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: erlef/setup-beam@54075bcc5e249e4758d363f27d099f55d843f124 # v1.24.1
+        with:
+          otp-version: '29.0.1'
+          elixir-version: '1.20.0'
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            conformance/deps
+            conformance/_build
+            conformance/deps_upstream
+            conformance/_build_upstream
+          key: conformance-stacks-${{ runner.os }}-29.0.1-1.20.0-${{ hashFiles('conformance/mix.lock', 'conformance/mix.upstream.lock', 'mix.exs') }}
+      - run: mix deps.get --check-locked
+      - run: mix deps.get --check-locked
+        env:
+          CONFORMANCE_DEPS: upstream
+      - name: Survey and compare
+        run: |
+          for adapter in sqlite postgres; do
+            CONFORMANCE_DEPS=upstream mix conformance.survey "$adapter"
+            mix conformance.survey "$adapter"
+            mix conformance.compare_surveys "results/upstream/survey-$adapter.json" "results/survey-$adapter.json" > /dev/null
+            cat "results/compare-survey-$adapter.md" >> "$GITHUB_STEP_SUMMARY"
+          done
+      - name: Upload surveys
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: conformance-stacks
+          path: conformance/results/
+  # Every registered data layer, surveyed side by side. The committed report
+  # must match what the data layers actually do.
+  ecosystem:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports: ['5432:5432']
+        options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_ROOT_PASSWORD: mysql
+        ports: ['3306:3306']
+        options: --health-cmd "mysqladmin ping -pmysql" --health-interval 10s --health-timeout 5s --health-retries 10
+      clickhouse:
+        image: clickhouse/clickhouse-server:25.8
+        env:
+          # AshClickhouse does not pass credentials to its client.
+          CLICKHOUSE_SKIP_USER_SETUP: '1'
+        ports: ['8123:8123']
+        options: --health-cmd "wget -qO- http://localhost:8123/ping" --health-interval 10s --health-timeout 5s --health-retries 10
+    env:
+      MIX_ENV: test
+      CONFORMANCE_PG_DATABASE: ash_conformance_ecosystem_${{ github.run_id }}_${{ github.run_attempt }}
+    defaults:
+      run:
+        working-directory: conformance
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: erlef/setup-beam@54075bcc5e249e4758d363f27d099f55d843f124 # v1.24.1
+        with:
+          otp-version: '29.0.1'
+          elixir-version: '1.20.0'
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            conformance/deps
+            conformance/_build
+          key: conformance-ecosystem-${{ runner.os }}-29.0.1-1.20.0-${{ hashFiles('conformance/mix.lock', 'mix.exs') }}
+      - run: mix deps.get --check-locked
+      - run: mix conformance.ecosystem
+      - name: Verify the committed report
+        run: git diff --exit-code -- ECOSYSTEM.md surveys/
+      - name: Upload surveys
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: conformance-ecosystem
+          path: |
+            conformance/ECOSYSTEM.md
+            conformance/surveys/
+  core-dispatch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: erlef/setup-beam@54075bcc5e249e4758d363f27d099f55d843f124 # v1.24.1
+        with:
+          otp-version: '29.0.1'
+          elixir-version: '1.20.0'
+      - run: mix deps.get --check-locked
+      - run: mix test test/ash/data_layer/dispatch_contract_test.exs

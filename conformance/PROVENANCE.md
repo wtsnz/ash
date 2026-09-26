@@ -1,0 +1,100 @@
+<!-- SPDX-FileCopyrightText: 2026 ash contributors <https://github.com/ash-project/ash/graphs/contributors> -->
+<!-- SPDX-License-Identifier: MIT -->
+# Provenance and dependency revisions
+
+Read when updating dependencies or coordinating with adapter repositories.
+
+The starting corpus is `wtsnz/ash_sql`, branch `test/aggregate-conformance`,
+commit `0dfab5dbf4d1d5b978ba14d10b9afad60d698820`. Commits `4a4a7e9` to
+`4e328e2` on the same branch were ported later: gap owners (now `lib/contracts/gaps.ex`),
+23 scenarios for decimals, dates and times, aggregate-filtered bulk writes,
+to-one then to-many paths, calculation dependencies and nested `parent`
+references. At the time of porting those five commits existed only in the local
+AshSQL worktree; this project carries its own copy. Its `conformance/` directory
+contained 146 scenarios, fixtures, resource factories, explicit expectations,
+report/comparison tooling and local gap tasks. This project copies that tracked
+source, preserving IDs and MIT attribution, and renames the namespace to
+`Ash.Conformance`. It does not move or modify the existing suite.
+
+New here: the Ash-owned Mix project; resource/capability inventory; runner setup
+boundary and integrity tests; core callback dispatch/fallback tests; attribute
+and context-tenancy profiles; actor/context authorization; equivalence and write
+checks; benchmark commands; and isolated CI. Two inherited fixture mutations
+were moved outside operation capture without changing their datasets.
+
+| Dependency | Source |
+| --- | --- |
+| Ash | Parent checkout, initially fork main `bc9884e08`, version 3.33.11 |
+| AshSQL | `ash-project/ash_sql` at `0ef973c11a96774f088137f3b2288ef9732d44f7` (main, ash_sql#264) |
+| AshSQLite | `ash-project/ash_sqlite` at `f489778aae1abad8de436ed07dfb3237148a44fd` (main, ash_sqlite#232) |
+| AshPostgres | `ash-project/ash_postgres` at `945073e431ec6eb3fbbb831a8ce5b561d8f8cd35` |
+
+Until 2026-09-25 the pins were the unmerged work on Will's forks:
+`wtsnz/ash_sql` at `0985b9fdcca0a0919defdf76b0c44115fa8b8340` and
+`wtsnz/ash_sqlite` at `46a4b869450a2a961ef9af44b5b69da2d5aff29c`. Both were
+squash-merged upstream that day, as ash_sql#264 (the aggregate extraction)
+and ash_sqlite#232 (grouped SQLite aggregates). The pins moved to the merge
+commits on ash-project `main`:
+
+- ash_sql's merge commit has the same tree as the old pin.
+- ash_sqlite's merge commit differs only in its own `mix.lock`, a `mint`
+  bump merged separately (#234).
+
+The separately stacked from-many and schema fixes are intentionally
+excluded. Updating pins requires rerunning every inherited gap, not
+accepting observations from a neighboring checkout.
+
+`override: true` on Ash forces every adapter/transitive dependency to the parent
+checkout. The AshSQL override forces both adapters to the same unreleased commit
+instead of their Hex version constraints. The adapters are pinned Git dependencies;
+all transitive versions are in `mix.lock`. CI never reads adjacent worktrees.
+For a local adapter experiment, set `CONFORMANCE_ASH_SQL_PATH`,
+`CONFORMANCE_ASH_SQLITE_PATH` or `CONFORMANCE_ASH_POSTGRES_PATH` to a checkout.
+The dependency then becomes a path with `override: true`. Nothing is substituted
+unless a variable is set, CI sets none, and each report lists any override that
+was active. Pins change only by editing `mix.exs` and the lock.
+
+`CONFORMANCE_DEPS=upstream` swaps the three adapters for ash-project `main`,
+locked separately in `mix.upstream.lock` with its own deps and build
+directories. The suite compiles against both sets: the SQLite custom aggregate
+module has no SQL implementation where AshSQLite lacks custom aggregates.
+
+The SQLite repo enables `write_transactions?`. AshSQLite defaults it to false for
+existing apps but recommends it, and its installer enables it. With it off,
+AshSQLite advertises no transactions and Ash runs actions without one.
+
+No new third-party benchmark or reporting library was added. The migrated suite
+already used the maintained adapter stack, ExUnit, Jason, Credo, Dialyxir and
+SimpleSat. Timing uses Erlang monotonic timers; query observation uses the existing
+Telemetry dependency. The selected pins compile against this Ash checkout and
+passed the recorded SQLite/Postgres runs.
+
+The inherited baseline used Ash 3.33.10 and Elixir 1.19. On Elixir 1.20, Postgres
+`root.unsorted_first_empty` raises an inner `BadMapError` on nil instead of a
+`KeyError` for `:sort`; the failing access remains in the pinned lateral aggregate
+implementation. `bounds.root_offset_only` still fails merging nil but the runtime
+formats nil on a separate line. Their exact signatures are updated for this
+runtime. Neither is promoted or reclassified as supported.
+
+Future migration should first make both suites run the same pinned dependencies
+and compare by stable scenario IDs. Adapter repositories can then consume a
+versioned Ash suite revision. Do not delete the older project until its owners
+agree that the replacement covers their workflows.
+
+## Where the ported files went
+
+The source tree was reorganised by feature level after porting. Scenario IDs
+did not change, so results compare across the move.
+
+| AshSQL suite file | Here |
+| --- | --- |
+| `lib/scenarios/operations.ex` | `lib/scenarios/aggregates/kinds.ex`, `results.ex` and `usage.ex` |
+| `lib/scenarios/relationships.ex` | `lib/scenarios/aggregates/paths.ex` |
+| `lib/scenarios/filters.ex`, `bounds.ex`, `context.ex` | the same names under `lib/scenarios/aggregates/` |
+| `lib/scenarios/values.ex`, `writes.ex`, `helpers.ex` | `lib/scenarios/aggregates/types.ex`, `writes.ex` and `helpers.ex` |
+| `lib/expectations.ex`, `lib/gaps.ex` | `lib/contracts/` |
+| `lib/resources.ex`, `lib/resource.ex`, `lib/manual.ex` | `lib/resources/aggregate.ex`, `base.ex` and `manual.ex` |
+| `lib/fixtures.ex` | `lib/fixtures.ex` and `lib/fixtures/aggregate.ex` |
+| `lib/database.ex`, `lib/adapter.ex` | `lib/sql/`, `lib/adapter.ex` and `lib/adapters/` |
+| `lib/report.ex`, `lib/report/comparison.ex`, `lib/formatter.ex` | `lib/report.ex` and `lib/report/` |
+
