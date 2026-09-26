@@ -16,19 +16,19 @@ defmodule Ash.Conformance.Scenarios.Aggregates.Usage do
       new("use.filter", :usage, [1], fn ctx ->
         ctx.parent
         |> Ash.Query.filter(child_sum > 5)
-        |> Ash.read!(authorize?: false)
+        |> Ash.read!(authorize?: Ash.Conformance.Variant.authorize?())
         |> Enum.map(& &1.id)
       end),
       new("use.sort", :usage, [2, 1, 3], fn ctx ->
         ctx.parent
         |> Ash.Query.sort(child_sum: :asc_nils_last)
-        |> Ash.read!(authorize?: false)
+        |> Ash.read!(authorize?: Ash.Conformance.Variant.authorize?())
         |> Enum.map(& &1.id)
       end),
       new("use.calculation", :usage, %{1 => 14, 2 => 9, 3 => 9}, fn ctx ->
         ctx.parent
         |> Ash.Query.load(:sum_plus_threshold)
-        |> Ash.read!(authorize?: false)
+        |> Ash.read!(authorize?: Ash.Conformance.Variant.authorize?())
         |> Map.new(&{&1.id, &1.sum_plus_threshold})
       end),
       new("use.pagination", :usage, {[2], 3}, fn ctx ->
@@ -37,7 +37,10 @@ defmodule Ash.Conformance.Scenarios.Aggregates.Usage do
           |> Ash.Query.for_read(:paged)
           |> Ash.Query.load(:child_count)
           |> Ash.Query.sort(child_count: :desc)
-          |> Ash.read!(page: [offset: 1, limit: 1, count: true], authorize?: false)
+          |> Ash.read!(
+            page: [offset: 1, limit: 1, count: true],
+            authorize?: Ash.Conformance.Variant.authorize?()
+          )
 
         {Enum.map(page.results, & &1.id), page.count}
       end),
@@ -48,7 +51,9 @@ defmodule Ash.Conformance.Scenarios.Aggregates.Usage do
         loaded(ctx, :sum, :children, field: :rating_count)
       end),
       new("field.root_aggregate", :expressions, 5, fn ctx ->
-        Ash.aggregate!(ctx.parent, [{:result, :sum, field: :child_count}], authorize?: false).result
+        Ash.aggregate!(ctx.parent, [{:result, :sum, field: :child_count}],
+          authorize?: Ash.Conformance.Variant.authorize?()
+        ).result
       end),
       new("ordering.expression_first", :ordering, %{1 => 7, 2 => 4, 3 => nil}, fn ctx ->
         loaded(ctx, :first, :children,
@@ -80,27 +85,27 @@ defmodule Ash.Conformance.Scenarios.Aggregates.Usage do
         ctx.parent
         |> Ash.Query.filter(children.rating_count > 1)
         |> Ash.Query.sort(:id)
-        |> Ash.read!(authorize?: false)
+        |> Ash.read!(authorize?: Ash.Conformance.Variant.authorize?())
         |> Enum.map(& &1.id)
       end),
       new("use.related_exists", :usage, [1], fn ctx ->
         ctx.parent
         |> Ash.Query.filter(exists(children, rating_count > 1))
         |> Ash.Query.sort(:id)
-        |> Ash.read!(authorize?: false)
+        |> Ash.read!(authorize?: Ash.Conformance.Variant.authorize?())
         |> Enum.map(& &1.id)
       end),
       new("use.to_one_filter", :usage, [11, 12, 13, 14], fn ctx ->
         ctx.child
         |> Ash.Query.filter(parent.child_sum > 5)
         |> Ash.Query.sort(:id)
-        |> Ash.read!(authorize?: false)
+        |> Ash.read!(authorize?: Ash.Conformance.Variant.authorize?())
         |> Enum.map(& &1.id)
       end),
       new("use.to_one_sort", :usage, [21, 11, 12, 13, 14], fn ctx ->
         ctx.child
         |> Ash.Query.sort([{Ash.Sort.expr_sort(parent.child_count, :integer), :asc}, id: :asc])
-        |> Ash.read!(authorize?: false)
+        |> Ash.read!(authorize?: Ash.Conformance.Variant.authorize?())
         |> Enum.map(& &1.id)
       end),
       new("use.keyset_pagination", :usage, {[1, 2], [3]}, fn ctx ->
@@ -109,9 +114,17 @@ defmodule Ash.Conformance.Scenarios.Aggregates.Usage do
           |> Ash.Query.for_read(:keyset)
           |> Ash.Query.sort(child_count: :desc, id: :asc)
 
-        first = Ash.read!(query, page: [limit: 2], authorize?: false)
+        first =
+          Ash.read!(query, page: [limit: 2], authorize?: Ash.Conformance.Variant.authorize?())
+
         keyset = List.last(first.results).__metadata__.keyset
-        next = Ash.read!(query, page: [limit: 2, after: keyset], authorize?: false)
+
+        next =
+          Ash.read!(query,
+            page: [limit: 2, after: keyset],
+            authorize?: Ash.Conformance.Variant.authorize?()
+          )
+
         {Enum.map(first.results, & &1.id), Enum.map(next.results, & &1.id)}
       end),
       new(
@@ -121,7 +134,7 @@ defmodule Ash.Conformance.Scenarios.Aggregates.Usage do
         fn ctx ->
           ctx.parent
           |> Ash.Query.load(top_children: :rating_count)
-          |> Ash.read!(authorize?: false)
+          |> Ash.read!(authorize?: Ash.Conformance.Variant.authorize?())
           |> Map.new(fn row ->
             {row.id, Enum.map(row.top_children, &{&1.id, &1.rating_count})}
           end)
@@ -130,14 +143,17 @@ defmodule Ash.Conformance.Scenarios.Aggregates.Usage do
       new("use.fanout_count", :usage, 2, fn ctx ->
         ctx.child
         |> Ash.Query.filter(ratings.score > 5)
-        |> Ash.count!(authorize?: false)
+        |> Ash.count!(authorize?: Ash.Conformance.Variant.authorize?())
       end),
       new("use.fanout_read_page", :usage, {[11, 12], 2}, fn ctx ->
         page =
           ctx.child
           |> Ash.Query.filter(ratings.score > 5)
           |> Ash.Query.sort(id: :asc)
-          |> Ash.read!(page: [limit: 2, count: true], authorize?: false)
+          |> Ash.read!(
+            page: [limit: 2, count: true],
+            authorize?: Ash.Conformance.Variant.authorize?()
+          )
 
         {Enum.map(page.results, & &1.id), page.count}
       end)

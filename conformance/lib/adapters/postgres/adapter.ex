@@ -13,6 +13,13 @@ defmodule Ash.Conformance.Postgres do
         Ash.Conformance.Postgres.Expectations.rules()
       )
 
+  def variant_expectations,
+    do:
+      Ash.Conformance.Contracts.Records.resolve_variants(
+        __MODULE__,
+        Ash.Conformance.Postgres.Expectations.variant_rules()
+      )
+
   def gaps, do: Ash.Conformance.Postgres.Gaps.all()
   def fixture?(_fixture), do: true
   def profiles, do: [:shared, :context_tenancy]
@@ -119,58 +126,78 @@ defmodule Ash.Conformance.Postgres.Manual do
   use Ash.Conformance.SQL.Manual, prefix: :ash_postgres
 end
 
+defmodule Ash.Conformance.Postgres.SchemaResources do
+  @moduledoc "Schema-based tenancy resources, which only PostgreSQL runs, for one resource set."
+
+  defmacro __using__(opts) do
+    namespace = opts |> Keyword.fetch!(:namespace) |> Macro.expand(__CALLER__)
+    parent = Module.concat(namespace, SchemaParent)
+    item = Module.concat(namespace, SchemaItem)
+
+    quote context: Elixir do
+      defmodule unquote(parent) do
+        @moduledoc false
+        use Ash.Conformance.Resources.Base,
+          adapter: Ash.Conformance.Postgres,
+          table: "dc_schema_parents"
+
+        attributes do
+          attribute(:id, :integer, primary_key?: true, allow_nil?: false, public?: true)
+        end
+
+        multitenancy do
+          strategy(:context)
+        end
+
+        actions do
+          read :paged do
+            pagination(offset?: true, countable: true, required?: false)
+          end
+        end
+
+        relationships do
+          has_many(:items, unquote(item),
+            destination_attribute: :parent_id,
+            sort: [id: :asc],
+            public?: true
+          )
+        end
+
+        aggregates do
+          count(:item_count, :items, public?: true)
+          sum(:item_sum, :items, :value, default: 0, public?: true)
+        end
+      end
+
+      defmodule unquote(item) do
+        @moduledoc false
+        use Ash.Conformance.Resources.Base,
+          adapter: Ash.Conformance.Postgres,
+          table: "dc_schema_items"
+
+        attributes do
+          attribute(:id, :integer, primary_key?: true, allow_nil?: false, public?: true)
+          attribute(:parent_id, :integer, public?: true)
+          attribute(:value, :integer, public?: true)
+        end
+
+        multitenancy do
+          strategy(:context)
+        end
+      end
+    end
+  end
+end
+
 defmodule Ash.Conformance.Postgres.Resources do
   @moduledoc "Every shared resource role, instantiated for PostgreSQL."
   use Ash.Conformance.Resources,
     namespace: Ash.Conformance.Postgres,
-    adapter: Ash.Conformance.Postgres
-end
-
-defmodule Ash.Conformance.Postgres.SchemaParent do
-  @moduledoc false
-  use Ash.Conformance.Resources.Base,
     adapter: Ash.Conformance.Postgres,
-    table: "dc_schema_parents"
+    variants: true
 
-  attributes do
-    attribute(:id, :integer, primary_key?: true, allow_nil?: false, public?: true)
-  end
-
-  multitenancy do
-    strategy(:context)
-  end
-
-  actions do
-    read :paged do
-      pagination(offset?: true, countable: true, required?: false)
-    end
-  end
-
-  relationships do
-    has_many(:items, Ash.Conformance.Postgres.SchemaItem,
-      destination_attribute: :parent_id,
-      sort: [id: :asc],
-      public?: true
-    )
-  end
-
-  aggregates do
-    count(:item_count, :items, public?: true)
-    sum(:item_sum, :items, :value, default: 0, public?: true)
-  end
-end
-
-defmodule Ash.Conformance.Postgres.SchemaItem do
-  @moduledoc false
-  use Ash.Conformance.Resources.Base, adapter: Ash.Conformance.Postgres, table: "dc_schema_items"
-
-  attributes do
-    attribute(:id, :integer, primary_key?: true, allow_nil?: false, public?: true)
-    attribute(:parent_id, :integer, public?: true)
-    attribute(:value, :integer, public?: true)
-  end
-
-  multitenancy do
-    strategy(:context)
-  end
+  # One set per Ash.Conformance.Variant.namespaces/0, as `variants: true` does.
+  use Ash.Conformance.Postgres.SchemaResources, namespace: Ash.Conformance.Postgres
+  use Ash.Conformance.Postgres.SchemaResources, namespace: Ash.Conformance.Postgres.PermitPolicy
+  use Ash.Conformance.Postgres.SchemaResources, namespace: Ash.Conformance.Postgres.FilterPolicy
 end

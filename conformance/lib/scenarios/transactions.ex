@@ -33,7 +33,7 @@ defmodule Ash.Conformance.Scenarios.Transactions do
           result =
             Ash.create(ledger(ctx), %{id: 1, amount: 5},
               action: :create_then_fail,
-              authorize?: false
+              authorize?: Ash.Conformance.Variant.authorize?()
             )
 
           {elem(result, 0), Process.get(:ash_conformance_ledger_visible), ids(ctx)}
@@ -48,7 +48,10 @@ defmodule Ash.Conformance.Scenarios.Transactions do
           raised =
             try do
               Ash.transact(ledger(ctx), fn ->
-                Ash.create!(ledger(ctx), %{id: 2, amount: 5}, authorize?: false)
+                Ash.create!(ledger(ctx), %{id: 2, amount: 5},
+                  authorize?: Ash.Conformance.Variant.authorize?()
+                )
+
                 raise "abort"
               end)
             rescue
@@ -66,7 +69,10 @@ defmodule Ash.Conformance.Scenarios.Transactions do
         fn ctx ->
           result =
             Ash.transact(ledger(ctx), fn ->
-              Ash.create!(ledger(ctx), %{id: 3, amount: 5}, authorize?: false)
+              Ash.create!(ledger(ctx), %{id: 3, amount: 5},
+                authorize?: Ash.Conformance.Variant.authorize?()
+              )
+
               Ash.DataLayer.rollback(ledger(ctx), :abort)
             end)
 
@@ -81,8 +87,13 @@ defmodule Ash.Conformance.Scenarios.Transactions do
         fn ctx ->
           result =
             Ash.transact(ledger(ctx), fn ->
-              Ash.create!(ledger(ctx), %{id: 4, amount: 5}, authorize?: false)
-              Ash.create!(ledger(ctx), %{id: 5, amount: 6}, authorize?: false)
+              Ash.create!(ledger(ctx), %{id: 4, amount: 5},
+                authorize?: Ash.Conformance.Variant.authorize?()
+              )
+
+              Ash.create!(ledger(ctx), %{id: 5, amount: 6},
+                authorize?: Ash.Conformance.Variant.authorize?()
+              )
             end)
 
           {elem(result, 0), ids(ctx)}
@@ -98,7 +109,7 @@ defmodule Ash.Conformance.Scenarios.Transactions do
             ctx.child
             |> Ash.Query.lock(:for_update)
             |> Ash.Query.filter(id == 11)
-            |> Ash.read!(authorize?: false)
+            |> Ash.read!(authorize?: Ash.Conformance.Variant.authorize?())
             |> Enum.map(& &1.id)
           end)
         end,
@@ -111,6 +122,9 @@ defmodule Ash.Conformance.Scenarios.Transactions do
   defp ledger(ctx), do: ctx.adapter.resource(:ledger)
 
   defp ids(ctx) do
-    ledger(ctx) |> Ash.read!(authorize?: false) |> Enum.map(& &1.id) |> Enum.sort()
+    ledger(ctx)
+    |> Ash.read!(authorize?: Ash.Conformance.Variant.authorize?())
+    |> Enum.map(& &1.id)
+    |> Enum.sort()
   end
 end

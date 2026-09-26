@@ -129,7 +129,7 @@ defmodule Ash.Conformance.Scenarios.Aggregates.Paths do
           [
             {:result, :sum, path: [:children], field: :value}
           ],
-          authorize?: false
+          authorize?: Ash.Conformance.Variant.authorize?()
         ).result
       end),
       new("identity.composite_count", :identity, %{1 => 2, 2 => 1, 3 => 0}, fn ctx ->
@@ -151,7 +151,7 @@ defmodule Ash.Conformance.Scenarios.Aggregates.Paths do
       new("identity.keyless_source", :identity, [3, 3], fn ctx ->
         ctx.adapter.resource(:event)
         |> Ash.Query.aggregate(:result, :sum, :parent, field: :threshold)
-        |> Ash.read!(authorize?: false)
+        |> Ash.read!(authorize?: Ash.Conformance.Variant.authorize?())
         |> Enum.map(& &1.aggregates.result)
       end)
     ]

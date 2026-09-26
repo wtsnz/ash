@@ -79,7 +79,7 @@ defmodule Ash.Conformance.Scenarios.Aggregates.Filters do
         ctx.parent
         |> Ash.Query.filter(exists(children, exists(ratings, score >= parent(parent(threshold)))))
         |> Ash.Query.sort(:id)
-        |> Ash.read!(authorize?: false)
+        |> Ash.read!(authorize?: Ash.Conformance.Variant.authorize?())
         |> Enum.map(& &1.id)
       end),
       new("filter.parent", :filters, %{1 => 7, 2 => nil, 3 => nil}, fn ctx ->
@@ -122,7 +122,7 @@ defmodule Ash.Conformance.Scenarios.Aggregates.Filters do
         ctx.child
         |> Ash.Query.filter(ratings.score > 5)
         |> Ash.Query.sort(:id)
-        |> Ash.read!(authorize?: false)
+        |> Ash.read!(authorize?: Ash.Conformance.Variant.authorize?())
         |> Enum.map(& &1.id)
       end),
       new("filter.sibling_independence", :filters, {4, 11}, fn ctx ->
@@ -133,7 +133,7 @@ defmodule Ash.Conformance.Scenarios.Aggregates.Filters do
             query: [filter: [visible: true]]
           )
           |> Ash.Query.aggregate(:all, :sum, :children, field: :value)
-          |> Ash.read_one!(authorize?: false)
+          |> Ash.read_one!(authorize?: Ash.Conformance.Variant.authorize?())
 
         {row.aggregates.filtered, row.aggregates.all}
       end),
@@ -262,7 +262,7 @@ defmodule Ash.Conformance.Scenarios.Aggregates.Filters do
         ctx.parent
         |> Ash.Query.filter(sum(above_threshold, field: :value) > 0)
         |> Ash.Query.sort(:id)
-        |> Ash.read!(authorize?: false)
+        |> Ash.read!(authorize?: Ash.Conformance.Variant.authorize?())
         |> Enum.map(& &1.id)
       end),
       new("use.parent_sort", :usage, [2, 3, 1], fn ctx ->
@@ -271,7 +271,7 @@ defmodule Ash.Conformance.Scenarios.Aggregates.Filters do
           {Ash.Sort.expr_sort(sum(above_threshold, field: :value), :integer), :asc_nils_first},
           id: :asc
         ])
-        |> Ash.read!(authorize?: false)
+        |> Ash.read!(authorize?: Ash.Conformance.Variant.authorize?())
         |> Enum.map(& &1.id)
       end)
     ]

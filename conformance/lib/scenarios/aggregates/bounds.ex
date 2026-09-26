@@ -82,7 +82,7 @@ defmodule Ash.Conformance.Scenarios.Aggregates.Bounds do
             {:first, :first, field: :value, query: [sort: [value: :asc]]},
             {:exists, :exists}
           ],
-          authorize?: false
+          authorize?: Ash.Conformance.Variant.authorize?()
         )
       end),
       new("bounds.many_to_many_query_limit", :bounds, :unresolved, fn ctx ->

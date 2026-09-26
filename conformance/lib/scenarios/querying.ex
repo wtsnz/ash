@@ -108,14 +108,15 @@ defmodule Ash.Conformance.Scenarios.Querying do
         present = Ash.Query.filter(ctx.record, not is_nil(quantity))
         missing = Ash.Query.filter(ctx.record, quantity > 100)
 
-        {Ash.count!(present, authorize?: false), Ash.exists?(present, authorize?: false),
-         Ash.exists?(missing, authorize?: false)}
+        {Ash.count!(present, authorize?: Ash.Conformance.Variant.authorize?()),
+         Ash.exists?(present, authorize?: Ash.Conformance.Variant.authorize?()),
+         Ash.exists?(missing, authorize?: Ash.Conformance.Variant.authorize?())}
       end),
       scenario("record.stream", :pagination, [1, 2, 3, 4, 5, 6, 7], @reads, fn ctx ->
         ctx.record
         |> Ash.Query.for_read(:streamable)
         |> Ash.Query.sort(:id)
-        |> Ash.stream!(batch_size: 2, authorize?: false)
+        |> Ash.stream!(batch_size: 2, authorize?: Ash.Conformance.Variant.authorize?())
         |> Enum.map(& &1.id)
       end),
       scenario(
@@ -148,7 +149,7 @@ defmodule Ash.Conformance.Scenarios.Querying do
           ctx.record
           |> Ash.Query.filter(id in [1, 3, 6])
           |> Ash.Query.load(:double_quantity)
-          |> Ash.read!(authorize?: false)
+          |> Ash.read!(authorize?: Ash.Conformance.Variant.authorize?())
           |> Map.new(&{&1.id, &1.double_quantity})
         end
       ),
@@ -157,7 +158,7 @@ defmodule Ash.Conformance.Scenarios.Querying do
         ctx.record
         |> Ash.Query.filter(id == 1)
         |> Ash.Query.load(suffixed: %{suffix: "-pie"})
-        |> Ash.read_one!(authorize?: false)
+        |> Ash.read_one!(authorize?: Ash.Conformance.Variant.authorize?())
         |> Map.fetch!(:suffixed)
       end)
     ]
@@ -174,7 +175,7 @@ defmodule Ash.Conformance.Scenarios.Querying do
           ctx.child
           |> Ash.Query.distinct(:label)
           |> Ash.Query.sort(label: :asc, id: :asc)
-          |> Ash.read!(authorize?: false)
+          |> Ash.read!(authorize?: Ash.Conformance.Variant.authorize?())
           |> Enum.map(& &1.id)
         end,
         semantic_basis: @query_docs,
@@ -191,7 +192,7 @@ defmodule Ash.Conformance.Scenarios.Querying do
             Ash.Query.Combination.union(filter: Ash.Expr.expr(value == 7))
           ])
           |> Ash.Query.sort(:id)
-          |> Ash.read!(authorize?: false)
+          |> Ash.read!(authorize?: Ash.Conformance.Variant.authorize?())
           |> Enum.map(& &1.id)
         end,
         semantic_basis: "../documentation/topics/advanced/combination-queries.md",
@@ -242,7 +243,7 @@ defmodule Ash.Conformance.Scenarios.Querying do
       struct(Ash.Query.Combination, type: type, filter: filter)
     ])
     |> Ash.Query.sort(:id)
-    |> Ash.read!(authorize?: false)
+    |> Ash.read!(authorize?: Ash.Conformance.Variant.authorize?())
     |> Enum.map(& &1.id)
   end
 

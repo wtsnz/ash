@@ -218,4 +218,35 @@ defmodule Ash.Conformance.Postgres.Expectations do
       )
     ]
   end
+
+  @doc """
+  Where an `Ash.Conformance.Variant` run behaves differently from the
+  scenario's own record.
+  """
+  def variant_rules do
+    [
+      # With authorization on, Ash raises before AshSQL's KeyError.
+      expect_variant(
+        "filter.nested_parent_control",
+        Ash.Conformance.Variant.all(),
+        defect_error(
+          ~r/\(MatchError\) no match of right hand side value:\s+\[\]/,
+          "nested-parent"
+        )
+      ),
+      # With authorization on, Ash raises before AshSQL's own prepared-query defect.
+      expect_variant(
+        "context.prepared_query_arguments",
+        Ash.Conformance.Variant.all(),
+        defect_error(
+          ~r/argument label is required/,
+          "authorized-action-arguments",
+          Ash.Error.Invalid
+        )
+      ),
+      # The policy filter changes the query AshSQL builds, and the aggregate over
+      # the no_attributes? relationship then works (see the no-attributes gap).
+      expect_variant("path.no_attributes", :filter_policy, :supported)
+    ]
+  end
 end

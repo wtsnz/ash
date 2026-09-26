@@ -69,7 +69,7 @@ defmodule Ash.Conformance.Scenarios.Identities do
           Ash.create!(
             ctx.adapter.resource(:identity_row),
             %{id: 1, code: "b", scope: "s", value: 1, note: "old"},
-            authorize?: false
+            authorize?: Ash.Conformance.Variant.authorize?()
           )
 
           upsert(ctx, :identity_row, %{id: 2, code: "b", scope: "s", value: 5, note: "new"})
@@ -88,24 +88,25 @@ defmodule Ash.Conformance.Scenarios.Identities do
       Ash.create(
         ctx.adapter.resource(role),
         %{id: id, code: "a", scope: nil, value: value},
-        authorize?: false
+        authorize?: Ash.Conformance.Variant.authorize?()
       )
 
   defp upsert(ctx, role, input) do
     ctx.adapter.resource(role)
-    |> Ash.Changeset.for_create(:upsert, input, authorize?: false)
-    |> Ash.create!(authorize?: false)
+    |> Ash.Changeset.for_create(:upsert, input, authorize?: Ash.Conformance.Variant.authorize?())
+    |> Ash.create!(authorize?: Ash.Conformance.Variant.authorize?())
   end
 
   defp status({:ok, _record}), do: :ok
   defp status(other), do: error_shape(other)
 
-  defp count(ctx, role), do: Ash.count!(ctx.adapter.resource(role), authorize?: false)
+  defp count(ctx, role),
+    do: Ash.count!(ctx.adapter.resource(role), authorize?: Ash.Conformance.Variant.authorize?())
 
   defp rows(ctx, role, project) do
     ctx.adapter.resource(role)
     |> Ash.Query.sort(:id)
-    |> Ash.read!(authorize?: false)
+    |> Ash.read!(authorize?: Ash.Conformance.Variant.authorize?())
     |> Enum.map(project)
   end
 end

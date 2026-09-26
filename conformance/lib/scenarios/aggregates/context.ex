@@ -48,14 +48,18 @@ defmodule Ash.Conformance.Scenarios.Aggregates.Context do
         |> Ash.Query.set_context(%{visible_label: "same"})
         |> Ash.Query.for_read(:from_context)
         |> Ash.Query.sort(:id)
-        |> Ash.read!(authorize?: false)
+        |> Ash.read!(authorize?: Ash.Conformance.Variant.authorize?())
         |> Enum.map(& &1.id)
       end),
       new("context.actor", :context, %{1 => 2, 2 => 0, 3 => 0}, fn ctx ->
         named(ctx, :actor_count, actor: %{label: "same"})
       end),
       new("context.prepared_query_arguments", :context, %{1 => 1, 2 => 0, 3 => 0}, fn ctx ->
-        query = Ash.Query.for_read(ctx.child, :by_label, %{label: "high"}, authorize?: false)
+        query =
+          Ash.Query.for_read(ctx.child, :by_label, %{label: "high"},
+            authorize?: Ash.Conformance.Variant.authorize?()
+          )
+
         loaded(ctx, :count, :children, query: query)
       end),
       new("context.intermediate_action", :context, %{1 => 3, 2 => 0, 3 => 0}, fn ctx ->
@@ -75,7 +79,7 @@ defmodule Ash.Conformance.Scenarios.Aggregates.Context do
           selected_parent(ctx)
           |> Ash.Query.aggregate(:scoped, :count, :tenant_children)
           |> Ash.Query.aggregate(:all, :count, :tenant_children, multitenancy: :bypass)
-          |> Ash.read_one!(tenant: "a", authorize?: false)
+          |> Ash.read_one!(tenant: "a", authorize?: Ash.Conformance.Variant.authorize?())
 
         {row.aggregates.scoped, row.aggregates.all}
       end),

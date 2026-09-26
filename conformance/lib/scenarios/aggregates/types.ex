@@ -29,7 +29,7 @@ defmodule Ash.Conformance.Scenarios.Aggregates.Types do
         %{301 => "0.1", 302 => "0.2", 303 => "12345678901234567.89", 304 => "0.01"},
         fn ctx ->
           ctx.adapter.resource(:reading)
-          |> Ash.read!(authorize?: false)
+          |> Ash.read!(authorize?: Ash.Conformance.Variant.authorize?())
           |> Map.new(&{&1.id, exact(&1.amount)})
         end,
         requires: Storage.stored(:decimal) ++ Storage.stored(:decimal, :edge)
@@ -69,7 +69,7 @@ defmodule Ash.Conformance.Scenarios.Aggregates.Types do
         "12345678901234568.2",
         fn ctx ->
           Ash.aggregate!(ctx.adapter.resource(:reading), [{:result, :sum, field: :amount}],
-            authorize?: false
+            authorize?: Ash.Conformance.Variant.authorize?()
           ).result
           |> exact()
         end,
@@ -91,7 +91,7 @@ defmodule Ash.Conformance.Scenarios.Aggregates.Types do
         },
         fn ctx ->
           ctx.adapter.resource(:reading)
-          |> Ash.read!(authorize?: false)
+          |> Ash.read!(authorize?: Ash.Conformance.Variant.authorize?())
           |> Map.new(&{&1.id, {&1.taken_on, &1.taken_at, &1.taken_time}})
         end,
         requires: Storage.stored([:date, :utc_datetime_usec, :time])
@@ -174,7 +174,7 @@ defmodule Ash.Conformance.Scenarios.Aggregates.Types do
         ~U[2024-02-01 00:00:00.000000Z],
         fn ctx ->
           Ash.aggregate!(ctx.adapter.resource(:reading), [{:result, :max, field: :taken_at}],
-            authorize?: false
+            authorize?: Ash.Conformance.Variant.authorize?()
           ).result
         end,
         @temporal

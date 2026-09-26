@@ -359,4 +359,31 @@ defmodule Ash.Conformance.Sqlite.Expectations do
       )
     ]
   end
+
+  @doc """
+  Where an `Ash.Conformance.Variant` run behaves differently from the
+  scenario's own record.
+  """
+  def variant_rules do
+    [
+      # With authorization on, Ash raises before AshSQL's KeyError.
+      expect_variant(
+        "filter.nested_parent_control",
+        Ash.Conformance.Variant.all(),
+        defect_error(
+          ~r/\(MatchError\) no match of right hand side value:\s+\[\]/,
+          "nested-parent"
+        )
+      ),
+      expect_variant(
+        "context.prepared_query_arguments",
+        Ash.Conformance.Variant.all(),
+        defect_error(
+          ~r/argument label is required/,
+          "authorized-action-arguments",
+          Ash.Error.Invalid
+        )
+      )
+    ]
+  end
 end

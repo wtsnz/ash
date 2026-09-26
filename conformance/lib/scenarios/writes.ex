@@ -20,7 +20,7 @@ defmodule Ash.Conformance.Scenarios.Writes do
     upsert?: true,
     upsert_identity: :local_id,
     upsert_fields: [:value],
-    authorize?: false,
+    authorize?: Ash.Conformance.Variant.authorize?(),
     return_records?: true,
     return_errors?: true
   ]
@@ -110,7 +110,7 @@ defmodule Ash.Conformance.Scenarios.Writes do
           result =
             Ash.bulk_create(rows, item(ctx), :create,
               tenant: 1,
-              authorize?: false,
+              authorize?: Ash.Conformance.Variant.authorize?(),
               return_records?: true,
               return_errors?: true
             )
@@ -119,7 +119,7 @@ defmodule Ash.Conformance.Scenarios.Writes do
             item(ctx)
             |> Ash.Query.set_tenant(1)
             |> Ash.Query.filter(local_id >= 10)
-            |> Ash.read!(authorize?: false)
+            |> Ash.read!(authorize?: Ash.Conformance.Variant.authorize?())
             |> Enum.map(& &1.local_id)
             |> Enum.sort()
 
@@ -146,7 +146,7 @@ defmodule Ash.Conformance.Scenarios.Writes do
             atomic_update: %{value: Ash.Expr.expr(value + 1)},
             strategy: :atomic,
             tenant: 1,
-            authorize?: false
+            authorize?: Ash.Conformance.Variant.authorize?()
           )
 
           {values(ctx, 1), values(ctx, 2)}
@@ -169,7 +169,7 @@ defmodule Ash.Conformance.Scenarios.Writes do
     item(ctx)
     |> Ash.Query.set_tenant(tenant)
     |> Ash.Query.sort(:local_id)
-    |> Ash.read!(authorize?: false)
+    |> Ash.read!(authorize?: Ash.Conformance.Variant.authorize?())
     |> Enum.map(&{&1.local_id, &1.value})
   end
 end

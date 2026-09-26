@@ -236,6 +236,7 @@ defmodule Ash.Conformance.Scenarios.Authorization do
         :writes,
         {Ash.Error.Forbidden, 99},
         fn ctx ->
+          # Setup for the forbidden update, so it stays unauthorized.
           item =
             Ash.get!(ctx.adapter.resource(:secure_item), [local_id: 3],
               tenant: 1,

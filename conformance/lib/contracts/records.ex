@@ -80,6 +80,46 @@ defmodule Ash.Conformance.Contracts.Records do
     end)
   end
 
+  @doc """
+  Scenarios expected to behave as `record` under the given
+  `Ash.Conformance.Variant`s, instead of as their own record.
+  """
+  def expect_variant(patterns, variants, record),
+    do: {:expect_variant, List.wrap(patterns), List.wrap(variants), record}
+
+  @doc "An adapter's variant records by `{scenario ID, variant}`, from its variant rules."
+  def resolve_variants(adapter, rules) do
+    ids = adapter |> Ash.Conformance.Catalog.for_adapter() |> Enum.map(& &1.id)
+
+    Enum.reduce(rules, %{}, fn {:expect_variant, patterns, variants, record}, acc ->
+      regexes = Enum.map(patterns, &glob/1)
+      matched = Enum.filter(ids, &matches?(regexes, &1))
+
+      if matched == [],
+        do:
+          raise(
+            ArgumentError,
+            "#{inspect(adapter)}: variant rule #{inspect(patterns)} matches no scenario"
+          )
+
+      for variant <- variants, variant not in Ash.Conformance.Variant.all() do
+        raise ArgumentError, "#{inspect(adapter)}: unknown variant #{inspect(variant)}"
+      end
+
+      for id <- matched, variant <- variants, reduce: acc do
+        acc ->
+          if Map.has_key?(acc, {id, variant}),
+            do:
+              raise(
+                ArgumentError,
+                "#{inspect(adapter)}: #{id} under #{variant} matches several variant rules"
+              )
+
+          Map.put(acc, {id, variant}, record)
+      end
+    end)
+  end
+
   defp patterns({:supported, patterns}), do: patterns
   defp patterns({:expect, patterns, _record}), do: patterns
 

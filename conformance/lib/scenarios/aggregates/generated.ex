@@ -76,13 +76,13 @@ defmodule Ash.Conformance.Scenarios.Aggregates.Generated do
     ctx.parent
     |> Ash.Query.aggregate(:result, test_case.kind, :children, aggregate_opts(test_case))
     |> Ash.Query.sort(:id)
-    |> Ash.read!(authorize?: false)
+    |> Ash.read!(authorize?: Ash.Conformance.Variant.authorize?())
     |> Map.new(&{&1.id, &1.aggregates.result})
   end
 
   defp observe(ctx, %{scope: :root} = test_case) do
     Ash.aggregate!(ctx.child, [{:result, test_case.kind, aggregate_opts(test_case)}],
-      authorize?: false
+      authorize?: Ash.Conformance.Variant.authorize?()
     ).result
   end
 

@@ -36,6 +36,11 @@ defmodule Ash.Conformance.Scenarios.Joins do
   @relationships "../documentation/topics/resources/relationships.md"
   @creates "../lib/ash.ex"
 
+  # Items are visible only to the user in `seen_by` (`Resources.Combination`),
+  # so reading or aggregating them with authorization on and no actor
+  # rightly returns less.
+  @item_policy {:none, "reads combination items, whose own policy hides them from a nil actor"}
+
   def all, do: reads() ++ calculations() ++ writes()
 
   defp reads do
@@ -78,7 +83,7 @@ defmodule Ash.Conformance.Scenarios.Joins do
         fn ctx ->
           ctx.adapter.resource(:combo_owner)
           |> Ash.Query.filter(items.value > 0)
-          |> Ash.count!(authorize?: false)
+          |> Ash.count!(authorize?: Ash.Conformance.Variant.authorize?())
         end,
         opts(@reads)
       ),
@@ -89,7 +94,7 @@ defmodule Ash.Conformance.Scenarios.Joins do
         fn ctx ->
           ctx.adapter.resource(:combo_owner)
           |> Ash.Query.filter(linked_items.status == "open")
-          |> Ash.count!(authorize?: false)
+          |> Ash.count!(authorize?: Ash.Conformance.Variant.authorize?())
         end,
         opts(@reads)
       ),
@@ -102,7 +107,7 @@ defmodule Ash.Conformance.Scenarios.Joins do
           |> Ash.Query.filter(items.value > 0)
           |> Ash.Query.sort(:id)
           |> Ash.Query.limit(2)
-          |> Ash.read!(authorize?: false)
+          |> Ash.read!(authorize?: Ash.Conformance.Variant.authorize?())
           |> Enum.map(& &1.id)
         end,
         opts(@reads)
@@ -117,7 +122,10 @@ defmodule Ash.Conformance.Scenarios.Joins do
             |> Ash.Query.for_read(:paged)
             |> Ash.Query.filter(linked_items.value > 0)
             |> Ash.Query.sort(:id)
-            |> Ash.read!(authorize?: false, page: [limit: 1, offset: 1, count: true])
+            |> Ash.read!(
+              authorize?: Ash.Conformance.Variant.authorize?(),
+              page: [limit: 1, offset: 1, count: true]
+            )
 
           {Enum.map(page.results, & &1.id), page.count}
         end,
@@ -130,10 +138,10 @@ defmodule Ash.Conformance.Scenarios.Joins do
         fn ctx ->
           ctx.adapter.resource(:combo_item)
           |> Ash.Query.sort([{"owner.label", :desc}, {:id, :asc}])
-          |> Ash.read!(authorize?: false)
+          |> Ash.read!(authorize?: Ash.Conformance.Variant.authorize?())
           |> Enum.map(& &1.id)
         end,
-        opts(@reads)
+        opts(@reads, @item_policy)
       )
     ]
   end
@@ -146,21 +154,21 @@ defmodule Ash.Conformance.Scenarios.Joins do
         :calculations,
         %{1 => 30, 2 => 26, 3 => nil},
         &owner_field(&1, :double_sum),
-        opts(@calculations)
+        opts(@calculations, @item_policy)
       ),
       new(
         "calc.over_aggregate",
         :calculations,
         %{1 => 10, 2 => 6, 3 => 0},
         &owner_field(&1, :count_doubled),
-        opts(@calculations)
+        opts(@calculations, @item_policy)
       ),
       new(
         "calc.filter_over_aggregate",
         :calculations,
         [1],
         &owners(&1, expr(count_doubled > 8)),
-        opts(@calculations)
+        opts(@calculations, @item_policy)
       ),
       new(
         "calc.argument_filter",
@@ -170,10 +178,10 @@ defmodule Ash.Conformance.Scenarios.Joins do
           ctx.adapter.resource(:combo_item)
           |> Ash.Query.filter(value_plus(amount: 10) > 14)
           |> Ash.Query.sort(:id)
-          |> Ash.read!(authorize?: false)
+          |> Ash.read!(authorize?: Ash.Conformance.Variant.authorize?())
           |> Enum.map(& &1.id)
         end,
-        opts(@calculations)
+        opts(@calculations, @item_policy)
       ),
       new(
         "calc.argument_sort",
@@ -182,10 +190,10 @@ defmodule Ash.Conformance.Scenarios.Joins do
         fn ctx ->
           ctx.adapter.resource(:combo_item)
           |> Ash.Query.sort([{:value_plus, {%{amount: 1}, :desc_nils_last}}, {:id, :asc}])
-          |> Ash.read!(authorize?: false)
+          |> Ash.read!(authorize?: Ash.Conformance.Variant.authorize?())
           |> Enum.map(& &1.id)
         end,
-        opts(@calculations)
+        opts(@calculations, @item_policy)
       )
     ]
   end
@@ -198,17 +206,20 @@ defmodule Ash.Conformance.Scenarios.Joins do
         {11, 11},
         fn ctx ->
           item = ctx.adapter.resource(:combo_item)
-          record = Ash.get!(item, 11, authorize?: false)
+          record = Ash.get!(item, 11, authorize?: Ash.Conformance.Variant.authorize?())
 
           updated =
             record
-            |> Ash.Changeset.for_update(:update, %{}, authorize?: false)
+            |> Ash.Changeset.for_update(:update, %{},
+              authorize?: Ash.Conformance.Variant.authorize?()
+            )
             |> Ash.Changeset.atomic_update(:value, expr(value * 2 + 1))
-            |> Ash.update!(authorize?: false)
+            |> Ash.update!(authorize?: Ash.Conformance.Variant.authorize?())
 
-          {updated.value, Ash.get!(item, 11, authorize?: false).value}
+          {updated.value,
+           Ash.get!(item, 11, authorize?: Ash.Conformance.Variant.authorize?()).value}
         end,
-        opts(@reads)
+        opts(@reads, @item_policy)
       ),
       # The top two by value are 22 (7) and 15 (6).
       new(
@@ -221,15 +232,18 @@ defmodule Ash.Conformance.Scenarios.Joins do
           item
           |> Ash.Query.sort(value: :desc_nils_last, id: :asc)
           |> Ash.Query.limit(2)
-          |> Ash.bulk_update!(:update, %{status: "top"}, authorize?: false, return_errors?: true)
+          |> Ash.bulk_update!(:update, %{status: "top"},
+            authorize?: Ash.Conformance.Variant.authorize?(),
+            return_errors?: true
+          )
 
           item
           |> Ash.Query.filter(status == "top")
           |> Ash.Query.sort(:id)
-          |> Ash.read!(authorize?: false)
+          |> Ash.read!(authorize?: Ash.Conformance.Variant.authorize?())
           |> Enum.map(& &1.id)
         end,
-        opts(@reads)
+        opts(@reads, @item_policy)
       ),
       # The two lowest values, 14 (1) and 23 (2), are destroyed.
       new(
@@ -242,11 +256,17 @@ defmodule Ash.Conformance.Scenarios.Joins do
           item
           |> Ash.Query.sort(value: :asc_nils_last, id: :asc)
           |> Ash.Query.limit(2)
-          |> Ash.bulk_destroy!(:destroy, %{}, authorize?: false, return_errors?: true)
+          |> Ash.bulk_destroy!(:destroy, %{},
+            authorize?: Ash.Conformance.Variant.authorize?(),
+            return_errors?: true
+          )
 
-          item |> Ash.Query.sort(:id) |> Ash.read!(authorize?: false) |> Enum.map(& &1.id)
+          item
+          |> Ash.Query.sort(:id)
+          |> Ash.read!(authorize?: Ash.Conformance.Variant.authorize?())
+          |> Enum.map(& &1.id)
         end,
-        opts(@reads)
+        opts(@reads, @item_policy)
       ),
       # `sorted?: true` returns records in input order (`Ash.bulk_create/4`).
       new(
@@ -260,7 +280,7 @@ defmodule Ash.Conformance.Scenarios.Joins do
             Ash.bulk_create!(inputs, ctx.adapter.resource(:combo_item), :create,
               return_records?: true,
               sorted?: true,
-              authorize?: false
+              authorize?: Ash.Conformance.Variant.authorize?()
             )
 
           Enum.map(records, & &1.id)
@@ -276,12 +296,14 @@ defmodule Ash.Conformance.Scenarios.Joins do
           input = %{id: 4, label: "owner-4", items: items}
 
           ctx.adapter.resource(:combo_owner)
-          |> Ash.Changeset.for_create(:create_with_items, input, authorize?: false)
-          |> Ash.create!(authorize?: false)
+          |> Ash.Changeset.for_create(:create_with_items, input,
+            authorize?: Ash.Conformance.Variant.authorize?()
+          )
+          |> Ash.create!(authorize?: Ash.Conformance.Variant.authorize?())
 
           item_ids(ctx, 4)
         end,
-        opts(@relationships)
+        opts(@relationships, @item_policy)
       ),
       # Direct control keeps 11, creates 16 and destroys owner 1's other items.
       new(
@@ -293,13 +315,18 @@ defmodule Ash.Conformance.Scenarios.Joins do
           items = [%{id: 11}, %{id: 16, value: 9, status: "open"}]
 
           owner
-          |> Ash.get!(1, authorize?: false)
-          |> Ash.Changeset.for_update(:replace_items, %{items: items}, authorize?: false)
-          |> Ash.update!(authorize?: false)
+          |> Ash.get!(1, authorize?: Ash.Conformance.Variant.authorize?())
+          |> Ash.Changeset.for_update(:replace_items, %{items: items},
+            authorize?: Ash.Conformance.Variant.authorize?()
+          )
+          |> Ash.update!(authorize?: Ash.Conformance.Variant.authorize?())
 
-          {item_ids(ctx, 1), Ash.count!(ctx.adapter.resource(:combo_item), authorize?: false)}
+          {item_ids(ctx, 1),
+           Ash.count!(ctx.adapter.resource(:combo_item),
+             authorize?: Ash.Conformance.Variant.authorize?()
+           )}
         end,
-        opts(@relationships)
+        opts(@relationships, @item_policy)
       )
     ]
   end
@@ -308,7 +335,7 @@ defmodule Ash.Conformance.Scenarios.Joins do
     ctx.adapter.resource(:combo_owner)
     |> Ash.Query.do_filter(expression)
     |> Ash.Query.sort(:id)
-    |> Ash.read!(authorize?: false)
+    |> Ash.read!(authorize?: Ash.Conformance.Variant.authorize?())
     |> Enum.map(& &1.id)
   end
 
@@ -316,7 +343,7 @@ defmodule Ash.Conformance.Scenarios.Joins do
     ctx.adapter.resource(:combo_owner)
     |> Ash.Query.load(field)
     |> Ash.Query.sort(:id)
-    |> Ash.read!(authorize?: false)
+    |> Ash.read!(authorize?: Ash.Conformance.Variant.authorize?())
     |> Map.new(&{&1.id, Map.fetch!(&1, field)})
   end
 
@@ -324,9 +351,10 @@ defmodule Ash.Conformance.Scenarios.Joins do
     ctx.adapter.resource(:combo_item)
     |> Ash.Query.filter(owner_id == ^owner_id)
     |> Ash.Query.sort(:id)
-    |> Ash.read!(authorize?: false)
+    |> Ash.read!(authorize?: Ash.Conformance.Variant.authorize?())
     |> Enum.map(& &1.id)
   end
 
   defp opts(basis), do: [fixture: :joins, semantic_basis: basis]
+  defp opts(basis, variants), do: opts(basis) ++ [variants: variants]
 end

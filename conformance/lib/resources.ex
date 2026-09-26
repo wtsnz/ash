@@ -9,6 +9,9 @@ defmodule Ash.Conformance.Resources do
         use Ash.Conformance.Resources, namespace: MyAdapter, adapter: MyAdapter
       end
 
+  `variants: true` also defines the resource sets `Ash.Conformance.Variant`'s
+  policy variants read from, over the same tables.
+
   Surveyed adapters can instead call `compile!/1` from `setup!/0`. Ash checks a
   resource against its data layer when the resource is defined, and reports
   what the data layer cannot support as warnings; compiling at setup keeps
@@ -16,6 +19,24 @@ defmodule Ash.Conformance.Resources do
   """
 
   defmacro __using__(opts) do
+    {variants?, opts} = Keyword.pop(opts, :variants, false)
+    namespace = opts |> Keyword.fetch!(:namespace) |> Macro.expand(__CALLER__)
+
+    sets =
+      if variants?,
+        do: [
+          opts
+          | for(
+              {_, ns} <- Ash.Conformance.Variant.namespaces(),
+              do: Keyword.put(opts, :namespace, Module.concat(namespace, ns))
+            )
+        ],
+        else: [opts]
+
+    {:__block__, [], Enum.map(sets, &resource_set/1)}
+  end
+
+  defp resource_set(opts) do
     quote do
       use Ash.Conformance.Resources.Aggregate, unquote(opts)
       use Ash.Conformance.Resources.Records, unquote(opts)

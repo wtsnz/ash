@@ -82,6 +82,11 @@ cause.
   feature alone before combining features in pairs, so a combination is
   only blamed when each part works. It runs on SQLite and Postgres for now,
   to keep the six-data-layer run short.
+- **Variants must not change the answer.** On SQLite and Postgres every
+  scenario also runs with authorization on: with no authorizer, with a
+  policy that allows everything, and with a filter policy every row passes.
+  Each must match the scenario's own record, so authorization-only code paths
+  are tested without new expected answers (`Ash.Conformance.Variant`).
 - **Reviewed and surveyed data layers.** Reviewed data layers (SQLite and
   Postgres) have an expectation record for every scenario, and `mix test`
   fails when a result changes, including when a known defect is fixed.

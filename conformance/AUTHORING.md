@@ -65,6 +65,30 @@ unknown IDs and cycles.
 A fixture row that cannot be stored gets its blockers without any
 declaration: the storage cells of the row's types.
 
+### Variants
+
+Every scenario also runs under each `Ash.Conformance.Variant`, on data
+layers whose resources use `variants: true` (SQLite and Postgres):
+`authorize` (`authorize?: true`, no authorizer), `permit_policy` (a policy
+that allows everything) and `filter_policy` (a filter policy every row
+passes). A variant must not change the answer, so a variant cell passes only
+when it matches the scenario's own record. It needs no new expected value.
+
+- Where you would pass `authorize?: false`, pass
+  `authorize?: Ash.Conformance.Variant.authorize?()`. Keep a literal `false`
+  only for reads that check what is stored, or set up the operation, and say
+  so in a comment.
+- Get resources through `ctx.adapter.resource/1`, which picks the variant's
+  resource set.
+- A scenario whose answer rightly changes, such as one that reads a resource
+  with its own policies and no actor, opts out with
+  `variants: {:none, reason}` or `{:except, variants, reason}`. The policy
+  grid, the combination grid and the authorization scenarios have their own
+  authorization axis and don't run variants.
+- When a variant shows a defect the scenario's own record doesn't, record it
+  in the adapter's `variant_rules/0` with `expect_variant/3`, linked to a gap
+  like any other record.
+
 Use `fixture: :aggregate`, `:isolation` or `:context_tenancy`. New fixture builders
 are selected in `Fixtures.build!/2`. Scenario-specific extra setup belongs in
 `Fixtures.prepare!/2`, outside capture. A write that is itself the behavior under

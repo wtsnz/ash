@@ -13,6 +13,13 @@ defmodule Ash.Conformance.Sqlite do
         Ash.Conformance.Sqlite.Expectations.rules()
       )
 
+  def variant_expectations,
+    do:
+      Ash.Conformance.Contracts.Records.resolve_variants(
+        __MODULE__,
+        Ash.Conformance.Sqlite.Expectations.variant_rules()
+      )
+
   def gaps, do: Ash.Conformance.Sqlite.Gaps.all()
   def fixture?(_fixture), do: true
   def instrumentation, do: Ash.Conformance.SQL.Instrumentation
@@ -102,5 +109,6 @@ defmodule Ash.Conformance.Sqlite.Resources do
   @moduledoc "Every shared resource role, instantiated for SQLite."
   use Ash.Conformance.Resources,
     namespace: Ash.Conformance.Sqlite,
-    adapter: Ash.Conformance.Sqlite
+    adapter: Ash.Conformance.Sqlite,
+    variants: true
 end

@@ -44,6 +44,22 @@ defmodule Ash.Conformance.Contracts.SharedGaps do
         """
       },
       %{
+        id: "authorized-action-arguments",
+        title: "Authorized action arguments",
+        kind: :implementation,
+        owners: [:ash],
+        body: ~S"""
+        Keep a prepared query's arguments when authorizing its path. An aggregate
+        whose `query:` is prepared for a read action with arguments
+        (`Ash.Query.for_read(child, :by_label, %{label: "high"})`) works with
+        authorization off. With `authorize?: true`, even on resources with no
+        authorizer, Ash raises "argument label is required": `relationship_query/6`
+        in `Ash.Filter` takes the action name from the prepared query but builds a
+        new query with only the relationship's `read_action_arguments`. Reproduced on
+        ETS. Found by the `authorize` variant (`context.prepared_query_arguments`).
+        """
+      },
+      %{
         id: "in-list-nil",
         title: "In list nil",
         kind: :decision,

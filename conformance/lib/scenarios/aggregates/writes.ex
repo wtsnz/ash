@@ -18,7 +18,10 @@ defmodule Ash.Conformance.Scenarios.Aggregates.Writes do
         fn ctx ->
           ctx.parent
           |> Ash.Query.filter(child_sum > 5)
-          |> Ash.bulk_update!(:relabel, %{label: "big"}, strategy: :atomic, authorize?: false)
+          |> Ash.bulk_update!(:relabel, %{label: "big"},
+            strategy: :atomic,
+            authorize?: Ash.Conformance.Variant.authorize?()
+          )
 
           parents(ctx, &{&1.id, &1.label})
         end
@@ -26,22 +29,28 @@ defmodule Ash.Conformance.Scenarios.Aggregates.Writes do
       new("write.bulk_destroy_filter", :writes, [1, 2], fn ctx ->
         ctx.parent
         |> Ash.Query.filter(child_count == 0)
-        |> Ash.bulk_destroy!(:destroy, %{}, strategy: :atomic, authorize?: false)
+        |> Ash.bulk_destroy!(:destroy, %{},
+          strategy: :atomic,
+          authorize?: Ash.Conformance.Variant.authorize?()
+        )
 
         parents(ctx, & &1.id)
       end),
       new("write.atomic_update", :writes, [{1, 4}, {2, 1}, {3, 0}], fn ctx ->
         Ash.bulk_update!(ctx.parent, :record_child_count, %{},
           strategy: :atomic,
-          authorize?: false
+          authorize?: Ash.Conformance.Variant.authorize?()
         )
 
         parents(ctx, &{&1.id, &1.threshold})
       end),
       new("write.single_atomic_update", :writes, 1, fn ctx ->
         ctx.parent
-        |> Ash.get!(2, authorize?: false)
-        |> Ash.update!(%{}, action: :record_child_count, authorize?: false)
+        |> Ash.get!(2, authorize?: Ash.Conformance.Variant.authorize?())
+        |> Ash.update!(%{},
+          action: :record_child_count,
+          authorize?: Ash.Conformance.Variant.authorize?()
+        )
         |> Map.fetch!(:threshold)
       end)
     ]
@@ -50,7 +59,7 @@ defmodule Ash.Conformance.Scenarios.Aggregates.Writes do
   defp parents(ctx, fun) do
     ctx.parent
     |> Ash.Query.sort(:id)
-    |> Ash.read!(authorize?: false)
+    |> Ash.read!(authorize?: Ash.Conformance.Variant.authorize?())
     |> Enum.map(fun)
   end
 end

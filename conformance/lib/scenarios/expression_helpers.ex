@@ -48,7 +48,7 @@ defmodule Ash.Conformance.Scenarios.ExpressionHelpers do
       ctx.adapter.resource(:expr_row)
       |> Ash.Query.calculate(:result, type, expression, %{}, constraints)
       |> Ash.Query.sort(:id)
-      |> Ash.read!(authorize?: false)
+      |> Ash.read!(authorize?: Ash.Conformance.Variant.authorize?())
       |> Map.new(&{&1.id, project(&1.calculations.result)})
     end
   end
@@ -57,7 +57,7 @@ defmodule Ash.Conformance.Scenarios.ExpressionHelpers do
     ctx.adapter.resource(:expr_row)
     |> Ash.Query.do_filter(expression)
     |> Ash.Query.sort(:id)
-    |> Ash.read!(authorize?: false)
+    |> Ash.read!(authorize?: Ash.Conformance.Variant.authorize?())
     |> Enum.map(& &1.id)
   end
 

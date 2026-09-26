@@ -111,7 +111,7 @@ defmodule Ash.Conformance.Scenarios.Aggregates.Results do
               {:first, :first, field: :value, query: [sort: [value: :asc]]},
               {:exists, :exists}
             ],
-            authorize?: false
+            authorize?: Ash.Conformance.Variant.authorize?()
           )
         end
       ),
@@ -138,7 +138,7 @@ defmodule Ash.Conformance.Scenarios.Aggregates.Results do
         query =
           selected_parent(ctx) |> Ash.Query.aggregate(:total, :sum, :children, field: :value)
 
-        original = Ash.read_one!(query, authorize?: false)
+        original = Ash.read_one!(query, authorize?: Ash.Conformance.Variant.authorize?())
 
         replaced =
           query
@@ -146,7 +146,7 @@ defmodule Ash.Conformance.Scenarios.Aggregates.Results do
             field: :value,
             query: [filter: [value: [gt: 3]]]
           )
-          |> Ash.read_one!(authorize?: false)
+          |> Ash.read_one!(authorize?: Ash.Conformance.Variant.authorize?())
 
         {original.aggregates.total, replaced.aggregates.total}
       end),
@@ -154,7 +154,7 @@ defmodule Ash.Conformance.Scenarios.Aggregates.Results do
         result =
           selected_parent(ctx)
           |> Ash.Query.aggregate("total", :sum, :children, field: :value)
-          |> Ash.read_one!(authorize?: false)
+          |> Ash.read_one!(authorize?: Ash.Conformance.Variant.authorize?())
 
         result.aggregates["total"]
       end)
@@ -192,7 +192,7 @@ defmodule Ash.Conformance.Scenarios.Aggregates.Results do
         fn ctx ->
           ctx.parent
           |> Ash.Query.aggregate(:result, :sum, :children, field: :value, uniq?: true)
-          |> Ash.read!(authorize?: false)
+          |> Ash.read!(authorize?: Ash.Conformance.Variant.authorize?())
         end,
         semantic_basis: "../lib/ash/query/aggregate.ex"
       )

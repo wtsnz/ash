@@ -307,7 +307,9 @@ defmodule Ash.Conformance.Storage do
     plan = [
       create: fn ->
         Enum.each(Enum.zip(ids, values), fn {id, value} ->
-          Ash.create!(resource, %{id: id, value: value}, authorize?: false)
+          Ash.create!(resource, %{id: id, value: value},
+            authorize?: Ash.Conformance.Variant.authorize?()
+          )
         end)
       end,
       read: fn -> check(resource, attribute, values) end,
@@ -348,12 +350,12 @@ defmodule Ash.Conformance.Storage do
     |> read!()
     |> Enum.zip(values)
     |> Enum.each(fn {record, value} ->
-      Ash.update!(record, %{value: value}, authorize?: false)
+      Ash.update!(record, %{value: value}, authorize?: Ash.Conformance.Variant.authorize?())
     end)
   end
 
   defp read!(resource) do
-    resource |> Ash.Query.sort(:id) |> Ash.read!(authorize?: false)
+    resource |> Ash.Query.sort(:id) |> Ash.read!(authorize?: Ash.Conformance.Variant.authorize?())
   end
 
   # A fresh read of every row, compared value by value with what was written.

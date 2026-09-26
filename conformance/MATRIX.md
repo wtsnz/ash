@@ -48,12 +48,12 @@ Elixir scenarios and expectations define the contract. CI runs each adapter inde
 | [`bounds.unsorted_limit`](lib/scenarios/aggregates/bounds.ex#L30) | [known_defect](GAPS.md#unsorted-bounds) · AshSQL | supported |
 | [`bulk.atomic_increment`](lib/scenarios/writes.ex#L137) | supported | supported |
 | [`bulk.partial_success`](lib/scenarios/writes.ex#L99) | supported | supported |
-| [`calc.aggregate_over_calculation`](lib/scenarios/joins.ex#L144) | supported | supported |
-| [`calc.argument_filter`](lib/scenarios/joins.ex#L165) | supported | supported |
-| [`calc.argument_sort`](lib/scenarios/joins.ex#L178) | supported | supported |
-| [`calc.filter_over_aggregate`](lib/scenarios/joins.ex#L158) | supported | supported |
-| [`calc.in_memory`](lib/scenarios/querying.ex#L226) | supported | supported |
-| [`calc.over_aggregate`](lib/scenarios/joins.ex#L151) | supported | supported |
+| [`calc.aggregate_over_calculation`](lib/scenarios/joins.ex#L152) | supported | supported |
+| [`calc.argument_filter`](lib/scenarios/joins.ex#L173) | supported | supported |
+| [`calc.argument_sort`](lib/scenarios/joins.ex#L186) | supported | supported |
+| [`calc.filter_over_aggregate`](lib/scenarios/joins.ex#L166) | supported | supported |
+| [`calc.in_memory`](lib/scenarios/querying.ex#L227) | supported | supported |
+| [`calc.over_aggregate`](lib/scenarios/joins.ex#L159) | supported | supported |
 | [`combo.base`](lib/scenarios/combinations.ex#L27) | supported | supported |
 | [`combo.count.linked_items.value_gt.tenant.off.page`](lib/scenarios/combinations.ex#L27) | supported | supported |
 | [`combo.count.top_items.none.tenant.off.filter`](lib/scenarios/combinations.ex#L27) | supported | supported |
@@ -87,23 +87,23 @@ Elixir scenarios and expectations define the contract. CI runs each adapter inde
 | [`combo.use.sort`](lib/scenarios/combinations.ex#L27) | supported | supported |
 | [`context.actor`](lib/scenarios/aggregates/context.ex#L54) | supported | supported |
 | [`context.arguments`](lib/scenarios/aggregates/context.ex#L15) | supported | supported |
-| [`context.attribute_tenant`](lib/scenarios/aggregates/context.ex#L67) | supported | supported |
-| [`context.authorization`](lib/scenarios/aggregates/context.ex#L91) | supported | supported |
-| [`context.authorization_before_bounds`](lib/scenarios/aggregates/context.ex#L94) | [known_defect](GAPS.md#authorization-bounds) · Ash | [known_defect](GAPS.md#authorization-bounds) · Ash |
-| [`context.authorization_bounds_control`](lib/scenarios/aggregates/context.ex#L103) | supported | supported |
-| [`context.bypass_sibling`](lib/scenarios/aggregates/context.ex#L73) | supported | [known_defect](GAPS.md#tenant-bypass) · AshSQL |
-| [`context.intermediate_action`](lib/scenarios/aggregates/context.ex#L61) | supported | supported |
-| [`context.intermediate_actor`](lib/scenarios/aggregates/context.ex#L64) | supported | supported |
+| [`context.attribute_tenant`](lib/scenarios/aggregates/context.ex#L71) | supported | supported |
+| [`context.authorization`](lib/scenarios/aggregates/context.ex#L95) | supported | supported |
+| [`context.authorization_before_bounds`](lib/scenarios/aggregates/context.ex#L98) | [known_defect](GAPS.md#authorization-bounds) · Ash | [known_defect](GAPS.md#authorization-bounds) · Ash |
+| [`context.authorization_bounds_control`](lib/scenarios/aggregates/context.ex#L107) | supported | supported |
+| [`context.bypass_sibling`](lib/scenarios/aggregates/context.ex#L77) | supported | [known_defect](GAPS.md#tenant-bypass) · AshSQL |
+| [`context.intermediate_action`](lib/scenarios/aggregates/context.ex#L65) | supported | supported |
+| [`context.intermediate_actor`](lib/scenarios/aggregates/context.ex#L68) | supported | supported |
 | [`context.prepared_context_control`](lib/scenarios/aggregates/context.ex#L46) | supported | supported |
 | [`context.prepared_query_arguments`](lib/scenarios/aggregates/context.ex#L57) | supported | [known_defect](GAPS.md#prepared-query) · AshSQL |
 | [`context.read_action`](lib/scenarios/aggregates/context.ex#L12) | supported | supported |
 | [`context.relationship_context`](lib/scenarios/aggregates/context.ex#L18) | [known_defect](GAPS.md#relationship-context) · Ash | [known_defect](GAPS.md#relationship-context) · Ash |
 | [`context.relationship_context_control`](lib/scenarios/aggregates/context.ex#L27) | [known_defect](GAPS.md#relationship-context) · Ash | [known_defect](GAPS.md#relationship-context) · Ash |
 | [`context.shared`](lib/scenarios/aggregates/context.ex#L36) | supported | supported |
-| [`context.tenant_bypass`](lib/scenarios/aggregates/context.ex#L70) | supported | [known_defect](GAPS.md#tenant-bypass) · AshSQL |
-| [`context.through_arguments`](lib/scenarios/aggregates/context.ex#L82) | supported | supported |
-| [`context.through_bypass`](lib/scenarios/aggregates/context.ex#L88) | supported | [known_defect](GAPS.md#tenant-bypass) · AshSQL |
-| [`context.through_tenant`](lib/scenarios/aggregates/context.ex#L85) | supported | supported |
+| [`context.tenant_bypass`](lib/scenarios/aggregates/context.ex#L74) | supported | [known_defect](GAPS.md#tenant-bypass) · AshSQL |
+| [`context.through_arguments`](lib/scenarios/aggregates/context.ex#L86) | supported | supported |
+| [`context.through_bypass`](lib/scenarios/aggregates/context.ex#L92) | supported | [known_defect](GAPS.md#tenant-bypass) · AshSQL |
+| [`context.through_tenant`](lib/scenarios/aggregates/context.ex#L89) | supported | supported |
 | [`equivalence.root_reference`](lib/scenarios/consistency.ex#L35) | supported | supported |
 | [`equivalence.visible_count_load`](lib/scenarios/consistency.ex#L21) | supported | supported |
 | [`expr.add`](lib/scenarios/expressions.ex#L39) | supported | supported |
@@ -137,9 +137,9 @@ Elixir scenarios and expectations define the contract. CI runs each adapter inde
 | [`expr.string_trim`](lib/scenarios/expressions.ex#L84) | supported | supported |
 | [`expr.subtract`](lib/scenarios/expressions.ex#L40) | supported | supported |
 | [`expr.type_to_string`](lib/scenarios/expressions.ex#L108) | supported | supported |
-| [`field.aggregate`](lib/scenarios/aggregates/usage.ex#L47) | supported | supported |
-| [`field.calculation`](lib/scenarios/aggregates/usage.ex#L44) | supported | supported |
-| [`field.root_aggregate`](lib/scenarios/aggregates/usage.ex#L50) | supported | supported |
+| [`field.aggregate`](lib/scenarios/aggregates/usage.ex#L50) | supported | supported |
+| [`field.calculation`](lib/scenarios/aggregates/usage.ex#L47) | supported | supported |
+| [`field.root_aggregate`](lib/scenarios/aggregates/usage.ex#L53) | supported | supported |
 | [`filter.aggregate_dependency`](lib/scenarios/aggregates/filters.ex#L24) | [unsupported](GAPS.md#filter-dependencies) · AshSQL | supported |
 | [`filter.aggregate_dependency_calculation`](lib/scenarios/aggregates/filters.ex#L55) | [unsupported](GAPS.md#filter-dependencies) · AshSQL | supported |
 | [`filter.aggregate_dependency_filtered`](lib/scenarios/aggregates/filters.ex#L39) | [unsupported](GAPS.md#filter-dependencies) · AshSQL | supported |
@@ -209,9 +209,9 @@ Elixir scenarios and expectations define the contract. CI runs each adapter inde
 | [`large.bulk_create_parameters`](lib/scenarios/large.ex#L45) | [known_defect](GAPS.md#bind-parameter-limit) · AshSQL | [known_defect](GAPS.md#bind-parameter-limit) · AshSQL |
 | [`large.in_list`](lib/scenarios/large.ex#L22) | supported | supported |
 | [`large.in_list_strings`](lib/scenarios/large.ex#L32) | supported | supported |
-| [`large.keyset_walk`](lib/scenarios/large.ex#L76) | supported | supported |
-| [`large.offset_deep`](lib/scenarios/large.ex#L60) | supported | supported |
-| [`large.sum`](lib/scenarios/large.ex#L92) | supported | supported |
+| [`large.keyset_walk`](lib/scenarios/large.ex#L82) | supported | supported |
+| [`large.offset_deep`](lib/scenarios/large.ex#L63) | supported | supported |
+| [`large.sum`](lib/scenarios/large.ex#L98) | supported | supported |
 | [`load.belongs_to`](lib/scenarios/relationships.ex#L20) | supported | supported |
 | [`load.has_many`](lib/scenarios/relationships.ex#L44) | supported | supported |
 | [`load.has_one`](lib/scenarios/relationships.ex#L32) | supported | supported |
@@ -396,10 +396,10 @@ Elixir scenarios and expectations define the contract. CI runs each adapter inde
 | [`ordering.asc_nils_last`](lib/scenarios/aggregates/results.ex#L171) | supported | supported |
 | [`ordering.desc_nils_first`](lib/scenarios/aggregates/results.ex#L171) | supported | supported |
 | [`ordering.desc_nils_last`](lib/scenarios/aggregates/results.ex#L171) | supported | supported |
-| [`ordering.expression_first`](lib/scenarios/aggregates/usage.ex#L53) | supported | supported |
-| [`ordering.expression_list`](lib/scenarios/aggregates/usage.ex#L59) | supported | supported |
+| [`ordering.expression_first`](lib/scenarios/aggregates/usage.ex#L58) | supported | supported |
+| [`ordering.expression_list`](lib/scenarios/aggregates/usage.ex#L64) | supported | supported |
 | [`ordering.list_desc`](lib/scenarios/aggregates/results.ex#L61) | supported | supported |
-| [`ordering.ties`](lib/scenarios/aggregates/usage.ex#L65) | supported | supported |
+| [`ordering.ties`](lib/scenarios/aggregates/usage.ex#L70) | supported | supported |
 | [`ordering.unique_other_field`](lib/scenarios/aggregates/bounds.ex#L92) | [unresolved](GAPS.md#unique-list-order) · Ash | [unresolved](GAPS.md#unique-list-order) · Ash |
 | [`path.final_many_to_many_custom`](lib/scenarios/aggregates/paths.ex#L83) | [unsupported](GAPS.md#many-to-many-paths) · AshSQL | supported |
 | [`path.final_many_to_many_first`](lib/scenarios/aggregates/paths.ex#L67) | [unsupported](GAPS.md#many-to-many-paths) · AshSQL | supported |
@@ -636,30 +636,30 @@ Elixir scenarios and expectations define the contract. CI runs each adapter inde
 | [`policy.strict_admin.offset_page`](lib/scenarios/policies.ex#L23) | supported | supported |
 | [`policy.strict_admin.read`](lib/scenarios/policies.ex#L23) | supported | supported |
 | [`policy.strict_admin.sum`](lib/scenarios/policies.ex#L23) | supported | supported |
-| [`query.distinct`](lib/scenarios/querying.ex#L169) | [unsupported](GAPS.md#query-distinct) · AshSQLite | supported |
-| [`query.except`](lib/scenarios/querying.ex#L216) | [unsupported](GAPS.md#query-combinations) · AshSQLite | supported |
-| [`query.intersect`](lib/scenarios/querying.ex#L209) | [unsupported](GAPS.md#query-combinations) · AshSQLite | supported |
-| [`query.lock_for_update`](lib/scenarios/transactions.ex#L92) | [unsupported](GAPS.md#row-locks) · AshSQLite | supported |
-| [`query.union`](lib/scenarios/querying.ex#L183) | [unsupported](GAPS.md#query-combinations) · AshSQLite | supported |
-| [`query.union_all`](lib/scenarios/querying.ex#L202) | [unsupported](GAPS.md#query-combinations) · AshSQLite | supported |
+| [`query.distinct`](lib/scenarios/querying.ex#L170) | [unsupported](GAPS.md#query-distinct) · AshSQLite | supported |
+| [`query.except`](lib/scenarios/querying.ex#L217) | [unsupported](GAPS.md#query-combinations) · AshSQLite | supported |
+| [`query.intersect`](lib/scenarios/querying.ex#L210) | [unsupported](GAPS.md#query-combinations) · AshSQLite | supported |
+| [`query.lock_for_update`](lib/scenarios/transactions.ex#L103) | [unsupported](GAPS.md#row-locks) · AshSQLite | supported |
+| [`query.union`](lib/scenarios/querying.ex#L184) | [unsupported](GAPS.md#query-combinations) · AshSQLite | supported |
+| [`query.union_all`](lib/scenarios/querying.ex#L203) | [unsupported](GAPS.md#query-combinations) · AshSQLite | supported |
 | [`query.uniq_sum_rejected`](lib/scenarios/aggregates/results.ex#L187) | supported | supported |
-| [`read.join_count`](lib/scenarios/joins.ex#L74) | supported | supported |
-| [`read.join_exists_or`](lib/scenarios/joins.ex#L59) | supported | supported |
-| [`read.join_limit`](lib/scenarios/joins.ex#L96) | [known_defect](GAPS.md#sorted-distinct-reads) · AshSQLite | supported |
-| [`read.join_many_to_many_count`](lib/scenarios/joins.ex#L85) | supported | supported |
-| [`read.join_negated`](lib/scenarios/joins.ex#L67) | [known_defect](GAPS.md#sorted-distinct-reads) · AshSQLite | supported |
-| [`read.join_or_paths`](lib/scenarios/joins.ex#L44) | [known_defect](GAPS.md#sorted-distinct-reads) · AshSQLite | supported |
-| [`read.join_page`](lib/scenarios/joins.ex#L110) | [known_defect](GAPS.md#sorted-distinct-reads) · AshSQLite | supported |
-| [`read.join_same_row`](lib/scenarios/joins.ex#L52) | supported | supported |
-| [`read.join_to_many`](lib/scenarios/joins.ex#L43) | [known_defect](GAPS.md#sorted-distinct-reads) · AshSQLite | supported |
+| [`read.join_count`](lib/scenarios/joins.ex#L79) | supported | supported |
+| [`read.join_exists_or`](lib/scenarios/joins.ex#L64) | supported | supported |
+| [`read.join_limit`](lib/scenarios/joins.ex#L101) | [known_defect](GAPS.md#sorted-distinct-reads) · AshSQLite | supported |
+| [`read.join_many_to_many_count`](lib/scenarios/joins.ex#L90) | supported | supported |
+| [`read.join_negated`](lib/scenarios/joins.ex#L72) | [known_defect](GAPS.md#sorted-distinct-reads) · AshSQLite | supported |
+| [`read.join_or_paths`](lib/scenarios/joins.ex#L49) | [known_defect](GAPS.md#sorted-distinct-reads) · AshSQLite | supported |
+| [`read.join_page`](lib/scenarios/joins.ex#L115) | [known_defect](GAPS.md#sorted-distinct-reads) · AshSQLite | supported |
+| [`read.join_same_row`](lib/scenarios/joins.ex#L57) | supported | supported |
+| [`read.join_to_many`](lib/scenarios/joins.ex#L48) | [known_defect](GAPS.md#sorted-distinct-reads) · AshSQLite | supported |
 | [`read.selection_expression`](lib/scenarios/consistency.ex#L51) | supported | supported |
-| [`read.sort_to_one`](lib/scenarios/joins.ex#L126) | supported | supported |
-| [`record.atomic_update`](lib/scenarios/records.ex#L68) | supported | supported |
-| [`record.calculation_argument`](lib/scenarios/querying.ex#L156) | supported | supported |
-| [`record.calculation_load`](lib/scenarios/querying.ex#L142) | supported | supported |
+| [`read.sort_to_one`](lib/scenarios/joins.ex#L134) | supported | supported |
+| [`record.atomic_update`](lib/scenarios/records.ex#L78) | supported | supported |
+| [`record.calculation_argument`](lib/scenarios/querying.ex#L157) | supported | supported |
+| [`record.calculation_load`](lib/scenarios/querying.ex#L143) | supported | supported |
 | [`record.count`](lib/scenarios/querying.ex#L107) | supported | supported |
 | [`record.create`](lib/scenarios/records.ex#L44) | supported | supported |
-| [`record.destroy`](lib/scenarios/records.ex#L64) | supported | supported |
+| [`record.destroy`](lib/scenarios/records.ex#L71) | supported | supported |
 | [`record.filter_array_member`](lib/scenarios/querying.ex#L56) | supported | supported |
 | [`record.filter_atom`](lib/scenarios/querying.ex#L34) | supported | supported |
 | [`record.filter_atom_as_string`](lib/scenarios/querying.ex#L36) | supported | supported |
@@ -684,14 +684,14 @@ Elixir scenarios and expectations define the contract. CI runs each adapter inde
 | [`record.filter_unicode`](lib/scenarios/querying.ex#L54) | supported | supported |
 | [`record.get_identity`](lib/scenarios/records.ex#L26) | supported | supported |
 | [`record.get_primary_key`](lib/scenarios/records.ex#L23) | supported | supported |
-| [`record.identity_conflict`](lib/scenarios/records.ex#L112) | supported | supported |
-| [`record.invalid_value`](lib/scenarios/records.ex#L96) | supported | supported |
-| [`record.keyset_pages`](lib/scenarios/querying.ex#L135) | supported | supported |
+| [`record.identity_conflict`](lib/scenarios/records.ex#L126) | supported | supported |
+| [`record.invalid_value`](lib/scenarios/records.ex#L106) | supported | supported |
+| [`record.keyset_pages`](lib/scenarios/querying.ex#L136) | supported | supported |
 | [`record.limit_offset`](lib/scenarios/querying.ex#L104) | supported | supported |
-| [`record.not_found`](lib/scenarios/records.ex#L89) | supported | supported |
-| [`record.offset_pages`](lib/scenarios/querying.ex#L121) | supported | supported |
+| [`record.not_found`](lib/scenarios/records.ex#L99) | supported | supported |
+| [`record.offset_pages`](lib/scenarios/querying.ex#L122) | supported | supported |
 | [`record.read_all`](lib/scenarios/records.ex#L22) | supported | supported |
-| [`record.required`](lib/scenarios/records.ex#L105) | supported | supported |
+| [`record.required`](lib/scenarios/records.ex#L117) | supported | supported |
 | [`record.select`](lib/scenarios/records.ex#L35) | supported | supported |
 | [`record.sort_asc_nils_first`](lib/scenarios/querying.ex#L78) | supported | supported |
 | [`record.sort_calculation`](lib/scenarios/querying.ex#L93) | supported | supported |
@@ -700,7 +700,7 @@ Elixir scenarios and expectations define the contract. CI runs each adapter inde
 | [`record.sort_desc_nils_last`](lib/scenarios/querying.ex#L74) | supported | supported |
 | [`record.sort_string`](lib/scenarios/querying.ex#L88) | supported | supported |
 | [`record.sort_tie_break`](lib/scenarios/querying.ex#L82) | supported | supported |
-| [`record.stream`](lib/scenarios/querying.ex#L114) | supported | supported |
+| [`record.stream`](lib/scenarios/querying.ex#L115) | supported | supported |
 | [`record.types_array`](lib/scenarios/types.ex#L40) | supported | supported |
 | [`record.types_embedded`](lib/scenarios/types.ex#L46) | supported | supported |
 | [`record.types_map`](lib/scenarios/types.ex#L42) | supported | supported |
@@ -710,8 +710,8 @@ Elixir scenarios and expectations define the contract. CI runs each adapter inde
 | [`record.types_strings`](lib/scenarios/types.ex#L39) | supported | supported |
 | [`record.types_temporal`](lib/scenarios/types.ex#L31) | supported | supported |
 | [`record.types_uuid`](lib/scenarios/types.ex#L37) | supported | supported |
-| [`record.update`](lib/scenarios/records.ex#L48) | supported | supported |
-| [`record.update_to_nil`](lib/scenarios/records.ex#L56) | supported | supported |
+| [`record.update`](lib/scenarios/records.ex#L52) | supported | supported |
+| [`record.update_to_nil`](lib/scenarios/records.ex#L63) | supported | supported |
 | [`root.avg`](lib/scenarios/aggregates/kinds.ex#L48) | supported | supported |
 | [`root.count`](lib/scenarios/aggregates/kinds.ex#L48) | supported | supported |
 | [`root.custom`](lib/scenarios/aggregates/kinds.ex#L48) | [unsupported](GAPS.md#root-kinds) · AshSQL | supported |
@@ -816,8 +816,8 @@ Elixir scenarios and expectations define the contract. CI runs each adapter inde
 | [`tenant.write_bulk_destroy`](lib/scenarios/tenancy.ex#L232) | supported | supported |
 | [`tenant.write_local_identity`](lib/scenarios/tenancy.ex#L216) | supported | supported |
 | [`txn.after_action_rollback`](lib/scenarios/transactions.ex#L26) | supported | supported |
-| [`txn.commit`](lib/scenarios/transactions.ex#L77) | supported | supported |
-| [`txn.explicit_rollback`](lib/scenarios/transactions.ex#L62) | supported | supported |
+| [`txn.commit`](lib/scenarios/transactions.ex#L83) | supported | supported |
+| [`txn.explicit_rollback`](lib/scenarios/transactions.ex#L65) | supported | supported |
 | [`txn.raise_rollback`](lib/scenarios/transactions.ex#L43) | supported | supported |
 | [`upsert.bulk`](lib/scenarios/writes.ex#L46) | supported | supported |
 | [`upsert.condition`](lib/scenarios/writes.ex#L60) | [known_defect](GAPS.md#upsert-conditions) · AshSQLite | supported |
@@ -827,19 +827,19 @@ Elixir scenarios and expectations define the contract. CI runs each adapter inde
 | [`upsert.skipped_record`](lib/scenarios/writes.ex#L77) | [known_defect](GAPS.md#upsert-conditions) · AshSQLite | [known_defect](GAPS.md#skipped-upsert-tenant) · AshPostgres |
 | [`upsert.tenant_identity`](lib/scenarios/writes.ex#L30) | supported | supported |
 | [`use.calculation`](lib/scenarios/aggregates/usage.ex#L28) | supported | supported |
-| [`use.fanout_count`](lib/scenarios/aggregates/usage.ex#L130) | supported | supported |
-| [`use.fanout_read_page`](lib/scenarios/aggregates/usage.ex#L135) | [known_defect](GAPS.md#sorted-distinct-reads) · AshSQLite | supported |
+| [`use.fanout_count`](lib/scenarios/aggregates/usage.ex#L143) | supported | supported |
+| [`use.fanout_read_page`](lib/scenarios/aggregates/usage.ex#L148) | [known_defect](GAPS.md#sorted-distinct-reads) · AshSQLite | supported |
 | [`use.filter`](lib/scenarios/aggregates/usage.ex#L16) | supported | supported |
-| [`use.keyset_pagination`](lib/scenarios/aggregates/usage.ex#L106) | supported | supported |
-| [`use.nested_limited_load`](lib/scenarios/aggregates/usage.ex#L117) | supported | supported |
+| [`use.keyset_pagination`](lib/scenarios/aggregates/usage.ex#L111) | supported | supported |
+| [`use.nested_limited_load`](lib/scenarios/aggregates/usage.ex#L130) | supported | supported |
 | [`use.pagination`](lib/scenarios/aggregates/usage.ex#L34) | supported | supported |
 | [`use.parent_filter`](lib/scenarios/aggregates/filters.ex#L261) | [unsupported](GAPS.md#parent-correlation) · AshSQL | supported |
 | [`use.parent_sort`](lib/scenarios/aggregates/filters.ex#L268) | [unsupported](GAPS.md#parent-correlation) · AshSQL | supported |
-| [`use.related_exists`](lib/scenarios/aggregates/usage.ex#L86) | supported | supported |
-| [`use.related_filter`](lib/scenarios/aggregates/usage.ex#L79) | supported | supported |
+| [`use.related_exists`](lib/scenarios/aggregates/usage.ex#L91) | supported | supported |
+| [`use.related_filter`](lib/scenarios/aggregates/usage.ex#L84) | supported | supported |
 | [`use.sort`](lib/scenarios/aggregates/usage.ex#L22) | supported | supported |
-| [`use.to_one_filter`](lib/scenarios/aggregates/usage.ex#L93) | supported | supported |
-| [`use.to_one_sort`](lib/scenarios/aggregates/usage.ex#L100) | supported | supported |
+| [`use.to_one_filter`](lib/scenarios/aggregates/usage.ex#L98) | supported | supported |
+| [`use.to_one_sort`](lib/scenarios/aggregates/usage.ex#L105) | supported | supported |
 | [`values.constrained_scalar`](lib/scenarios/aggregates/results.ex#L71) | supported | supported |
 | [`values.date_list`](lib/scenarios/aggregates/types.ex#L117) | supported | supported |
 | [`values.date_list_desc`](lib/scenarios/aggregates/types.ex#L126) | supported | supported |
@@ -867,17 +867,17 @@ Elixir scenarios and expectations define the contract. CI runs each adapter inde
 | [`values.string_name`](lib/scenarios/aggregates/results.ex#L153) | supported | supported |
 | [`values.temporal_read_control`](lib/scenarios/aggregates/types.ex#L83) | supported | supported |
 | [`values.time_min`](lib/scenarios/aggregates/types.ex#L162) | supported | supported |
-| [`write.atomic_expression`](lib/scenarios/joins.ex#L195) | supported | supported |
-| [`write.atomic_update`](lib/scenarios/aggregates/writes.ex#L33) | supported | supported |
-| [`write.bulk_create_sorted`](lib/scenarios/joins.ex#L252) | supported | supported |
-| [`write.bulk_destroy_filter`](lib/scenarios/aggregates/writes.ex#L26) | supported | supported |
-| [`write.bulk_destroy_sorted_limit`](lib/scenarios/joins.ex#L235) | supported | supported |
+| [`write.atomic_expression`](lib/scenarios/joins.ex#L203) | supported | supported |
+| [`write.atomic_update`](lib/scenarios/aggregates/writes.ex#L39) | supported | supported |
+| [`write.bulk_create_sorted`](lib/scenarios/joins.ex#L272) | supported | supported |
+| [`write.bulk_destroy_filter`](lib/scenarios/aggregates/writes.ex#L29) | supported | supported |
+| [`write.bulk_destroy_sorted_limit`](lib/scenarios/joins.ex#L249) | supported | supported |
 | [`write.bulk_update_filter`](lib/scenarios/aggregates/writes.ex#L14) | supported | supported |
-| [`write.bulk_update_sorted_limit`](lib/scenarios/joins.ex#L214) | supported | supported |
+| [`write.bulk_update_sorted_limit`](lib/scenarios/joins.ex#L225) | supported | supported |
 | [`write.lifecycle`](lib/scenarios/tenancy.ex#L194) | supported | supported |
-| [`write.manage_create`](lib/scenarios/joins.ex#L270) | supported | supported |
-| [`write.manage_direct_control`](lib/scenarios/joins.ex#L287) | supported | supported |
-| [`write.single_atomic_update`](lib/scenarios/aggregates/writes.ex#L41) | supported | supported |
+| [`write.manage_create`](lib/scenarios/joins.ex#L290) | supported | supported |
+| [`write.manage_direct_control`](lib/scenarios/joins.ex#L309) | supported | supported |
+| [`write.single_atomic_update`](lib/scenarios/aggregates/writes.ex#L47) | supported | supported |
 
 ## Gaps by owner
 
@@ -885,6 +885,7 @@ The first owner is where the fix starts. Counts are scenarios linked to each gap
 
 | Gap | Owner | Kind | sqlite | postgres |
 | --- | --- | --- | ---: | ---: |
+| [authorized-action-arguments](GAPS.md#authorized-action-arguments) | Ash | implementation | 0 | 0 |
 | [bulk-stream-forbidden](GAPS.md#bulk-stream-forbidden) | Ash | implementation | 2 | 0 |
 | [decimal-avg](GAPS.md#decimal-avg) | Ash | decision | 1 | 1 |
 | [in-list-nil](GAPS.md#in-list-nil) | Ash | decision | 1 | 1 |

@@ -214,19 +214,24 @@ defmodule Ash.Conformance.Operations do
         :gt -> Ash.Query.filter(resource, value > ^probe)
       end
 
-    query |> Ash.read!(authorize?: false) |> Enum.map(& &1.id) |> Enum.sort()
+    query
+    |> Ash.read!(authorize?: Ash.Conformance.Variant.authorize?())
+    |> Enum.map(& &1.id)
+    |> Enum.sort()
   end
 
   defp sorted(resource) do
     resource
     |> Ash.Query.sort(value: :asc_nils_last, id: :asc)
-    |> Ash.read!(authorize?: false)
+    |> Ash.read!(authorize?: Ash.Conformance.Variant.authorize?())
     |> Enum.map(& &1.id)
   end
 
   defp aggregate(resource, kind, opts \\ []) do
     resource
-    |> Ash.aggregate!([{:result, kind, [field: :value] ++ opts}], authorize?: false)
+    |> Ash.aggregate!([{:result, kind, [field: :value] ++ opts}],
+      authorize?: Ash.Conformance.Variant.authorize?()
+    )
     |> Map.fetch!(:result)
   end
 

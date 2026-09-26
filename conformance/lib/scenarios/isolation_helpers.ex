@@ -22,6 +22,7 @@ defmodule Ash.Conformance.Scenarios.IsolationHelpers do
       if local_ids, do: Ash.Query.filter(query, local_id in ^local_ids), else: query
     end)
     |> Ash.Query.sort(:local_id)
+    # Checks what is stored, so it stays unauthorized under every variant.
     |> Ash.read!(authorize?: false)
     |> Enum.map(&{&1.local_id, &1.value})
   end

@@ -14,6 +14,9 @@ defmodule Ash.Conformance.Scenario do
   runs the same path without the feature under test, or a tier-1 storage
   cell (`Ash.Conformance.Storage.stored/2`). When this scenario fails and a
   prerequisite fails too, reports label it as blocked by that prerequisite.
+
+  `variants:` opts out of `Ash.Conformance.Variant` runs whose answer would
+  legitimately differ: `{:none, "reason"}` or `{:except, [:authorize], "reason"}`.
   """
   @enforce_keys [:id, :area, :expected, :run]
   defstruct [
@@ -31,7 +34,8 @@ defmodule Ash.Conformance.Scenario do
     benchmark: false,
     fallback: nil,
     detail: nil,
-    semantic_basis: "../documentation/topics/resources/aggregates.md"
+    semantic_basis: "../documentation/topics/resources/aggregates.md",
+    variants: :all
   ]
 
   @doc "A fixture's name for reports: `aggregate`, or `operations.integer` for a tier-2 type."
@@ -64,6 +68,7 @@ defmodule Ash.Conformance.Scenario do
         benchmark: Keyword.get(unquote(opts), :benchmark, false),
         fallback: Keyword.get(unquote(opts), :fallback),
         detail: Keyword.get(unquote(opts), :detail),
+        variants: Keyword.get(unquote(opts), :variants, :all),
         semantic_basis:
           Keyword.get(
             unquote(opts),

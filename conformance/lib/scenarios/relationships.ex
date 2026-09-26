@@ -24,7 +24,7 @@ defmodule Ash.Conformance.Scenarios.Relationships do
         fn ctx ->
           ctx.child
           |> Ash.Query.load(:parent)
-          |> Ash.read!(authorize?: false)
+          |> Ash.read!(authorize?: Ash.Conformance.Variant.authorize?())
           |> Map.new(&{&1.id, &1.parent.id})
         end,
         semantic_basis: "../documentation/topics/resources/relationships.md"
@@ -36,7 +36,7 @@ defmodule Ash.Conformance.Scenarios.Relationships do
         fn ctx ->
           ctx.parent
           |> Ash.Query.load(:top_child)
-          |> Ash.read!(authorize?: false)
+          |> Ash.read!(authorize?: Ash.Conformance.Variant.authorize?())
           |> Map.new(&{&1.id, &1.top_child && &1.top_child.id})
         end,
         semantic_basis: "../documentation/topics/resources/relationships.md"
@@ -111,7 +111,7 @@ defmodule Ash.Conformance.Scenarios.Relationships do
     ctx.parent
     |> Ash.Query.sort(:id)
     |> Ash.Query.load([{relationship, query}])
-    |> Ash.read!(authorize?: false)
+    |> Ash.read!(authorize?: Ash.Conformance.Variant.authorize?())
     |> Map.new(fn row -> {row.id, row |> Map.fetch!(relationship) |> Enum.map(& &1.id)} end)
   end
 
@@ -122,7 +122,7 @@ defmodule Ash.Conformance.Scenarios.Relationships do
       module
       |> Ash.Query.sort(:id)
       |> Ash.Query.load(load)
-      |> Ash.read!(authorize?: false)
+      |> Ash.read!(authorize?: Ash.Conformance.Variant.authorize?())
       |> Map.new(&{&1.id, project.(&1)})
 
     {warned?, loads}

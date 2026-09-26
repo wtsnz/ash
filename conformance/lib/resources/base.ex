@@ -19,6 +19,11 @@ defmodule Ash.Conformance.Resources.Base do
     table = Keyword.fetch!(opts, :table)
     authorizers = Keyword.get(opts, :authorizers, [])
 
+    # A resource in a policy variant's set gets that variant's policies,
+    # unless it declares its own authorizers (Ash.Conformance.Variant).
+    policy = if authorizers == [], do: Ash.Conformance.Variant.policy(__CALLER__.module)
+    authorizers = if policy, do: [Ash.Policy.Authorizer], else: authorizers
+
     # The adapter supplies its data layer and configuration block for each
     # shared table.
     {data_layer, config} = adapter.resource_config(table)
@@ -38,6 +43,8 @@ defmodule Ash.Conformance.Resources.Base do
       actions do
         defaults([:read])
       end
+
+      unquote(Ash.Conformance.Variant.policies(policy))
     end
   end
 end

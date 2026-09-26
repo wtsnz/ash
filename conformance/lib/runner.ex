@@ -49,6 +49,31 @@ defmodule Ash.Conformance.Runner do
     end
   end
 
+  @doc """
+  Runs a scenario under an `Ash.Conformance.Variant`. The outcome must match
+  the adapter's variant record for the scenario if it has one, or else the
+  scenario's own record: a variant must not change the answer.
+  """
+  def execute_variant!(scenario, adapter, variant) do
+    expectation =
+      Map.get_lazy(adapter.variant_expectations(), {scenario.id, variant}, fn ->
+        Ash.Conformance.Contracts.Expectations.for(scenario.id, adapter.id())
+      end)
+
+    Ash.Conformance.Variant.run(variant, fn ->
+      case expectation do
+        {:unknown, {:setup_error, pattern}, task} ->
+          expect_setup_failure!(scenario, adapter, pattern, task, fn _ -> :ok end)
+
+        expectation ->
+          outcome =
+            scenario |> observe_both_orders(adapter) |> Ash.Conformance.Variant.normalize()
+
+          assert_outcome!(scenario, expectation, outcome)
+      end
+    end)
+  end
+
   # A `not_run` record: the fixture must fail to store, with the recorded
   # reason. Only a `SetupError` counts, so an operation's failure never does.
   defp expect_setup_failure!(scenario, adapter, pattern, task, record_result) do

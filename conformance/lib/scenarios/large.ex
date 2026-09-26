@@ -51,7 +51,10 @@ defmodule Ash.Conformance.Scenarios.Large do
           inputs = for id <- 10_001..32_000, do: %{id: id, value: id, label: "bulk-#{id}"}
 
           result =
-            Ash.bulk_create(inputs, resource, :create, batch_size: 22_000, authorize?: false)
+            Ash.bulk_create(inputs, resource, :create,
+              batch_size: 22_000,
+              authorize?: Ash.Conformance.Variant.authorize?()
+            )
 
           {result.status, count(resource)}
         end,
@@ -65,7 +68,10 @@ defmodule Ash.Conformance.Scenarios.Large do
           ctx.adapter.resource(:large_row)
           |> Ash.Query.for_read(:paged)
           |> Ash.Query.sort(:id)
-          |> Ash.read!(page: [limit: 20, offset: 1_990], authorize?: false)
+          |> Ash.read!(
+            page: [limit: 20, offset: 1_990],
+            authorize?: Ash.Conformance.Variant.authorize?()
+          )
           |> Map.fetch!(:results)
           |> Enum.map(& &1.id)
         end,
@@ -82,7 +88,7 @@ defmodule Ash.Conformance.Scenarios.Large do
             ctx.adapter.resource(:large_row)
             |> Ash.Query.for_read(:keyset_paged)
             |> Ash.Query.sort(:id)
-            |> Ash.read!(page: [limit: 250], authorize?: false)
+            |> Ash.read!(page: [limit: 250], authorize?: Ash.Conformance.Variant.authorize?())
             |> walk([])
 
           {Enum.map(pages, &length/1), List.flatten(pages) == Enum.to_list(1..2_000)}
@@ -94,14 +100,16 @@ defmodule Ash.Conformance.Scenarios.Large do
         :aggregates,
         2_001_000,
         fn ctx ->
-          Ash.sum!(ctx.adapter.resource(:large_row), :value, authorize?: false)
+          Ash.sum!(ctx.adapter.resource(:large_row), :value,
+            authorize?: Ash.Conformance.Variant.authorize?()
+          )
         end,
         [semantic_basis: "../documentation/topics/resources/aggregates.md"] ++ @opts
       )
     ]
   end
 
-  defp count(query), do: Ash.count!(query, authorize?: false)
+  defp count(query), do: Ash.count!(query, authorize?: Ash.Conformance.Variant.authorize?())
 
   defp walk(page, pages) when length(pages) < 10 do
     pages = [Enum.map(page.results, & &1.id) | pages]

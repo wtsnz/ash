@@ -38,6 +38,11 @@ defmodule Ash.Conformance.Adapter do
   @doc "Expectation records by scenario ID, for every scenario in the adapter's profiles."
   @callback expectations() :: %{String.t() => term()}
   @doc """
+  Records for `Ash.Conformance.Variant` runs that behave differently from the
+  scenario's own record, by `{scenario ID, variant}`.
+  """
+  @callback variant_expectations() :: %{{String.t(), atom()} => term()}
+  @doc """
   The data layer and its configuration block for one of the shared tables,
   e.g. `{MyDataLayer, quote(do: my_dl do table(...) end)}`.
   """
@@ -142,11 +147,12 @@ defmodule Ash.Conformance.Adapter do
       def label, do: unquote(label)
       def package, do: unquote(package)
       def profiles, do: [:shared]
-      def resource(role), do: Module.concat(__MODULE__, Macro.camelize(to_string(role)))
+      def resource(role), do: Ash.Conformance.Variant.resource(__MODULE__, role)
       def persist!(role, rows, opts), do: Ash.Seed.seed!(resource(role), rows, opts)
       def benchmark_persist!(role, rows), do: persist!(role, rows, [])
       def instrumentation, do: nil
       def expectations, do: %{}
+      def variant_expectations, do: %{}
       def fixture?(fixture), do: fixture not in [:context_tenancy, :combination, :large]
       def custom_aggregate, do: Ash.Conformance.Resources.NoCustomAggregate
       def manual_relationship, do: Ash.Conformance.Resources.PlainManual
@@ -163,6 +169,7 @@ defmodule Ash.Conformance.Adapter do
                      benchmark_persist!: 2,
                      instrumentation: 0,
                      expectations: 0,
+                     variant_expectations: 0,
                      fixture?: 1,
                      custom_aggregate: 0,
                      manual_relationship: 0,

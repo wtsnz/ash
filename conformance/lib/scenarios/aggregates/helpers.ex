@@ -10,7 +10,7 @@ defmodule Ash.Conformance.Scenarios.Aggregates.Helpers do
     context.parent
     |> Ash.Query.build(aggregate: {:result, kind, path, opts})
     |> Ash.Query.sort(:id)
-    |> Ash.read!(Keyword.put_new(read_opts, :authorize?, false))
+    |> Ash.read!(Keyword.put_new(read_opts, :authorize?, Ash.Conformance.Variant.authorize?()))
     |> Map.new(&{&1.id, normalize(Map.fetch!(&1.aggregates, :result))})
   end
 
@@ -19,7 +19,7 @@ defmodule Ash.Conformance.Scenarios.Aggregates.Helpers do
     context.parent
     |> Ash.Query.build(aggregate: {:result, kind, path, opts})
     |> Ash.Query.sort(:id)
-    |> Ash.read!(authorize?: false)
+    |> Ash.read!(authorize?: Ash.Conformance.Variant.authorize?())
     |> Map.new(&{&1.id, exact(Map.fetch!(&1.aggregates, :result))})
   end
 
@@ -28,7 +28,9 @@ defmodule Ash.Conformance.Scenarios.Aggregates.Helpers do
   def exact(value), do: value
 
   def root(context, kind, opts \\ []) do
-    Ash.aggregate!(context.child, [{:result, kind, opts}], authorize?: false)
+    Ash.aggregate!(context.child, [{:result, kind, opts}],
+      authorize?: Ash.Conformance.Variant.authorize?()
+    )
     |> Map.fetch!(:result)
     |> normalize()
   end
@@ -36,14 +38,14 @@ defmodule Ash.Conformance.Scenarios.Aggregates.Helpers do
   def named(context, name, read_opts \\ []) do
     context.parent
     |> Ash.Query.load(name)
-    |> Ash.read!(Keyword.put_new(read_opts, :authorize?, false))
+    |> Ash.read!(Keyword.put_new(read_opts, :authorize?, Ash.Conformance.Variant.authorize?()))
     |> Map.new(&{&1.id, Map.fetch!(&1, name)})
   end
 
   def relationship_ids(context, name, read_opts \\ []) do
     context.parent
     |> Ash.Query.load(name)
-    |> Ash.read!(Keyword.put_new(read_opts, :authorize?, false))
+    |> Ash.read!(Keyword.put_new(read_opts, :authorize?, Ash.Conformance.Variant.authorize?()))
     |> Map.new(fn row ->
       ids = row |> Map.fetch!(name) |> List.wrap() |> Enum.map(& &1.id) |> Enum.sort()
       {row.id, ids}

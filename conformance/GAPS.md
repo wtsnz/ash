@@ -44,6 +44,18 @@ false`. A negated filter then keeps or drops the wrong rows:
 answers. Found by generated filters (`lib/fuzz.ex`), shrunk to
 `(a == 0 and string_length(t) > 2)` on row 3 (`a` nil, `t` "x").
 
+## Authorized action arguments
+
+Owner: Ash.
+Keep a prepared query's arguments when authorizing its path. An aggregate
+whose `query:` is prepared for a read action with arguments
+(`Ash.Query.for_read(child, :by_label, %{label: "high"})`) works with
+authorization off. With `authorize?: true`, even on resources with no
+authorizer, Ash raises "argument label is required": `relationship_query/6`
+in `Ash.Filter` takes the action name from the prepared query but builds a
+new query with only the relationship's `read_action_arguments`. Reproduced on
+ETS. Found by the `authorize` variant (`context.prepared_query_arguments`).
+
 ## In list nil
 
 Decision owner: Ash.

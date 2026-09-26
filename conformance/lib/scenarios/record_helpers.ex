@@ -56,7 +56,9 @@ defmodule Ash.Conformance.Scenarios.RecordHelpers do
         fn ctx ->
           var!(query, __MODULE__) = Ash.Query.sort(ctx.record, unquote(sort))
 
-          unquote(filtered) |> Ash.read!(authorize?: false) |> Enum.map(& &1.id)
+          unquote(filtered)
+          |> Ash.read!(authorize?: Ash.Conformance.Variant.authorize?())
+          |> Enum.map(& &1.id)
         end
       )
     end
@@ -73,10 +75,12 @@ defmodule Ash.Conformance.Scenarios.RecordHelpers do
         Ash.Conformance.Scenarios.RecordHelpers.project(attributes),
         unquote(@attributes),
         fn ctx ->
-          Ash.create!(ctx.record, Map.merge(%{id: 9, code: "rt"}, attributes), authorize?: false)
+          Ash.create!(ctx.record, Map.merge(%{id: 9, code: "rt"}, attributes),
+            authorize?: Ash.Conformance.Variant.authorize?()
+          )
 
           ctx.record
-          |> Ash.get!(9, authorize?: false)
+          |> Ash.get!(9, authorize?: Ash.Conformance.Variant.authorize?())
           |> Map.take(Map.keys(attributes))
           |> Ash.Conformance.Scenarios.RecordHelpers.project()
         end
@@ -104,7 +108,7 @@ defmodule Ash.Conformance.Scenarios.RecordHelpers do
     ctx.record
     |> Ash.Query.for_read(:paged)
     |> Ash.Query.sort(:id)
-    |> Ash.read!(page: opts, authorize?: false)
+    |> Ash.read!(page: opts, authorize?: Ash.Conformance.Variant.authorize?())
   end
 
   @doc "A keyset page, from the keyset-only read action."
@@ -112,10 +116,11 @@ defmodule Ash.Conformance.Scenarios.RecordHelpers do
     ctx.record
     |> Ash.Query.for_read(:keyset_paged)
     |> Ash.Query.sort(sort)
-    |> Ash.read!(page: opts, authorize?: false)
+    |> Ash.read!(page: opts, authorize?: Ash.Conformance.Variant.authorize?())
   end
 
   def query(ctx), do: Ash.Query.sort(ctx.record, :id)
 
-  def ids(query), do: query |> Ash.read!(authorize?: false) |> Enum.map(& &1.id)
+  def ids(query),
+    do: query |> Ash.read!(authorize?: Ash.Conformance.Variant.authorize?()) |> Enum.map(& &1.id)
 end
