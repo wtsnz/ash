@@ -13,6 +13,10 @@ defmodule Ash.Conformance.Sqlite.Expectations do
   def rules do
     [
       supported("*"),
+      expect(
+        "values.decimal_avg",
+        unresolved_value(%{1 => 0.15, 2 => 6_172_839_450_617_284.0, 3 => nil}, "decimal-avg")
+      ),
       expect("bounds.default_sort", defect_value(%{1 => 2, 2 => 4, 3 => nil}, "default-sort")),
       expect("bounds.from_many", defect_value(%{1 => 4, 2 => 1, 3 => 0}, "from-many")),
       expect(

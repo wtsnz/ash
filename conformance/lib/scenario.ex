@@ -6,6 +6,10 @@ defmodule Ash.Conformance.Scenario do
   @moduledoc """
   A public Ash operation with an adapter-independent expected result.
 
+  `prepare:` is a function of the fixture context that adds rows only this
+  scenario needs. It runs after the fixture is built, outside the captured
+  operation, so a failure in it is a setup failure.
+
   `requires:` lists the scenarios this one builds on, such as a control that
   runs the same path without the feature under test, or a tier-1 storage
   cell (`Ash.Conformance.Storage.stored/2`). When this scenario fails and a
@@ -23,6 +27,7 @@ defmodule Ash.Conformance.Scenario do
     profile: :shared,
     capabilities: [],
     requires: [],
+    prepare: nil,
     benchmark: false,
     fallback: nil,
     detail: nil,
@@ -55,6 +60,7 @@ defmodule Ash.Conformance.Scenario do
         profile: Keyword.get(unquote(opts), :profile, :shared),
         capabilities: Keyword.get(unquote(opts), :capabilities, []),
         requires: Keyword.get(unquote(opts), :requires, []),
+        prepare: Keyword.get(unquote(opts), :prepare),
         benchmark: Keyword.get(unquote(opts), :benchmark, false),
         fallback: Keyword.get(unquote(opts), :fallback),
         detail: Keyword.get(unquote(opts), :detail),

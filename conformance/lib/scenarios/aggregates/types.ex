@@ -52,11 +52,12 @@ defmodule Ash.Conformance.Scenarios.Aggregates.Types do
         end,
         @decimals
       ),
-      # Ash averages are floats, so they are compared rounded.
+      # Whether an average of decimals is a float or a Decimal is an open Ash
+      # decision (`decimal-avg` in GAPS.md), so the answer is unresolved.
       new(
         "values.decimal_avg",
         :results,
-        %{1 => 0.15, 2 => 6_172_839_450_617_284.0, 3 => nil},
+        :unresolved,
         fn ctx ->
           loaded(ctx, :avg, :readings, field: :amount)
         end,

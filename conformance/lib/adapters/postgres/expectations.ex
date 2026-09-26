@@ -14,6 +14,10 @@ defmodule Ash.Conformance.Postgres.Expectations do
     [
       supported("*"),
       expect(
+        "values.decimal_avg",
+        unresolved_value(%{1 => 0.15, 2 => 6_172_839_450_617_284.0, 3 => nil}, "decimal-avg")
+      ),
+      expect(
         "bounds.default_sort",
         defect_orders(
           [

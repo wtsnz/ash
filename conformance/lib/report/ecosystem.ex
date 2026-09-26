@@ -13,7 +13,7 @@ defmodule Ash.Conformance.Report.Ecosystem do
   alias Ash.Conformance.{Adapter, Blockers, Resources, Survey}
   alias Ash.Conformance.Report.FeatureReport
 
-  @classifications ~w(works rejected wrong crashed setup_failed open_question)a
+  @classifications ~w(works rejected wrong order_dependent crashed setup_failed open_question)a
 
   def run(adapters \\ Adapter.every()) do
     Enum.map(adapters, fn adapter ->

@@ -3,12 +3,13 @@
 
 defmodule Ash.Conformance.Scenarios.Aggregates.Generated do
   @moduledoc """
-  A bounded, seeded set of filtered aggregates checked against an in-memory
-  reference over the literal aggregate fixture.
+  A bounded, seeded set of filtered aggregates, each checked against an
+  in-memory reference over the literal aggregate fixture.
 
-  The reference only filters and folds child values; it does not model any
-  query planner. Changing the seed or case count changes the cases, so both are
-  part of the scenario description and the result lists every failing case.
+  Each case is its own scenario, named after what it checks, such as
+  `generated.loaded.sum.gt_4`, and compared strictly like any other. The
+  reference only filters and folds child values; it does not model any
+  query planner. Changing the seed or case count changes the cases.
   """
   import Ash.Conformance.Scenario, only: [new: 5]
 
@@ -16,16 +17,32 @@ defmodule Ash.Conformance.Scenarios.Aggregates.Generated do
   @count 24
   @kinds [:count, :sum, :min, :max, :exists]
   @comparisons [:gt, :gte, :lt]
+  @basis "../documentation/topics/resources/aggregates.md"
 
   def all do
-    [
-      new("generated.filtered_aggregates", :aggregates, [], &mismatches/1,
-        description:
-          "#{@count} cases from seed #{inspect(@seed)}: loaded and root aggregates filtered by child value",
-        semantic_basis: "../documentation/topics/resources/aggregates.md"
-      )
-    ]
+    for test_case <- unique_cases() do
+      %{scope: scope, kind: kind, comparison: op, threshold: n} = test_case
+      run = fn ctx -> observe(ctx, test_case) end
+      opts = [description: description(test_case), semantic_basis: @basis]
+      expected = reference(test_case)
+      new("generated.#{scope}.#{kind}.#{op}_#{n}", :aggregates, expected, run, opts)
+    end
   end
+
+  @doc "Every generated scenario ID."
+  def ids, do: Enum.map(unique_cases(), &id/1)
+
+  defp id(test_case),
+    do:
+      "generated.#{test_case.scope}.#{test_case.kind}.#{test_case.comparison}_#{test_case.threshold}"
+
+  defp description(test_case),
+    do:
+      "A #{test_case.scope} #{test_case.kind} of child values #{test_case.comparison} " <>
+        "#{test_case.threshold} (case #{test_case.index} of #{@count} from seed #{inspect(@seed)})"
+
+  # Cases the seed repeats are checked once.
+  defp unique_cases, do: Enum.uniq_by(cases(), &id/1)
 
   @doc "The generated cases, reproducible from the fixed seed."
   def cases do
@@ -53,14 +70,6 @@ defmodule Ash.Conformance.Scenarios.Aggregates.Generated do
   defp pick(values, state) do
     {index, state} = :rand.uniform_s(length(values), state)
     {Enum.at(values, index - 1), state}
-  end
-
-  defp mismatches(ctx) do
-    Enum.flat_map(cases(), fn test_case ->
-      actual = observe(ctx, test_case)
-      expected = reference(test_case)
-      if actual == expected, do: [], else: [{test_case, expected: expected, actual: actual}]
-    end)
   end
 
   defp observe(ctx, %{scope: :loaded} = test_case) do

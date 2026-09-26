@@ -14,8 +14,8 @@ defmodule Ash.Conformance.Report.OperationGrid do
   @legend """
   ✅ returns the answer Ash defines; ❌ does not, while the same operation
   works on integers and the type stores; ◌ blocked: the operation fails on
-  integers too, or the type does not store; ❔ did not run; – does not apply
-  to the type.
+  integers too, or the type does not store; 🔀 the answer changes with the
+  order rows were stored in; ❔ did not run; – does not apply to the type.
   """
 
   @doc "Type × data layer overview."
@@ -74,7 +74,7 @@ defmodule Ash.Conformance.Report.OperationGrid do
           (marker = marker(by_id, name, operation)) != "–",
           do: marker
 
-    judged = Enum.count(cells, &(&1 in ["✅", "❌"]))
+    judged = Enum.count(cells, &(&1 in ["✅", "❌", "🔀"]))
     passing = Enum.count(cells, &(&1 == "✅"))
     blocked = Enum.count(cells, &(&1 == "◌"))
     unknown = Enum.count(cells, &(&1 == "❔"))
@@ -103,6 +103,7 @@ defmodule Ash.Conformance.Report.OperationGrid do
       %{classification: :works} -> "✅"
       %{classification: :setup_failed} -> "❔"
       %{blocked_by: [_ | _]} -> "◌"
+      %{classification: :order_dependent} -> "🔀"
       _row -> "❌"
     end
   end

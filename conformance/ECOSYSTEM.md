@@ -11,14 +11,14 @@ their results as observations. Each data layer's failing scenarios are listed in
 
 ## Data layers
 
-| Column | Data layer | Version | Reviewed | Works | Rejected | Wrong | Crashed | Setup failed | Open question | Blocked | Definition warnings |
-| --- | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| sqlite | AshSqlite | 0.2.19 (`f489778`) | yes | 622 | 37 | 39 | 19 | 5 | 5 | 24 | 0 |
-| postgres | AshPostgres | 2.13.1 (`945073e`) | yes | 691 | 0 | 28 | 8 | 0 | 5 | 2 | 0 |
-| ets | Ash.DataLayer.Ets | 3.33.11 | no | 679 | 7 | 29 | 7 | 0 | 5 | 3 | 0 |
-| csv | AshCsv | 0.9.9 | no | 229 | 137 | 43 | 33 | 285 | 0 | 421 | 19 |
-| mysql | AshMysql | 0.1.0-dev (`99684ca`) | no | 382 | 189 | 49 | 88 | 14 | 5 | 93 | 16 |
-| clickhouse | AshClickhouse | 0.7.3 | no | 282 | 69 | 162 | 119 | 91 | 4 | 141 | 16 |
+| Column | Data layer | Version | Reviewed | Works | Rejected | Wrong | Order dependent | Crashed | Setup failed | Open question | Blocked | Definition warnings |
+| --- | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| sqlite | AshSqlite | 0.2.19 (`f489778`) | yes | 643 | 37 | 39 | 0 | 19 | 5 | 6 | 24 | 0 |
+| postgres | AshPostgres | 2.13.1 (`945073e`) | yes | 712 | 0 | 22 | 6 | 8 | 0 | 6 | 2 | 0 |
+| ets | Ash.DataLayer.Ets | 3.33.11 | no | 700 | 7 | 29 | 0 | 7 | 0 | 6 | 3 | 0 |
+| csv | AshCsv | 0.9.9 | no | 229 | 137 | 43 | 0 | 33 | 307 | 0 | 443 | 19 |
+| mysql | AshMysql | 0.1.0-dev (`99684ca`) | no | 386 | 199 | 55 | 1 | 88 | 14 | 6 | 92 | 16 |
+| clickhouse | AshClickhouse | 0.7.3 | no | 285 | 72 | 176 | 1 | 119 | 91 | 5 | 140 | 16 |
 
 Blocked counts results in the columns before it that have a failing
 prerequisite, such as a type the data layer cannot store; see
@@ -86,8 +86,8 @@ operation table.
 
 ✅ returns the answer Ash defines; ❌ does not, while the same operation
 works on integers and the type stores; ◌ blocked: the operation fails on
-integers too, or the type does not store; ❔ did not run; – does not apply
-to the type.
+integers too, or the type does not store; 🔀 the answer changes with the
+order rows were stored in; ❔ did not run; – does not apply to the type.
 
 | Type | sqlite | postgres | ets | csv | mysql | clickhouse |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -125,8 +125,9 @@ survey file has the full case × path table.
 
 ✅ returns the answer Ash's policy semantics define; ❌ does not, while the
 same path works without authorization; ◌ the path fails even without
-authorization, so the policy cannot be judged; ❔ did not run; – does not
-apply, such as getting a hidden record when the actor may read every note.
+authorization, so the policy cannot be judged; 🔀 the answer changes with
+the order rows were stored in; ❔ did not run; – does not apply, such as
+getting a hidden record when the actor may read every note.
 
 | Case | sqlite | postgres | ets | csv | mysql | clickhouse |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -233,7 +234,7 @@ apply, such as getting a hidden record when the actor may read every note.
 | Feature | sqlite | postgres | ets | csv | mysql | clickhouse |
 | --- | --- | --- | --- | --- | --- | --- |
 | Strings, integers, booleans, atoms and nil round-trip | ✅ Works 3/3 | ✅ Works 3/3 | ✅ Works 3/3 | ❔ Unknown 3 not run | ✅ Works 3/3 | ❔ Unknown 3 not run |
-| Large integers, floats and decimals round-trip | 🟡 Partial 1/2 · 1 blocked | ✅ Works 2/2 | ✅ Works 2/2 | ❔ Unknown 2 not run | 🟡 Partial 1/2 · 1 blocked | ❌ Broken 0/1 · 1 not run |
+| Large integers, floats and decimals round-trip | 🟡 Partial 1/2 · 1 blocked | ✅ Works 2/2 | ✅ Works 2/2 | ❔ Unknown 2 not run | ✅ Works 2/2 | ❌ Broken 0/1 · 1 not run |
 | Dates, microsecond datetimes and times round-trip | ✅ Works 2/2 | ✅ Works 2/2 | ✅ Works 2/2 | ❔ Unknown 2 not run | ✅ Works 2/2 | ❌ Broken 0/1 · 1 not run · 1 blocked |
 | UUIDs round-trip | ✅ Works 1/1 | ✅ Works 1/1 | ✅ Works 1/1 | ❔ Unknown 1 not run | ✅ Works 1/1 | ❔ Unknown 1 not run |
 | Arrays round-trip, keeping order and duplicates | ✅ Works 1/1 | ✅ Works 1/1 | ✅ Works 1/1 | ❔ Unknown 1 not run | ✅ Works 1/1 | ❔ Unknown 1 not run |
@@ -285,7 +286,7 @@ apply, such as getting a hidden record when the actor may read every note.
 | Load each aggregate kind on records | ✅ Works 9/9 | ✅ Works 9/9 | 🟡 Partial 8/9 | ❔ Unknown 9 not run | ⛔ Not supported 0/9 | 🟡 Partial 4/9 |
 | Run each aggregate kind over a whole query | 🟡 Partial 9/15 | 🟡 Partial 13/15 | 🟡 Partial 10/15 | ❔ Unknown 15 not run | 🟡 Partial 6/15 | 🟡 Partial 5/15 |
 | Defaults, nils, uniqueness and field counts | ✅ Works 12/12 | 🟡 Partial 11/12 | 🟡 Partial 11/12 | ❔ Unknown 12 not run | ⛔ Not supported 0/12 | 🟡 Partial 4/12 |
-| Aggregate decimals, dates, times and constrained types | 🟡 Partial 12/15 · 3 blocked | ✅ Works 15/15 | 🟡 Partial 14/15 | ❔ Unknown 15 not run | 🟡 Partial 2/15 | 🟡 Partial 4/15 · 9 blocked |
+| Aggregate decimals, dates, times and constrained types | 🟡 Partial 11/15 · 3 blocked | ❓ Open question 14/15 | 🟡 Partial 13/15 | ❔ Unknown 15 not run | 🟡 Partial 2/15 | 🟡 Partial 4/15 · 8 blocked |
 | Order first and list aggregates, including nils and ties | ❓ Open question 8/9 | ❓ Open question 8/9 | ❓ Open question 8/9 | ❔ Unknown 9 not run | ⛔ Not supported 0/9 | ⛔ Not supported 0/9 |
 | Aggregate calculations and other aggregates | ✅ Works 3/3 | ✅ Works 3/3 | 🟡 Partial 2/3 | ❔ Unknown 3 not run | ❌ Broken 0/3 | ❌ Broken 0/3 |
 | Filter the records an aggregate uses | ✅ Works 6/6 | ✅ Works 6/6 | 🟡 Partial 5/6 | ❔ Unknown 6 not run | ⛔ Not supported 0/6 | ❌ Broken 0/6 |
@@ -299,7 +300,7 @@ apply, such as getting a hidden record when the actor may read every note.
 | Distinct counts over composite and missing keys | 🟡 Partial 1/5 | ❓ Open question 4/5 | 🟡 Partial 1/5 | ❔ Unknown 5 not run | 🟡 Partial 1/5 | 🟡 Partial 3/5 |
 | Filter, sort, paginate and calculate with aggregates | ✅ Works 10/10 | ✅ Works 10/10 | ✅ Works 10/10 | ❔ Unknown 10 not run | ⛔ Not supported 0/10 | ❌ Broken 0/10 |
 | Aggregates respect read actions, arguments, actor and context | 🟡 Partial 8/9 · 1 blocked | 🟡 Partial 7/9 · 1 blocked | 🟡 Partial 8/9 · 1 blocked | ❔ Unknown 9 not run | ⛔ Not supported 0/9 · 2 blocked | ❌ Broken 0/9 · 2 blocked |
-| Seeded filtered aggregates match an in-memory reference | ✅ Works 1/1 | ✅ Works 1/1 | ✅ Works 1/1 | ❔ Unknown 1 not run | ⛔ Not supported 0/1 | ⛔ Not supported 0/1 |
+| Seeded filtered aggregates match an in-memory reference | ✅ Works 23/23 | ✅ Works 23/23 | ✅ Works 23/23 | ❔ Unknown 23 not run | 🟡 Partial 3/23 | 🟡 Partial 3/23 |
 
 ## 8. Writes
 
@@ -406,7 +407,7 @@ blockers counts under each.
 
 | Blocker | Its result | Not run | Failing | Only blocker of |
 | --- | --- | ---: | ---: | ---: |
-| `storage.boolean.ordinary` | error at create: stored value for value could not be casted from the stored value to type Ash.Type.Boolean: "true" | 252 | 0 | 194 |
+| `storage.boolean.ordinary` | error at create: stored value for value could not be casted from the stored value to type Ash.Type.Boolean: "true" | 274 | 0 | 216 |
 | `storage.float.ordinary` | error at create: stored value for value could not be casted from the stored value to type Ash.Type.Float: "1.5" | 68 | 0 | 10 |
 | `storage.embedded.ordinary` | error at create: ** (Protocol.UndefinedError) protocol String.Chars not implemented for Ash.Conformance.Resources.Address (a struct) | 61 | 0 | 3 |
 | `storage.map.ordinary` | error at create: ** (Protocol.UndefinedError) protocol String.Chars not implemented for Map | 61 | 0 | 3 |
@@ -439,7 +440,7 @@ blockers counts under each.
 | `policy.control.loaded_count` | rejected | 0 | 12 | 12 |
 | `policy.control.loaded_sum` | rejected | 0 | 12 | 12 |
 | `ops.integer.sort` | crashed | 0 | 10 | 9 |
-| `storage.decimal.ordinary` | lost at read: Decimal.new("2") | 0 | 10 | 8 |
+| `storage.decimal.ordinary` | lost at read: Decimal.new("2") | 0 | 9 | 7 |
 | `storage.duration.ordinary` | no_table at table: (1064) You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'duration, PRIMARY  | 5 | 0 | 5 |
 | `storage.embeddeds.ordinary` | no_table at table: Array type is not supported by MySQL | 3 | 0 | 3 |
 | `storage.integers.ordinary` | no_table at table: Array type is not supported by MySQL | 3 | 0 | 3 |
@@ -467,13 +468,13 @@ blockers counts under each.
 | `storage.naive_datetime.ordinary` | lost at read: ~U[2024-02-29 12:34:56.000000Z] | 0 | 6 | 5 |
 | `storage.time_usec.ordinary` | lost at read: "12:34:56.123456" | 0 | 6 | 5 |
 | `storage.duration.ordinary` | error at create: ** (Protocol.UndefinedError) protocol Jason.Encoder not implemented for Duration (a struct), Jason.Encoder protocol must always be explicitly implemented. | 5 | 0 | 5 |
-| `values.decimal_read_control` | wrong | 0 | 4 | 4 |
 | `storage.embedded.ordinary` | no_table at table: ClickHouse does not support Nullable(Map(String, String)) because the inner type is a | 3 | 0 | 3 |
 | `storage.embeddeds.ordinary` | no_table at table: ClickHouse does not support Nullable(Array(String)) because the inner type is a | 3 | 0 | 3 |
 | `storage.integers.ordinary` | no_table at table: ClickHouse does not support Nullable(Array(Int64)) because the inner type is a | 3 | 0 | 3 |
 | `storage.map.ordinary` | no_table at table: ClickHouse does not support Nullable(Map(String, String)) because the inner type is a | 3 | 0 | 3 |
 | `storage.strings.ordinary` | no_table at table: ClickHouse does not support Nullable(Array(String)) because the inner type is a | 3 | 0 | 3 |
 | `storage.union.ordinary` | no_table at table: ClickHouse does not support Nullable(Map(String, String)) because the inner type is a | 3 | 0 | 3 |
+| `values.decimal_read_control` | wrong | 0 | 3 | 3 |
 | `context.relationship_context_control` | wrong | 0 | 2 | 2 |
 | `filter.nested_parent_control` | crashed | 0 | 1 | 1 |
 | `filter.parent_through_control` | crashed | 0 | 1 | 1 |
@@ -544,7 +545,6 @@ whose claims disagree with the result:
 | Root aggregates over sorted, limited and offset queries | clickhouse | Advertised, but ❌ Broken |
 | Filter, sort, paginate and calculate with aggregates | clickhouse | Not advertising `parent: :aggregate_filter`, `parent: :aggregate_sort`, but not rejected either: wrong answers |
 | Aggregates respect read actions, arguments, actor and context | clickhouse | Not advertising `parent: {:aggregate_relationship, :children}`, but not rejected either: wrong answers |
-| Seeded filtered aggregates match an in-memory reference | clickhouse | Advertised, but ⛔ Not supported |
 | Upsert on an identity, in bulk, with conditions | ets | Works without advertising `tenant_item: :bulk_upsert_return_skipped` |
 | Upsert on an identity, in bulk, with conditions | mysql | Not advertising `tenant_item: :upsert`, `tenant_item: {:atomic, :upsert}`, `tenant_item: :bulk_upsert_return_skipped`, but not rejected either: wrong answers |
 | Upsert on an identity, in bulk, with conditions | clickhouse | Not advertising `tenant_item: :upsert`, `tenant_item: {:atomic, :upsert}`, `tenant_item: :bulk_upsert_return_skipped`, but not rejected either: wrong answers |

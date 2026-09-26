@@ -153,16 +153,4 @@ defmodule Ash.Conformance.Fixtures do
 
     %{adapter: adapter}
   end
-
-  def prepare!(context, "values.string_constraints") do
-    seed!(context.adapter, :child, [
-      %{id: 15, parent_id: 1, label: ""},
-      %{id: 16, parent_id: 1, label: " padded "}
-    ])
-  end
-
-  def prepare!(context, "filter.fanout_avg"),
-    do: seed!(context.adapter, :rating, [%{id: 105, child_id: 13, score: 8}])
-
-  def prepare!(_context, _id), do: :ok
 end

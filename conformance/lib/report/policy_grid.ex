@@ -15,8 +15,9 @@ defmodule Ash.Conformance.Report.PolicyGrid do
   @legend """
   ✅ returns the answer Ash's policy semantics define; ❌ does not, while the
   same path works without authorization; ◌ the path fails even without
-  authorization, so the policy cannot be judged; ❔ did not run; – does not
-  apply, such as getting a hidden record when the actor may read every note.
+  authorization, so the policy cannot be judged; 🔀 the answer changes with
+  the order rows were stored in; ❔ did not run; – does not apply, such as
+  getting a hidden record when the actor may read every note.
   """
 
   @doc "Case × data layer overview."
@@ -79,7 +80,7 @@ defmodule Ash.Conformance.Report.PolicyGrid do
           (marker = marker(by_id, case_id, path)) != "–",
           do: marker
 
-    judged = Enum.count(cells, &(&1 in ["✅", "❌"]))
+    judged = Enum.count(cells, &(&1 in ["✅", "❌", "🔀"]))
     passing = Enum.count(cells, &(&1 == "✅"))
     path = Enum.count(cells, &(&1 == "◌"))
     unknown = Enum.count(cells, &(&1 == "❔"))
@@ -108,6 +109,7 @@ defmodule Ash.Conformance.Report.PolicyGrid do
       %{classification: :works} -> "✅"
       %{classification: :setup_failed} -> "❔"
       %{blocked_by: [_ | _]} -> "◌"
+      %{classification: :order_dependent} -> "🔀"
       _row -> "❌"
     end
   end

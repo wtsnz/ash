@@ -4,7 +4,7 @@
 
 Generated from an unreviewed run: each result was classified automatically against the intended answer. Nothing here has been reviewed.
 
-Feature catalog version 1: 141 features and 732 scenarios.
+Feature catalog version 1: 141 features and 754 scenarios.
 
 | Status | Meaning |
 | --- | --- |
@@ -150,7 +150,7 @@ fix.
 | Load each aggregate kind on records | 🟡 Partial 4/9 | `loaded.avg` wrong, `loaded.custom` rejected, `loaded.exists` rejected, `loaded.first` rejected, `loaded.list` rejected |
 | Run each aggregate kind over a whole query | 🟡 Partial 5/15 | `root.custom` rejected, `root.custom_empty` rejected, `root.exists` rejected, `root.first` rejected, `root.list` rejected, `root.list_default_empty` rejected, `root.list_empty` rejected, `root.list_unsorted` rejected, `root.unsorted_first_empty` rejected, `values.root_empty` rejected |
 | Defaults, nils, uniqueness and field counts | 🟡 Partial 4/12 | `values.distinct_count` wrong, `values.distinct_list` rejected, `values.filtered_first_default` rejected, `values.include_nil_first` rejected, `values.include_nil_list` rejected, `values.list_default` rejected, `values.list_unsorted` rejected, `values.same_name_distinct_definitions` wrong |
-| Aggregate decimals, dates, times and constrained types | 🟡 Partial 4/15 · 9 blocked | `root.decimal_sum` wrong (blocked by `values.decimal_read_control`), `values.constrained_scalar` wrong, `values.date_list` rejected (blocked by `storage.date.ordinary`), `values.date_list_desc` rejected (blocked by `storage.date.ordinary`), `values.date_max` wrong (blocked by `storage.date.ordinary`), `values.date_min` wrong (blocked by `storage.date.ordinary`), `values.datetime_first` rejected (blocked by `storage.date.ordinary`), `values.decimal_avg` wrong (blocked by `values.decimal_read_control`), `values.decimal_max` wrong (blocked by `values.decimal_read_control`), `values.decimal_sum` wrong (blocked by `values.decimal_read_control`), `values.string_constraints` rejected |
+| Aggregate decimals, dates, times and constrained types | 🟡 Partial 4/15 · 8 blocked | `root.decimal_sum` wrong (blocked by `values.decimal_read_control`), `values.constrained_scalar` wrong, `values.date_list` rejected (blocked by `storage.date.ordinary`), `values.date_list_desc` rejected (blocked by `storage.date.ordinary`), `values.date_max` wrong (blocked by `storage.date.ordinary`), `values.date_min` wrong (blocked by `storage.date.ordinary`), `values.datetime_first` rejected (blocked by `storage.date.ordinary`), `values.decimal_avg` open question, `values.decimal_max` wrong (blocked by `values.decimal_read_control`), `values.decimal_sum` wrong (blocked by `values.decimal_read_control`), `values.string_constraints` rejected |
 | Order first and list aggregates, including nils and ties | ⛔ Not supported 0/9 | `ordering.asc_nils_first` rejected, `ordering.asc_nils_last` rejected, `ordering.desc_nils_first` rejected, `ordering.desc_nils_last` rejected, `ordering.expression_first` rejected, `ordering.expression_list` rejected, `ordering.list_desc` rejected, `ordering.ties` rejected, `ordering.unique_other_field` open question |
 | Aggregate calculations and other aggregates | ❌ Broken 0/3 | `field.aggregate` crashed, `field.calculation` crashed, `field.root_aggregate` crashed |
 | Filter the records an aggregate uses | ❌ Broken 0/6 | `filter.exists` wrong, `filter.join` wrong, `filter.not_exists` wrong, `filter.or_exists` wrong, `filter.ordinary` wrong, `filter.sibling_independence` wrong |
@@ -164,13 +164,13 @@ fix.
 | Distinct counts over composite and missing keys | 🟡 Partial 3/5 | `identity.keyless_distinct` open question, `identity.keyless_source` crashed |
 | Filter, sort, paginate and calculate with aggregates | ❌ Broken 0/10 | `use.calculation` crashed, `use.filter` crashed, `use.keyset_pagination` crashed, `use.nested_limited_load` wrong, `use.pagination` crashed, `use.related_exists` crashed, `use.related_filter` crashed, `use.sort` crashed, `use.to_one_filter` crashed, `use.to_one_sort` crashed |
 | Aggregates respect read actions, arguments, actor and context | ❌ Broken 0/9 · 2 blocked | `context.actor` wrong, `context.arguments` wrong, `context.intermediate_action` wrong, `context.intermediate_actor` wrong, `context.prepared_query_arguments` wrong, `context.read_action` wrong, `context.relationship_context` wrong (blocked by `context.relationship_context_control`), `context.shared` wrong (blocked by `context.relationship_context_control`), `context.through_arguments` wrong |
-| Seeded filtered aggregates match an in-memory reference | ⛔ Not supported 0/1 | `generated.filtered_aggregates` rejected |
+| Seeded filtered aggregates match an in-memory reference | 🟡 Partial 3/23 | `generated.loaded.count.gt_6` wrong, `generated.loaded.count.gt_7` wrong, `generated.loaded.count.gte_6` wrong, `generated.loaded.count.lt_5` wrong, `generated.loaded.exists.gt_0` rejected, `generated.loaded.exists.lt_2` rejected, `generated.loaded.exists.lt_5` rejected, `generated.loaded.min.gt_2` wrong, `generated.loaded.min.gt_6` wrong, `generated.loaded.sum.lt_0` wrong, `generated.loaded.sum.lt_7` wrong, `generated.root.count.gte_0` wrong, `generated.root.count.gte_1` wrong, `generated.root.count.gte_5` wrong, `generated.root.exists.gt_7` rejected, `generated.root.max.lt_2` wrong, `generated.root.min.lt_0` wrong, `generated.root.min.lt_2` wrong, `generated.root.sum.gt_2` wrong, `generated.root.sum.gte_4` wrong |
 
 ## 8. Writes
 
 | Feature | clickhouse | Not working |
 | --- | --- | --- |
-| Upsert on an identity, in bulk, with conditions | ❌ Broken 0/4 | `upsert.bulk` crashed, `upsert.condition` crashed, `upsert.skipped_record` wrong, `upsert.tenant_identity` rejected |
+| Upsert on an identity, in bulk, with conditions | ❌ Broken 0/4 | `upsert.bulk` crashed, `upsert.condition` crashed, `upsert.skipped_record` order dependent, `upsert.tenant_identity` rejected |
 | Bulk create with partial success | ❌ Broken 0/1 | `bulk.partial_success` wrong |
 | Bulk update atomically | ❌ Broken 0/1 | `bulk.atomic_increment` crashed |
 | Writes that filter by or read aggregates | ❌ Broken 0/4 | `write.atomic_update` crashed, `write.bulk_destroy_filter` crashed, `write.bulk_update_filter` crashed, `write.single_atomic_update` rejected |
@@ -262,7 +262,6 @@ whose claims disagree with the result:
 | Root aggregates over sorted, limited and offset queries | clickhouse | Advertised, but ❌ Broken |
 | Filter, sort, paginate and calculate with aggregates | clickhouse | Not advertising `parent: :aggregate_filter`, `parent: :aggregate_sort`, but not rejected either: wrong answers |
 | Aggregates respect read actions, arguments, actor and context | clickhouse | Not advertising `parent: {:aggregate_relationship, :children}`, but not rejected either: wrong answers |
-| Seeded filtered aggregates match an in-memory reference | clickhouse | Advertised, but ⛔ Not supported |
 | Upsert on an identity, in bulk, with conditions | clickhouse | Not advertising `tenant_item: :upsert`, `tenant_item: {:atomic, :upsert}`, `tenant_item: :bulk_upsert_return_skipped`, but not rejected either: wrong answers |
 | Bulk create with partial success | clickhouse | Not advertising `tenant_item: :bulk_create_with_partial_success`, but not rejected either: wrong answers |
 | Bulk update atomically | clickhouse | Not advertising `tenant_item: {:atomic, :update}`, but not rejected either: wrong answers |
@@ -310,8 +309,8 @@ values of that class.
 
 ✅ returns the answer Ash defines; ❌ does not, while the same operation
 works on integers and the type stores; ◌ blocked: the operation fails on
-integers too, or the type does not store; ❔ did not run; – does not apply
-to the type.
+integers too, or the type does not store; 🔀 the answer changes with the
+order rows were stored in; ❔ did not run; – does not apply to the type.
 
 | Type | `eq` | `in` | `is_nil` | `gt` | `sort` | `count` | `min` | `max` | `sum` | `first` |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -343,8 +342,9 @@ to the type.
 
 ✅ returns the answer Ash's policy semantics define; ❌ does not, while the
 same path works without authorization; ◌ the path fails even without
-authorization, so the policy cannot be judged; ❔ did not run; – does not
-apply, such as getting a hidden record when the actor may read every note.
+authorization, so the policy cannot be judged; 🔀 the answer changes with
+the order rows were stored in; ❔ did not run; – does not apply, such as
+getting a hidden record when the actor may read every note.
 
 | Case | `read` | `get_hidden` | `get_error` | `count` | `sum` | `offset_page` | `keyset_pages` | `load` | `loaded_count` | `loaded_sum` | `aggregate_filter` | `exists_filter` | `exists_filter_input` | `bulk_update` | `bulk_destroy` | `update_hidden` | `field_read` | `field_filter` | `field_filter_input` | `field_aggregate` | `create_own` | `create_other` |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -379,13 +379,13 @@ apply, such as getting a hidden record when the actor may read every note.
 | `storage.naive_datetime.ordinary` | lost at read: ~U[2024-02-29 12:34:56.000000Z] | 0 | 6 | 5 |
 | `storage.time_usec.ordinary` | lost at read: "12:34:56.123456" | 0 | 6 | 5 |
 | `storage.duration.ordinary` | error at create: ** (Protocol.UndefinedError) protocol Jason.Encoder not implemented for Duration (a struct), Jason.Encoder protocol must always be explicitly implemented. | 5 | 0 | 5 |
-| `values.decimal_read_control` | wrong | 0 | 4 | 4 |
 | `storage.embedded.ordinary` | no_table at table: ClickHouse does not support Nullable(Map(String, String)) because the inner type is a | 3 | 0 | 3 |
 | `storage.embeddeds.ordinary` | no_table at table: ClickHouse does not support Nullable(Array(String)) because the inner type is a | 3 | 0 | 3 |
 | `storage.integers.ordinary` | no_table at table: ClickHouse does not support Nullable(Array(Int64)) because the inner type is a | 3 | 0 | 3 |
 | `storage.map.ordinary` | no_table at table: ClickHouse does not support Nullable(Map(String, String)) because the inner type is a | 3 | 0 | 3 |
 | `storage.strings.ordinary` | no_table at table: ClickHouse does not support Nullable(Array(String)) because the inner type is a | 3 | 0 | 3 |
 | `storage.union.ordinary` | no_table at table: ClickHouse does not support Nullable(Map(String, String)) because the inner type is a | 3 | 0 | 3 |
+| `values.decimal_read_control` | wrong | 0 | 3 | 3 |
 | `context.relationship_context_control` | wrong | 0 | 2 | 2 |
 | `filter.nested_parent_control` | crashed | 0 | 1 | 1 |
 | `filter.parent_through_control` | crashed | 0 | 1 | 1 |

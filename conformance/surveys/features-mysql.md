@@ -4,7 +4,7 @@
 
 Generated from an unreviewed run: each result was classified automatically against the intended answer. Nothing here has been reviewed.
 
-Feature catalog version 1: 141 features and 732 scenarios.
+Feature catalog version 1: 141 features and 754 scenarios.
 
 | Status | Meaning |
 | --- | --- |
@@ -98,7 +98,7 @@ fix.
 | Feature | mysql | Not working |
 | --- | --- | --- |
 | Strings, integers, booleans, atoms and nil round-trip | ✅ Works 3/3 |  |
-| Large integers, floats and decimals round-trip | 🟡 Partial 1/2 · 1 blocked | `record.types_numeric` wrong (blocked by `storage.decimal.ordinary`) |
+| Large integers, floats and decimals round-trip | ✅ Works 2/2 |  |
 | Dates, microsecond datetimes and times round-trip | ✅ Works 2/2 |  |
 | UUIDs round-trip | ✅ Works 1/1 |  |
 | Arrays round-trip, keeping order and duplicates | ✅ Works 1/1 |  |
@@ -150,7 +150,7 @@ fix.
 | Load each aggregate kind on records | ⛔ Not supported 0/9 | `loaded.avg` rejected, `loaded.count` rejected, `loaded.custom` rejected, `loaded.exists` rejected, `loaded.first` rejected, `loaded.list` rejected, `loaded.max` rejected, `loaded.min` rejected, `loaded.sum` rejected |
 | Run each aggregate kind over a whole query | 🟡 Partial 6/15 | `root.custom` crashed, `root.custom_empty` crashed, `root.first` crashed, `root.list` crashed, `root.list_default_empty` crashed, `root.list_empty` crashed, `root.list_unsorted` crashed, `root.unsorted_first_empty` crashed, `values.root_empty` crashed |
 | Defaults, nils, uniqueness and field counts | ⛔ Not supported 0/12 | `query.uniq_sum_rejected` rejected, `values.distinct_count` rejected, `values.distinct_list` rejected, `values.field_count` rejected, `values.filtered_first_default` rejected, `values.include_nil_first` rejected, `values.include_nil_list` rejected, `values.list_default` rejected, `values.list_unsorted` rejected, `values.same_name_distinct_definitions` rejected, `values.scalar_default` rejected, `values.string_name` rejected |
-| Aggregate decimals, dates, times and constrained types | 🟡 Partial 2/15 | `values.constrained_scalar` rejected, `values.date_list` rejected, `values.date_list_desc` rejected, `values.date_max` rejected, `values.date_min` rejected, `values.datetime_first` rejected, `values.datetime_max` rejected, `values.datetime_min` rejected, `values.decimal_avg` rejected, `values.decimal_max` rejected, `values.decimal_sum` rejected, `values.string_constraints` rejected, `values.time_min` rejected |
+| Aggregate decimals, dates, times and constrained types | 🟡 Partial 2/15 | `values.constrained_scalar` rejected, `values.date_list` rejected, `values.date_list_desc` rejected, `values.date_max` rejected, `values.date_min` rejected, `values.datetime_first` rejected, `values.datetime_max` rejected, `values.datetime_min` rejected, `values.decimal_avg` open question, `values.decimal_max` rejected, `values.decimal_sum` rejected, `values.string_constraints` rejected, `values.time_min` rejected |
 | Order first and list aggregates, including nils and ties | ⛔ Not supported 0/9 | `ordering.asc_nils_first` rejected, `ordering.asc_nils_last` rejected, `ordering.desc_nils_first` rejected, `ordering.desc_nils_last` rejected, `ordering.expression_first` rejected, `ordering.expression_list` rejected, `ordering.list_desc` rejected, `ordering.ties` rejected, `ordering.unique_other_field` open question |
 | Aggregate calculations and other aggregates | ❌ Broken 0/3 | `field.aggregate` rejected, `field.calculation` rejected, `field.root_aggregate` crashed |
 | Filter the records an aggregate uses | ⛔ Not supported 0/6 | `filter.exists` rejected, `filter.join` rejected, `filter.not_exists` rejected, `filter.or_exists` rejected, `filter.ordinary` rejected, `filter.sibling_independence` rejected |
@@ -164,13 +164,13 @@ fix.
 | Distinct counts over composite and missing keys | 🟡 Partial 1/5 | `identity.composite_count` rejected, `identity.keyless_count` rejected, `identity.keyless_distinct` open question, `identity.keyless_source` rejected |
 | Filter, sort, paginate and calculate with aggregates | ⛔ Not supported 0/10 | `use.calculation` rejected, `use.filter` rejected, `use.keyset_pagination` rejected, `use.nested_limited_load` rejected, `use.pagination` rejected, `use.related_exists` rejected, `use.related_filter` rejected, `use.sort` rejected, `use.to_one_filter` rejected, `use.to_one_sort` rejected |
 | Aggregates respect read actions, arguments, actor and context | ⛔ Not supported 0/9 · 2 blocked | `context.actor` rejected, `context.arguments` rejected, `context.intermediate_action` rejected, `context.intermediate_actor` rejected, `context.prepared_query_arguments` rejected, `context.read_action` rejected, `context.relationship_context` rejected (blocked by `context.relationship_context_control`), `context.shared` rejected (blocked by `context.relationship_context_control`), `context.through_arguments` rejected |
-| Seeded filtered aggregates match an in-memory reference | ⛔ Not supported 0/1 | `generated.filtered_aggregates` rejected |
+| Seeded filtered aggregates match an in-memory reference | 🟡 Partial 3/23 | `generated.loaded.count.gt_6` rejected, `generated.loaded.count.gt_7` rejected, `generated.loaded.count.gte_6` rejected, `generated.loaded.count.lt_5` rejected, `generated.loaded.exists.gt_0` rejected, `generated.loaded.exists.lt_2` rejected, `generated.loaded.exists.lt_5` rejected, `generated.loaded.min.gt_2` rejected, `generated.loaded.min.gt_6` rejected, `generated.loaded.min.lt_8` rejected, `generated.loaded.sum.lt_0` rejected, `generated.loaded.sum.lt_7` rejected, `generated.root.count.gte_0` wrong, `generated.root.count.gte_1` wrong, `generated.root.count.gte_5` wrong, `generated.root.max.lt_2` wrong, `generated.root.min.lt_0` wrong, `generated.root.min.lt_2` wrong, `generated.root.sum.gt_2` wrong, `generated.root.sum.gte_4` wrong |
 
 ## 8. Writes
 
 | Feature | mysql | Not working |
 | --- | --- | --- |
-| Upsert on an identity, in bulk, with conditions | ❌ Broken 0/4 | `upsert.bulk` crashed, `upsert.condition` crashed, `upsert.skipped_record` wrong, `upsert.tenant_identity` rejected |
+| Upsert on an identity, in bulk, with conditions | ❌ Broken 0/4 | `upsert.bulk` crashed, `upsert.condition` crashed, `upsert.skipped_record` order dependent, `upsert.tenant_identity` rejected |
 | Bulk create with partial success | ❌ Broken 0/1 | `bulk.partial_success` crashed |
 | Bulk update atomically | ❌ Broken 0/1 | `bulk.atomic_increment` crashed |
 | Writes that filter by or read aggregates | ❌ Broken 0/4 | `write.atomic_update` crashed, `write.bulk_destroy_filter` rejected, `write.bulk_update_filter` rejected, `write.single_atomic_update` crashed |
@@ -299,8 +299,8 @@ values of that class.
 
 ✅ returns the answer Ash defines; ❌ does not, while the same operation
 works on integers and the type stores; ◌ blocked: the operation fails on
-integers too, or the type does not store; ❔ did not run; – does not apply
-to the type.
+integers too, or the type does not store; 🔀 the answer changes with the
+order rows were stored in; ❔ did not run; – does not apply to the type.
 
 | Type | `eq` | `in` | `is_nil` | `gt` | `sort` | `count` | `min` | `max` | `sum` | `first` |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -332,8 +332,9 @@ to the type.
 
 ✅ returns the answer Ash's policy semantics define; ❌ does not, while the
 same path works without authorization; ◌ the path fails even without
-authorization, so the policy cannot be judged; ❔ did not run; – does not
-apply, such as getting a hidden record when the actor may read every note.
+authorization, so the policy cannot be judged; 🔀 the answer changes with
+the order rows were stored in; ❔ did not run; – does not apply, such as
+getting a hidden record when the actor may read every note.
 
 | Case | `read` | `get_hidden` | `get_error` | `count` | `sum` | `offset_page` | `keyset_pages` | `load` | `loaded_count` | `loaded_sum` | `aggregate_filter` | `exists_filter` | `exists_filter_input` | `bulk_update` | `bulk_destroy` | `update_hidden` | `field_read` | `field_filter` | `field_filter_input` | `field_aggregate` | `create_own` | `create_other` |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -361,7 +362,7 @@ apply, such as getting a hidden record when the actor may read every note.
 | `policy.control.loaded_count` | rejected | 0 | 12 | 12 |
 | `policy.control.loaded_sum` | rejected | 0 | 12 | 12 |
 | `ops.integer.sort` | crashed | 0 | 10 | 9 |
-| `storage.decimal.ordinary` | lost at read: Decimal.new("2") | 0 | 10 | 8 |
+| `storage.decimal.ordinary` | lost at read: Decimal.new("2") | 0 | 9 | 7 |
 | `storage.duration.ordinary` | no_table at table: (1064) You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'duration, PRIMARY  | 5 | 0 | 5 |
 | `storage.embeddeds.ordinary` | no_table at table: Array type is not supported by MySQL | 3 | 0 | 3 |
 | `storage.integers.ordinary` | no_table at table: Array type is not supported by MySQL | 3 | 0 | 3 |

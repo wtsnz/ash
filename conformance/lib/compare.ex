@@ -8,6 +8,11 @@ defmodule Ash.Conformance.Compare do
   Elixir's `==` treats `2` and `2.0` as equal, so a result whose type changed
   from integer to float would still pass. Here numbers must also match in type,
   recursively through lists, tuples, maps and structs.
+
+  Decimals compare by value, as Ash's own `Ash.Type.Decimal.equal?/2` does:
+  `0.30` is `0.3`, but never the float `0.3`. Whether a changed representation
+  counts as stored unchanged is an open Ash decision (`value-representation`
+  in `GAPS.md`); tier 1 reports it separately and does not use this rule.
   """
 
   def equal?(left, right) when is_integer(left) and is_integer(right), do: left == right
@@ -19,6 +24,8 @@ defmodule Ash.Conformance.Compare do
 
   def equal?(left, right) when is_tuple(left) and is_tuple(right),
     do: equal?(Tuple.to_list(left), Tuple.to_list(right))
+
+  def equal?(%Decimal{} = left, %Decimal{} = right), do: Decimal.eq?(left, right)
 
   def equal?(%module{} = left, %module{} = right),
     do: equal?(Map.from_struct(left), Map.from_struct(right))

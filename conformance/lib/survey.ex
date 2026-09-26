@@ -11,7 +11,9 @@ defmodule Ash.Conformance.Survey do
 
   - `works`: the intended answer, in every seed order;
   - `rejected`: an Ash error saying the feature is not supported;
-  - `wrong`: a different value, or a value that changes with row order;
+  - `wrong`: a different value, the same in every seed order;
+  - `order dependent`: a result that changes with the order rows were
+    stored in, so it relies on unspecified order;
   - `crashed`: any other exception;
   - `setup failed`: the fixture could not be stored, so the operation never
     ran. Its status is `unknown`: it says nothing about the feature;
@@ -85,6 +87,7 @@ defmodule Ash.Conformance.Survey do
   def classify(scenario, outcome) do
     cond do
       Runner.semantic_pass?(scenario, outcome) -> {:works, :supported}
+      match?({:order_dependent, _}, outcome) -> {:order_dependent, :known_defect}
       rejection?(outcome) -> {:rejected, :unsupported}
       match?({:error, _, _}, outcome) -> {:crashed, :known_defect}
       true -> {:wrong, :known_defect}

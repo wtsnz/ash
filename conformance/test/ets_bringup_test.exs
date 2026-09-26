@@ -12,7 +12,7 @@ defmodule Ash.Conformance.EtsBringupTest do
 
   @matching ~w(loaded.count loaded.sum loaded.list root.count root.sum path.multi_hop
     path.many_to_many filter.exists bounds.relationship_limit use.keyset_pagination
-    values.decimal_sum query.distinct query.union txn.commit generated.filtered_aggregates)
+    values.decimal_sum query.distinct query.union txn.commit generated.loaded.sum.lt_0)
 
   test "the ETS integration is probe-only and has no expectations" do
     refute Ash.Conformance.Ets in Adapter.all()

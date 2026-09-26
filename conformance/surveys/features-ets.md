@@ -4,7 +4,7 @@
 
 Generated from an unreviewed run: each result was classified automatically against the intended answer. Nothing here has been reviewed.
 
-Feature catalog version 1: 141 features and 732 scenarios.
+Feature catalog version 1: 141 features and 754 scenarios.
 
 | Status | Meaning |
 | --- | --- |
@@ -150,7 +150,7 @@ fix.
 | Load each aggregate kind on records | 🟡 Partial 8/9 | `loaded.custom` rejected |
 | Run each aggregate kind over a whole query | 🟡 Partial 10/15 | `root.custom` rejected, `root.custom_empty` rejected, `root.first` wrong, `root.list` wrong, `root.list_default_empty` wrong |
 | Defaults, nils, uniqueness and field counts | 🟡 Partial 11/12 | `values.list_default` wrong |
-| Aggregate decimals, dates, times and constrained types | 🟡 Partial 14/15 | `values.constrained_scalar` wrong |
+| Aggregate decimals, dates, times and constrained types | 🟡 Partial 13/15 | `values.constrained_scalar` wrong, `values.decimal_avg` open question |
 | Order first and list aggregates, including nils and ties | ❓ Open question 8/9 | `ordering.unique_other_field` open question |
 | Aggregate calculations and other aggregates | 🟡 Partial 2/3 | `field.root_aggregate` wrong |
 | Filter the records an aggregate uses | 🟡 Partial 5/6 | `filter.join` wrong |
@@ -164,7 +164,7 @@ fix.
 | Distinct counts over composite and missing keys | 🟡 Partial 1/5 | `identity.composite_count` wrong, `identity.keyless_count` wrong, `identity.keyless_distinct` open question, `identity.root_composite_count` wrong |
 | Filter, sort, paginate and calculate with aggregates | ✅ Works 10/10 |  |
 | Aggregates respect read actions, arguments, actor and context | 🟡 Partial 8/9 · 1 blocked | `context.relationship_context` wrong (blocked by `context.relationship_context_control`) |
-| Seeded filtered aggregates match an in-memory reference | ✅ Works 1/1 |  |
+| Seeded filtered aggregates match an in-memory reference | ✅ Works 23/23 |  |
 
 ## 8. Writes
 
@@ -289,8 +289,8 @@ values of that class.
 
 ✅ returns the answer Ash defines; ❌ does not, while the same operation
 works on integers and the type stores; ◌ blocked: the operation fails on
-integers too, or the type does not store; ❔ did not run; – does not apply
-to the type.
+integers too, or the type does not store; 🔀 the answer changes with the
+order rows were stored in; ❔ did not run; – does not apply to the type.
 
 | Type | `eq` | `in` | `is_nil` | `gt` | `sort` | `count` | `min` | `max` | `sum` | `first` |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -322,8 +322,9 @@ to the type.
 
 ✅ returns the answer Ash's policy semantics define; ❌ does not, while the
 same path works without authorization; ◌ the path fails even without
-authorization, so the policy cannot be judged; ❔ did not run; – does not
-apply, such as getting a hidden record when the actor may read every note.
+authorization, so the policy cannot be judged; 🔀 the answer changes with
+the order rows were stored in; ❔ did not run; – does not apply, such as
+getting a hidden record when the actor may read every note.
 
 | Case | `read` | `get_hidden` | `get_error` | `count` | `sum` | `offset_page` | `keyset_pages` | `load` | `loaded_count` | `loaded_sum` | `aggregate_filter` | `exists_filter` | `exists_filter_input` | `bulk_update` | `bulk_destroy` | `update_hidden` | `field_read` | `field_filter` | `field_filter_input` | `field_aggregate` | `create_own` | `create_other` |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |

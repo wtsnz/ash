@@ -87,7 +87,7 @@ defmodule Ash.Conformance.Runner do
 
     try do
       context = Ash.Conformance.Fixtures.build!(adapter, scenario.fixture, order)
-      Ash.Conformance.Fixtures.prepare!(context, scenario.id)
+      if scenario.prepare, do: scenario.prepare.(context)
       observe.(fn -> capture(fn -> scenario.run.(context) end) end)
     after
       adapter.checkin!()

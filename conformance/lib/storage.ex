@@ -419,6 +419,9 @@ defmodule Ash.Conformance.Storage do
     do: %{duration | microsecond: microseconds}
 
   # Embedded records carry metadata; only their attribute values are stored.
+  # Tier 1 reports representation, so a Decimal's scale counts here, unlike in
+  # `Ash.Conformance.Compare`: `1.5` read back as `1.5000000000` is changed.
+  defp normalize(%Decimal{} = decimal), do: {:decimal, decimal.sign, decimal.coef, decimal.exp}
   defp normalize(%Ash.Union{type: type, value: value}), do: {:union, type, normalize(value)}
   defp normalize(list) when is_list(list), do: Enum.map(list, &normalize/1)
 

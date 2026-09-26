@@ -52,7 +52,9 @@ defmodule Ash.Conformance.Scenarios.Aggregates.Helpers do
 
   def selected_parent(context, id \\ 1), do: Ash.Query.filter(context.parent, id == ^id)
 
-  def normalize(%Decimal{} = value), do: value |> Decimal.to_float() |> Float.round(6)
+  # Floats are rounded to six places, since databases compute them in
+  # different orders. Decimals stay Decimals: rounding them to floats would
+  # hide both precision loss and an aggregate that returns the wrong type.
   def normalize(value) when is_float(value), do: Float.round(value, 6)
   def normalize(value) when is_list(value), do: Enum.map(value, &normalize/1)
   def normalize(value), do: value

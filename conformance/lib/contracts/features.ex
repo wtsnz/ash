@@ -472,7 +472,7 @@ defmodule Ash.Conformance.Contracts.Features do
            "Seeded filtered aggregates match an in-memory reference",
            "#{@docs}/resources/aggregates.md",
            claims: [parent: {:aggregate, :count}, child: {:query_aggregate, :count}],
-           scenarios: ~w(generated.filtered_aggregates)
+           scenarios: Ash.Conformance.Scenarios.Aggregates.Generated.ids()
          )
        ]},
       {8, "Writes",

@@ -184,9 +184,15 @@ defmodule Ash.Conformance.RunnerTest do
     end
 
     test "structs compare every field, including precision" do
-      refute Compare.equal?(Decimal.new("0.3"), Decimal.new("0.30"))
       refute Compare.equal?(~U[2024-01-01 00:00:00Z], ~U[2024-01-01 00:00:00.000000Z])
       assert Compare.equal?(~D[2024-01-01], ~D[2024-01-01])
+    end
+
+    test "decimals compare by value, as Ash's decimal type does, but never equal a float" do
+      assert Compare.equal?(Decimal.new("0.3"), Decimal.new("0.30"))
+      assert Compare.equal?(%{sum: Decimal.new("0.3")}, %{sum: Decimal.new("0.300")})
+      refute Compare.equal?(Decimal.new("0.3"), Decimal.new("0.31"))
+      refute Compare.equal?(Decimal.new("0.3"), 0.3)
     end
 
     test "a supported scenario fails when only the numeric type changed" do

@@ -70,9 +70,10 @@ are selected in `Fixtures.build!/2`. Scenario-specific extra setup belongs in
 `Fixtures.prepare!/2`, outside capture. A write that is itself the behavior under
 test belongs in the operation. Persist fixtures through the adapter's callback.
 
-Keep projections lossless for the behavior under test. Inherited numerical
-aggregates normalize floats/decimals to six decimal places; nils, custom structs
-and string whitespace remain intact. Relationship-order checks must preserve
+Keep projections lossless for the behavior under test. Aggregate helpers
+round floats to six decimal places. Decimals stay Decimals and compare by
+value (`0.30` is `0.3`, never the float `0.3`); nils, custom structs and string
+whitespace remain intact. Relationship-order checks must preserve
 order, not sort the observed values. Use an explicit tie-breaker and null order.
 
 A valid-input semantic answer can also be a rejection. Prefer stable structured

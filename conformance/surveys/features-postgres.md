@@ -4,7 +4,7 @@
 
 Generated from an unreviewed run: each result was classified automatically against the intended answer. Nothing here has been reviewed.
 
-Feature catalog version 1: 141 features and 732 scenarios.
+Feature catalog version 1: 141 features and 754 scenarios.
 
 | Status | Meaning |
 | --- | --- |
@@ -150,7 +150,7 @@ fix.
 | Load each aggregate kind on records | ✅ Works 9/9 |  |
 | Run each aggregate kind over a whole query | 🟡 Partial 13/15 | `root.list_unsorted` wrong, `root.unsorted_first_empty` crashed |
 | Defaults, nils, uniqueness and field counts | 🟡 Partial 11/12 | `values.list_unsorted` wrong |
-| Aggregate decimals, dates, times and constrained types | ✅ Works 15/15 |  |
+| Aggregate decimals, dates, times and constrained types | ❓ Open question 14/15 | `values.decimal_avg` open question |
 | Order first and list aggregates, including nils and ties | ❓ Open question 8/9 | `ordering.unique_other_field` open question |
 | Aggregate calculations and other aggregates | ✅ Works 3/3 |  |
 | Filter the records an aggregate uses | ✅ Works 6/6 |  |
@@ -159,18 +159,18 @@ fix.
 | Aggregate filters that reference the parent record | 🟡 Partial 7/8 · 1 blocked | `filter.nested_parent` crashed (blocked by `filter.nested_parent_control`) |
 | Aggregate over to-one, multi-hop and many-to-many paths | 🟡 Partial 15/17 | `path.repeated_many_to_many` open question, `path.root_relationship` crashed |
 | Aggregate over manual and attribute-free relationships | 🟡 Partial 2/3 | `path.no_attributes` crashed |
-| Aggregate over limited, offset and from-many relationships | 🟡 Partial 6/9 | `bounds.default_sort` wrong, `bounds.from_many` wrong, `bounds.many_to_many_query_limit` open question |
-| Root aggregates over sorted, limited and offset queries | 🟡 Partial 2/7 | `bounds.root_custom_limit` wrong, `bounds.root_first_distinct_sort` wrong, `bounds.root_list_limit` wrong, `bounds.root_offset_only` crashed, `bounds.root_order_then_limit` wrong |
+| Aggregate over limited, offset and from-many relationships | 🟡 Partial 6/9 | `bounds.default_sort` order dependent, `bounds.from_many` wrong, `bounds.many_to_many_query_limit` open question |
+| Root aggregates over sorted, limited and offset queries | 🟡 Partial 2/7 | `bounds.root_custom_limit` order dependent, `bounds.root_first_distinct_sort` order dependent, `bounds.root_list_limit` order dependent, `bounds.root_offset_only` crashed, `bounds.root_order_then_limit` order dependent |
 | Distinct counts over composite and missing keys | ❓ Open question 4/5 | `identity.keyless_distinct` open question |
 | Filter, sort, paginate and calculate with aggregates | ✅ Works 10/10 |  |
 | Aggregates respect read actions, arguments, actor and context | 🟡 Partial 7/9 · 1 blocked | `context.prepared_query_arguments` crashed, `context.relationship_context` wrong (blocked by `context.relationship_context_control`) |
-| Seeded filtered aggregates match an in-memory reference | ✅ Works 1/1 |  |
+| Seeded filtered aggregates match an in-memory reference | ✅ Works 23/23 |  |
 
 ## 8. Writes
 
 | Feature | postgres | Not working |
 | --- | --- | --- |
-| Upsert on an identity, in bulk, with conditions | 🟡 Partial 3/4 | `upsert.skipped_record` wrong |
+| Upsert on an identity, in bulk, with conditions | 🟡 Partial 3/4 | `upsert.skipped_record` order dependent |
 | Bulk create with partial success | ✅ Works 1/1 |  |
 | Bulk update atomically | ✅ Works 1/1 |  |
 | Writes that filter by or read aggregates | ✅ Works 4/4 |  |
@@ -286,8 +286,8 @@ values of that class.
 
 ✅ returns the answer Ash defines; ❌ does not, while the same operation
 works on integers and the type stores; ◌ blocked: the operation fails on
-integers too, or the type does not store; ❔ did not run; – does not apply
-to the type.
+integers too, or the type does not store; 🔀 the answer changes with the
+order rows were stored in; ❔ did not run; – does not apply to the type.
 
 | Type | `eq` | `in` | `is_nil` | `gt` | `sort` | `count` | `min` | `max` | `sum` | `first` |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -319,8 +319,9 @@ to the type.
 
 ✅ returns the answer Ash's policy semantics define; ❌ does not, while the
 same path works without authorization; ◌ the path fails even without
-authorization, so the policy cannot be judged; ❔ did not run; – does not
-apply, such as getting a hidden record when the actor may read every note.
+authorization, so the policy cannot be judged; 🔀 the answer changes with
+the order rows were stored in; ❔ did not run; – does not apply, such as
+getting a hidden record when the actor may read every note.
 
 | Case | `read` | `get_hidden` | `get_error` | `count` | `sum` | `offset_page` | `keyset_pages` | `load` | `loaded_count` | `loaded_sum` | `aggregate_filter` | `exists_filter` | `exists_filter_input` | `bulk_update` | `bulk_destroy` | `update_hidden` | `field_read` | `field_filter` | `field_filter_input` | `field_aggregate` | `create_own` | `create_other` |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |

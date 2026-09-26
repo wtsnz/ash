@@ -88,6 +88,13 @@ defmodule Ash.Conformance.Scenarios.Aggregates.Results do
         fn ctx ->
           # Check string preservation independently of the database's text collation.
           loaded(ctx, :list, :children, field: :label, query: [sort: [id: :asc]])
+        end,
+        # An empty label and a padded one, which must come back unchanged.
+        prepare: fn ctx ->
+          Ash.Conformance.Fixtures.seed!(ctx.adapter, :child, [
+            %{id: 15, parent_id: 1, label: ""},
+            %{id: 16, parent_id: 1, label: " padded "}
+          ])
         end
       ),
       new(

@@ -10,6 +10,26 @@ defmodule Ash.Conformance.Contracts.SharedGaps do
   def all do
     [
       %{
+        id: "decimal-avg",
+        title: "Decimal avg",
+        kind: :decision,
+        owners: [:ash],
+        body: ~S"""
+
+        Decision: is the average of a decimal field a float or a Decimal? Ash
+        declares every `avg` aggregate as a float
+        (`Ash.Query.Aggregate.kind_to_type/2`), and AshPostgres and AshSqlite
+        return floats. Ash's own ETS data layer averages Decimals exactly and
+        returns a Decimal (`Decimal.new("0.15")` for 0.1 and 0.2), added in "Add
+        `:decimal` aggregate support to `DataLayer.Ets`" (#841). The aggregate
+        guide does not say. A float also loses precision: 12345678901234567.89 and
+        0.01 average to `6172839450617284.0`. Until Ash decides,
+        `values.decimal_avg` is unresolved, and each reviewed data layer pins what
+        it returns. The suite's aggregate helpers used to round Decimals to floats,
+        which hid this difference.
+        """
+      },
+      %{
         id: "bulk-stream-forbidden",
         title: "Bulk stream forbidden",
         kind: :implementation,

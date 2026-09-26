@@ -152,7 +152,7 @@ Claims never decide what runs.
 | `aggregates.identity` | Distinct counts over composite and missing keys | implemented | 5 |
 | `aggregates.usage` | Filter, sort, paginate and calculate with aggregates | implemented | 10 |
 | `aggregates.context` | Aggregates respect read actions, arguments, actor and context | implemented | 9 |
-| `aggregates.generated` | Seeded filtered aggregates match an in-memory reference | implemented | 1 |
+| `aggregates.generated` | Seeded filtered aggregates match an in-memory reference | implemented | 23 |
 
 ## 8. Writes
 
@@ -223,4 +223,4 @@ obligation. Fallback evidence comes from instrumented core dispatch tests and
 from scenarios that name a fallback. Other adapter scenarios report
 `unobserved`.
 
-732 executable scenarios are registered. See [MATRIX.md](MATRIX.md) for individual contracts.
+754 executable scenarios are registered. See [MATRIX.md](MATRIX.md) for individual contracts.

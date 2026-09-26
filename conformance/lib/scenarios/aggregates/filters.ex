@@ -154,6 +154,20 @@ defmodule Ash.Conformance.Scenarios.Aggregates.Filters do
 
   @fanout [requires: ["filter.fanout_read_control"]]
 
+  # The average also includes child 13, through one extra rating above 5.
+  defp fanout_opts(:avg),
+    do:
+      @fanout ++
+        [
+          prepare: fn ctx ->
+            Ash.Conformance.Fixtures.seed!(ctx.adapter, :rating, [
+              %{id: 105, child_id: 13, score: 8}
+            ])
+          end
+        ]
+
+  defp fanout_opts(_kind), do: @fanout
+
   defp fanout do
     for {kind, expected} <- [sum: 4, avg: 3.666667, count: 2, list: [2, 2], custom: 4] do
       run = fn ctx ->
@@ -173,7 +187,7 @@ defmodule Ash.Conformance.Scenarios.Aggregates.Filters do
         |> Map.fetch!(1)
       end
 
-      new("filter.fanout_#{kind}", :filters, expected, run, @fanout)
+      new("filter.fanout_#{kind}", :filters, expected, run, fanout_opts(kind))
     end
   end
 

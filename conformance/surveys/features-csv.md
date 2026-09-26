@@ -4,7 +4,7 @@
 
 Generated from an unreviewed run: each result was classified automatically against the intended answer. Nothing here has been reviewed.
 
-Feature catalog version 1: 141 features and 732 scenarios.
+Feature catalog version 1: 141 features and 754 scenarios.
 
 | Status | Meaning |
 | --- | --- |
@@ -164,7 +164,7 @@ fix.
 | Distinct counts over composite and missing keys | ❔ Unknown 5 not run | `identity.composite_count` setup failed (blocked by `storage.boolean.ordinary`), `identity.keyless_count` setup failed (blocked by `storage.boolean.ordinary`), `identity.keyless_distinct` setup failed (blocked by `storage.boolean.ordinary`), `identity.keyless_source` setup failed (blocked by `storage.boolean.ordinary`), `identity.root_composite_count` setup failed (blocked by `storage.boolean.ordinary`) |
 | Filter, sort, paginate and calculate with aggregates | ❔ Unknown 10 not run | `use.calculation` setup failed (blocked by `storage.boolean.ordinary`), `use.filter` setup failed (blocked by `storage.boolean.ordinary`), `use.keyset_pagination` setup failed (blocked by `storage.boolean.ordinary`), `use.nested_limited_load` setup failed (blocked by `storage.boolean.ordinary`), `use.pagination` setup failed (blocked by `storage.boolean.ordinary`), `use.related_exists` setup failed (blocked by `storage.boolean.ordinary`), `use.related_filter` setup failed (blocked by `storage.boolean.ordinary`), `use.sort` setup failed (blocked by `storage.boolean.ordinary`), `use.to_one_filter` setup failed (blocked by `storage.boolean.ordinary`), `use.to_one_sort` setup failed (blocked by `storage.boolean.ordinary`) |
 | Aggregates respect read actions, arguments, actor and context | ❔ Unknown 9 not run | `context.actor` setup failed (blocked by `storage.boolean.ordinary`), `context.arguments` setup failed (blocked by `storage.boolean.ordinary`), `context.intermediate_action` setup failed (blocked by `storage.boolean.ordinary`), `context.intermediate_actor` setup failed (blocked by `storage.boolean.ordinary`), `context.prepared_query_arguments` setup failed (blocked by `storage.boolean.ordinary`), `context.read_action` setup failed (blocked by `storage.boolean.ordinary`), `context.relationship_context` setup failed (blocked by `storage.boolean.ordinary`), `context.shared` setup failed (blocked by `storage.boolean.ordinary`), `context.through_arguments` setup failed (blocked by `storage.boolean.ordinary`) |
-| Seeded filtered aggregates match an in-memory reference | ❔ Unknown 1 not run | `generated.filtered_aggregates` setup failed (blocked by `storage.boolean.ordinary`) |
+| Seeded filtered aggregates match an in-memory reference | ❔ Unknown 23 not run | `generated.loaded.count.gt_6` setup failed (blocked by `storage.boolean.ordinary`), `generated.loaded.count.gt_7` setup failed (blocked by `storage.boolean.ordinary`), `generated.loaded.count.gte_6` setup failed (blocked by `storage.boolean.ordinary`), `generated.loaded.count.lt_5` setup failed (blocked by `storage.boolean.ordinary`), `generated.loaded.exists.gt_0` setup failed (blocked by `storage.boolean.ordinary`), `generated.loaded.exists.lt_2` setup failed (blocked by `storage.boolean.ordinary`), `generated.loaded.exists.lt_5` setup failed (blocked by `storage.boolean.ordinary`), `generated.loaded.min.gt_2` setup failed (blocked by `storage.boolean.ordinary`), `generated.loaded.min.gt_6` setup failed (blocked by `storage.boolean.ordinary`), `generated.loaded.min.lt_8` setup failed (blocked by `storage.boolean.ordinary`), `generated.loaded.sum.lt_0` setup failed (blocked by `storage.boolean.ordinary`), `generated.loaded.sum.lt_7` setup failed (blocked by `storage.boolean.ordinary`), `generated.root.count.gte_0` setup failed (blocked by `storage.boolean.ordinary`), `generated.root.count.gte_1` setup failed (blocked by `storage.boolean.ordinary`), `generated.root.count.gte_5` setup failed (blocked by `storage.boolean.ordinary`), `generated.root.exists.gt_7` setup failed (blocked by `storage.boolean.ordinary`), `generated.root.max.gte_5` setup failed (blocked by `storage.boolean.ordinary`), `generated.root.max.lt_2` setup failed (blocked by `storage.boolean.ordinary`), `generated.root.min.lt_0` setup failed (blocked by `storage.boolean.ordinary`), `generated.root.min.lt_2` setup failed (blocked by `storage.boolean.ordinary`), `generated.root.sum.gt_2` setup failed (blocked by `storage.boolean.ordinary`), `generated.root.sum.gte_0` setup failed (blocked by `storage.boolean.ordinary`), `generated.root.sum.gte_4` setup failed (blocked by `storage.boolean.ordinary`) |
 
 ## 8. Writes
 
@@ -285,8 +285,8 @@ values of that class.
 
 ✅ returns the answer Ash defines; ❌ does not, while the same operation
 works on integers and the type stores; ◌ blocked: the operation fails on
-integers too, or the type does not store; ❔ did not run; – does not apply
-to the type.
+integers too, or the type does not store; 🔀 the answer changes with the
+order rows were stored in; ❔ did not run; – does not apply to the type.
 
 | Type | `eq` | `in` | `is_nil` | `gt` | `sort` | `count` | `min` | `max` | `sum` | `first` |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -318,8 +318,9 @@ to the type.
 
 ✅ returns the answer Ash's policy semantics define; ❌ does not, while the
 same path works without authorization; ◌ the path fails even without
-authorization, so the policy cannot be judged; ❔ did not run; – does not
-apply, such as getting a hidden record when the actor may read every note.
+authorization, so the policy cannot be judged; 🔀 the answer changes with
+the order rows were stored in; ❔ did not run; – does not apply, such as
+getting a hidden record when the actor may read every note.
 
 | Case | `read` | `get_hidden` | `get_error` | `count` | `sum` | `offset_page` | `keyset_pages` | `load` | `loaded_count` | `loaded_sum` | `aggregate_filter` | `exists_filter` | `exists_filter_input` | `bulk_update` | `bulk_destroy` | `update_hidden` | `field_read` | `field_filter` | `field_filter_input` | `field_aggregate` | `create_own` | `create_other` |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -342,7 +343,7 @@ apply, such as getting a hidden record when the actor may read every note.
 
 | Blocker | Its result | Not run | Failing | Only blocker of |
 | --- | --- | ---: | ---: | ---: |
-| `storage.boolean.ordinary` | error at create: stored value for value could not be casted from the stored value to type Ash.Type.Boolean: "true" | 252 | 0 | 194 |
+| `storage.boolean.ordinary` | error at create: stored value for value could not be casted from the stored value to type Ash.Type.Boolean: "true" | 274 | 0 | 216 |
 | `storage.float.ordinary` | error at create: stored value for value could not be casted from the stored value to type Ash.Type.Float: "1.5" | 68 | 0 | 10 |
 | `storage.embedded.ordinary` | error at create: ** (Protocol.UndefinedError) protocol String.Chars not implemented for Ash.Conformance.Resources.Address (a struct) | 61 | 0 | 3 |
 | `storage.map.ordinary` | error at create: ** (Protocol.UndefinedError) protocol String.Chars not implemented for Map | 61 | 0 | 3 |

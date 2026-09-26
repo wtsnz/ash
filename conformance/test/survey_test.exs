@@ -14,7 +14,8 @@ defmodule Ash.Conformance.SurveyTest do
     order_dependent =
       {:order_dependent, %{forward: {:ok, 7}, reverse: {:ok, 7}, rotated: {:ok, 4}}}
 
-    assert Survey.classify(scenario(7), order_dependent) == {:wrong, :known_defect}
+    # Its own classification, so it is not counted as a plain wrong answer.
+    assert Survey.classify(scenario(7), order_dependent) == {:order_dependent, :known_defect}
   end
 
   test "an Ash error saying the feature is unsupported is a rejection" do

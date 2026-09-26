@@ -82,7 +82,30 @@ The aggregate corpus preserves several open semantic questions in [GAPS.md](GAPS
 path multiplicity, keyless distinct identity, unique-list ordering by another
 field, and a missing many-to-many bounds API. Current results remain strict
 characterizations. Agreement between adapters does not resolve those questions.
-Generated cases and concurrent-pagination semantics are follow-up work.
+Concurrent-pagination semantics are follow-up work.
+
+## How results are compared
+
+- **Types must match.** `2` and `2.0` differ, recursively
+  (`lib/compare.ex`).
+- **Decimals compare by value,** as `Ash.Type.Decimal.equal?/2` does. So
+  `0.30` is `0.3`, but never the float `0.3`.
+  - Aggregate helpers keep Decimals as Decimals and round only floats, to six
+    places.
+  - Tier 1 is the exception. It reports a changed representation (`1.5` read
+    back as `1.5000000000`) as ≈, under the open `value-representation`
+    decision.
+- **Tier 2 compares values by the type's own equality.** Representation is
+  tier 1's concern.
+- **Seed order.** A result that changes with the order rows were stored in
+  never passes. Surveys classify it as order-dependent, separately from a
+  wrong answer.
+- **Averages of decimals are unresolved** (`decimal-avg`). Ash declares
+  `avg` a float, but its ETS data layer returns a Decimal.
+- **Generated aggregate cases are separate scenarios,** each compared
+  strictly, such as `generated.loaded.sum.gt_4`.
+- **Extra rows belong to the scenario.** A scenario that needs rows beyond
+  its fixture adds them with `prepare:`, outside the captured operation.
 
 ## Added scenario answers
 
