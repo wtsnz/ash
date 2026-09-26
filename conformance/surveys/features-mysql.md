@@ -4,7 +4,7 @@
 
 Generated from an unreviewed run: each result was classified automatically against the intended answer. Nothing here has been reviewed.
 
-Feature catalog version 1: 155 features and 869 scenarios.
+Feature catalog version 1: 164 features and 1319 scenarios.
 
 | Status | Meaning |
 | --- | --- |
@@ -56,26 +56,26 @@ fix.
 
 | Feature | mysql | Not working |
 | --- | --- | --- |
-| Integers | 🟡 Partial 8/10 | `ops.integer.first` crashed, `ops.integer.sort` crashed |
-| Floats | 🟡 Partial 8/10 · 2 blocked | `ops.float.first` crashed (blocked by `ops.integer.first`), `ops.float.sort` crashed (blocked by `ops.integer.sort`) |
-| Decimals | 🟡 Partial 2/10 · 8 blocked | `ops.decimal.eq` wrong (blocked by `storage.decimal.ordinary`), `ops.decimal.first` crashed (blocked by `ops.integer.first`, `storage.decimal.ordinary`), `ops.decimal.gt` wrong (blocked by `storage.decimal.ordinary`), `ops.decimal.in` wrong (blocked by `storage.decimal.ordinary`), `ops.decimal.max` wrong (blocked by `storage.decimal.ordinary`), `ops.decimal.min` wrong (blocked by `storage.decimal.ordinary`), `ops.decimal.sort` crashed (blocked by `ops.integer.sort`, `storage.decimal.ordinary`), `ops.decimal.sum` wrong (blocked by `storage.decimal.ordinary`) |
-| Strings | 🟡 Partial 7/9 · 2 blocked | `ops.string.first` crashed (blocked by `ops.integer.first`), `ops.string.sort` crashed (blocked by `ops.integer.sort`) |
-| Case-insensitive strings | 🟡 Partial 6/9 · 2 blocked | `ops.ci_string.first` crashed (blocked by `ops.integer.first`), `ops.ci_string.in` wrong, `ops.ci_string.sort` crashed (blocked by `ops.integer.sort`) |
-| Binaries | ❌ Broken 0/5 · 1 blocked | `ops.binary.count` crashed, `ops.binary.eq` crashed, `ops.binary.first` crashed (blocked by `ops.integer.first`), `ops.binary.in` crashed, `ops.binary.is_nil` crashed |
+| Integers | 🟡 Partial 16/20 · 2 blocked | `ops.integer.first` crashed, `ops.integer.first.edge` crashed (blocked by `ops.integer.first`), `ops.integer.sort` crashed, `ops.integer.sort.edge` crashed (blocked by `ops.integer.sort`) |
+| Floats | 🟡 Partial 16/20 · 4 blocked | `ops.float.first` crashed (blocked by `ops.integer.first`), `ops.float.first.edge` crashed (blocked by `ops.integer.first`), `ops.float.sort` crashed (blocked by `ops.integer.sort`), `ops.float.sort.edge` crashed (blocked by `ops.integer.sort`) |
+| Decimals | 🟡 Partial 2/10 · 10 not run · 8 blocked | `ops.decimal.count.edge` setup failed, `ops.decimal.eq` wrong (blocked by `storage.decimal.ordinary`), `ops.decimal.eq.edge` setup failed, `ops.decimal.first` crashed (blocked by `ops.integer.first`, `storage.decimal.ordinary`), `ops.decimal.first.edge` setup failed, `ops.decimal.gt` wrong (blocked by `storage.decimal.ordinary`), `ops.decimal.gt.edge` setup failed, `ops.decimal.in` wrong (blocked by `storage.decimal.ordinary`), `ops.decimal.in.edge` setup failed, `ops.decimal.is_nil.edge` setup failed, `ops.decimal.max` wrong (blocked by `storage.decimal.ordinary`), `ops.decimal.max.edge` setup failed, `ops.decimal.min` wrong (blocked by `storage.decimal.ordinary`), `ops.decimal.min.edge` setup failed, `ops.decimal.sort` crashed (blocked by `ops.integer.sort`, `storage.decimal.ordinary`), `ops.decimal.sort.edge` setup failed, `ops.decimal.sum` wrong (blocked by `storage.decimal.ordinary`), `ops.decimal.sum.edge` setup failed |
+| Strings | 🟡 Partial 14/18 · 4 blocked | `ops.string.first` crashed (blocked by `ops.integer.first`), `ops.string.first.edge` crashed (blocked by `ops.integer.first`), `ops.string.sort` crashed (blocked by `ops.integer.sort`), `ops.string.sort.edge` crashed (blocked by `ops.integer.sort`) |
+| Case-insensitive strings | 🟡 Partial 12/18 · 5 blocked | `ops.ci_string.first` crashed (blocked by `ops.integer.first`), `ops.ci_string.first.edge` crashed (blocked by `ops.integer.first`), `ops.ci_string.in` wrong, `ops.ci_string.in.edge` wrong (blocked by `ops.ci_string.in`), `ops.ci_string.sort` crashed (blocked by `ops.integer.sort`), `ops.ci_string.sort.edge` crashed (blocked by `ops.integer.sort`) |
+| Binaries | ❌ Broken 0/10 · 6 blocked | `ops.binary.count` crashed, `ops.binary.count.edge` crashed (blocked by `ops.binary.count`), `ops.binary.eq` crashed, `ops.binary.eq.edge` crashed (blocked by `ops.binary.eq`), `ops.binary.first` crashed (blocked by `ops.integer.first`), `ops.binary.first.edge` crashed (blocked by `ops.integer.first`), `ops.binary.in` crashed, `ops.binary.in.edge` crashed (blocked by `ops.binary.in`), `ops.binary.is_nil` crashed, `ops.binary.is_nil.edge` crashed (blocked by `ops.binary.is_nil`) |
 | Booleans | 🟡 Partial 1/5 · 1 blocked | `ops.boolean.count` wrong, `ops.boolean.first` crashed (blocked by `ops.integer.first`), `ops.boolean.in` wrong, `ops.boolean.is_nil` wrong |
 | Atoms with one_of | 🟡 Partial 3/5 · 1 blocked | `ops.atom.first` crashed (blocked by `ops.integer.first`), `ops.atom.in` crashed |
-| Dates | 🟡 Partial 7/9 · 2 blocked | `ops.date.first` crashed (blocked by `ops.integer.first`), `ops.date.sort` crashed (blocked by `ops.integer.sort`) |
-| Times | 🟡 Partial 7/9 · 2 blocked | `ops.time.first` crashed (blocked by `ops.integer.first`), `ops.time.sort` crashed (blocked by `ops.integer.sort`) |
-| Microsecond times | 🟡 Partial 3/9 · 2 blocked | `ops.time_usec.eq` wrong, `ops.time_usec.first` crashed (blocked by `ops.integer.first`), `ops.time_usec.gt` wrong, `ops.time_usec.in` wrong, `ops.time_usec.max` wrong, `ops.time_usec.sort` crashed (blocked by `ops.integer.sort`) |
-| UTC datetimes | 🟡 Partial 7/9 · 2 blocked | `ops.utc_datetime.first` crashed (blocked by `ops.integer.first`), `ops.utc_datetime.sort` crashed (blocked by `ops.integer.sort`) |
-| Microsecond UTC datetimes | 🟡 Partial 7/9 · 2 blocked | `ops.utc_datetime_usec.first` crashed (blocked by `ops.integer.first`), `ops.utc_datetime_usec.sort` crashed (blocked by `ops.integer.sort`) |
-| Naive datetimes | 🟡 Partial 7/9 · 2 blocked | `ops.naive_datetime.first` crashed (blocked by `ops.integer.first`), `ops.naive_datetime.sort` crashed (blocked by `ops.integer.sort`) |
-| Durations | ❔ Unknown 5 not run | `ops.duration.count` setup failed (blocked by `storage.duration.ordinary`), `ops.duration.eq` setup failed (blocked by `storage.duration.ordinary`), `ops.duration.first` setup failed (blocked by `storage.duration.ordinary`), `ops.duration.in` setup failed (blocked by `storage.duration.ordinary`), `ops.duration.is_nil` setup failed (blocked by `storage.duration.ordinary`) |
-| UUIDs | 🟡 Partial 4/5 · 1 blocked | `ops.uuid.first` crashed (blocked by `ops.integer.first`) |
+| Dates | 🟡 Partial 14/18 · 4 blocked | `ops.date.first` crashed (blocked by `ops.integer.first`), `ops.date.first.edge` crashed (blocked by `ops.integer.first`), `ops.date.sort` crashed (blocked by `ops.integer.sort`), `ops.date.sort.edge` crashed (blocked by `ops.integer.sort`) |
+| Times | 🟡 Partial 14/18 · 4 blocked | `ops.time.first` crashed (blocked by `ops.integer.first`), `ops.time.first.edge` crashed (blocked by `ops.integer.first`), `ops.time.sort` crashed (blocked by `ops.integer.sort`), `ops.time.sort.edge` crashed (blocked by `ops.integer.sort`) |
+| Microsecond times | 🟡 Partial 7/18 · 6 blocked | `ops.time_usec.eq` wrong, `ops.time_usec.first` crashed (blocked by `ops.integer.first`), `ops.time_usec.first.edge` crashed (blocked by `ops.integer.first`), `ops.time_usec.gt` wrong, `ops.time_usec.in` wrong, `ops.time_usec.in.edge` wrong (blocked by `ops.time_usec.in`), `ops.time_usec.max` wrong, `ops.time_usec.max.edge` crashed (blocked by `ops.time_usec.max`), `ops.time_usec.min.edge` wrong, `ops.time_usec.sort` crashed (blocked by `ops.integer.sort`), `ops.time_usec.sort.edge` crashed (blocked by `ops.integer.sort`) |
+| UTC datetimes | 🟡 Partial 14/18 · 4 blocked | `ops.utc_datetime.first` crashed (blocked by `ops.integer.first`), `ops.utc_datetime.first.edge` crashed (blocked by `ops.integer.first`), `ops.utc_datetime.sort` crashed (blocked by `ops.integer.sort`), `ops.utc_datetime.sort.edge` crashed (blocked by `ops.integer.sort`) |
+| Microsecond UTC datetimes | 🟡 Partial 14/18 · 4 blocked | `ops.utc_datetime_usec.first` crashed (blocked by `ops.integer.first`), `ops.utc_datetime_usec.first.edge` crashed (blocked by `ops.integer.first`), `ops.utc_datetime_usec.sort` crashed (blocked by `ops.integer.sort`), `ops.utc_datetime_usec.sort.edge` crashed (blocked by `ops.integer.sort`) |
+| Naive datetimes | 🟡 Partial 14/18 · 4 blocked | `ops.naive_datetime.first` crashed (blocked by `ops.integer.first`), `ops.naive_datetime.first.edge` crashed (blocked by `ops.integer.first`), `ops.naive_datetime.sort` crashed (blocked by `ops.integer.sort`), `ops.naive_datetime.sort.edge` crashed (blocked by `ops.integer.sort`) |
+| Durations | ❔ Unknown 10 not run | `ops.duration.count` setup failed (blocked by `storage.duration.ordinary`), `ops.duration.count.edge` setup failed (blocked by `storage.duration.ordinary`), `ops.duration.eq` setup failed (blocked by `storage.duration.ordinary`), `ops.duration.eq.edge` setup failed (blocked by `storage.duration.ordinary`), `ops.duration.first` setup failed (blocked by `storage.duration.ordinary`), `ops.duration.first.edge` setup failed (blocked by `storage.duration.ordinary`), `ops.duration.in` setup failed (blocked by `storage.duration.ordinary`), `ops.duration.in.edge` setup failed (blocked by `storage.duration.ordinary`), `ops.duration.is_nil` setup failed (blocked by `storage.duration.ordinary`), `ops.duration.is_nil.edge` setup failed (blocked by `storage.duration.ordinary`) |
+| UUIDs | 🟡 Partial 8/10 · 2 blocked | `ops.uuid.first` crashed (blocked by `ops.integer.first`), `ops.uuid.first.edge` crashed (blocked by `ops.integer.first`) |
 | UUIDv7s | 🟡 Partial 3/5 · 1 blocked | `ops.uuid_v7.first` crashed (blocked by `ops.integer.first`), `ops.uuid_v7.in` wrong |
-| Maps | 🟡 Partial 2/3 · 1 blocked | `ops.map.first` crashed (blocked by `ops.integer.first`) |
-| Arrays of strings | ❔ Unknown 3 not run | `ops.strings.count` setup failed (blocked by `storage.strings.ordinary`), `ops.strings.first` setup failed (blocked by `storage.strings.ordinary`), `ops.strings.is_nil` setup failed (blocked by `storage.strings.ordinary`) |
-| Arrays of integers | ❔ Unknown 3 not run | `ops.integers.count` setup failed (blocked by `storage.integers.ordinary`), `ops.integers.first` setup failed (blocked by `storage.integers.ordinary`), `ops.integers.is_nil` setup failed (blocked by `storage.integers.ordinary`) |
+| Maps | 🟡 Partial 4/6 · 2 blocked | `ops.map.first` crashed (blocked by `ops.integer.first`), `ops.map.first.edge` crashed (blocked by `ops.integer.first`) |
+| Arrays of strings | ❔ Unknown 6 not run | `ops.strings.count` setup failed (blocked by `storage.strings.ordinary`), `ops.strings.count.edge` setup failed (blocked by `storage.strings.ordinary`), `ops.strings.first` setup failed (blocked by `storage.strings.ordinary`), `ops.strings.first.edge` setup failed (blocked by `storage.strings.ordinary`), `ops.strings.is_nil` setup failed (blocked by `storage.strings.ordinary`), `ops.strings.is_nil.edge` setup failed (blocked by `storage.strings.ordinary`) |
+| Arrays of integers | ❔ Unknown 6 not run | `ops.integers.count` setup failed (blocked by `storage.integers.ordinary`), `ops.integers.count.edge` setup failed (blocked by `storage.integers.ordinary`), `ops.integers.first` setup failed (blocked by `storage.integers.ordinary`), `ops.integers.first.edge` setup failed (blocked by `storage.integers.ordinary`), `ops.integers.is_nil` setup failed (blocked by `storage.integers.ordinary`), `ops.integers.is_nil.edge` setup failed (blocked by `storage.integers.ordinary`) |
 | Embedded resources | 🟡 Partial 2/3 · 1 blocked | `ops.embedded.first` crashed (blocked by `ops.integer.first`) |
 | Arrays of embedded resources | ❔ Unknown 3 not run | `ops.embeddeds.count` setup failed (blocked by `storage.embeddeds.ordinary`), `ops.embeddeds.first` setup failed (blocked by `storage.embeddeds.ordinary`), `ops.embeddeds.is_nil` setup failed (blocked by `storage.embeddeds.ordinary`) |
 | Unions | 🟡 Partial 2/3 · 1 blocked | `ops.union.first` crashed (blocked by `ops.integer.first`) |
@@ -118,6 +118,12 @@ fix.
 | String functions, including non-ASCII text | 🟡 Partial 6/11 | `expr.contains_unicode` wrong, `expr.filter.string_length` wrong, `expr.string_join` rejected, `expr.string_length` wrong, `expr.string_trim` wrong |
 | if, cond, || and && | 🟡 Partial 2/5 | `expr.and_then` wrong, `expr.filter.or_else` wrong, `expr.or_else` wrong |
 | Date and datetime arithmetic | 🟡 Partial 4/5 | `expr.start_of_day` crashed |
+| Every signature of the date and time functions, including Duration forms | ➖ Not applicable |  |
+| Every signature of the list, map, nil, conditional and type functions | ➖ Not applicable |  |
+| Every signature of the string functions, with case-insensitive strings | ➖ Not applicable |  |
+| Every signature of negation, rem and round | ➖ Not applicable |  |
+| Every typed signature of <>, /, *, - and +, including date and time arithmetic | ➖ Not applicable |  |
+| Functions on unusual values: decomposed Unicode, whitespace, empty lists, overflow and halves | ➖ Not applicable |  |
 | Negation, column comparisons and and/or with nil | 🟡 Partial 10/13 | `nil.not_contradictory_in` wrong, `nil.not_in_with_nil` open question, `nil.or` open question |
 | Filters through to-many relationships return each record once | 🟡 Partial 6/9 | `read.join_count` wrong, `read.join_many_to_many_count` wrong, `read.join_page` wrong |
 | Sort by a related record's attribute | ✅ Works 1/1 |  |
@@ -242,6 +248,9 @@ fix.
 | --- | --- | --- |
 | Each combined feature works on its own | ➖ Not applicable |  |
 | Features work together, pair by pair | ➖ Not applicable |  |
+| Aggregates and exists over paths of one to three hops, on integer and UUID keys | ➖ Not applicable |  |
+| Sorting by the destination's aggregate inside a path | ➖ Not applicable |  |
+| Calculations over a related field keep records whose related record is missing | ➖ Not applicable |  |
 
 ## 14. Consistency checks
 
@@ -378,19 +387,33 @@ getting a hidden record when the actor may read every note.
 
 | Blocker | Its result | Not run | Failing | Only blocker of |
 | --- | --- | ---: | ---: | ---: |
-| `ops.integer.first` | crashed | 0 | 18 | 17 |
+| `ops.integer.first` | crashed | 0 | 31 | 30 |
+| `ops.integer.sort` | crashed | 0 | 20 | 19 |
 | `policy.control.aggregate_filter` | rejected | 0 | 12 | 12 |
 | `policy.control.loaded_count` | rejected | 0 | 12 | 12 |
 | `policy.control.loaded_sum` | rejected | 0 | 12 | 12 |
 | `storage.decimal.ordinary` | lost at read: Decimal.new("2") | 0 | 11 | 9 |
-| `ops.integer.sort` | crashed | 0 | 10 | 9 |
-| `storage.duration.ordinary` | no_table at table: (1064) You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'duration, PRIMARY  | 5 | 0 | 5 |
+| `storage.duration.ordinary` | no_table at table: (1064) You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'duration, PRIMARY  | 10 | 0 | 10 |
+| `storage.integers.ordinary` | no_table at table: Array type is not supported by MySQL | 6 | 0 | 6 |
+| `storage.strings.ordinary` | no_table at table: Array type is not supported by MySQL | 6 | 0 | 6 |
 | `storage.embeddeds.ordinary` | no_table at table: Array type is not supported by MySQL | 3 | 0 | 3 |
-| `storage.integers.ordinary` | no_table at table: Array type is not supported by MySQL | 3 | 0 | 3 |
-| `storage.strings.ordinary` | no_table at table: Array type is not supported by MySQL | 3 | 0 | 3 |
 | `context.relationship_context_control` | wrong | 0 | 2 | 2 |
 | `bounds.default_sort_control` | crashed | 0 | 1 | 1 |
 | `context.authorization_bounds_control` | crashed | 0 | 1 | 1 |
 | `filter.nested_parent_control` | crashed | 0 | 1 | 1 |
 | `filter.parent_through_control` | crashed | 0 | 1 | 1 |
+| `ops.binary.count` | crashed | 0 | 1 | 1 |
+| `ops.binary.eq` | crashed | 0 | 1 | 1 |
+| `ops.binary.in` | crashed | 0 | 1 | 1 |
+| `ops.binary.is_nil` | crashed | 0 | 1 | 1 |
+| `ops.ci_string.in` | wrong | 0 | 1 | 1 |
+| `ops.time_usec.in` | wrong | 0 | 1 | 1 |
+| `ops.time_usec.max` | wrong | 0 | 1 | 1 |
 | `policy.control.field_aggregate` | rejected | 0 | 1 | 1 |
+
+Setup failures that no storage cell explains: no type in the row
+raised when stored on its own, or tier 1 could not test it.
+
+| Scenarios | Role | Reason |
+| ---: | --- | --- |
+| 10 | `storage_decimal` | ** (MyXQL.Error) (1264) Out of range value for column 'value' at row 1 |

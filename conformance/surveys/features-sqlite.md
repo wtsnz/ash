@@ -4,7 +4,7 @@
 
 Generated from an unreviewed run: each result was classified automatically against the intended answer. Nothing here has been reviewed.
 
-Feature catalog version 1: 155 features and 869 scenarios.
+Feature catalog version 1: 164 features and 1319 scenarios.
 
 | Status | Meaning |
 | --- | --- |
@@ -56,26 +56,26 @@ fix.
 
 | Feature | sqlite | Not working |
 | --- | --- | --- |
-| Integers | ✅ Works 10/10 |  |
-| Floats | ✅ Works 10/10 |  |
-| Decimals | ✅ Works 10/10 |  |
-| Strings | ✅ Works 9/9 |  |
-| Case-insensitive strings | 🟡 Partial 8/9 | `ops.ci_string.sort` wrong |
-| Binaries | 🟡 Partial 4/5 | `ops.binary.in` crashed |
+| Integers | ✅ Works 20/20 |  |
+| Floats | ✅ Works 20/20 |  |
+| Decimals | 🟡 Partial 18/20 | `ops.decimal.min.edge` wrong, `ops.decimal.sum.edge` wrong |
+| Strings | ✅ Works 18/18 |  |
+| Case-insensitive strings | 🟡 Partial 17/18 | `ops.ci_string.sort` wrong |
+| Binaries | 🟡 Partial 8/10 · 1 blocked | `ops.binary.in` crashed, `ops.binary.in.edge` crashed (blocked by `ops.binary.in`) |
 | Booleans | ✅ Works 5/5 |  |
 | Atoms with one_of | ✅ Works 5/5 |  |
-| Dates | ✅ Works 9/9 |  |
-| Times | ✅ Works 9/9 |  |
-| Microsecond times | ✅ Works 9/9 |  |
-| UTC datetimes | ✅ Works 9/9 |  |
-| Microsecond UTC datetimes | ✅ Works 9/9 |  |
-| Naive datetimes | ✅ Works 9/9 |  |
-| Durations | ❔ Unknown 5 not run | `ops.duration.count` setup failed (blocked by `storage.duration.ordinary`), `ops.duration.eq` setup failed (blocked by `storage.duration.ordinary`), `ops.duration.first` setup failed (blocked by `storage.duration.ordinary`), `ops.duration.in` setup failed (blocked by `storage.duration.ordinary`), `ops.duration.is_nil` setup failed (blocked by `storage.duration.ordinary`) |
-| UUIDs | ✅ Works 5/5 |  |
+| Dates | ✅ Works 18/18 |  |
+| Times | ✅ Works 18/18 |  |
+| Microsecond times | ✅ Works 18/18 |  |
+| UTC datetimes | ✅ Works 18/18 |  |
+| Microsecond UTC datetimes | ✅ Works 18/18 |  |
+| Naive datetimes | ✅ Works 18/18 |  |
+| Durations | ❔ Unknown 10 not run | `ops.duration.count` setup failed (blocked by `storage.duration.ordinary`), `ops.duration.count.edge` setup failed (blocked by `storage.duration.ordinary`), `ops.duration.eq` setup failed (blocked by `storage.duration.ordinary`), `ops.duration.eq.edge` setup failed (blocked by `storage.duration.ordinary`), `ops.duration.first` setup failed (blocked by `storage.duration.ordinary`), `ops.duration.first.edge` setup failed (blocked by `storage.duration.ordinary`), `ops.duration.in` setup failed (blocked by `storage.duration.ordinary`), `ops.duration.in.edge` setup failed (blocked by `storage.duration.ordinary`), `ops.duration.is_nil` setup failed (blocked by `storage.duration.ordinary`), `ops.duration.is_nil.edge` setup failed (blocked by `storage.duration.ordinary`) |
+| UUIDs | ✅ Works 10/10 |  |
 | UUIDv7s | ✅ Works 5/5 |  |
-| Maps | 🟡 Partial 1/3 | `ops.map.count` wrong, `ops.map.is_nil` wrong |
-| Arrays of strings | 🟡 Partial 1/3 | `ops.strings.count` wrong, `ops.strings.is_nil` wrong |
-| Arrays of integers | 🟡 Partial 1/3 | `ops.integers.count` wrong, `ops.integers.is_nil` wrong |
+| Maps | 🟡 Partial 2/6 · 2 blocked | `ops.map.count` wrong, `ops.map.count.edge` wrong (blocked by `ops.map.count`), `ops.map.is_nil` wrong, `ops.map.is_nil.edge` wrong (blocked by `ops.map.is_nil`) |
+| Arrays of strings | 🟡 Partial 2/6 · 2 blocked | `ops.strings.count` wrong, `ops.strings.count.edge` wrong (blocked by `ops.strings.count`), `ops.strings.is_nil` wrong, `ops.strings.is_nil.edge` wrong (blocked by `ops.strings.is_nil`) |
+| Arrays of integers | 🟡 Partial 2/6 · 2 blocked | `ops.integers.count` wrong, `ops.integers.count.edge` wrong (blocked by `ops.integers.count`), `ops.integers.is_nil` wrong, `ops.integers.is_nil.edge` wrong (blocked by `ops.integers.is_nil`) |
 | Embedded resources | 🟡 Partial 1/3 | `ops.embedded.count` wrong, `ops.embedded.is_nil` wrong |
 | Arrays of embedded resources | 🟡 Partial 1/3 | `ops.embeddeds.count` wrong, `ops.embeddeds.is_nil` wrong |
 | Unions | 🟡 Partial 1/3 | `ops.union.count` wrong, `ops.union.is_nil` wrong |
@@ -118,6 +118,12 @@ fix.
 | String functions, including non-ASCII text | 🟡 Partial 8/11 | `expr.filter.string_downcase` wrong, `expr.string_downcase` wrong, `expr.string_join` rejected |
 | if, cond, || and && | 🟡 Partial 4/5 | `expr.and_then` wrong |
 | Date and datetime arithmetic | 🟡 Partial 2/5 | `expr.date_add_month` wrong, `expr.filter.date_add_month` wrong, `expr.start_of_day` crashed |
+| Every signature of the date and time functions, including Duration forms | 🟡 Partial 7/16 | `sig.ago.duration` crashed, `sig.date_add.duration` crashed, `sig.datetime_add.duration` crashed, `sig.datetime_add.naive_duration` crashed, `sig.from_now.duration` crashed, `sig.start_of_day.date` crashed, `sig.start_of_day.date_zone` crashed, `sig.start_of_day.datetime` crashed, `sig.start_of_day.datetime_zone` crashed |
+| Every signature of the list, map, nil, conditional and type functions | 🟡 Partial 9/14 | `sig.at.index` crashed, `sig.count_nils.list` crashed, `sig.has.array` crashed, `sig.intersects.array` crashed, `sig.length.array` crashed |
+| Every signature of the string functions, with case-insensitive strings | 🟡 Partial 12/38 | `sig.contains.ci_ci` wrong, `sig.contains.ci_string` wrong, `sig.contains.string_ci` wrong, `sig.string_ends_with.ci_ci` wrong, `sig.string_ends_with.ci_string` wrong, `sig.string_ends_with.string_ci` wrong, `sig.string_join.array` rejected, `sig.string_join.array_ci_separator` rejected, `sig.string_join.array_separator` rejected, `sig.string_join.ci_list` rejected, `sig.string_join.ci_list_separator` rejected, `sig.string_position.ci_ci` wrong, `sig.string_position.ci_string` wrong, `sig.string_position.string_ci` wrong, `sig.string_split.ci` crashed, `sig.string_split.ci_ci` crashed, `sig.string_split.ci_ci_trim` crashed, `sig.string_split.ci_separator` crashed, `sig.string_split.ci_separator_trim` crashed, `sig.string_split.ci_trim` crashed, `sig.string_split.default` crashed, `sig.string_split.separator` crashed, `sig.string_split.trim` crashed, `sig.string_starts_with.ci_ci` wrong, `sig.string_starts_with.ci_string` wrong, `sig.string_starts_with.string_ci` wrong |
+| Every signature of negation, rem and round | 🟡 Partial 2/8 | `sig.round.decimal` crashed, `sig.round.decimal_places` crashed, `sig.round.float` crashed, `sig.round.float_places` crashed, `sig.round.integer` crashed, `sig.round.integer_places` crashed |
+| Every typed signature of <>, /, *, - and +, including date and time arithmetic | 🟡 Partial 13/46 | `sig.div.decimal_decimal` crashed, `sig.div.float_decimal` crashed, `sig.div.integer_decimal` crashed, `sig.minus.date_date` wrong, `sig.minus.date_duration` crashed, `sig.minus.datetime_datetime` wrong, `sig.minus.datetime_duration` crashed, `sig.minus.naive_duration` crashed, `sig.minus.naive_naive` wrong, `sig.minus.time_duration` crashed, `sig.minus.time_time` wrong, `sig.minus.time_usec_duration` crashed, `sig.minus.time_usec_time_usec` wrong, `sig.minus.usec_duration` crashed, `sig.minus.usec_usec` wrong, `sig.minus.utc_datetime_duration` crashed, `sig.minus.utc_datetime_utc_datetime` wrong, `sig.plus.date_duration` crashed, `sig.plus.datetime_duration` crashed, `sig.plus.duration_date` crashed, `sig.plus.duration_datetime` crashed, `sig.plus.duration_naive` crashed, `sig.plus.duration_time` crashed, `sig.plus.duration_time_usec` crashed, `sig.plus.duration_usec` crashed, `sig.plus.duration_utc_datetime` crashed, `sig.plus.naive_duration` crashed, `sig.plus.time_duration` crashed, `sig.plus.time_usec_duration` crashed, `sig.plus.usec_duration` crashed, `sig.plus.utc_datetime_duration` crashed, `sig.times.duration_integer` crashed, `sig.times.integer_duration` crashed |
+| Functions on unusual values: decomposed Unicode, whitespace, empty lists, overflow and halves | 🟡 Partial 8/16 | `edge.at.negative_index` open question, `edge.plus.integer_overflow` open question, `edge.round.decimal_half` crashed, `edge.round.half` crashed, `edge.string_join.empty_items` rejected, `edge.string_length.graphemes` crashed, `edge.string_split.empty_items` crashed, `edge.string_trim.whitespace` wrong |
 | Negation, column comparisons and and/or with nil | 🟡 Partial 10/13 | `nil.not_contradictory_in` wrong, `nil.not_in_with_nil` open question, `nil.or` open question |
 | Filters through to-many relationships return each record once | 🟡 Partial 4/9 | `read.join_limit` wrong, `read.join_negated` wrong, `read.join_or_paths` wrong, `read.join_page` wrong, `read.join_to_many` wrong |
 | Sort by a related record's attribute | ✅ Works 1/1 |  |
@@ -242,6 +248,9 @@ fix.
 | --- | --- | --- |
 | Each combined feature works on its own | ✅ Works 14/14 |  |
 | Features work together, pair by pair | 🟡 Partial 16/17 | `combo.list.top_items.value_gt.global.actor.loaded` wrong |
+| Aggregates and exists over paths of one to three hops, on integer and UUID keys | ✅ Works 174/174 |  |
+| Sorting by the destination's aggregate inside a path | ✅ Works 4/4 |  |
+| Calculations over a related field keep records whose related record is missing | ✅ Works 8/8 |  |
 
 ## 14. Consistency checks
 
@@ -394,10 +403,17 @@ answer changes with the order rows were stored in; ❔ did not run.
 
 | Blocker | Its result | Not run | Failing | Only blocker of |
 | --- | --- | ---: | ---: | ---: |
+| `storage.duration.ordinary` | error at create: ** (Exqlite.Error) unsupported type: %Duration{hour: 1, minute: 30} | 10 | 0 | 10 |
 | `filter.fanout_read_control` | wrong | 0 | 7 | 7 |
 | `policy.control.exists_filter_input` | wrong | 0 | 5 | 5 |
-| `storage.duration.ordinary` | error at create: ** (Exqlite.Error) unsupported type: %Duration{hour: 1, minute: 30} | 5 | 0 | 5 |
 | `storage.decimal.edge` | lost at read: Decimal.new("12345678901234568") | 0 | 4 | 4 |
 | `context.relationship_context_control` | wrong | 0 | 1 | 1 |
 | `filter.nested_parent_control` | crashed | 0 | 1 | 1 |
 | `filter.parent_through_control` | crashed | 0 | 1 | 1 |
+| `ops.binary.in` | crashed | 0 | 1 | 1 |
+| `ops.integers.count` | wrong | 0 | 1 | 1 |
+| `ops.integers.is_nil` | wrong | 0 | 1 | 1 |
+| `ops.map.count` | wrong | 0 | 1 | 1 |
+| `ops.map.is_nil` | wrong | 0 | 1 | 1 |
+| `ops.strings.count` | wrong | 0 | 1 | 1 |
+| `ops.strings.is_nil` | wrong | 0 | 1 | 1 |

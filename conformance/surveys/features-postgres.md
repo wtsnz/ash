@@ -4,7 +4,7 @@
 
 Generated from an unreviewed run: each result was classified automatically against the intended answer. Nothing here has been reviewed.
 
-Feature catalog version 1: 155 features and 869 scenarios.
+Feature catalog version 1: 164 features and 1319 scenarios.
 
 | Status | Meaning |
 | --- | --- |
@@ -56,26 +56,26 @@ fix.
 
 | Feature | postgres | Not working |
 | --- | --- | --- |
-| Integers | ✅ Works 10/10 |  |
-| Floats | ✅ Works 10/10 |  |
-| Decimals | ✅ Works 10/10 |  |
-| Strings | ✅ Works 9/9 |  |
-| Case-insensitive strings | ✅ Works 9/9 |  |
-| Binaries | ✅ Works 5/5 |  |
+| Integers | ✅ Works 20/20 |  |
+| Floats | ✅ Works 20/20 |  |
+| Decimals | ✅ Works 20/20 |  |
+| Strings | ✅ Works 18/18 |  |
+| Case-insensitive strings | ✅ Works 18/18 |  |
+| Binaries | ✅ Works 10/10 |  |
 | Booleans | ✅ Works 5/5 |  |
 | Atoms with one_of | ✅ Works 5/5 |  |
-| Dates | ✅ Works 9/9 |  |
-| Times | ✅ Works 9/9 |  |
-| Microsecond times | ✅ Works 9/9 |  |
-| UTC datetimes | ✅ Works 9/9 |  |
-| Microsecond UTC datetimes | ✅ Works 9/9 |  |
-| Naive datetimes | ✅ Works 9/9 |  |
-| Durations | ✅ Works 5/5 |  |
-| UUIDs | ✅ Works 5/5 |  |
+| Dates | ✅ Works 18/18 |  |
+| Times | ✅ Works 18/18 |  |
+| Microsecond times | ✅ Works 18/18 |  |
+| UTC datetimes | ✅ Works 18/18 |  |
+| Microsecond UTC datetimes | ✅ Works 18/18 |  |
+| Naive datetimes | ✅ Works 18/18 |  |
+| Durations | ✅ Works 10/10 |  |
+| UUIDs | ✅ Works 10/10 |  |
 | UUIDv7s | ✅ Works 5/5 |  |
-| Maps | ✅ Works 3/3 |  |
-| Arrays of strings | ✅ Works 3/3 |  |
-| Arrays of integers | ✅ Works 3/3 |  |
+| Maps | ✅ Works 6/6 |  |
+| Arrays of strings | ✅ Works 6/6 |  |
+| Arrays of integers | ✅ Works 6/6 |  |
 | Embedded resources | ✅ Works 3/3 |  |
 | Arrays of embedded resources | ✅ Works 3/3 |  |
 | Unions | ✅ Works 3/3 |  |
@@ -118,6 +118,12 @@ fix.
 | String functions, including non-ASCII text | ✅ Works 11/11 |  |
 | if, cond, || and && | ✅ Works 5/5 |  |
 | Date and datetime arithmetic | ✅ Works 5/5 |  |
+| Every signature of the date and time functions, including Duration forms | 🟡 Partial 14/16 | `sig.start_of_day.date_zone` wrong, `sig.start_of_day.datetime_zone` wrong |
+| Every signature of the list, map, nil, conditional and type functions | ✅ Works 14/14 |  |
+| Every signature of the string functions, with case-insensitive strings | 🟡 Partial 28/38 | `sig.string_position.string_ci` wrong, `sig.string_split.ci` wrong, `sig.string_split.ci_ci` wrong, `sig.string_split.ci_ci_trim` wrong, `sig.string_split.ci_separator` wrong, `sig.string_split.ci_separator_trim` wrong, `sig.string_split.ci_trim` wrong, `sig.string_split.default` wrong, `sig.string_split.separator` wrong, `sig.string_split.trim` wrong |
+| Every signature of negation, rem and round | ✅ Works 8/8 |  |
+| Every typed signature of <>, /, *, - and +, including date and time arithmetic | 🟡 Partial 37/46 | `sig.div.decimal_decimal` crashed, `sig.div.float_decimal` crashed, `sig.div.integer_decimal` crashed, `sig.minus.datetime_datetime` crashed, `sig.minus.naive_naive` crashed, `sig.minus.time_time` crashed, `sig.minus.time_usec_time_usec` crashed, `sig.minus.usec_usec` crashed, `sig.minus.utc_datetime_utc_datetime` crashed |
+| Functions on unusual values: decomposed Unicode, whitespace, empty lists, overflow and halves | 🟡 Partial 13/16 | `edge.at.negative_index` open question, `edge.plus.integer_overflow` open question, `edge.string_length.graphemes` crashed |
 | Negation, column comparisons and and/or with nil | 🟡 Partial 10/13 | `nil.not_contradictory_in` wrong, `nil.not_in_with_nil` open question, `nil.or` open question |
 | Filters through to-many relationships return each record once | ✅ Works 9/9 |  |
 | Sort by a related record's attribute | ✅ Works 1/1 |  |
@@ -242,6 +248,9 @@ fix.
 | --- | --- | --- |
 | Each combined feature works on its own | ✅ Works 14/14 |  |
 | Features work together, pair by pair | 🟡 Partial 16/17 | `combo.list.top_items.value_gt.global.actor.loaded` wrong |
+| Aggregates and exists over paths of one to three hops, on integer and UUID keys | ✅ Works 174/174 |  |
+| Sorting by the destination's aggregate inside a path | ✅ Works 4/4 |  |
+| Calculations over a related field keep records whose related record is missing | ✅ Works 8/8 |  |
 
 ## 14. Consistency checks
 
