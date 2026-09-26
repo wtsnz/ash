@@ -24,6 +24,11 @@ defmodule Ash.Conformance.ExpressionsTest do
         {"nil.not_in_with_nil", :unresolved} -> assert report.observation.actual == "[2, 4]"
         # Ash's evaluator returns true for `nil or true`, like SQL.
         {"nil.or", :unresolved} -> assert report.observation.actual == "[1, 3]"
+        # Ash's evaluator gets nil-left `and`/`or` wrong (`runtime-nil-logic`).
+        {"nil.not_and_false", _} -> assert report.observation.actual == "[1, 2, 4]"
+        {"nil.not_or_false", _} -> assert report.observation.actual == "[2, 3]"
+        # Ash simplifies the filter to `true` first (`in-simplification`).
+        {"nil.not_contradictory_in", _} -> assert report.observation.actual == "[1, 2, 3, 4]"
         {_id, expected} -> assert report.observation.actual == Report.value(expected)
       end
     end

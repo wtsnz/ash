@@ -96,6 +96,30 @@ limitation: something unsupported by design, where the documented rejection is
 the intended result. Tests reject
 missing expectations, duplicate IDs, unexpected passes and changed signatures.
 
+## Triage a generated filter
+
+`mix conformance.fuzz` and `test/fuzz_test.exs` report filters on which a
+data layer disagrees with SQL's three-valued logic, shrunk to a minimal
+filter (`lib/fuzz.ex`). For each one:
+
+1. **Check it by hand against the expressions guide,** row by row, on the
+   expression fixture.
+2. **Find where the answer changes.** Compare the same filter on another
+   data layer, then inspect `Ash.Query.filter`: when every data layer agrees
+   on a wrong answer, Ash has usually rewritten the filter first, as with
+   `in-simplification`. Evaluate it with `Ash.Expr.eval/2` too: the fuzzer
+   can check Ash's evaluator on its own (`mix conformance.fuzz ash`), where it
+   found `runtime-nil-logic`.
+3. **Write it up.** Add a written scenario with the decided answer, usually
+   under `nil.*` in `lib/scenarios/expressions.ex`, and a gap owned by
+   whoever must fix it. Record what each reviewed data layer returns.
+4. **Mark the shrunk filter as known.** List it in `@known` in
+   `test/fuzz_test.exs`, next to its gap.
+
+The generator leaves out what Ash has not decided (nil in `in` lists, and
+ordering strings), so it does not report those again. Widen it only after
+Ash decides them.
+
 ## Add a data layer
 
 A new data layer takes one folder and one list entry. `lib/adapters/ets/adapter.ex`

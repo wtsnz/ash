@@ -4,7 +4,7 @@
 
 Generated from an unreviewed run: each result was classified automatically against the intended answer. Nothing here has been reviewed.
 
-Feature catalog version 1: 152 features and 850 scenarios.
+Feature catalog version 1: 155 features and 869 scenarios.
 
 | Status | Meaning |
 | --- | --- |
@@ -118,7 +118,7 @@ fix.
 | String functions, including non-ASCII text | ✅ Works 11/11 |  |
 | if, cond, || and && | ✅ Works 5/5 |  |
 | Date and datetime arithmetic | ✅ Works 5/5 |  |
-| Negation, column comparisons and and/or with nil | ❓ Open question 8/10 | `nil.not_in_with_nil` open question, `nil.or` open question |
+| Negation, column comparisons and and/or with nil | 🟡 Partial 8/13 | `nil.not_and_false` wrong, `nil.not_contradictory_in` wrong, `nil.not_in_with_nil` open question, `nil.not_or_false` wrong, `nil.or` open question |
 | Filters through to-many relationships return each record once | ✅ Works 9/9 |  |
 | Sort by a related record's attribute | ✅ Works 1/1 |  |
 | Calculations feed aggregates, filters and sorts | ✅ Works 5/5 |  |
@@ -134,6 +134,8 @@ fix.
 | Load expression calculations, with arguments | ✅ Works 3/3 |  |
 | Offset pagination with counts | ✅ Works 1/1 |  |
 | Keyset pagination, forwards and backwards | ✅ Works 1/1 |  |
+| Keyset pagination on nullable, duplicate, descending and calculated keys | ✅ Works 5/5 |  |
+| Long in-lists, bulk creates past parameter limits, deep pages and aggregates over thousands of rows | ➖ Not applicable |  |
 | Pagination while records change | ⚪ Untested |  |
 
 ## 6. Relationships
@@ -179,6 +181,7 @@ fix.
 | Feature | ets | Not working |
 | --- | --- | --- |
 | Upsert on an identity, in bulk, with conditions | ✅ Works 4/4 |  |
+| Identities and upserts on keys that can be nil, and upsert fields | 🟡 Partial 2/5 | `identity.nils_not_distinct` wrong, `upsert.nil_key` wrong, `upsert.nil_key_not_distinct` wrong |
 | Bulk create with partial success | ✅ Works 1/1 |  |
 | Bulk update atomically | ✅ Works 1/1 |  |
 | Writes that filter by or read aggregates | ✅ Works 4/4 |  |
@@ -260,6 +263,7 @@ whose claims disagree with the result:
 | Select only some attributes | ets | Works without advertising `record: :select` |
 | Stream records in batches | ets | Works without advertising `record: :keyset` |
 | Keyset pagination, forwards and backwards | ets | Works without advertising `record: :keyset` |
+| Keyset pagination on nullable, duplicate, descending and calculated keys | ets | Works without advertising `record: :keyset` |
 | Parent references in nested and through relationship filters | ets | Advertised, but ❌ Broken |
 | Upsert on an identity, in bulk, with conditions | ets | Works without advertising `tenant_item: :bulk_upsert_return_skipped` |
 | Bulk create with partial success | ets | Works without advertising `tenant_item: :bulk_create_with_partial_success` |

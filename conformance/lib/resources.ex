@@ -25,6 +25,8 @@ defmodule Ash.Conformance.Resources do
       use Ash.Conformance.Resources.Policy, unquote(opts)
       use Ash.Conformance.Resources.Combination, unquote(opts)
       use Ash.Conformance.Resources.Expressions, unquote(opts)
+      use Ash.Conformance.Resources.Large, unquote(opts)
+      use Ash.Conformance.Resources.Identities, unquote(opts)
     end
   end
 

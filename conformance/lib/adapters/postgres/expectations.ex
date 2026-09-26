@@ -13,6 +13,8 @@ defmodule Ash.Conformance.Postgres.Expectations do
   def rules do
     [
       supported("*"),
+      expect("nil.not_contradictory_in", defect_value([1, 2, 3, 4], "in-simplification")),
+      expect("large.bulk_create_parameters", defect_value({:error, 0}, "bind-parameter-limit")),
       expect("nil.not_in_with_nil", unresolved_value([], "in-list-nil")),
       expect("nil.or", unresolved_value([1, 3], "true-or-nil")),
       # The item policy applies after the relationship's limit, as in

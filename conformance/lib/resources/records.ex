@@ -61,6 +61,12 @@ defmodule Ash.Conformance.Resources.Records do
             pagination(offset?: true, keyset?: true, countable: true, required?: false)
           end
 
+          # Keyset only: with both kinds allowed, a request with only a limit
+          # returns offset pages.
+          read :keyset_paged do
+            pagination(keyset?: true, countable: true, required?: false)
+          end
+
           read :streamable do
             pagination(keyset?: true, required?: false)
           end

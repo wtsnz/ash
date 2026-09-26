@@ -10,6 +10,29 @@ defmodule Ash.Conformance.SQL.Gaps do
   def all do
     [
       %{
+        id: "bind-parameter-limit",
+        title: "Bind parameter limit",
+        kind: :implementation,
+        owners: [:ash_sql, :ash_postgres, :ash_sqlite],
+        body: ~S"""
+
+        Split a bulk insert whose rows need more bind parameters than the database
+        allows in one statement. `Ash.bulk_create/4` takes `batch_size` as the number
+        of records per batch and documents no other limit, but 22,000 rows of three
+        fields (66,000 parameters) in one batch fail on both data layers
+        (`large.bulk_create_parameters`). SQLite stops at 32,766 ("variable number
+        must be between ?1 and ?32766") and Postgres at 65,535 ("postgresql protocol
+        can not handle 66000 parameters"). A wide resource reaches the same limit at
+        Ash's default batch of 100.
+
+        Postgres is worse: the error disconnects the connection, and the surrounding
+        transaction is lost with it, so the fixture's 2,000 rows are gone when the
+        scenario counts afterwards. If Ash decides batches past the limit are the
+        caller's problem, the intended result becomes a clean error, but never a
+        dropped connection.
+        """
+      },
+      %{
         id: "root-relationship",
         title: "Root relationship",
         kind: :implementation,

@@ -4,7 +4,7 @@
 
 Generated from an unreviewed run: each result was classified automatically against the intended answer. Nothing here has been reviewed.
 
-Feature catalog version 1: 143 features and 785 scenarios.
+Feature catalog version 1: 155 features and 869 scenarios.
 
 | Status | Meaning |
 | --- | --- |
@@ -114,6 +114,14 @@ fix.
 | Filter booleans and atoms, including atoms as strings | 🟡 Partial 2/3 | `record.filter_boolean` wrong |
 | Filter strings: contains, case, unicode and empty | 🟡 Partial 3/4 | `record.filter_contains` wrong |
 | Filter inside arrays, maps and embedded resources | 🟡 Partial 2/3 | `record.filter_array_member` crashed |
+| Arithmetic and rounding, with integer division as a float | 🟡 Partial 4/10 · 2 blocked | `expr.decimal_multiply` wrong (blocked by `storage.decimal.ordinary`), `expr.divide` wrong, `expr.divide_float` wrong, `expr.filter.round` crashed, `expr.round` crashed, `expr.round_decimal` crashed (blocked by `storage.decimal.ordinary`) |
+| String functions, including non-ASCII text | 🟡 Partial 6/11 | `expr.contains_unicode` wrong, `expr.filter.string_length` wrong, `expr.string_join` rejected, `expr.string_length` wrong, `expr.string_trim` wrong |
+| if, cond, || and && | 🟡 Partial 2/5 | `expr.and_then` wrong, `expr.filter.or_else` wrong, `expr.or_else` wrong |
+| Date and datetime arithmetic | 🟡 Partial 4/5 | `expr.start_of_day` crashed |
+| Negation, column comparisons and and/or with nil | 🟡 Partial 10/13 | `nil.not_contradictory_in` wrong, `nil.not_in_with_nil` open question, `nil.or` open question |
+| Filters through to-many relationships return each record once | 🟡 Partial 6/9 | `read.join_count` wrong, `read.join_many_to_many_count` wrong, `read.join_page` wrong |
+| Sort by a related record's attribute | ✅ Works 1/1 |  |
+| Calculations feed aggregates, filters and sorts | 🟡 Partial 1/5 | `calc.aggregate_over_calculation` rejected, `calc.argument_sort` crashed, `calc.filter_over_aggregate` crashed, `calc.over_aggregate` rejected |
 | Filter by a calculation | ✅ Works 1/1 |  |
 | Sort by one or more fields, with explicit nil order | 🟡 Partial 2/6 · 1 blocked | `record.sort_asc_nils_first` crashed, `record.sort_date` crashed, `record.sort_decimal` crashed (blocked by `storage.decimal.ordinary`), `record.sort_desc_nils_last` crashed |
 | Sort by a calculation | ✅ Works 1/1 |  |
@@ -122,10 +130,12 @@ fix.
 | Stream records in batches | ✅ Works 1/1 |  |
 | Distinct records by a field | ⛔ Not supported 0/1 | `query.distinct` rejected |
 | Combine queries with union | ⛔ Not supported 0/1 | `query.union` rejected |
-| Combine queries with union all and intersection | ⚪ Untested |  |
+| Combine queries with union all, intersect and except | ⛔ Not supported 0/3 | `query.except` rejected, `query.intersect` rejected, `query.union_all` rejected |
 | Load expression calculations, with arguments | ✅ Works 3/3 |  |
 | Offset pagination with counts | ✅ Works 1/1 |  |
 | Keyset pagination, forwards and backwards | ✅ Works 1/1 |  |
+| Keyset pagination on nullable, duplicate, descending and calculated keys | ❌ Broken 0/5 | `keyset.backward` crashed, `keyset.calculation` crashed, `keyset.duplicates_descending_tie` crashed, `keyset.nullable_asc` crashed, `keyset.nullable_desc` crashed |
+| Long in-lists, bulk creates past parameter limits, deep pages and aggregates over thousands of rows | ➖ Not applicable |  |
 | Pagination while records change | ⚪ Untested |  |
 
 ## 6. Relationships
@@ -141,7 +151,7 @@ fix.
 | Relationship context reaches the read action | 🟡 Partial 1/2 | `context.relationship_context_control` wrong |
 | Parent references in nested and through relationship filters | ❌ Broken 0/2 | `filter.nested_parent_control` crashed, `filter.parent_through_control` crashed |
 | Load belongs-to, has-one, has-many and many-to-many relationships | 🟡 Partial 3/4 | `load.has_one` crashed |
-| Create and update related records with manage_relationship | ⚪ Untested |  |
+| Create and update related records with manage_relationship | ✅ Works 2/2 |  |
 
 ## 7. Aggregates
 
@@ -171,9 +181,11 @@ fix.
 | Feature | mysql | Not working |
 | --- | --- | --- |
 | Upsert on an identity, in bulk, with conditions | ❌ Broken 0/4 | `upsert.bulk` crashed, `upsert.condition` crashed, `upsert.skipped_record` order dependent, `upsert.tenant_identity` rejected |
+| Identities and upserts on keys that can be nil, and upsert fields | 🟡 Partial 1/5 | `identity.nils_not_distinct` wrong, `upsert.fields` rejected, `upsert.nil_key` rejected, `upsert.nil_key_not_distinct` rejected |
 | Bulk create with partial success | ❌ Broken 0/1 | `bulk.partial_success` crashed |
 | Bulk update atomically | ❌ Broken 0/1 | `bulk.atomic_increment` crashed |
 | Writes that filter by or read aggregates | ❌ Broken 0/4 | `write.atomic_update` crashed, `write.bulk_destroy_filter` rejected, `write.bulk_update_filter` rejected, `write.single_atomic_update` crashed |
+| Atomic updates with expressions, and bulk writes over sorted, limited queries | 🟡 Partial 2/4 | `write.bulk_destroy_sorted_limit` crashed, `write.bulk_update_sorted_limit` crashed |
 
 ## 9. Transactions and locks
 
@@ -251,6 +263,7 @@ whose claims disagree with the result:
 | Stream records in batches | mysql | Works without advertising `record: :keyset` |
 | Load expression calculations, with arguments | mysql | Works without advertising `record: :calculate` |
 | Keyset pagination, forwards and backwards | mysql | Works without advertising `record: :keyset` |
+| Keyset pagination on nullable, duplicate, descending and calculated keys | mysql | Not advertising `record: :keyset`, but not rejected either: wrong answers |
 | Limit and offset a has-many load for each parent | mysql | Not advertising `parent: {:lateral_join, :children}`, but not rejected either: wrong answers |
 | Limit a many-to-many load for each parent | mysql | Not advertising `parent: {:lateral_join, :tags}`, but not rejected either: wrong answers |
 | Relationships through other relationships | mysql | Not advertising `parent: :through_relationship`, but not rejected either: wrong answers |
@@ -369,8 +382,8 @@ getting a hidden record when the actor may read every note.
 | `policy.control.aggregate_filter` | rejected | 0 | 12 | 12 |
 | `policy.control.loaded_count` | rejected | 0 | 12 | 12 |
 | `policy.control.loaded_sum` | rejected | 0 | 12 | 12 |
+| `storage.decimal.ordinary` | lost at read: Decimal.new("2") | 0 | 11 | 9 |
 | `ops.integer.sort` | crashed | 0 | 10 | 9 |
-| `storage.decimal.ordinary` | lost at read: Decimal.new("2") | 0 | 9 | 7 |
 | `storage.duration.ordinary` | no_table at table: (1064) You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'duration, PRIMARY  | 5 | 0 | 5 |
 | `storage.embeddeds.ordinary` | no_table at table: Array type is not supported by MySQL | 3 | 0 | 3 |
 | `storage.integers.ordinary` | no_table at table: Array type is not supported by MySQL | 3 | 0 | 3 |

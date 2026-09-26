@@ -18,6 +18,8 @@ defmodule Ash.Conformance.Mysql do
 
   def notes,
     do: [
+      "The identity with `nils_distinct?: false` gets a plain unique index, as MySQL has " <>
+        "no `NULLS NOT DISTINCT`.",
       "Tier-1 storage tables use the column types AshMysql's migration generator chooses, " <>
         "unlike the shared tables below.",
       "The records table stores `tags` as JSON and `code` as a `VARCHAR`, since MySQL has no array " <>
@@ -43,7 +45,11 @@ defmodule Ash.Conformance.Mysql do
     Ash.Conformance.Resources.compile!(__MODULE__)
 
     Ash.Conformance.SQL.Database.setup!(repo(),
-      replace: %{4 => Ash.Conformance.Mysql.Values, 6 => Ash.Conformance.Mysql.Records},
+      replace: %{
+        4 => Ash.Conformance.Mysql.Values,
+        6 => Ash.Conformance.Mysql.Records,
+        13 => Ash.Conformance.SQL.Migrations.IdentitiesPlain
+      },
       storage: {__MODULE__, &column/1}
     )
   end

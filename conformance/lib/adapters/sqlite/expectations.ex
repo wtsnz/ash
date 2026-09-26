@@ -13,6 +13,13 @@ defmodule Ash.Conformance.Sqlite.Expectations do
   def rules do
     [
       supported("*"),
+      expect("nil.not_contradictory_in", defect_value([1, 2, 3, 4], "in-simplification")),
+      expect("identity.nils_not_distinct", defect_value({:ok, 2}, "nils-not-distinct")),
+      expect("upsert.nil_key_not_distinct", defect_value([{1, 1}, {2, 5}], "nils-not-distinct")),
+      expect(
+        "large.bulk_create_parameters",
+        defect_value({:error, 2_000}, "bind-parameter-limit")
+      ),
       expect("expr.and_then", defect_value(%{1 => 2, 2 => 3, 3 => nil, 4 => 0}, "elixir-and")),
       expect(
         "expr.date_add_month",

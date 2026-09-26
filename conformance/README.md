@@ -152,6 +152,24 @@ To test a local checkout of a data layer, point at it, for example
 `CONFORMANCE_ASH_POSTGRES_PATH` and `CONFORMANCE_ASH_MYSQL_PATH` work the
 same way. Reports list any such overrides.
 
+### Search for disagreements with generated filters
+
+Written scenarios check the answers someone decided. Generated filters look
+for the ones nobody thought to write. StreamData generates random filters
+over the expression fixture, and each one, and its negation, is checked
+against SQL's three-valued logic, which Ash's expression guide specifies.
+Failures are shrunk to a minimal filter:
+
+```sh
+MIX_ENV=test mise exec -- mix conformance.fuzz sqlite --runs 500 --rounds 5 --seed 7
+MIX_ENV=test mise exec -- mix conformance.fuzz postgres --oracle runtime  # against Ash's evaluator
+MIX_ENV=test mise exec -- mix conformance.fuzz ash                        # Ash's evaluator alone
+```
+
+A report lists leads, not results. A person decides each answer and turns it
+into a written scenario with a gap. `mix test` runs a small, seeded search
+on each reviewed data layer, and fails on any disagreement not yet triaged.
+
 ### Regenerate the committed reports
 
 ```sh

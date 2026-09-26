@@ -324,6 +324,24 @@ defmodule Ash.Conformance.Sqlite.Gaps do
         """
       },
       %{
+        id: "nils-not-distinct",
+        title: "Nils not distinct",
+        kind: :implementation,
+        owners: [:ash_sqlite],
+        body: ~S"""
+
+        Honor `nils_distinct?: false` on identities. SQLite's unique indexes always
+        treat NULLs as distinct, and AshSqlite's migration generator writes
+        `nulls_distinct: false`, which ecto_sqlite3 rejects ("`nulls_distinct` is
+        not supported with SQLite3"), so an application cannot even migrate such an
+        identity. With a plain index, a second row with the same code and a nil
+        scope is created (`identity.nils_not_distinct`), and an upsert on the
+        identity inserts instead of updating (`upsert.nil_key_not_distinct`).
+        AshSqlite could index `coalesce` expressions, or check the identity before
+        writing. Postgres passes with a `NULLS NOT DISTINCT` index.
+        """
+      },
+      %{
         id: "elixir-and",
         title: "Elixir and",
         kind: :implementation,

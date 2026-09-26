@@ -134,6 +134,8 @@ defmodule Ash.Conformance.Fixtures do
   defp build_fixture!(adapter, :records), do: Ash.Conformance.Fixtures.Records.seed!(adapter)
   defp build_fixture!(adapter, :policy), do: Ash.Conformance.Fixtures.Policy.seed!(adapter)
 
+  defp build_fixture!(adapter, :large), do: Ash.Conformance.Fixtures.Large.seed!(adapter)
+
   defp build_fixture!(adapter, :expressions),
     do: Ash.Conformance.Fixtures.Expressions.seed!(adapter)
 

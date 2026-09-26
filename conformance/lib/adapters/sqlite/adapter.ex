@@ -30,8 +30,16 @@ defmodule Ash.Conformance.Sqlite do
      end}
   end
 
+  def notes,
+    do: [
+      "The identity with `nils_distinct?: false` gets a plain unique index: AshSqlite's " <>
+        "migration generator writes `nulls_distinct: false`, which ecto_sqlite3 rejects " <>
+        "(\"`nulls_distinct` is not supported with SQLite3\")."
+    ]
+
   def setup! do
     Ash.Conformance.SQL.Database.setup!(repo(),
+      replace: %{13 => Ash.Conformance.SQL.Migrations.IdentitiesPlain},
       storage: {__MODULE__, &Ash.Conformance.SQL.Columns.ash_sql/1}
     )
   end

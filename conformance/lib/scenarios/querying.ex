@@ -133,7 +133,7 @@ defmodule Ash.Conformance.Scenarios.Querying do
         end
       ),
       scenario("record.keyset_pages", :pagination, {[4, 5, 6], [1, 2, 3], 7}, @reads, fn ctx ->
-        first = page(ctx, limit: 3, count: true)
+        first = keyset_page(ctx, limit: 3, count: true)
         next = Ash.page!(first, :next)
         previous = Ash.page!(next, :prev)
 

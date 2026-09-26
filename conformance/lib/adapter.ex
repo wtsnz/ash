@@ -29,9 +29,10 @@ defmodule Ash.Conformance.Adapter do
   @callback benchmark_persist!(atom(), [map()]) :: term()
   @doc """
   Whether this integration runs a fixture's scenarios. By default every
-  fixture but `:context_tenancy` (schema-based tenancy) and `:combination`
-  (the combination grid, which runs on the reviewed data layers to keep the
-  ecosystem run short). An adapter opts in by returning true.
+  fixture but `:context_tenancy` (schema-based tenancy), `:combination` (the
+  combination grid) and `:large` (thousands of rows), which run on the
+  reviewed data layers to keep the ecosystem run short. An adapter opts in
+  by returning true.
   """
   @callback fixture?(atom() | {:operations, atom()}) :: boolean()
   @doc "Expectation records by scenario ID, for every scenario in the adapter's profiles."
@@ -84,12 +85,13 @@ defmodule Ash.Conformance.Adapter do
           authorized_child ledger record tenant_parent tenant_item secure_parent secure_item
           context_parent context_item)a ++
         Ash.Conformance.Storage.roles() ++
-        Ash.Conformance.Policy.roles() ++ ~w(combo_owner combo_item combo_link expr_row)a
+        Ash.Conformance.Policy.roles() ++
+        ~w(combo_owner combo_item combo_link expr_row large_row identity_row strict_identity_row)a
 
   def table_roles,
-    do:
-      ~w(parent child rating tag link child_tag event reading ledger record tenant_parent
-          tenant_item policy_doc policy_note policy_member combo_owner combo_item combo_link expr_row)a
+    do: ~w(parent child rating tag link child_tag event reading ledger record tenant_parent
+          tenant_item policy_doc policy_note policy_member combo_owner combo_item combo_link expr_row large_row identity_row
+          strict_identity_row)a
 
   def find!(name) do
     Enum.find(every(), &(to_string(&1.id()) == name)) ||
@@ -145,7 +147,7 @@ defmodule Ash.Conformance.Adapter do
       def benchmark_persist!(role, rows), do: persist!(role, rows, [])
       def instrumentation, do: nil
       def expectations, do: %{}
-      def fixture?(fixture), do: fixture not in [:context_tenancy, :combination]
+      def fixture?(fixture), do: fixture not in [:context_tenancy, :combination, :large]
       def custom_aggregate, do: Ash.Conformance.Resources.NoCustomAggregate
       def manual_relationship, do: Ash.Conformance.Resources.PlainManual
       def checkout!, do: :ok

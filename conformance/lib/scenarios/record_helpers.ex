@@ -107,6 +107,14 @@ defmodule Ash.Conformance.Scenarios.RecordHelpers do
     |> Ash.read!(page: opts, authorize?: false)
   end
 
+  @doc "A keyset page, from the keyset-only read action."
+  def keyset_page(ctx, opts, sort \\ [:id]) do
+    ctx.record
+    |> Ash.Query.for_read(:keyset_paged)
+    |> Ash.Query.sort(sort)
+    |> Ash.read!(page: opts, authorize?: false)
+  end
+
   def query(ctx), do: Ash.Query.sort(ctx.record, :id)
 
   def ids(query), do: query |> Ash.read!(authorize?: false) |> Enum.map(& &1.id)

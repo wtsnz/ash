@@ -198,7 +198,20 @@ Elixir scenarios and expectations define the contract. CI runs each adapter inde
 | [`identity.keyless_count`](lib/scenarios/aggregates/paths.ex#L141) | supported | supported |
 | [`identity.keyless_distinct`](lib/scenarios/aggregates/paths.ex#L138) | [unresolved](GAPS.md#keyless-identity) · Ash | [unresolved](GAPS.md#keyless-identity) · Ash |
 | [`identity.keyless_source`](lib/scenarios/aggregates/paths.ex#L151) | [unsupported](GAPS.md#record-identity) · AshSQL | supported |
+| [`identity.nils_distinct`](lib/scenarios/identities.ex#L19) | supported | supported |
+| [`identity.nils_not_distinct`](lib/scenarios/identities.ex#L29) | [known_defect](GAPS.md#nils-not-distinct) · AshSQLite | supported |
 | [`identity.root_composite_count`](lib/scenarios/aggregates/paths.ex#L144) | [unsupported](GAPS.md#record-identity) · AshSQL | supported |
+| [`keyset.backward`](lib/scenarios/keyset.ex#L51) | supported | supported |
+| [`keyset.calculation`](lib/scenarios/keyset.ex#L44) | supported | supported |
+| [`keyset.duplicates_descending_tie`](lib/scenarios/keyset.ex#L36) | supported | supported |
+| [`keyset.nullable_asc`](lib/scenarios/keyset.ex#L22) | supported | supported |
+| [`keyset.nullable_desc`](lib/scenarios/keyset.ex#L29) | supported | supported |
+| [`large.bulk_create_parameters`](lib/scenarios/large.ex#L45) | [known_defect](GAPS.md#bind-parameter-limit) · AshSQL | [known_defect](GAPS.md#bind-parameter-limit) · AshSQL |
+| [`large.in_list`](lib/scenarios/large.ex#L22) | supported | supported |
+| [`large.in_list_strings`](lib/scenarios/large.ex#L32) | supported | supported |
+| [`large.keyset_walk`](lib/scenarios/large.ex#L76) | supported | supported |
+| [`large.offset_deep`](lib/scenarios/large.ex#L60) | supported | supported |
+| [`large.sum`](lib/scenarios/large.ex#L92) | supported | supported |
 | [`load.belongs_to`](lib/scenarios/relationships.ex#L20) | supported | supported |
 | [`load.has_many`](lib/scenarios/relationships.ex#L44) | supported | supported |
 | [`load.has_one`](lib/scenarios/relationships.ex#L32) | supported | supported |
@@ -220,11 +233,14 @@ Elixir scenarios and expectations define the contract. CI runs each adapter inde
 | [`nil.compare_columns`](lib/scenarios/expressions.ex#L219) | supported | supported |
 | [`nil.compare_columns_negated`](lib/scenarios/expressions.ex#L220) | supported | supported |
 | [`nil.not_and`](lib/scenarios/expressions.ex#L224) | supported | supported |
+| [`nil.not_and_false`](lib/scenarios/expressions.ex#L226) | supported | supported |
+| [`nil.not_contradictory_in`](lib/scenarios/expressions.ex#L231) | [known_defect](GAPS.md#in-simplification) · Ash | [known_defect](GAPS.md#in-simplification) · Ash |
 | [`nil.not_equal`](lib/scenarios/expressions.ex#L217) | supported | supported |
 | [`nil.not_equal_negated`](lib/scenarios/expressions.ex#L218) | supported | supported |
-| [`nil.not_in_with_nil`](lib/scenarios/expressions.ex#L237) | [unresolved](GAPS.md#in-list-nil) · Ash | [unresolved](GAPS.md#in-list-nil) · Ash |
-| [`nil.or`](lib/scenarios/expressions.ex#L240) | [unresolved](GAPS.md#true-or-nil) · Ash | [unresolved](GAPS.md#true-or-nil) · Ash |
-| [`nil.partition`](lib/scenarios/expressions.ex#L226) | supported | supported |
+| [`nil.not_in_with_nil`](lib/scenarios/expressions.ex#L244) | [unresolved](GAPS.md#in-list-nil) · Ash | [unresolved](GAPS.md#in-list-nil) · Ash |
+| [`nil.not_or_false`](lib/scenarios/expressions.ex#L228) | supported | supported |
+| [`nil.or`](lib/scenarios/expressions.ex#L247) | [unresolved](GAPS.md#true-or-nil) · Ash | [unresolved](GAPS.md#true-or-nil) · Ash |
+| [`nil.partition`](lib/scenarios/expressions.ex#L233) | supported | supported |
 | [`nil.pinned_nil`](lib/scenarios/expressions.ex#L222) | supported | supported |
 | [`ops.atom.count`](lib/scenarios/operations.ex#L26) | supported | supported |
 | [`ops.atom.eq`](lib/scenarios/operations.ex#L26) | supported | supported |
@@ -805,6 +821,9 @@ Elixir scenarios and expectations define the contract. CI runs each adapter inde
 | [`txn.raise_rollback`](lib/scenarios/transactions.ex#L43) | supported | supported |
 | [`upsert.bulk`](lib/scenarios/writes.ex#L46) | supported | supported |
 | [`upsert.condition`](lib/scenarios/writes.ex#L60) | [known_defect](GAPS.md#upsert-conditions) · AshSQLite | supported |
+| [`upsert.fields`](lib/scenarios/identities.ex#L64) | supported | supported |
+| [`upsert.nil_key`](lib/scenarios/identities.ex#L40) | supported | supported |
+| [`upsert.nil_key_not_distinct`](lib/scenarios/identities.ex#L52) | [known_defect](GAPS.md#nils-not-distinct) · AshSQLite | supported |
 | [`upsert.skipped_record`](lib/scenarios/writes.ex#L77) | [known_defect](GAPS.md#upsert-conditions) · AshSQLite | [known_defect](GAPS.md#skipped-upsert-tenant) · AshPostgres |
 | [`upsert.tenant_identity`](lib/scenarios/writes.ex#L30) | supported | supported |
 | [`use.calculation`](lib/scenarios/aggregates/usage.ex#L28) | supported | supported |
@@ -869,10 +888,12 @@ The first owner is where the fix starts. Counts are scenarios linked to each gap
 | [bulk-stream-forbidden](GAPS.md#bulk-stream-forbidden) | Ash | implementation | 2 | 0 |
 | [decimal-avg](GAPS.md#decimal-avg) | Ash | decision | 1 | 1 |
 | [in-list-nil](GAPS.md#in-list-nil) | Ash | decision | 1 | 1 |
+| [in-simplification](GAPS.md#in-simplification) | Ash | implementation | 1 | 1 |
 | [keyless-identity](GAPS.md#keyless-identity) | Ash | decision | 1 | 1 |
 | [many-to-many-bounds-api](GAPS.md#many-to-many-bounds-api) | Ash | decision | 1 | 1 |
 | [path-multiplicity](GAPS.md#path-multiplicity) | Ash | decision | 1 | 1 |
 | [relationship-context](GAPS.md#relationship-context) | Ash | implementation | 2 | 2 |
+| [runtime-nil-logic](GAPS.md#runtime-nil-logic) | Ash | implementation | 0 | 0 |
 | [true-or-nil](GAPS.md#true-or-nil) | Ash | decision | 2 | 2 |
 | [union-nil](GAPS.md#union-nil) | Ash | implementation | 1 | 1 |
 | [unique-list-order](GAPS.md#unique-list-order) | Ash | decision | 1 | 1 |
@@ -897,6 +918,7 @@ The first owner is where the fix starts. Counts are scenarios linked to each gap
 | [unsorted-list-nil](GAPS.md#unsorted-list-nil) | AshSQL | implementation | 0 | 2 |
 | [nested-parent](GAPS.md#nested-parent) | AshSQL, then Ash | implementation | 1 | 2 |
 | [parent-through-load](GAPS.md#parent-through-load) | AshSQL, then Ash | implementation | 1 | 1 |
+| [bind-parameter-limit](GAPS.md#bind-parameter-limit) | AshSQL, then AshPostgres, then AshSQLite | implementation | 1 | 1 |
 | [elixir-and](GAPS.md#elixir-and) | AshSQL, then AshSQLite | implementation | 1 | 0 |
 | [manual](GAPS.md#manual) | AshSQL, then AshSQLite | implementation | 1 | 0 |
 | [no-attributes](GAPS.md#no-attributes) | AshSQL, then AshSQLite | implementation | 2 | 1 |
@@ -910,6 +932,7 @@ The first owner is where the fix starts. Counts are scenarios linked to each gap
 | [duration-storage](GAPS.md#duration-storage) | AshSQLite | implementation | 7 | 0 |
 | [error-expressions](GAPS.md#error-expressions) | AshSQLite | limitation | 8 | 0 |
 | [month-overflow](GAPS.md#month-overflow) | AshSQLite | implementation | 2 | 0 |
+| [nils-not-distinct](GAPS.md#nils-not-distinct) | AshSQLite | implementation | 2 | 0 |
 | [query-combinations](GAPS.md#query-combinations) | AshSQLite | implementation | 4 | 0 |
 | [query-distinct](GAPS.md#query-distinct) | AshSQLite | implementation | 1 | 0 |
 | [row-locks](GAPS.md#row-locks) | AshSQLite | limitation | 1 | 0 |

@@ -10,6 +10,40 @@ defmodule Ash.Conformance.Contracts.SharedGaps do
   def all do
     [
       %{
+        id: "in-simplification",
+        title: "In simplification",
+        kind: :implementation,
+        owners: [:ash],
+        body: ~S"""
+
+        Keep nil logic when simplifying `in` filters. Ash rewrites `not (a in [0]
+        and a in [1])` to `true` while it builds the query, as no value is in both
+        lists. For a nil `a` the conjunction is nil, not false, so the negation should
+        drop the row, as SQL does and as the same filter written with `==` does.
+        Every data layer receives `true` and returns every row
+        (`nil.not_contradictory_in`). Found by generated filters (`lib/fuzz.ex`),
+        shrunk to `(a in [0] and a in [1])`.
+        """
+      },
+      %{
+        id: "runtime-nil-logic",
+        title: "Runtime nil logic",
+        kind: :implementation,
+        owners: [:ash],
+        body: ~S"""
+
+        Evaluate `and` and `or` with a nil operand as SQL does, in either order. The
+        expressions guide says nil behaves like SQL `NULL`, where `NULL AND FALSE` is
+        false and `NULL OR FALSE` is `NULL`. Ash's in-memory evaluation
+        (`Ash.Expr.eval/2`, `Ash.Filter.Runtime`, and so the ETS data layer) returns
+        nil for `nil and false` but false for `false and nil`, and false for `nil or
+        false`. A negated filter then keeps or drops the wrong rows:
+        `nil.not_and_false` and `nil.not_or_false`. SQLite and Postgres return the SQL
+        answers. Found by generated filters (`lib/fuzz.ex`), shrunk to
+        `(a == 0 and string_length(t) > 2)` on row 3 (`a` nil, `t` "x").
+        """
+      },
+      %{
         id: "in-list-nil",
         title: "In list nil",
         kind: :decision,

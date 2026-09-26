@@ -4,7 +4,7 @@
 
 Generated from an unreviewed run: each result was classified automatically against the intended answer. Nothing here has been reviewed.
 
-Feature catalog version 1: 143 features and 785 scenarios.
+Feature catalog version 1: 155 features and 869 scenarios.
 
 | Status | Meaning |
 | --- | --- |
@@ -114,6 +114,14 @@ fix.
 | Filter booleans and atoms, including atoms as strings | ❔ Unknown 3 not run | `record.filter_atom` setup failed, `record.filter_atom_as_string` setup failed, `record.filter_boolean` setup failed |
 | Filter strings: contains, case, unicode and empty | ❔ Unknown 4 not run | `record.filter_case_insensitive` setup failed, `record.filter_contains` setup failed, `record.filter_empty_string` setup failed, `record.filter_unicode` setup failed |
 | Filter inside arrays, maps and embedded resources | ❔ Unknown 3 not run | `record.filter_array_member` setup failed, `record.filter_embedded` setup failed, `record.filter_map_key` setup failed |
+| Arithmetic and rounding, with integer division as a float | ❌ Broken 0/10 | `expr.add` crashed, `expr.decimal_multiply` crashed, `expr.divide` crashed, `expr.divide_float` crashed, `expr.filter.divide` crashed, `expr.filter.round` crashed, `expr.multiply` crashed, `expr.round` crashed, `expr.round_decimal` crashed, `expr.subtract` crashed |
+| String functions, including non-ASCII text | ❌ Broken 0/11 | `expr.concat` crashed, `expr.contains_unicode` crashed, `expr.filter.concat` crashed, `expr.filter.string_downcase` crashed, `expr.filter.string_length` crashed, `expr.string_downcase` crashed, `expr.string_join` crashed, `expr.string_length` crashed, `expr.string_position` crashed, `expr.string_trim` crashed, `expr.type_to_string` crashed |
+| if, cond, || and && | ❌ Broken 0/5 | `expr.and_then` crashed, `expr.cond` crashed, `expr.filter.or_else` crashed, `expr.if` crashed, `expr.or_else` crashed |
+| Date and datetime arithmetic | ❌ Broken 0/5 · 3 blocked | `expr.date_add_day` crashed (blocked by `storage.date.ordinary`), `expr.date_add_month` crashed (blocked by `storage.date.ordinary`), `expr.datetime_add` crashed, `expr.filter.date_add_month` crashed (blocked by `storage.date.ordinary`), `expr.start_of_day` crashed |
+| Negation, column comparisons and and/or with nil | 🟡 Partial 7/13 | `nil.compare_columns` crashed, `nil.compare_columns_negated` crashed, `nil.not_contradictory_in` crashed, `nil.not_equal` crashed, `nil.not_in_with_nil` open question, `nil.or` open question |
+| Filters through to-many relationships return each record once | ❌ Broken 0/9 | `read.join_count` crashed, `read.join_exists_or` order dependent, `read.join_limit` crashed, `read.join_many_to_many_count` crashed, `read.join_negated` crashed, `read.join_or_paths` crashed, `read.join_page` crashed, `read.join_same_row` crashed, `read.join_to_many` crashed |
+| Sort by a related record's attribute | ❌ Broken 0/1 | `read.sort_to_one` crashed |
+| Calculations feed aggregates, filters and sorts | ❌ Broken 0/5 | `calc.aggregate_over_calculation` crashed, `calc.argument_filter` crashed, `calc.argument_sort` crashed, `calc.filter_over_aggregate` crashed, `calc.over_aggregate` crashed |
 | Filter by a calculation | ❔ Unknown 1 not run | `record.filter_calculation` setup failed |
 | Sort by one or more fields, with explicit nil order | ❔ Unknown 6 not run | `record.sort_asc_nils_first` setup failed, `record.sort_date` setup failed, `record.sort_decimal` setup failed, `record.sort_desc_nils_last` setup failed, `record.sort_string` setup failed, `record.sort_tie_break` setup failed |
 | Sort by a calculation | ❔ Unknown 1 not run | `record.sort_calculation` setup failed |
@@ -122,10 +130,12 @@ fix.
 | Stream records in batches | ❔ Unknown 1 not run | `record.stream` setup failed |
 | Distinct records by a field | ❌ Broken 0/1 | `query.distinct` crashed |
 | Combine queries with union | ⛔ Not supported 0/1 | `query.union` rejected |
-| Combine queries with union all and intersection | ⚪ Untested |  |
+| Combine queries with union all, intersect and except | ⛔ Not supported 0/3 | `query.except` rejected, `query.intersect` rejected, `query.union_all` rejected |
 | Load expression calculations, with arguments | 🔸 Incomplete 1/1 · 2 not run | `record.calculation_argument` setup failed, `record.calculation_load` setup failed |
 | Offset pagination with counts | ❔ Unknown 1 not run | `record.offset_pages` setup failed |
 | Keyset pagination, forwards and backwards | ❔ Unknown 1 not run | `record.keyset_pages` setup failed |
+| Keyset pagination on nullable, duplicate, descending and calculated keys | ❔ Unknown 5 not run | `keyset.backward` setup failed, `keyset.calculation` setup failed, `keyset.duplicates_descending_tie` setup failed, `keyset.nullable_asc` setup failed, `keyset.nullable_desc` setup failed |
+| Long in-lists, bulk creates past parameter limits, deep pages and aggregates over thousands of rows | ➖ Not applicable |  |
 | Pagination while records change | ⚪ Untested |  |
 
 ## 6. Relationships
@@ -141,7 +151,7 @@ fix.
 | Relationship context reaches the read action | 🟡 Partial 1/2 | `context.relationship_context_control` wrong |
 | Parent references in nested and through relationship filters | ❌ Broken 0/2 | `filter.nested_parent_control` crashed, `filter.parent_through_control` crashed |
 | Load belongs-to, has-one, has-many and many-to-many relationships | ✅ Works 4/4 |  |
-| Create and update related records with manage_relationship | ⚪ Untested |  |
+| Create and update related records with manage_relationship | ✅ Works 2/2 |  |
 
 ## 7. Aggregates
 
@@ -171,9 +181,11 @@ fix.
 | Feature | clickhouse | Not working |
 | --- | --- | --- |
 | Upsert on an identity, in bulk, with conditions | ❌ Broken 0/4 | `upsert.bulk` crashed, `upsert.condition` crashed, `upsert.skipped_record` order dependent, `upsert.tenant_identity` rejected |
+| Identities and upserts on keys that can be nil, and upsert fields | 🟡 Partial 1/5 | `identity.nils_not_distinct` wrong, `upsert.fields` rejected, `upsert.nil_key` rejected, `upsert.nil_key_not_distinct` rejected |
 | Bulk create with partial success | ❌ Broken 0/1 | `bulk.partial_success` wrong |
 | Bulk update atomically | ❌ Broken 0/1 | `bulk.atomic_increment` crashed |
 | Writes that filter by or read aggregates | ❌ Broken 0/4 | `write.atomic_update` crashed, `write.bulk_destroy_filter` crashed, `write.bulk_update_filter` crashed, `write.single_atomic_update` rejected |
+| Atomic updates with expressions, and bulk writes over sorted, limited queries | 🟡 Partial 1/4 | `write.atomic_expression` rejected, `write.bulk_create_sorted` crashed, `write.bulk_update_sorted_limit` crashed |
 
 ## 9. Transactions and locks
 
@@ -380,10 +392,10 @@ getting a hidden record when the actor may read every note.
 | `policy.control.exists_filter_input` | crashed | 0 | 12 | 12 |
 | `policy.control.loaded_count` | wrong | 0 | 12 | 12 |
 | `policy.control.loaded_sum` | wrong | 0 | 12 | 12 |
+| `storage.date.ordinary` | lost at read: "2024-02-29" | 0 | 12 | 11 |
 | `policy.control.bulk_update` | wrong | 0 | 10 | 10 |
 | `storage.decimal.ordinary` | no_table at table: ["Code: 43. DB::Exception: Decimal argument precision is invalid. (ILLEGAL_TYPE_OF_ARGUMENT) (version 25.8.33.6 (official build))"] | 10 | 0 | 10 |
 | `filter.fanout_read_control` | crashed | 0 | 9 | 9 |
-| `storage.date.ordinary` | lost at read: "2024-02-29" | 0 | 9 | 8 |
 | `storage.naive_datetime.ordinary` | lost at read: ~U[2024-02-29 12:34:56.000000Z] | 0 | 6 | 5 |
 | `storage.time_usec.ordinary` | lost at read: "12:34:56.123456" | 0 | 6 | 5 |
 | `storage.duration.ordinary` | error at create: ** (Protocol.UndefinedError) protocol Jason.Encoder not implemented for Duration (a struct), Jason.Encoder protocol must always be explicitly implemented. | 5 | 0 | 5 |
@@ -404,4 +416,4 @@ raised when stored on its own, or tier 1 could not test it.
 
 | Scenarios | Role | Reason |
 | ---: | --- | --- |
-| 58 | `record` | protocol Jason.Encoder not implemented for Ash.Conformance.Resources.Address (a struct), Jason.Encoder protocol must always be explicitly implemented. |
+| 63 | `record` | protocol Jason.Encoder not implemented for Ash.Conformance.Resources.Address (a struct), Jason.Encoder protocol must always be explicitly implemented. |

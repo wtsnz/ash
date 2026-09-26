@@ -18,6 +18,32 @@ adapter's `gaps/0`).
 
 # Ash
 
+## In simplification
+
+Owner: Ash.
+
+Keep nil logic when simplifying `in` filters. Ash rewrites `not (a in [0]
+and a in [1])` to `true` while it builds the query, as no value is in both
+lists. For a nil `a` the conjunction is nil, not false, so the negation should
+drop the row, as SQL does and as the same filter written with `==` does.
+Every data layer receives `true` and returns every row
+(`nil.not_contradictory_in`). Found by generated filters (`lib/fuzz.ex`),
+shrunk to `(a in [0] and a in [1])`.
+
+## Runtime nil logic
+
+Owner: Ash.
+
+Evaluate `and` and `or` with a nil operand as SQL does, in either order. The
+expressions guide says nil behaves like SQL `NULL`, where `NULL AND FALSE` is
+false and `NULL OR FALSE` is `NULL`. Ash's in-memory evaluation
+(`Ash.Expr.eval/2`, `Ash.Filter.Runtime`, and so the ETS data layer) returns
+nil for `nil and false` but false for `false and nil`, and false for `nil or
+false`. A negated filter then keeps or drops the wrong rows:
+`nil.not_and_false` and `nil.not_or_false`. SQLite and Postgres return the SQL
+answers. Found by generated filters (`lib/fuzz.ex`), shrunk to
+`(a == 0 and string_length(t) > 2)` on row 3 (`a` nil, `t` "x").
+
 ## In list nil
 
 Decision owner: Ash.
@@ -141,6 +167,25 @@ clause for a change from a union to nil keeps the old member type. Creating a
 record with nil stores nil.
 
 # AshSQL
+
+## Bind parameter limit
+
+Owner: AshSQL, then AshPostgres, then AshSQLite.
+
+Split a bulk insert whose rows need more bind parameters than the database
+allows in one statement. `Ash.bulk_create/4` takes `batch_size` as the number
+of records per batch and documents no other limit, but 22,000 rows of three
+fields (66,000 parameters) in one batch fail on both data layers
+(`large.bulk_create_parameters`). SQLite stops at 32,766 ("variable number
+must be between ?1 and ?32766") and Postgres at 65,535 ("postgresql protocol
+can not handle 66000 parameters"). A wide resource reaches the same limit at
+Ash's default batch of 100.
+
+Postgres is worse: the error disconnects the connection, and the surrounding
+transaction is lost with it, so the fixture's 2,000 rows are gone when the
+scenario counts afterwards. If Ash decides batches past the limit are the
+caller's problem, the intended result becomes a clean error, but never a
+dropped connection.
 
 ## Root relationship
 
@@ -485,6 +530,20 @@ Filter binaries with `in`. `value in ^[<<1, 0>>, <<2, 0>>]` crashes with an
 `Ecto.QueryError` ("invalid keyword list in query"): AshSqlite's IN list
 binds each binary as an Exqlite `{:blob, value}` tuple, and Ecto reads the
 list of tuples as a keyword list. Equality on a single binary works.
+
+## Nils not distinct
+
+Owner: AshSQLite.
+
+Honor `nils_distinct?: false` on identities. SQLite's unique indexes always
+treat NULLs as distinct, and AshSqlite's migration generator writes
+`nulls_distinct: false`, which ecto_sqlite3 rejects ("`nulls_distinct` is
+not supported with SQLite3"), so an application cannot even migrate such an
+identity. With a plain index, a second row with the same code and a nil
+scope is created (`identity.nils_not_distinct`), and an upsert on the
+identity inserts instead of updating (`upsert.nil_key_not_distinct`).
+AshSqlite could index `coalesce` expressions, or check the identity before
+writing. Postgres passes with a `NULLS NOT DISTINCT` index.
 
 ## Elixir and
 

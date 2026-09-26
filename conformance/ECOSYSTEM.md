@@ -13,12 +13,12 @@ their results as observations. Each data layer's failing scenarios are listed in
 
 | Column | Data layer | Version | Reviewed | Works | Rejected | Wrong | Order dependent | Crashed | Setup failed | Open question | Blocked | Definition warnings |
 | --- | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| sqlite | AshSqlite | 0.2.19 (`f489778`) | yes | 673 | 37 | 40 | 0 | 19 | 5 | 6 | 24 | 0 |
-| postgres | AshPostgres | 2.13.1 (`945073e`) | yes | 742 | 0 | 23 | 6 | 8 | 0 | 6 | 2 | 0 |
-| ets | Ash.DataLayer.Ets | 3.33.11 | no | 700 | 7 | 29 | 0 | 7 | 0 | 6 | 3 | 0 |
-| csv | AshCsv | 0.9.9 | no | 229 | 137 | 43 | 0 | 33 | 307 | 0 | 443 | 20 |
-| mysql | AshMysql | 0.1.0-dev (`99684ca`) | no | 386 | 199 | 55 | 1 | 88 | 14 | 6 | 92 | 17 |
-| clickhouse | AshClickhouse | 0.7.3 | no | 285 | 72 | 176 | 1 | 119 | 91 | 5 | 140 | 17 |
+| sqlite | AshSqlite | 0.2.19 (`f489778`) | yes | 733 | 41 | 54 | 0 | 23 | 5 | 8 | 24 | 0 |
+| postgres | AshPostgres | 2.13.1 (`945073e`) | yes | 822 | 0 | 25 | 6 | 8 | 0 | 8 | 2 | 0 |
+| ets | Ash.DataLayer.Ets | 3.33.11 | no | 770 | 7 | 35 | 0 | 7 | 0 | 8 | 3 | 0 |
+| csv | AshCsv | 0.9.9 | no | 236 | 145 | 44 | 0 | 43 | 359 | 0 | 495 | 20 |
+| mysql | AshMysql | 0.1.0-dev (`99684ca`) | no | 425 | 208 | 70 | 1 | 101 | 14 | 8 | 94 | 17 |
+| clickhouse | AshClickhouse | 0.7.3 | no | 296 | 79 | 177 | 2 | 170 | 96 | 7 | 143 | 17 |
 
 Blocked counts results in the columns before it that have a failing
 prerequisite, such as a type the data layer cannot store; see
@@ -29,7 +29,9 @@ prerequisite, such as a type the data layer cannot store; see
 Where the suite had to do something other than configure the data layer
 as an application would, and why:
 
+- **AshSqlite:** The identity with `nils_distinct?: false` gets a plain unique index: AshSqlite's migration generator writes `nulls_distinct: false`, which ecto_sqlite3 rejects ("`nulls_distinct` is not supported with SQLite3").
 - **AshCsv:** Each resource's `columns` are set to its own attributes. A role over a shared table with other columns gets its own file, and seeded rows are copied into it.
+- **AshMysql:** The identity with `nils_distinct?: false` gets a plain unique index, as MySQL has no `NULLS NOT DISTINCT`.
 - **AshMysql:** Tier-1 storage tables use the column types AshMysql's migration generator chooses, unlike the shared tables below.
 - **AshMysql:** The records table stores `tags` as JSON and `code` as a `VARCHAR`, since MySQL has no array column and cannot index `TEXT` without a key length.
 - **AshMysql:** Decimals are `DECIMAL(30,10)`: a bare `DECIMAL` is `DECIMAL(10,0)`, and wider columns return values past the 34 digits Decimal parses by default. Values read back with ten decimal places.
@@ -48,9 +50,10 @@ could not run.
 | --- | --- | --- | --- | --- | --- | --- |
 | Storage (tier 1) | 61/65 | 61/65 | 64/65 | 45/65 | 49/65 | 28/65 |
 | Operations (tier 2) | 131/145 · 5 not run | 150/150 | 150/150 | 62/112 · 45 blocked · 38 not run | 86/136 · 34 blocked · 14 not run | 78/117 · 26 blocked · 33 not run |
+| Expressions | 31/44 | 41/44 | 39/44 | 0/0 · 44 not run | 26/44 · 2 blocked | 7/44 · 3 blocked |
 | Policy grid | 198/214 · 5 blocked | 214/214 | 212/214 | 97/214 · 91 blocked | 158/214 · 37 blocked | 117/214 · 59 blocked |
 | Combinations | 30/31 | 30/31 | – not included | – not included | – not included | – not included |
-| Integration (tier 4) | 253/320 · 14 blocked | 287/325 · 2 blocked | 274/320 · 3 blocked | 25/51 · 269 not run | 93/320 · 7 blocked | 62/262 · 22 blocked · 58 not run |
+| Integration (tier 4) | 282/360 · 14 blocked | 326/365 · 2 blocked | 305/354 · 3 blocked | 32/77 · 277 not run | 106/354 · 7 blocked | 66/291 · 22 blocked · 63 not run |
 
 ## Storage
 
@@ -296,6 +299,14 @@ answer changes with the order rows were stored in; ❔ did not run.
 | Filter booleans and atoms, including atoms as strings | ✅ Works 3/3 | ✅ Works 3/3 | ✅ Works 3/3 | ❔ Unknown 3 not run | 🟡 Partial 2/3 | ❔ Unknown 3 not run |
 | Filter strings: contains, case, unicode and empty | ✅ Works 4/4 | ✅ Works 4/4 | ✅ Works 4/4 | ❔ Unknown 4 not run | 🟡 Partial 3/4 | ❔ Unknown 4 not run |
 | Filter inside arrays, maps and embedded resources | ✅ Works 3/3 | ✅ Works 3/3 | ✅ Works 3/3 | ❔ Unknown 3 not run | 🟡 Partial 2/3 | ❔ Unknown 3 not run |
+| Arithmetic and rounding, with integer division as a float | 🟡 Partial 7/10 | ✅ Works 10/10 | ✅ Works 10/10 | ❔ Unknown 10 not run | 🟡 Partial 4/10 · 2 blocked | ❌ Broken 0/10 |
+| String functions, including non-ASCII text | 🟡 Partial 8/11 | ✅ Works 11/11 | ✅ Works 11/11 | ❔ Unknown 11 not run | 🟡 Partial 6/11 | ❌ Broken 0/11 |
+| if, cond, || and && | 🟡 Partial 4/5 | ✅ Works 5/5 | ✅ Works 5/5 | ❔ Unknown 5 not run | 🟡 Partial 2/5 | ❌ Broken 0/5 |
+| Date and datetime arithmetic | 🟡 Partial 2/5 | ✅ Works 5/5 | ✅ Works 5/5 | ❔ Unknown 5 not run | 🟡 Partial 4/5 | ❌ Broken 0/5 · 3 blocked |
+| Negation, column comparisons and and/or with nil | 🟡 Partial 10/13 | 🟡 Partial 10/13 | 🟡 Partial 8/13 | ❔ Unknown 13 not run | 🟡 Partial 10/13 | 🟡 Partial 7/13 |
+| Filters through to-many relationships return each record once | 🟡 Partial 4/9 | ✅ Works 9/9 | ✅ Works 9/9 | 🟡 Partial 1/9 | 🟡 Partial 6/9 | ❌ Broken 0/9 |
+| Sort by a related record's attribute | ✅ Works 1/1 | ✅ Works 1/1 | ✅ Works 1/1 | ⛔ Not supported 0/1 | ✅ Works 1/1 | ❌ Broken 0/1 |
+| Calculations feed aggregates, filters and sorts | ✅ Works 5/5 | ✅ Works 5/5 | ✅ Works 5/5 | 🟡 Partial 1/5 | 🟡 Partial 1/5 | ❌ Broken 0/5 |
 | Filter by a calculation | ✅ Works 1/1 | ✅ Works 1/1 | ✅ Works 1/1 | ❔ Unknown 1 not run | ✅ Works 1/1 | ❔ Unknown 1 not run |
 | Sort by one or more fields, with explicit nil order | ✅ Works 6/6 | ✅ Works 6/6 | ✅ Works 6/6 | ❔ Unknown 6 not run | 🟡 Partial 2/6 · 1 blocked | ❔ Unknown 6 not run |
 | Sort by a calculation | ✅ Works 1/1 | ✅ Works 1/1 | ✅ Works 1/1 | ❔ Unknown 1 not run | ✅ Works 1/1 | ❔ Unknown 1 not run |
@@ -304,10 +315,12 @@ answer changes with the order rows were stored in; ❔ did not run.
 | Stream records in batches | ✅ Works 1/1 | ✅ Works 1/1 | ✅ Works 1/1 | ❔ Unknown 1 not run | ✅ Works 1/1 | ❔ Unknown 1 not run |
 | Distinct records by a field | ⛔ Not supported 0/1 | ✅ Works 1/1 | ✅ Works 1/1 | ❔ Unknown 1 not run | ⛔ Not supported 0/1 | ❌ Broken 0/1 |
 | Combine queries with union | ⛔ Not supported 0/1 | ✅ Works 1/1 | ✅ Works 1/1 | ❔ Unknown 1 not run | ⛔ Not supported 0/1 | ⛔ Not supported 0/1 |
-| Combine queries with union all and intersection | ⚪ Untested | ⚪ Untested | ⚪ Untested | ⚪ Untested | ⚪ Untested | ⚪ Untested |
+| Combine queries with union all, intersect and except | ⛔ Not supported 0/3 | ✅ Works 3/3 | ✅ Works 3/3 | ❔ Unknown 3 not run | ⛔ Not supported 0/3 | ⛔ Not supported 0/3 |
 | Load expression calculations, with arguments | ✅ Works 3/3 | ✅ Works 3/3 | ✅ Works 3/3 | ❔ Unknown 3 not run | ✅ Works 3/3 | 🔸 Incomplete 1/1 · 2 not run |
 | Offset pagination with counts | ✅ Works 1/1 | ✅ Works 1/1 | ✅ Works 1/1 | ❔ Unknown 1 not run | ✅ Works 1/1 | ❔ Unknown 1 not run |
 | Keyset pagination, forwards and backwards | ✅ Works 1/1 | ✅ Works 1/1 | ✅ Works 1/1 | ❔ Unknown 1 not run | ✅ Works 1/1 | ❔ Unknown 1 not run |
+| Keyset pagination on nullable, duplicate, descending and calculated keys | ✅ Works 5/5 | ✅ Works 5/5 | ✅ Works 5/5 | ❔ Unknown 5 not run | ❌ Broken 0/5 | ❔ Unknown 5 not run |
+| Long in-lists, bulk creates past parameter limits, deep pages and aggregates over thousands of rows | 🟡 Partial 5/6 | 🟡 Partial 5/6 | ➖ Not applicable | ➖ Not applicable | ➖ Not applicable | ➖ Not applicable |
 | Pagination while records change | ⚪ Untested | ⚪ Untested | ⚪ Untested | ⚪ Untested | ⚪ Untested | ⚪ Untested |
 
 ## 6. Relationships
@@ -323,7 +336,7 @@ answer changes with the order rows were stored in; ❔ did not run.
 | Relationship context reaches the read action | 🟡 Partial 1/2 | 🟡 Partial 1/2 | 🟡 Partial 1/2 | ❔ Unknown 2 not run | 🟡 Partial 1/2 | 🟡 Partial 1/2 |
 | Parent references in nested and through relationship filters | ❌ Broken 0/2 | ❌ Broken 0/2 | ❌ Broken 0/2 | ❔ Unknown 2 not run | ❌ Broken 0/2 | ❌ Broken 0/2 |
 | Load belongs-to, has-one, has-many and many-to-many relationships | ✅ Works 4/4 | ✅ Works 4/4 | ✅ Works 4/4 | ❔ Unknown 4 not run | 🟡 Partial 3/4 | ✅ Works 4/4 |
-| Create and update related records with manage_relationship | ⚪ Untested | ⚪ Untested | ⚪ Untested | ⚪ Untested | ⚪ Untested | ⚪ Untested |
+| Create and update related records with manage_relationship | ✅ Works 2/2 | ✅ Works 2/2 | ✅ Works 2/2 | 🟡 Partial 1/2 | ✅ Works 2/2 | ✅ Works 2/2 |
 
 ## 7. Aggregates
 
@@ -353,9 +366,11 @@ answer changes with the order rows were stored in; ❔ did not run.
 | Feature | sqlite | postgres | ets | csv | mysql | clickhouse |
 | --- | --- | --- | --- | --- | --- | --- |
 | Upsert on an identity, in bulk, with conditions | 🟡 Partial 2/4 | 🟡 Partial 3/4 | ✅ Works 4/4 | 🟡 Partial 2/4 | ❌ Broken 0/4 | ❌ Broken 0/4 |
+| Identities and upserts on keys that can be nil, and upsert fields | 🟡 Partial 3/5 | ✅ Works 5/5 | 🟡 Partial 2/5 | 🟡 Partial 2/5 | 🟡 Partial 1/5 | 🟡 Partial 1/5 |
 | Bulk create with partial success | ✅ Works 1/1 | ✅ Works 1/1 | ✅ Works 1/1 | ❌ Broken 0/1 | ❌ Broken 0/1 | ❌ Broken 0/1 |
 | Bulk update atomically | ✅ Works 1/1 | ✅ Works 1/1 | ✅ Works 1/1 | ❌ Broken 0/1 | ❌ Broken 0/1 | ❌ Broken 0/1 |
 | Writes that filter by or read aggregates | ✅ Works 4/4 | ✅ Works 4/4 | ✅ Works 4/4 | ❔ Unknown 4 not run | ❌ Broken 0/4 | ❌ Broken 0/4 |
+| Atomic updates with expressions, and bulk writes over sorted, limited queries | ✅ Works 4/4 | ✅ Works 4/4 | ✅ Works 4/4 | 🟡 Partial 2/4 | 🟡 Partial 2/4 | 🟡 Partial 1/4 |
 
 ## 9. Transactions and locks
 
@@ -460,11 +475,11 @@ blockers counts under each.
 
 | Blocker | Its result | Not run | Failing | Only blocker of |
 | --- | --- | ---: | ---: | ---: |
-| `storage.boolean.ordinary` | error at create: stored value for value could not be casted from the stored value to type Ash.Type.Boolean: "true" | 274 | 0 | 216 |
-| `storage.float.ordinary` | error at create: stored value for value could not be casted from the stored value to type Ash.Type.Float: "1.5" | 68 | 0 | 10 |
-| `storage.embedded.ordinary` | error at create: ** (Protocol.UndefinedError) protocol String.Chars not implemented for Ash.Conformance.Resources.Address (a struct) | 61 | 0 | 3 |
-| `storage.map.ordinary` | error at create: ** (Protocol.UndefinedError) protocol String.Chars not implemented for Map | 61 | 0 | 3 |
-| `storage.strings.ordinary` | error at create: ** (Protocol.UndefinedError) protocol Enumerable not implemented for BitString | 61 | 0 | 3 |
+| `storage.boolean.ordinary` | error at create: stored value for value could not be casted from the stored value to type Ash.Type.Boolean: "true" | 282 | 0 | 219 |
+| `storage.float.ordinary` | error at create: stored value for value could not be casted from the stored value to type Ash.Type.Float: "1.5" | 117 | 0 | 54 |
+| `storage.embedded.ordinary` | error at create: ** (Protocol.UndefinedError) protocol String.Chars not implemented for Ash.Conformance.Resources.Address (a struct) | 66 | 0 | 3 |
+| `storage.map.ordinary` | error at create: ** (Protocol.UndefinedError) protocol String.Chars not implemented for Map | 66 | 0 | 3 |
+| `storage.strings.ordinary` | error at create: ** (Protocol.UndefinedError) protocol Enumerable not implemented for BitString | 66 | 0 | 3 |
 | `ops.integer.count` | rejected | 0 | 13 | 13 |
 | `ops.integer.first` | rejected | 0 | 13 | 13 |
 | `policy.control.aggregate_filter` | rejected | 0 | 12 | 12 |
@@ -492,8 +507,8 @@ blockers counts under each.
 | `policy.control.aggregate_filter` | rejected | 0 | 12 | 12 |
 | `policy.control.loaded_count` | rejected | 0 | 12 | 12 |
 | `policy.control.loaded_sum` | rejected | 0 | 12 | 12 |
+| `storage.decimal.ordinary` | lost at read: Decimal.new("2") | 0 | 11 | 9 |
 | `ops.integer.sort` | crashed | 0 | 10 | 9 |
-| `storage.decimal.ordinary` | lost at read: Decimal.new("2") | 0 | 9 | 7 |
 | `storage.duration.ordinary` | no_table at table: (1064) You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'duration, PRIMARY  | 5 | 0 | 5 |
 | `storage.embeddeds.ordinary` | no_table at table: Array type is not supported by MySQL | 3 | 0 | 3 |
 | `storage.integers.ordinary` | no_table at table: Array type is not supported by MySQL | 3 | 0 | 3 |
@@ -514,10 +529,10 @@ blockers counts under each.
 | `policy.control.exists_filter_input` | crashed | 0 | 12 | 12 |
 | `policy.control.loaded_count` | wrong | 0 | 12 | 12 |
 | `policy.control.loaded_sum` | wrong | 0 | 12 | 12 |
+| `storage.date.ordinary` | lost at read: "2024-02-29" | 0 | 12 | 11 |
 | `policy.control.bulk_update` | wrong | 0 | 10 | 10 |
 | `storage.decimal.ordinary` | no_table at table: ["Code: 43. DB::Exception: Decimal argument precision is invalid. (ILLEGAL_TYPE_OF_ARGUMENT) (version 25.8.33.6 (official build))"] | 10 | 0 | 10 |
 | `filter.fanout_read_control` | crashed | 0 | 9 | 9 |
-| `storage.date.ordinary` | lost at read: "2024-02-29" | 0 | 9 | 8 |
 | `storage.naive_datetime.ordinary` | lost at read: ~U[2024-02-29 12:34:56.000000Z] | 0 | 6 | 5 |
 | `storage.time_usec.ordinary` | lost at read: "12:34:56.123456" | 0 | 6 | 5 |
 | `storage.duration.ordinary` | error at create: ** (Protocol.UndefinedError) protocol Jason.Encoder not implemented for Duration (a struct), Jason.Encoder protocol must always be explicitly implemented. | 5 | 0 | 5 |
@@ -538,7 +553,7 @@ raised when stored on its own, or tier 1 could not test it.
 
 | Scenarios | Role | Reason |
 | ---: | --- | --- |
-| 58 | `record` | protocol Jason.Encoder not implemented for Ash.Conformance.Resources.Address (a struct), Jason.Encoder protocol must always be explicitly implemented. |
+| 63 | `record` | protocol Jason.Encoder not implemented for Ash.Conformance.Resources.Address (a struct), Jason.Encoder protocol must always be explicitly implemented. |
 
 ## Claims versus results
 
@@ -566,6 +581,10 @@ whose claims disagree with the result:
 | Keyset pagination, forwards and backwards | postgres | Works without advertising `record: :keyset` |
 | Keyset pagination, forwards and backwards | ets | Works without advertising `record: :keyset` |
 | Keyset pagination, forwards and backwards | mysql | Works without advertising `record: :keyset` |
+| Keyset pagination on nullable, duplicate, descending and calculated keys | sqlite | Works without advertising `record: :keyset` |
+| Keyset pagination on nullable, duplicate, descending and calculated keys | postgres | Works without advertising `record: :keyset` |
+| Keyset pagination on nullable, duplicate, descending and calculated keys | ets | Works without advertising `record: :keyset` |
+| Keyset pagination on nullable, duplicate, descending and calculated keys | mysql | Not advertising `record: :keyset`, but not rejected either: wrong answers |
 | Filter across to-many relationships without duplicates | clickhouse | Not advertising `child: {:filter_relationship, :ratings}`, but not rejected either: wrong answers |
 | Limit and offset a has-many load for each parent | sqlite | Works without advertising `parent: {:lateral_join, :children}` |
 | Limit and offset a has-many load for each parent | mysql | Not advertising `parent: {:lateral_join, :children}`, but not rejected either: wrong answers |

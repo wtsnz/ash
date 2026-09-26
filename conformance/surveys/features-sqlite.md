@@ -4,7 +4,7 @@
 
 Generated from an unreviewed run: each result was classified automatically against the intended answer. Nothing here has been reviewed.
 
-Feature catalog version 1: 143 features and 785 scenarios.
+Feature catalog version 1: 155 features and 869 scenarios.
 
 | Status | Meaning |
 | --- | --- |
@@ -114,6 +114,14 @@ fix.
 | Filter booleans and atoms, including atoms as strings | ✅ Works 3/3 |  |
 | Filter strings: contains, case, unicode and empty | ✅ Works 4/4 |  |
 | Filter inside arrays, maps and embedded resources | ✅ Works 3/3 |  |
+| Arithmetic and rounding, with integer division as a float | 🟡 Partial 7/10 | `expr.filter.round` crashed, `expr.round` crashed, `expr.round_decimal` crashed |
+| String functions, including non-ASCII text | 🟡 Partial 8/11 | `expr.filter.string_downcase` wrong, `expr.string_downcase` wrong, `expr.string_join` rejected |
+| if, cond, || and && | 🟡 Partial 4/5 | `expr.and_then` wrong |
+| Date and datetime arithmetic | 🟡 Partial 2/5 | `expr.date_add_month` wrong, `expr.filter.date_add_month` wrong, `expr.start_of_day` crashed |
+| Negation, column comparisons and and/or with nil | 🟡 Partial 10/13 | `nil.not_contradictory_in` wrong, `nil.not_in_with_nil` open question, `nil.or` open question |
+| Filters through to-many relationships return each record once | 🟡 Partial 4/9 | `read.join_limit` wrong, `read.join_negated` wrong, `read.join_or_paths` wrong, `read.join_page` wrong, `read.join_to_many` wrong |
+| Sort by a related record's attribute | ✅ Works 1/1 |  |
+| Calculations feed aggregates, filters and sorts | ✅ Works 5/5 |  |
 | Filter by a calculation | ✅ Works 1/1 |  |
 | Sort by one or more fields, with explicit nil order | ✅ Works 6/6 |  |
 | Sort by a calculation | ✅ Works 1/1 |  |
@@ -122,10 +130,12 @@ fix.
 | Stream records in batches | ✅ Works 1/1 |  |
 | Distinct records by a field | ⛔ Not supported 0/1 | `query.distinct` rejected |
 | Combine queries with union | ⛔ Not supported 0/1 | `query.union` rejected |
-| Combine queries with union all and intersection | ⚪ Untested |  |
+| Combine queries with union all, intersect and except | ⛔ Not supported 0/3 | `query.except` rejected, `query.intersect` rejected, `query.union_all` rejected |
 | Load expression calculations, with arguments | ✅ Works 3/3 |  |
 | Offset pagination with counts | ✅ Works 1/1 |  |
 | Keyset pagination, forwards and backwards | ✅ Works 1/1 |  |
+| Keyset pagination on nullable, duplicate, descending and calculated keys | ✅ Works 5/5 |  |
+| Long in-lists, bulk creates past parameter limits, deep pages and aggregates over thousands of rows | 🟡 Partial 5/6 | `large.bulk_create_parameters` wrong |
 | Pagination while records change | ⚪ Untested |  |
 
 ## 6. Relationships
@@ -141,7 +151,7 @@ fix.
 | Relationship context reaches the read action | 🟡 Partial 1/2 | `context.relationship_context_control` wrong |
 | Parent references in nested and through relationship filters | ❌ Broken 0/2 | `filter.nested_parent_control` crashed, `filter.parent_through_control` crashed |
 | Load belongs-to, has-one, has-many and many-to-many relationships | ✅ Works 4/4 |  |
-| Create and update related records with manage_relationship | ⚪ Untested |  |
+| Create and update related records with manage_relationship | ✅ Works 2/2 |  |
 
 ## 7. Aggregates
 
@@ -171,9 +181,11 @@ fix.
 | Feature | sqlite | Not working |
 | --- | --- | --- |
 | Upsert on an identity, in bulk, with conditions | 🟡 Partial 2/4 | `upsert.condition` crashed, `upsert.skipped_record` crashed |
+| Identities and upserts on keys that can be nil, and upsert fields | 🟡 Partial 3/5 | `identity.nils_not_distinct` wrong, `upsert.nil_key_not_distinct` wrong |
 | Bulk create with partial success | ✅ Works 1/1 |  |
 | Bulk update atomically | ✅ Works 1/1 |  |
 | Writes that filter by or read aggregates | ✅ Works 4/4 |  |
+| Atomic updates with expressions, and bulk writes over sorted, limited queries | ✅ Works 4/4 |  |
 
 ## 9. Transactions and locks
 
@@ -251,6 +263,7 @@ whose claims disagree with the result:
 | Stream records in batches | sqlite | Works without advertising `record: :keyset` |
 | Load expression calculations, with arguments | sqlite | Works without advertising `record: :calculate` |
 | Keyset pagination, forwards and backwards | sqlite | Works without advertising `record: :keyset` |
+| Keyset pagination on nullable, duplicate, descending and calculated keys | sqlite | Works without advertising `record: :keyset` |
 | Limit and offset a has-many load for each parent | sqlite | Works without advertising `parent: {:lateral_join, :children}` |
 | Limit a many-to-many load for each parent | sqlite | Not advertising `parent: {:lateral_join, :tags}`, but not rejected either: wrong answers |
 | Relationships through other relationships | sqlite | Not advertising `parent: :through_relationship`, but not rejected either: wrong answers |

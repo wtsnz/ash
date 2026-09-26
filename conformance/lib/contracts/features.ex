@@ -200,7 +200,7 @@ defmodule Ash.Conformance.Contracts.Features do
            "#{@docs}/reference/expressions.md",
            claims: [],
            scenarios:
-             ~w(nil.not_equal nil.not_equal_negated nil.compare_columns nil.compare_columns_negated nil.pinned_nil nil.and nil.not_and nil.partition nil.not_in_with_nil nil.or)
+             ~w(nil.not_equal nil.not_equal_negated nil.compare_columns nil.compare_columns_negated nil.pinned_nil nil.and nil.not_and nil.not_and_false nil.not_or_false nil.not_contradictory_in nil.partition nil.not_in_with_nil nil.or)
          ),
          feature(
            "filter.joins",
@@ -304,6 +304,22 @@ defmodule Ash.Conformance.Contracts.Features do
            "#{@docs}/advanced/pagination.livemd",
            claims: [record: :keyset],
            scenarios: ~w(record.keyset_pages)
+         ),
+         feature(
+           "pagination.keyset_keys",
+           "Keyset pagination on nullable, duplicate, descending and calculated keys",
+           "#{@docs}/advanced/pagination.livemd",
+           claims: [record: :keyset],
+           scenarios:
+             ~w(keyset.nullable_asc keyset.nullable_desc keyset.duplicates_descending_tie keyset.calculation keyset.backward)
+         ),
+         feature(
+           "scale.large",
+           "Long in-lists, bulk creates past parameter limits, deep pages and aggregates over thousands of rows",
+           "#{@docs}/actions/read-actions.md",
+           claims: [],
+           scenarios:
+             ~w(large.in_list large.in_list_strings large.bulk_create_parameters large.offset_deep large.keyset_walk large.sum)
          ),
          feature(
            "pagination.concurrent",
@@ -554,6 +570,14 @@ defmodule Ash.Conformance.Contracts.Features do
            ],
            scenarios:
              ~w(upsert.tenant_identity upsert.bulk upsert.condition upsert.skipped_record)
+         ),
+         feature(
+           "writes.nil_identities",
+           "Identities and upserts on keys that can be nil, and upsert fields",
+           "../lib/ash/resource/identity.ex",
+           claims: [identity_row: :upsert],
+           scenarios:
+             ~w(identity.nils_distinct identity.nils_not_distinct upsert.nil_key upsert.nil_key_not_distinct upsert.fields)
          ),
          feature(
            "writes.bulk_create",

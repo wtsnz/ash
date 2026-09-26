@@ -222,6 +222,13 @@ defmodule Ash.Conformance.Scenarios.Expressions do
       filter("nil.pinned_nil", expr(a == ^nil), [], int),
       filter("nil.and", expr(a > 0 and b > 0), [1], int),
       filter("nil.not_and", expr(not (a > 0 and b > 3)), [1, 2, 4], int),
+      # Row 3: `nil and false` is false in SQL, so its negation keeps the row.
+      filter("nil.not_and_false", expr(not (a > 0 and b > 5)), [1, 2, 3, 4], int),
+      # Row 3: `nil or false` is NULL in SQL, so its negation drops the row.
+      filter("nil.not_or_false", expr(not (a > 0 or b > 5)), [2], int),
+      # No value is in both lists, but for row 3's nil `a` the conjunction is
+      # nil, so its negation drops the row.
+      filter("nil.not_contradictory_in", expr(not (a in [0] and a in [1])), [1, 2, 4], int),
       # `a`, `not a` and `is_nil(a)` partition the rows.
       new(
         "nil.partition",
