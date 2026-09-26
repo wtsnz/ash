@@ -4,7 +4,7 @@
 
 Generated from an unreviewed run: each result was classified automatically against the intended answer. Nothing here has been reviewed.
 
-Feature catalog version 1: 141 features and 754 scenarios.
+Feature catalog version 1: 143 features and 785 scenarios.
 
 | Status | Meaning |
 | --- | --- |
@@ -16,7 +16,7 @@ Feature catalog version 1: 141 features and 754 scenarios.
 | ❓ Open question | The remaining scenarios need a semantic decision in Ash. |
 | ❔ Unknown | No scenario could run, usually because the data layer could not store its fixture. Never means not supported. |
 | ⚪ Untested | Listed so the specification is complete; no scenario verifies it yet. |
-| ➖ Not applicable | The data layer does not provide this storage profile. |
+| ➖ Not applicable | The data layer does not run these scenarios: a storage profile or fixture it does not opt in to, such as the combination grid, which runs on SQLite and Postgres. |
 | ⚠️ Changed | A result no longer matches its recorded contract. |
 
 Counts are passing scenarios out of those that ran, then how many could
@@ -224,7 +224,14 @@ fix.
 | A filter check on create runs after the insert | ❌ Broken 0/2 | `policy.owner.create_other` wrong, `policy.owner.create_own` wrong |
 | Every policy path, without authorization | 🟡 Partial 18/22 | `policy.control.aggregate_filter` rejected, `policy.control.field_aggregate` rejected, `policy.control.loaded_count` rejected, `policy.control.loaded_sum` rejected |
 
-## 13. Consistency checks
+## 13. Combinations
+
+| Feature | mysql | Not working |
+| --- | --- | --- |
+| Each combined feature works on its own | ➖ Not applicable |  |
+| Features work together, pair by pair | ➖ Not applicable |  |
+
+## 14. Consistency checks
 
 | Feature | mysql | Not working |
 | --- | --- | --- |
@@ -352,6 +359,7 @@ getting a hidden record when the actor may read every note.
 | strict_admin | ✅ | – | – | ✅ | ✅ | ✅ | ✅ | ✅ | ◌ | ◌ | ◌ | ✅ | ✅ | ✅ | ✅ | – | – | – | – | – | – | – |
 | field | – | – | – | – | – | – | – | – | – | – | – | – | – | – | – | – | ❌ | ✅ | ✅ | ◌ | – | – |
 | control (no authorization) | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ | ✅ | ✅ |
+
 
 ## Blockers
 

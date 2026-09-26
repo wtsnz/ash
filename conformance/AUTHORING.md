@@ -162,7 +162,7 @@ is the smallest complete example.
 | `custom_aggregate/0` | Adapter-specific custom aggregate implementation. |
 | `manual_relationship/0` | Manual relationship implementation; defaults to one that loads in Elixir. |
 | `instrumentation/0` | Optional module for untimed `measure/2` and `metadata/1`, or `nil`. |
-| `fixture?/1` | Whether the integration provides the resources for a fixture. |
+| `fixture?/1` | Whether the integration runs a fixture's scenarios. Defaults to every fixture except `:context_tenancy` and `:combination`, the combination grid, which only SQLite and Postgres run for now. |
 | `expectations/0` | Expectation records by scenario ID; `%{}` for a survey-only adapter. |
 | `gaps/0` | Gaps only this data layer shows, rendered into `GAPS.md`. |
 | `resource_config/1` | `{data_layer, config_block}` for a shared table. |

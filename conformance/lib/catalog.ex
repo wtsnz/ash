@@ -83,6 +83,7 @@ defmodule Ash.Conformance.Catalog do
       Scenarios.ContextTenancy,
       Scenarios.Authorization,
       Scenarios.Policies,
+      Scenarios.Combinations,
       Scenarios.Consistency
     ]
     |> Enum.flat_map(& &1.all())

@@ -146,7 +146,7 @@ defmodule Ash.Conformance.Report.FeatureReport do
     | #{label(:open_question)} | The remaining scenarios need a semantic decision in Ash. |
     | #{label(:unknown)} | No scenario could run, usually because the data layer could not store its fixture. Never means not supported. |
     | #{label(:untested)} | Listed so the specification is complete; no scenario verifies it yet. |
-    | #{label(:not_applicable)} | The data layer does not provide this storage profile. |
+    | #{label(:not_applicable)} | The data layer does not run these scenarios: a storage profile or fixture it does not opt in to, such as the combination grid, which runs on SQLite and Postgres. |
     | #{label(:changed)} | A result no longer matches its recorded contract. |
     """
     |> String.trim_trailing()

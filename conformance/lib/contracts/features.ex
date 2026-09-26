@@ -622,7 +622,8 @@ defmodule Ash.Conformance.Contracts.Features do
          )
        ]},
       {12, "Policies", policies()},
-      {13, "Consistency checks",
+      {13, "Combinations", combinations()},
+      {14, "Consistency checks",
        [
          feature(
            "consistency.equivalences",
@@ -667,6 +668,31 @@ defmodule Ash.Conformance.Contracts.Features do
           )
       )
     end
+  end
+
+  defp combinations do
+    {singles, pairs} =
+      Ash.Conformance.Combinations.cases()
+      |> Enum.split_with(&(length(Ash.Conformance.Combinations.changed(&1)) <= 1))
+
+    ids = &Enum.map(&1, fn test_case -> Ash.Conformance.Combinations.scenario_id(test_case) end)
+
+    [
+      feature(
+        "combinations.single",
+        "Each combined feature works on its own",
+        "#{@docs}/resources/aggregates.md",
+        claims: [],
+        scenarios: ids.(singles)
+      ),
+      feature(
+        "combinations.pairs",
+        "Features work together, pair by pair",
+        "#{@docs}/resources/aggregates.md",
+        claims: [],
+        scenarios: ids.(pairs)
+      )
+    ]
   end
 
   @policy_titles %{

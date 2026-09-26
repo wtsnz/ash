@@ -13,12 +13,12 @@ their results as observations. Each data layer's failing scenarios are listed in
 
 | Column | Data layer | Version | Reviewed | Works | Rejected | Wrong | Order dependent | Crashed | Setup failed | Open question | Blocked | Definition warnings |
 | --- | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| sqlite | AshSqlite | 0.2.19 (`f489778`) | yes | 643 | 37 | 39 | 0 | 19 | 5 | 6 | 24 | 0 |
-| postgres | AshPostgres | 2.13.1 (`945073e`) | yes | 712 | 0 | 22 | 6 | 8 | 0 | 6 | 2 | 0 |
+| sqlite | AshSqlite | 0.2.19 (`f489778`) | yes | 673 | 37 | 40 | 0 | 19 | 5 | 6 | 24 | 0 |
+| postgres | AshPostgres | 2.13.1 (`945073e`) | yes | 742 | 0 | 23 | 6 | 8 | 0 | 6 | 2 | 0 |
 | ets | Ash.DataLayer.Ets | 3.33.11 | no | 700 | 7 | 29 | 0 | 7 | 0 | 6 | 3 | 0 |
-| csv | AshCsv | 0.9.9 | no | 229 | 137 | 43 | 0 | 33 | 307 | 0 | 443 | 19 |
-| mysql | AshMysql | 0.1.0-dev (`99684ca`) | no | 386 | 199 | 55 | 1 | 88 | 14 | 6 | 92 | 16 |
-| clickhouse | AshClickhouse | 0.7.3 | no | 285 | 72 | 176 | 1 | 119 | 91 | 5 | 140 | 16 |
+| csv | AshCsv | 0.9.9 | no | 229 | 137 | 43 | 0 | 33 | 307 | 0 | 443 | 20 |
+| mysql | AshMysql | 0.1.0-dev (`99684ca`) | no | 386 | 199 | 55 | 1 | 88 | 14 | 6 | 92 | 17 |
+| clickhouse | AshClickhouse | 0.7.3 | no | 285 | 72 | 176 | 1 | 119 | 91 | 5 | 140 | 17 |
 
 Blocked counts results in the columns before it that have a failing
 prerequisite, such as a type the data layer cannot store; see
@@ -36,6 +36,21 @@ as an application would, and why:
 - **AshClickhouse:** Shared tables are created from AshClickhouse's column types rather than its generator, which rejects the records table: ClickHouse cannot wrap an array or map in `Nullable`, so those columns are not nullable.
 - **AshClickhouse:** AshClickhouse 0.7.3 renders an unconstrained `:decimal` as `Decimal(arbitrary, arbitrary)`, which ClickHouse rejects, so the suite creates those columns as the `Decimal(38, 10)` it documents.
 - **AshClickhouse:** AshClickhouse 0.7.3 does not pass `:username` or `:password` to its client, so the server's default user has no password.
+
+## By tier
+
+Read from the top: a failure in a lower tier explains failures above it.
+Each cell counts scenarios that work, out of those that ran, then the
+failures that have a failing prerequisite (blocked), and those that
+could not run.
+
+| Tier | sqlite | postgres | ets | csv | mysql | clickhouse |
+| --- | --- | --- | --- | --- | --- | --- |
+| Storage (tier 1) | 61/65 | 61/65 | 64/65 | 45/65 | 49/65 | 28/65 |
+| Operations (tier 2) | 131/145 · 5 not run | 150/150 | 150/150 | 62/112 · 45 blocked · 38 not run | 86/136 · 34 blocked · 14 not run | 78/117 · 26 blocked · 33 not run |
+| Policy grid | 198/214 · 5 blocked | 214/214 | 212/214 | 97/214 · 91 blocked | 158/214 · 37 blocked | 117/214 · 59 blocked |
+| Combinations | 30/31 | 30/31 | – not included | – not included | – not included | – not included |
+| Integration (tier 4) | 253/320 · 14 blocked | 287/325 · 2 blocked | 274/320 · 3 blocked | 25/51 · 269 not run | 93/320 · 7 blocked | 62/262 · 22 blocked · 58 not run |
 
 ## Storage
 
@@ -146,6 +161,37 @@ getting a hidden record when the actor may read every note.
 | field | ✅ 4/4 | ✅ 4/4 | ✅ 4/4 | ◌ 3/3 · 1 ◌ | ❌ 2/3 · 1 ◌ | ❌ 0/3 · 1 ◌ |
 | control (no authorization) | ❌ 21/22 | ✅ 22/22 | ✅ 22/22 | ❌ 13/22 | ❌ 18/22 | ❌ 16/22 |
 
+## Combinations
+
+Aggregates combined with relationship shapes, aggregate filters, tenants,
+policies and how the result is used (`lib/combinations.ex`). Each feature
+runs alone first; the 17 pairwise cases cover every pair of
+feature values at least once. Each data layer's survey file lists them.
+
+Not included for `ets`, `csv`, `mysql`, `clickhouse`: the grid runs on the data layers that opt in to its fixture (`fixture?(:combination)`).
+
+✅ returns the answer Ash defines; ❌ does not, while each feature it
+combines works alone; ◌ blocked: one of those features fails alone; 🔀 the
+answer changes with the order rows were stored in; ❔ did not run.
+
+| Case | sqlite | postgres |
+| --- | --- | --- |
+| base: kind count, relationship items, filter none, tenant global, policy off, use loaded | ✅ | ✅ |
+| kind: sum | ✅ | ✅ |
+| kind: max | ✅ | ✅ |
+| kind: list | ✅ | ✅ |
+| kind: exists | ✅ | ✅ |
+| relationship: top_items | ✅ | ✅ |
+| relationship: linked_items | ✅ | ✅ |
+| filter: value_gt | ✅ | ✅ |
+| filter: open | ✅ | ✅ |
+| tenant: tenant | ✅ | ✅ |
+| policy: actor | ✅ | ✅ |
+| use: page | ✅ | ✅ |
+| use: sort | ✅ | ✅ |
+| use: filter | ✅ | ✅ |
+| **Pairs** | ❌ 16/17 | ❌ 16/17 |
+
 | Status | Meaning |
 | --- | --- |
 | ✅ Works | Every scenario ran and returns the answer Ash defines. |
@@ -156,7 +202,7 @@ getting a hidden record when the actor may read every note.
 | ❓ Open question | The remaining scenarios need a semantic decision in Ash. |
 | ❔ Unknown | No scenario could run, usually because the data layer could not store its fixture. Never means not supported. |
 | ⚪ Untested | Listed so the specification is complete; no scenario verifies it yet. |
-| ➖ Not applicable | The data layer does not provide this storage profile. |
+| ➖ Not applicable | The data layer does not run these scenarios: a storage profile or fixture it does not opt in to, such as the combination grid, which runs on SQLite and Postgres. |
 | ⚠️ Changed | A result no longer matches its recorded contract. |
 | ➖ Not run | The data layer's storage could not be set up for this run. |
 
@@ -360,7 +406,14 @@ getting a hidden record when the actor may read every note.
 | A filter check on create runs after the insert | ✅ Works 2/2 | ✅ Works 2/2 | ❌ Broken 0/2 | 🟡 Partial 1/2 | ❌ Broken 0/2 | ❌ Broken 0/2 |
 | Every policy path, without authorization | 🟡 Partial 21/22 | ✅ Works 22/22 | ✅ Works 22/22 | 🟡 Partial 13/22 | 🟡 Partial 18/22 | 🟡 Partial 16/22 |
 
-## 13. Consistency checks
+## 13. Combinations
+
+| Feature | sqlite | postgres | ets | csv | mysql | clickhouse |
+| --- | --- | --- | --- | --- | --- | --- |
+| Each combined feature works on its own | ✅ Works 14/14 | ✅ Works 14/14 | ➖ Not applicable | ➖ Not applicable | ➖ Not applicable | ➖ Not applicable |
+| Features work together, pair by pair | 🟡 Partial 16/17 | 🟡 Partial 16/17 | ➖ Not applicable | ➖ Not applicable | ➖ Not applicable | ➖ Not applicable |
+
+## 14. Consistency checks
 
 | Feature | sqlite | postgres | ets | csv | mysql | clickhouse |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -596,6 +649,7 @@ None.
 | ---: | --- |
 | 3 | Data layer does not support composite primary keys |
 | 1 | Ash.Conformance.Csv.Child.ratings is not aggregatable |
+| 1 | Ash.Conformance.Csv.ComboOwner.items is not aggregatable |
 | 1 | Ash.Conformance.Csv.ContextParent.items is not aggregatable |
 | 1 | Ash.Conformance.Csv.Parent.children is not aggregatable |
 | 1 | Ash.Conformance.Csv.PolicyAllOfDoc.notes is not aggregatable |
@@ -617,6 +671,7 @@ None.
 | Resources | Warning |
 | ---: | --- |
 | 1 | Ash.Conformance.Mysql.Child.ratings is not aggregatable |
+| 1 | Ash.Conformance.Mysql.ComboOwner.items is not aggregatable |
 | 1 | Ash.Conformance.Mysql.ContextParent.items is not aggregatable |
 | 1 | Ash.Conformance.Mysql.Parent.children is not aggregatable |
 | 1 | Ash.Conformance.Mysql.PolicyAllOfDoc.notes is not aggregatable |
@@ -638,6 +693,7 @@ None.
 | Resources | Warning |
 | ---: | --- |
 | 1 | Ash.Conformance.Clickhouse.Child.ratings is not aggregatable |
+| 1 | Ash.Conformance.Clickhouse.ComboOwner.items is not aggregatable |
 | 1 | Ash.Conformance.Clickhouse.ContextParent.items is not aggregatable |
 | 1 | Ash.Conformance.Clickhouse.Parent.children is not aggregatable |
 | 1 | Ash.Conformance.Clickhouse.PolicyAllOfDoc.notes is not aggregatable |

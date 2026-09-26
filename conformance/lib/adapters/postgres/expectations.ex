@@ -13,6 +13,12 @@ defmodule Ash.Conformance.Postgres.Expectations do
   def rules do
     [
       supported("*"),
+      # The item policy applies after the relationship's limit, as in
+      # context.authorization_before_bounds.
+      expect(
+        "combo.list.top_items.value_gt.global.actor.loaded",
+        defect_value(%{1 => [5], 2 => [7], 3 => []}, "authorization-bounds")
+      ),
       expect(
         "values.decimal_avg",
         unresolved_value(%{1 => 0.15, 2 => 6_172_839_450_617_284.0, 3 => nil}, "decimal-avg")

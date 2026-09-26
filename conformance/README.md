@@ -35,11 +35,12 @@ instead.
 ## What it tells you
 
 - **[ECOSYSTEM.md](ECOSYSTEM.md)**: every data layer, a column each. It
-  opens with the storage grid (which Ash types each can store and read back
-  unchanged), then the operations grid (which filters, sorts and aggregates
-  work on each type), then the policy grid (every policy shape on every read
-  and write path), then every feature from basic reads up to multitenancy
-  and authorization, then the blockers to fix first.
+  opens with a summary by tier, then the storage grid (which Ash types each
+  can store and read back unchanged), the operations grid (which filters,
+  sorts and aggregates work on each type), the policy grid (every policy
+  shape on every read and write path) and the combination grid (features
+  alone and in pairs), then every feature from basic reads up to
+  multitenancy and authorization, then the blockers to fix first.
 - **[FEATURES.md](FEATURES.md)**: the same features for the reviewed data
   layers, from their recorded contracts, with a gap link for everything that
   is not fully working.
@@ -77,7 +78,10 @@ cause.
   sort and aggregate then runs on every type it applies to, with integers as
   the control, so a type is only blamed when the operation works on
   integers. Each policy path also runs without authorization, so a policy is
-  only blamed when the path itself works.
+  only blamed when the path itself works. The combination grid runs each
+  feature alone before combining features in pairs, so a combination is
+  only blamed when each part works. It runs on SQLite and Postgres for now,
+  to keep the six-data-layer run short.
 - **Reviewed and surveyed data layers.** Reviewed data layers (SQLite and
   Postgres) have an expectation record for every scenario, and `mix test`
   fails when a result changes, including when a known defect is fixed.
@@ -203,7 +207,7 @@ Module names follow paths under `lib/`:
 | --- | --- |
 | `scenario.ex`, `runner.ex`, `catalog.ex`, `compare.ex` | Declaring scenarios, running them in three seed orders, strict comparison. |
 | `scenarios/` | The scenarios, one file per area and `aggregates/` by topic; `storage.ex` and `policies.ex` generate the two grids. |
-| `storage.ex`, `operations.ex`, `policy.ex` | Tier 1's types and round trip, tier 2's operations and their answers, and the policy grid's reference model. |
+| `storage.ex`, `operations.ex`, `policy.ex`, `combinations.ex`, `tiers.ex` | Tier 1's types and round trip, tier 2's operations and their answers, the policy and combination grids' reference models, and which tier each scenario belongs to. |
 | `resources/`, `fixtures.ex`, `fixtures/` | Shared resource roles each adapter instantiates, and each fixture's rows. |
 | `adapter.ex`, `adapters/` | The adapter behaviour, and one folder per data layer: its adapter and, when reviewed, its expectation rules and its own gaps. |
 | `contracts/` | The feature catalog, record builders, shared gaps and capability claims. |

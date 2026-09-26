@@ -4,7 +4,7 @@
 
 Generated from an unreviewed run: each result was classified automatically against the intended answer. Nothing here has been reviewed.
 
-Feature catalog version 1: 141 features and 754 scenarios.
+Feature catalog version 1: 143 features and 785 scenarios.
 
 | Status | Meaning |
 | --- | --- |
@@ -16,7 +16,7 @@ Feature catalog version 1: 141 features and 754 scenarios.
 | ❓ Open question | The remaining scenarios need a semantic decision in Ash. |
 | ❔ Unknown | No scenario could run, usually because the data layer could not store its fixture. Never means not supported. |
 | ⚪ Untested | Listed so the specification is complete; no scenario verifies it yet. |
-| ➖ Not applicable | The data layer does not provide this storage profile. |
+| ➖ Not applicable | The data layer does not run these scenarios: a storage profile or fixture it does not opt in to, such as the combination grid, which runs on SQLite and Postgres. |
 | ⚠️ Changed | A result no longer matches its recorded contract. |
 
 Counts are passing scenarios out of those that ran, then how many could
@@ -224,7 +224,14 @@ fix.
 | A filter check on create runs after the insert | ✅ Works 2/2 |  |
 | Every policy path, without authorization | 🟡 Partial 21/22 | `policy.control.exists_filter_input` wrong |
 
-## 13. Consistency checks
+## 13. Combinations
+
+| Feature | sqlite | Not working |
+| --- | --- | --- |
+| Each combined feature works on its own | ✅ Works 14/14 |  |
+| Features work together, pair by pair | 🟡 Partial 16/17 | `combo.list.top_items.value_gt.global.actor.loaded` wrong |
+
+## 14. Consistency checks
 
 | Feature | sqlite | Not working |
 | --- | --- | --- |
@@ -343,6 +350,32 @@ getting a hidden record when the actor may read every note.
 | strict_admin | ✅ | – | – | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ◌ | ✅ | ✅ | – | – | – | – | – | – | – |
 | field | – | – | – | – | – | – | – | – | – | – | – | – | – | – | – | – | ✅ | ✅ | ✅ | ✅ | – | – |
 | control (no authorization) | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+
+## Combinations
+
+✅ returns the answer Ash defines; ❌ does not, while each feature it
+combines works alone; ◌ blocked: one of those features fails alone; 🔀 the
+answer changes with the order rows were stored in; ❔ did not run.
+
+| kind | relationship | filter | tenant | policy | use | Result |
+| --- | --- | --- | --- | --- | --- | --- |
+| `sum` | `top_items` | `none` | `tenant` | `off` | `page` | ✅ |
+| `max` | `linked_items` | `none` | `global` | `off` | `filter` | ✅ |
+| `exists` | `items` | `none` | `tenant` | `off` | `sort` | ✅ |
+| `sum` | `linked_items` | `open` | `tenant` | `actor` | `loaded` | ✅ |
+| `count` | `top_items` | `open` | `global` | `off` | `sort` | ✅ |
+| `exists` | `items` | `open` | `global` | `actor` | `filter` | ✅ |
+| `max` | `items` | `open` | `global` | `actor` | `page` | ✅ |
+| `list` | `top_items` | `value_gt` | `global` | `actor` | `loaded` | ❌ |
+| `count` | `linked_items` | `value_gt` | `tenant` | `off` | `page` | ✅ |
+| `sum` | `items` | `value_gt` | `global` | `off` | `filter` | ✅ |
+| `max` | `top_items` | `value_gt` | `tenant` | `actor` | `sort` | ✅ |
+| `count` | `top_items` | `none` | `tenant` | `off` | `filter` | ✅ |
+| `exists` | `top_items` | `value_gt` | `global` | `off` | `loaded` | ✅ |
+| `exists` | `linked_items` | `none` | `global` | `off` | `page` | ✅ |
+| `list` | `items` | `none` | `tenant` | `off` | `page` | ✅ |
+| `list` | `linked_items` | `open` | `global` | `off` | `loaded` | ✅ |
+| `sum` | `linked_items` | `none` | `global` | `off` | `sort` | ✅ |
 
 ## Blockers
 

@@ -49,6 +49,37 @@ Elixir scenarios and expectations define the contract. CI runs each adapter inde
 | [`bulk.atomic_increment`](lib/scenarios/writes.ex#L137) | supported | supported |
 | [`bulk.partial_success`](lib/scenarios/writes.ex#L99) | supported | supported |
 | [`calc.in_memory`](lib/scenarios/querying.ex#L203) | supported | supported |
+| [`combo.base`](lib/scenarios/combinations.ex#L27) | supported | supported |
+| [`combo.count.linked_items.value_gt.tenant.off.page`](lib/scenarios/combinations.ex#L27) | supported | supported |
+| [`combo.count.top_items.none.tenant.off.filter`](lib/scenarios/combinations.ex#L27) | supported | supported |
+| [`combo.count.top_items.open.global.off.sort`](lib/scenarios/combinations.ex#L27) | supported | supported |
+| [`combo.exists.items.none.tenant.off.sort`](lib/scenarios/combinations.ex#L27) | supported | supported |
+| [`combo.exists.items.open.global.actor.filter`](lib/scenarios/combinations.ex#L27) | supported | supported |
+| [`combo.exists.linked_items.none.global.off.page`](lib/scenarios/combinations.ex#L27) | supported | supported |
+| [`combo.exists.top_items.value_gt.global.off.loaded`](lib/scenarios/combinations.ex#L27) | supported | supported |
+| [`combo.filter.open`](lib/scenarios/combinations.ex#L27) | supported | supported |
+| [`combo.filter.value_gt`](lib/scenarios/combinations.ex#L27) | supported | supported |
+| [`combo.kind.exists`](lib/scenarios/combinations.ex#L27) | supported | supported |
+| [`combo.kind.list`](lib/scenarios/combinations.ex#L27) | supported | supported |
+| [`combo.kind.max`](lib/scenarios/combinations.ex#L27) | supported | supported |
+| [`combo.kind.sum`](lib/scenarios/combinations.ex#L27) | supported | supported |
+| [`combo.list.items.none.tenant.off.page`](lib/scenarios/combinations.ex#L27) | supported | supported |
+| [`combo.list.linked_items.open.global.off.loaded`](lib/scenarios/combinations.ex#L27) | supported | supported |
+| [`combo.list.top_items.value_gt.global.actor.loaded`](lib/scenarios/combinations.ex#L27) | [known_defect](GAPS.md#authorization-bounds) · Ash | [known_defect](GAPS.md#authorization-bounds) · Ash |
+| [`combo.max.items.open.global.actor.page`](lib/scenarios/combinations.ex#L27) | supported | supported |
+| [`combo.max.linked_items.none.global.off.filter`](lib/scenarios/combinations.ex#L27) | supported | supported |
+| [`combo.max.top_items.value_gt.tenant.actor.sort`](lib/scenarios/combinations.ex#L27) | supported | supported |
+| [`combo.policy.actor`](lib/scenarios/combinations.ex#L27) | supported | supported |
+| [`combo.relationship.linked_items`](lib/scenarios/combinations.ex#L27) | supported | supported |
+| [`combo.relationship.top_items`](lib/scenarios/combinations.ex#L27) | supported | supported |
+| [`combo.sum.items.value_gt.global.off.filter`](lib/scenarios/combinations.ex#L27) | supported | supported |
+| [`combo.sum.linked_items.none.global.off.sort`](lib/scenarios/combinations.ex#L27) | supported | supported |
+| [`combo.sum.linked_items.open.tenant.actor.loaded`](lib/scenarios/combinations.ex#L27) | supported | supported |
+| [`combo.sum.top_items.none.tenant.off.page`](lib/scenarios/combinations.ex#L27) | supported | supported |
+| [`combo.tenant.tenant`](lib/scenarios/combinations.ex#L27) | supported | supported |
+| [`combo.use.filter`](lib/scenarios/combinations.ex#L27) | supported | supported |
+| [`combo.use.page`](lib/scenarios/combinations.ex#L27) | supported | supported |
+| [`combo.use.sort`](lib/scenarios/combinations.ex#L27) | supported | supported |
 | [`context.actor`](lib/scenarios/aggregates/context.ex#L54) | supported | supported |
 | [`context.arguments`](lib/scenarios/aggregates/context.ex#L15) | supported | supported |
 | [`context.attribute_tenant`](lib/scenarios/aggregates/context.ex#L67) | supported | supported |
@@ -780,7 +811,7 @@ The first owner is where the fix starts. Counts are scenarios linked to each gap
 | [union-nil](GAPS.md#union-nil) | Ash | implementation | 1 | 1 |
 | [unique-list-order](GAPS.md#unique-list-order) | Ash | decision | 1 | 1 |
 | [value-representation](GAPS.md#value-representation) | Ash | decision | 0 | 2 |
-| [authorization-bounds](GAPS.md#authorization-bounds) | Ash, then AshSQL | implementation | 1 | 1 |
+| [authorization-bounds](GAPS.md#authorization-bounds) | Ash, then AshSQL | implementation | 2 | 2 |
 | [many-to-many-load-limit](GAPS.md#many-to-many-load-limit) | Ash, then AshSQLite | implementation | 1 | 0 |
 | [through-fallback](GAPS.md#through-fallback) | Ash, then AshSQLite | implementation | 2 | 0 |
 | [nul-in-text](GAPS.md#nul-in-text) | AshPostgres | limitation | 0 | 1 |

@@ -125,7 +125,7 @@ defmodule Ash.Conformance.Survey do
     counts
   end
 
-  @doc "An adapter's survey report: its features, storage, operation and policy grids, and blockers."
+  @doc "An adapter's survey report: its features, storage, operation, policy and combination grids, and blockers."
   def markdown(adapter, rows) do
     FeatureReport.markdown(rows, [adapter], :unreviewed) <>
       "\n" <>
@@ -134,6 +134,8 @@ defmodule Ash.Conformance.Survey do
       Ash.Conformance.Report.OperationGrid.detail(rows) <>
       "\n" <>
       Ash.Conformance.Report.PolicyGrid.detail(rows) <>
+      "\n" <>
+      Ash.Conformance.Report.CombinationGrid.detail(rows) <>
       "\n## Blockers\n\n" <> Blockers.markdown(rows)
   end
 end

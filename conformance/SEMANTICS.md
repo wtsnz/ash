@@ -107,6 +107,20 @@ Concurrent-pagination semantics are follow-up work.
 - **Extra rows belong to the scenario.** A scenario that needs rows beyond
   its fixture adds them with `prepare:`, outside the captured operation.
 
+## Combination answers
+
+The combination grid (`lib/combinations.ex`) computes each answer from its
+fixture. It applies steps in the order existing scenarios settle:
+
+1. the relationship's members;
+2. the tenant (`tenant.bounds`);
+3. the item read policy (`context.authorization_before_bounds`);
+4. the relationship's sort and limit;
+5. the aggregate's own filter (`bounds.filter_after_limit`);
+6. the aggregate itself.
+
+Pairwise cases are only blamed when each feature they combine works alone.
+
 ## Added scenario answers
 
 Module documentation in `lib/scenarios/` states the data each answer comes from.

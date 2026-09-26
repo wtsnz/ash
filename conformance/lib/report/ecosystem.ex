@@ -64,9 +64,11 @@ defmodule Ash.Conformance.Report.Ecosystem do
     [Blockers](#blockers).
 
     #{notes_section(adapters)}
+    #{Ash.Conformance.Tiers.markdown(results)}
     #{Ash.Conformance.Report.StorageGrid.markdown(results)}
     #{Ash.Conformance.Report.OperationGrid.markdown(results)}
     #{Ash.Conformance.Report.PolicyGrid.markdown(results)}
+    #{Ash.Conformance.Report.CombinationGrid.markdown(results)}
     #{FeatureReport.legend()}
     | ➖ Not run | The data layer's storage could not be set up for this run. |
 

@@ -23,6 +23,7 @@ defmodule Ash.Conformance.Resources do
       use Ash.Conformance.Resources.Writes, unquote(opts)
       use Ash.Conformance.Resources.Storage, unquote(opts)
       use Ash.Conformance.Resources.Policy, unquote(opts)
+      use Ash.Conformance.Resources.Combination, unquote(opts)
     end
   end
 

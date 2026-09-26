@@ -142,7 +142,10 @@ defmodule Ash.Conformance.SQL.Gaps do
         nil for the first parent after selecting its hidden highest-valued child.
         Direct authorized relationship loading returns the visible child with value 2.
         Ash currently combines policy and aggregate filters, so this may require an
-        Ash change to preserve their distinct ordering.
+        Ash change to preserve their distinct ordering. The combination grid finds it
+        again for a named `list` aggregate over a limited relationship
+        (`combo.list.top_items.value_gt.global.actor.loaded`): owner 1 returns `[5]`
+        instead of `[5, 3]`.
         """
       }
     ]

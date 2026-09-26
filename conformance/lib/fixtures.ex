@@ -134,6 +134,9 @@ defmodule Ash.Conformance.Fixtures do
   defp build_fixture!(adapter, :records), do: Ash.Conformance.Fixtures.Records.seed!(adapter)
   defp build_fixture!(adapter, :policy), do: Ash.Conformance.Fixtures.Policy.seed!(adapter)
 
+  defp build_fixture!(adapter, :combination),
+    do: Ash.Conformance.Fixtures.Combination.seed!(adapter)
+
   # Tier 2: one type's operation rows, in its tier-1 table.
   defp build_fixture!(adapter, {:operations, name}) do
     alias Ash.Conformance.Storage
