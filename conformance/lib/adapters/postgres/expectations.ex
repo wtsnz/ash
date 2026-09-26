@@ -309,6 +309,15 @@ defmodule Ash.Conformance.Postgres.Expectations do
   """
   def variant_rules do
     [
+      expect_variant(
+        ~w(shape.exists.*.depth_2.*.sort shape.exists.*.depth_2.*.filter
+           shape.exists.*.depth_3.*.sort shape.exists.*.depth_3.*.filter),
+        :filter_policy,
+        defect_error(
+          ~r/no such relationship Ash\.Conformance\.\w+\.Shape(Integer|Uuid)(Leaf|Tip)\.(integer|uuid)_mids/,
+          "exists-path-authorization"
+        )
+      ),
       # With authorization on, Ash raises before AshSQL's KeyError.
       expect_variant(
         "filter.nested_parent_control",

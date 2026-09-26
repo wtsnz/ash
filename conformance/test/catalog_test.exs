@@ -96,11 +96,18 @@ defmodule Ash.Conformance.CatalogTest do
   end
 
   test "gaps an adapter records must exist, and every gap is used or is shared" do
-    linked =
+    base =
       for {_id, statuses} <- Expectations.all(),
           {_adapter, {_status, _signature, "GAPS.md#" <> gap}} <- statuses,
-          into: MapSet.new(),
           do: gap
+
+    # Records for Ash.Conformance.Variant runs link gaps too.
+    variants =
+      for adapter <- Adapter.all(),
+          {_key, {_status, _signature, "GAPS.md#" <> gap}} <- adapter.variant_expectations(),
+          do: gap
+
+    linked = MapSet.new(base ++ variants)
 
     shared = Enum.map(Ash.Conformance.Contracts.SharedGaps.all(), & &1.id)
 

@@ -11,9 +11,11 @@ defmodule Ash.Conformance.Tiers do
   - Tier 2, operations: each filter, sort and aggregate on each type
     (`ops.*`).
   - Expressions: each expression function, and nil logic, on one small
-    fixture (`expr.*`, `nil.*`).
+    fixture (`expr.*`, `nil.*`), every declared signature (`sig.*`) and
+    unusual values (`edge.*`).
   - The policy grid: each policy shape on each path (`policy.*`).
-  - The combination grid: features alone and in pairs (`combo.*`).
+  - The combination grid: features alone and in pairs (`combo.*`), and the
+    shapes grid: paths, key types and missing rows (`shape.*`).
   - Tier 4, integration: every other scenario. These run on the richly
     typed fixtures and usually exercise several features at once, so read a
     failure here after the grids above. (Tier 3, core-typed fixtures, was
@@ -23,9 +25,9 @@ defmodule Ash.Conformance.Tiers do
   @tiers [
     {:storage, "Storage (tier 1)", "storage."},
     {:operations, "Operations (tier 2)", "ops."},
-    {:expressions, "Expressions", ["expr.", "nil."]},
+    {:expressions, "Expressions", ["expr.", "nil.", "sig.", "edge."]},
     {:policies, "Policy grid", "policy."},
-    {:combinations, "Combinations", "combo."},
+    {:combinations, "Combinations", ["combo.", "shape."]},
     {:integration, "Integration (tier 4)", nil}
   ]
 

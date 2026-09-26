@@ -38,13 +38,17 @@ defmodule Ash.Conformance.SQL.Database do
       {11, Ash.Conformance.SQL.Migrations.Expressions},
       {12, Ash.Conformance.SQL.Migrations.Large},
       {13, Ash.Conformance.SQL.Migrations.Identities},
-      {14, Ash.Conformance.SQL.Migrations.Signatures}
+      {14, Ash.Conformance.SQL.Migrations.Signatures},
+      {15, Ash.Conformance.SQL.Migrations.Shapes}
     ]
 
+    # In version order, so an adapter's own migration, such as Postgres's
+    # `citext` extension (7), runs before a shared table that needs it.
     migrations =
-      Enum.map(shared, fn {version, migration} ->
-        {version, Map.get(replace, version, migration)}
-      end) ++ Keyword.get(opts, :migrations, [])
+      (Enum.map(shared, fn {version, migration} ->
+         {version, Map.get(replace, version, migration)}
+       end) ++ Keyword.get(opts, :migrations, []))
+      |> Enum.sort_by(&elem(&1, 0))
 
     for {version, migration} <- migrations do
       Ecto.Migrator.up(repo, version, migration, log: false)

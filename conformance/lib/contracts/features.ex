@@ -832,6 +832,29 @@ defmodule Ash.Conformance.Contracts.Features do
         "#{@docs}/resources/aggregates.md",
         claims: [],
         scenarios: ids.(pairs)
+      ),
+      feature(
+        "combinations.shapes",
+        "Aggregates and exists over paths of one to three hops, on integer and UUID keys",
+        "#{@docs}/resources/aggregates.md",
+        claims: [],
+        scenarios: Enum.map(Ash.Conformance.Shapes.cases(), &Ash.Conformance.Shapes.scenario_id/1)
+      ),
+      feature(
+        "combinations.sort_inside_paths",
+        "Sorting by the destination's aggregate inside a path",
+        "#{@docs}/resources/aggregates.md",
+        claims: [],
+        scenarios:
+          Enum.map(Ash.Conformance.Shapes.sorted_cases(), &Ash.Conformance.Shapes.sorted_id/1)
+      ),
+      feature(
+        "combinations.missing_related",
+        "Calculations over a related field keep records whose related record is missing",
+        "#{@docs}/resources/calculations.md",
+        claims: [],
+        scenarios:
+          Enum.map(Ash.Conformance.Shapes.related_cases(), &Ash.Conformance.Shapes.related_id/1)
       )
     ]
   end

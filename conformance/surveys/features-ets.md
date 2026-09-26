@@ -4,7 +4,7 @@
 
 Generated from an unreviewed run: each result was classified automatically against the intended answer. Nothing here has been reviewed.
 
-Feature catalog version 1: 161 features and 1133 scenarios.
+Feature catalog version 1: 164 features and 1319 scenarios.
 
 | Status | Meaning |
 | --- | --- |
@@ -248,6 +248,9 @@ fix.
 | --- | --- | --- |
 | Each combined feature works on its own | ➖ Not applicable |  |
 | Features work together, pair by pair | ➖ Not applicable |  |
+| Aggregates and exists over paths of one to three hops, on integer and UUID keys | ➖ Not applicable |  |
+| Sorting by the destination's aggregate inside a path | ➖ Not applicable |  |
+| Calculations over a related field keep records whose related record is missing | ➖ Not applicable |  |
 
 ## 14. Consistency checks
 

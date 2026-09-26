@@ -103,6 +103,27 @@ defmodule Ash.Conformance.SQL.Gaps do
         """
       },
       %{
+        id: "exists-path-authorization",
+        title: "Exists path authorization",
+        kind: :implementation,
+        owners: [:ash_sql, :ash],
+        body: ~S"""
+        Resolve a policy filter's relationship path from the right resource in an
+        `exists` aggregate over two or more hops. With a filter policy on the path's
+        resources, sorting or filtering by such an aggregate raises "no such
+        relationship ...ShapeIntegerLeaf.integer_mids" in
+        `AshSql.Join.relationship_path_to_relationships/3`. AshSQL's `exists`
+        translation builds the last hop's subquery (`AshSql.Join.related_subquery/3`)
+        and filters it with a policy filter whose path starts at the root, so the
+        path is resolved from the leaf. Loading the aggregate works, and so do
+        `count` and `sum` over the same paths, one-hop paths, a policy that allows
+        everything, and `authorize?: true` with no authorizer. Whether Ash builds the
+        wrong path or AshSQL applies it at the wrong binding is not settled. Found by
+        the `filter_policy` variant on the shapes grid
+        (`shape.exists.*.depth_2.*` and `depth_3`, `sort` and `filter`).
+        """
+      },
+      %{
         id: "root-relationship",
         title: "Root relationship",
         kind: :implementation,

@@ -72,6 +72,7 @@ defmodule Ash.Conformance.Catalog do
       Scenarios.Expressions,
       Scenarios.Signatures,
       Scenarios.Edges,
+      Scenarios.Shapes,
       Scenarios.Joins,
       Scenarios.Relationships,
       Scenarios.Aggregates.Kinds,
