@@ -158,8 +158,8 @@ Elixir scenarios and expectations define the contract. CI runs each adapter inde
 | [`filter.fanout_read_control`](lib/scenarios/aggregates/filters.ex#L121) | [known_defect](GAPS.md#sorted-distinct-reads) · AshSQLite | supported |
 | [`filter.fanout_sum`](lib/scenarios/aggregates/filters.ex#L190) | [unsupported](GAPS.md#filter-fanout) · AshSQL | [known_defect](GAPS.md#filter-fanout) · AshSQL |
 | [`filter.join`](lib/scenarios/aggregates/filters.ex#L100) | supported | supported |
-| [`filter.nested_parent`](lib/scenarios/aggregates/filters.ex#L66) | [unsupported](GAPS.md#parent-correlation) · AshSQL | [known_defect](GAPS.md#nested-parent) · AshSQL |
-| [`filter.nested_parent_control`](lib/scenarios/aggregates/filters.ex#L78) | [known_defect](GAPS.md#nested-parent) · AshSQL | [known_defect](GAPS.md#nested-parent) · AshSQL |
+| [`filter.nested_parent`](lib/scenarios/aggregates/filters.ex#L66) | [unsupported](GAPS.md#parent-correlation) · AshSQL | [known_defect](GAPS.md#nested-parent) · Ash |
+| [`filter.nested_parent_control`](lib/scenarios/aggregates/filters.ex#L78) | [known_defect](GAPS.md#nested-parent) · Ash | [known_defect](GAPS.md#nested-parent) · Ash |
 | [`filter.not_exists`](lib/scenarios/aggregates/filters.ex#L146) | supported | supported |
 | [`filter.or_exists`](lib/scenarios/aggregates/filters.ex#L140) | supported | supported |
 | [`filter.ordinary`](lib/scenarios/aggregates/filters.ex#L15) | supported | supported |
@@ -899,6 +899,7 @@ The first owner is where the fix starts. Counts are scenarios linked to each gap
 | [unique-list-order](GAPS.md#unique-list-order) | Ash | decision | 1 | 1 |
 | [value-representation](GAPS.md#value-representation) | Ash | decision | 0 | 2 |
 | [authorization-bounds](GAPS.md#authorization-bounds) | Ash, then AshSQL | implementation | 2 | 2 |
+| [nested-parent](GAPS.md#nested-parent) | Ash, then AshSQL | implementation | 1 | 2 |
 | [many-to-many-load-limit](GAPS.md#many-to-many-load-limit) | Ash, then AshSQLite | implementation | 1 | 0 |
 | [through-fallback](GAPS.md#through-fallback) | Ash, then AshSQLite | implementation | 2 | 0 |
 | [nul-in-text](GAPS.md#nul-in-text) | AshPostgres | limitation | 0 | 1 |
@@ -916,7 +917,6 @@ The first owner is where the fix starts. Counts are scenarios linked to each gap
 | [tenant-bypass](GAPS.md#tenant-bypass) | AshSQL | implementation | 0 | 3 |
 | [unsorted-bounds](GAPS.md#unsorted-bounds) | AshSQL | implementation | 1 | 0 |
 | [unsorted-list-nil](GAPS.md#unsorted-list-nil) | AshSQL | implementation | 0 | 2 |
-| [nested-parent](GAPS.md#nested-parent) | AshSQL, then Ash | implementation | 1 | 2 |
 | [parent-through-load](GAPS.md#parent-through-load) | AshSQL, then Ash | implementation | 1 | 1 |
 | [bind-parameter-limit](GAPS.md#bind-parameter-limit) | AshSQL, then AshPostgres, then AshSQLite | implementation | 1 | 1 |
 | [elixir-and](GAPS.md#elixir-and) | AshSQL, then AshSQLite | implementation | 1 | 0 |

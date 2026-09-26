@@ -65,20 +65,24 @@ defmodule Ash.Conformance.SQL.Gaps do
         id: "nested-parent",
         title: "Nested parent",
         kind: :implementation,
-        owners: [:ash_sql, :ash],
+        owners: [:ash, :ash_sql],
         body: ~S"""
-        The control's `KeyError` is raised in AshSQL's parent expression handling. In
-        the aggregate, the nested reference reaches AshSQL without a resource, so Ash
-        may also need to resolve it.
+        The read control is Ash's. `Ash.Query.Exists.new/3` merges
+        `exists(children, exists(ratings, expr))` into `exists(children.ratings, expr)`
+        and leaves `parent` references in `expr` unchanged, so they point one level too
+        far out. `parent(parent(threshold))` then has no record to refer to: AshSQL
+        raises `KeyError` for `:parent_bindings`, ETS returns no records, and with
+        `authorize?: true` Ash raises a `MatchError` in `Ash.Filter.update_aggregates/5`
+        before any data layer runs. Written so the `exists` cannot be merged
+        (`exists(children, value == -1 or exists(ratings, ...))`), the same filter
+        returns the intended parents on AshPostgres and ETS, with and without
+        authorization. A single `parent(...)` in a nested `exists` is affected too.
 
-        Support `parent(parent(...))` inside nested `exists`. A plain read filtering
-        parents by `exists(children, exists(ratings, score >= parent(parent(threshold))))`
-        raises `KeyError` for `:parent_bindings` on both adapters, and on AshSQL main.
-        The Postgres aggregate with the same inner filter raises an unsupported
-        expression error. SQLite rejects parent-dependent aggregate filters. AshPostgres's
-        own tests use `parent(parent(...))` in a relationship filter, so the feature is
-        supported by Ash in that context. The same `KeyError` appears under
-        [Parent through load](#parent-through-load); one fix may cover both.
+        The aggregate (`filter.nested_parent`) has a single `exists`, so the merge
+        does not explain it. The Postgres aggregate raises an unsupported expression
+        error, and SQLite rejects parent-dependent aggregate filters. Whether Ash or
+        AshSQL owns it is not settled. The same `KeyError` appears under
+        [Parent through load](#parent-through-load).
         """
       },
       %{
