@@ -4,7 +4,7 @@
 
 Generated from an unreviewed run: each result was classified automatically against the intended answer. Nothing here has been reviewed.
 
-Feature catalog version 1: 160 features and 991 scenarios.
+Feature catalog version 1: 161 features and 1007 scenarios.
 
 | Status | Meaning |
 | --- | --- |
@@ -123,6 +123,7 @@ fix.
 | Every signature of the string functions, with case-insensitive strings | ➖ Not applicable |  |
 | Every signature of negation, rem and round | ➖ Not applicable |  |
 | Every typed signature of <>, /, *, - and +, including date and time arithmetic | ➖ Not applicable |  |
+| Functions on unusual values: decomposed Unicode, whitespace, empty lists, overflow and halves | ➖ Not applicable |  |
 | Negation, column comparisons and and/or with nil | 🟡 Partial 8/13 | `nil.not_and_false` wrong, `nil.not_contradictory_in` wrong, `nil.not_in_with_nil` open question, `nil.not_or_false` wrong, `nil.or` open question |
 | Filters through to-many relationships return each record once | ✅ Works 9/9 |  |
 | Sort by a related record's attribute | ✅ Works 1/1 |  |

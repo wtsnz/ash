@@ -117,6 +117,33 @@ defmodule Ash.Conformance.Contracts.SharedGaps do
         """
       },
       %{
+        id: "integer-overflow",
+        title: "Integer overflow",
+        kind: :decision,
+        owners: [:ash],
+        body: ~S"""
+        Decision: what does integer arithmetic past 64 bits return? The expressions
+        guide says operators behave as in Elixir, where `9223372036854775807 + 1` is
+        `9223372036854775808`, but SQL integers are 64-bit. Postgres raises "bigint
+        out of range"; SQLite silently returns 9223372036854775807. Until Ash
+        decides, `edge.plus.integer_overflow` is unresolved and each reviewed data
+        layer pins what it does.
+        """
+      },
+      %{
+        id: "at-negative-index",
+        title: "At negative index",
+        kind: :decision,
+        owners: [:ash],
+        body: ~S"""
+        Decision: does `at(list, -1)` count from the end? Ash's evaluation uses
+        `Enum.at/2`, so it returns the last element; the guide only says "get an
+        element from a list". AshSQL renders `list[index + 1]`, so on Postgres -1
+        reads index 0, which is nil. Until Ash decides, `edge.at.negative_index` is
+        unresolved.
+        """
+      },
+      %{
         id: "in-list-nil",
         title: "In list nil",
         kind: :decision,

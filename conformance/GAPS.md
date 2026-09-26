@@ -97,6 +97,25 @@ returns whole seconds, so the loss is in the calculation path, not the
 arithmetic. Postgres keeps them (`sig.plus.usec_duration`,
 `sig.minus.time_usec_duration` and their mirrors).
 
+## Integer overflow
+
+Decision owner: Ash.
+Decision: what does integer arithmetic past 64 bits return? The expressions
+guide says operators behave as in Elixir, where `9223372036854775807 + 1` is
+`9223372036854775808`, but SQL integers are 64-bit. Postgres raises "bigint
+out of range"; SQLite silently returns 9223372036854775807. Until Ash
+decides, `edge.plus.integer_overflow` is unresolved and each reviewed data
+layer pins what it does.
+
+## At negative index
+
+Decision owner: Ash.
+Decision: does `at(list, -1)` count from the end? Ash's evaluation uses
+`Enum.at/2`, so it returns the last element; the guide only says "get an
+element from a list". AshSQL renders `list[index + 1]`, so on Postgres -1
+reads index 0, which is nil. Until Ash decides, `edge.at.negative_index` is
+unresolved.
+
 ## In list nil
 
 Decision owner: Ash.
@@ -279,6 +298,16 @@ Split an empty string as `String.split/3` does. Ash's evaluation of
 `string_split("", "o")` is `[""]`, and `[]` with `trim?: true`. Postgres's
 `string_to_array('', ...)` returns `{}`, and the `trim?: true` path returns nil,
 which reads as if the input were nil (`sig.string_split.*`, row 2).
+
+## Grapheme length
+
+Limitation owner: AshSQL.
+Limitation: SQL data layers can't count graphemes, as
+`Ash.Query.Function.StringLength` documents, so `string_length(s, :graphemes)` is rejected with an unsupported
+expression error. Without a unit, `string_length/1` counts codepoints, which
+both data layers do. The expressions guide still describes `string_length/1`
+as `String.length/1` (graphemes), which disagrees with the module and should
+be updated (`edge.string_length.*`).
 
 ## Root relationship
 
@@ -632,6 +661,15 @@ Ignore case in `contains/2`, `string_starts_with/2`, `string_ends_with/2` and
 false or nil: `contains("HeLLo", "hel")` is false. Postgres and Ash's
 evaluation match either case. Comparing `lower(...)` on both sides would
 match Ash.
+
+## Trim whitespace
+
+Owner: AshSQLite.
+Trim all whitespace in `string_trim/1`, as `String.trim/1` does. AshSqlite
+renders SQLite's `TRIM(?)`, which removes only spaces, so tabs and newlines
+stay: `"  \t padded \n "` trims to `"\t padded \n"`. Postgres, through AshSQL's
+regular expression, returns "padded". `TRIM(?, ' ' || char(9, 10, 11, 12, 13))`
+would match for ASCII whitespace (`edge.string_trim.whitespace`).
 
 ## CI-string sort
 

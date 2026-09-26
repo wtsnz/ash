@@ -230,6 +230,13 @@ defmodule Ash.Conformance.Contracts.Features do
            scenarios: Ash.Conformance.Scenarios.Signatures.ids(:operators)
          ),
          feature(
+           "expressions.edge_values",
+           "Functions on unusual values: decomposed Unicode, whitespace, empty lists, overflow and halves",
+           "#{@docs}/reference/expressions.md",
+           claims: [],
+           scenarios: Ash.Conformance.Scenarios.Edges.ids()
+         ),
+         feature(
            "filter.nil_logic",
            "Negation, column comparisons and and/or with nil",
            "#{@docs}/reference/expressions.md",

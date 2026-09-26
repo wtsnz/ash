@@ -77,7 +77,11 @@ defmodule Ash.Conformance.SignaturesTest do
     "sig.div.decimal_float" => @decimal,
     "sig.div.decimal_integer" => @decimal,
     "sig.start_of_day.datetime_zone" => @no_zones,
-    "sig.start_of_day.date_zone" => @no_zones
+    "sig.start_of_day.date_zone" => @no_zones,
+    # Open decisions: what Ash's evaluation returns, for when Ash decides.
+    "edge.at.negative_index" => {"at-negative-index", ~r/^%\{11 => nil, 12 => 1, 13 => nil\}$/},
+    "edge.plus.integer_overflow" =>
+      {"integer-overflow", ~r/^%\{11 => 9223372036854775808, 12 => -4, 13 => nil\}$/}
   }
 
   test "every recorded evaluator difference names a known gap" do
@@ -88,7 +92,7 @@ defmodule Ash.Conformance.SignaturesTest do
     end
   end
 
-  for {id, _signature} <- Signatures.signatures() do
+  for id <- Map.keys(Signatures.signatures()) ++ Ash.Conformance.Scenarios.Edges.ids() do
     test "Ash's evaluation agrees with #{id}" do
       scenario = Enum.find(Catalog.all(), &(&1.id == unquote(id)))
       report = Probe.run(scenario, Ash.Conformance.Ets)

@@ -13,6 +13,24 @@ defmodule Ash.Conformance.Postgres.Expectations do
   def rules do
     [
       supported("*"),
+      expect(
+        "edge.plus.integer_overflow",
+        unresolved_error(
+          ~r/ERROR 22003 \(numeric_value_out_of_range\) bigint out of range/,
+          "integer-overflow"
+        )
+      ),
+      expect(
+        "edge.at.negative_index",
+        unresolved_value(%{11 => nil, 12 => nil, 13 => nil}, "at-negative-index")
+      ),
+      expect(
+        "edge.string_length.graphemes",
+        unsupported(
+          ~r/Unsupported expression in Elixir\.AshPostgres\.SqlImplementation query: .*name: :string_length/s,
+          "grapheme-length"
+        )
+      ),
       # Ash stops at `/`'s first signature before any query runs.
       expect(
         ~w(sig.div.decimal_decimal sig.div.float_decimal sig.div.integer_decimal),

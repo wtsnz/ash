@@ -104,6 +104,22 @@ Elixir scenarios and expectations define the contract. CI runs each adapter inde
 | [`context.through_arguments`](lib/scenarios/aggregates/context.ex#L86) | supported | supported |
 | [`context.through_bypass`](lib/scenarios/aggregates/context.ex#L92) | supported | [known_defect](GAPS.md#tenant-bypass) · AshSQL |
 | [`context.through_tenant`](lib/scenarios/aggregates/context.ex#L89) | supported | supported |
+| [`edge.at.negative_index`](lib/scenarios/edges.ex#L34) | [unresolved](GAPS.md#array-functions) · AshSQL | [unresolved](GAPS.md#at-negative-index) · Ash |
+| [`edge.contains.normalization`](lib/scenarios/edges.ex#L34) | supported | supported |
+| [`edge.datetime_add.leap_day`](lib/scenarios/edges.ex#L34) | supported | supported |
+| [`edge.div.negative`](lib/scenarios/edges.ex#L34) | supported | supported |
+| [`edge.is_nil.map`](lib/scenarios/edges.ex#L34) | supported | supported |
+| [`edge.plus.integer_overflow`](lib/scenarios/edges.ex#L34) | [unresolved](GAPS.md#integer-overflow) · Ash | [unresolved](GAPS.md#integer-overflow) · Ash |
+| [`edge.rem.negative`](lib/scenarios/edges.ex#L34) | supported | supported |
+| [`edge.round.decimal_half`](lib/scenarios/edges.ex#L34) | [known_defect](GAPS.md#round-syntax) · AshSQL | supported |
+| [`edge.round.half`](lib/scenarios/edges.ex#L34) | [known_defect](GAPS.md#round-syntax) · AshSQL | supported |
+| [`edge.string_join.empty_items`](lib/scenarios/edges.ex#L34) | [unsupported](GAPS.md#string-join) · AshSQLite | supported |
+| [`edge.string_length.bytes`](lib/scenarios/edges.ex#L34) | supported | supported |
+| [`edge.string_length.codepoints`](lib/scenarios/edges.ex#L34) | supported | supported |
+| [`edge.string_length.default`](lib/scenarios/edges.ex#L34) | supported | supported |
+| [`edge.string_length.graphemes`](lib/scenarios/edges.ex#L34) | [unsupported](GAPS.md#grapheme-length) · AshSQL | [unsupported](GAPS.md#grapheme-length) · AshSQL |
+| [`edge.string_split.empty_items`](lib/scenarios/edges.ex#L34) | [known_defect](GAPS.md#array-functions) · AshSQL | supported |
+| [`edge.string_trim.whitespace`](lib/scenarios/edges.ex#L34) | [known_defect](GAPS.md#trim-whitespace) · AshSQLite | supported |
 | [`equivalence.root_reference`](lib/scenarios/consistency.ex#L35) | supported | supported |
 | [`equivalence.visible_count_load`](lib/scenarios/consistency.ex#L21) | supported | supported |
 | [`expr.add`](lib/scenarios/expressions.ex#L39) | supported | supported |
@@ -1007,11 +1023,13 @@ The first owner is where the fix starts. Counts are scenarios linked to each gap
 
 | Gap | Owner | Kind | sqlite | postgres |
 | --- | --- | --- | ---: | ---: |
+| [at-negative-index](GAPS.md#at-negative-index) | Ash | decision | 0 | 1 |
 | [authorized-action-arguments](GAPS.md#authorized-action-arguments) | Ash | implementation | 0 | 0 |
 | [bulk-stream-forbidden](GAPS.md#bulk-stream-forbidden) | Ash | implementation | 2 | 0 |
 | [decimal-avg](GAPS.md#decimal-avg) | Ash | decision | 1 | 1 |
 | [in-list-nil](GAPS.md#in-list-nil) | Ash | decision | 1 | 1 |
 | [in-simplification](GAPS.md#in-simplification) | Ash | implementation | 1 | 1 |
+| [integer-overflow](GAPS.md#integer-overflow) | Ash | decision | 1 | 1 |
 | [keyless-identity](GAPS.md#keyless-identity) | Ash | decision | 1 | 1 |
 | [many-to-many-bounds-api](GAPS.md#many-to-many-bounds-api) | Ash | decision | 1 | 1 |
 | [operator-signature-cast](GAPS.md#operator-signature-cast) | Ash | implementation | 3 | 3 |
@@ -1035,6 +1053,7 @@ The first owner is where the fix starts. Counts are scenarios linked to each gap
 | [filter-dependencies](GAPS.md#filter-dependencies) | AshSQL | implementation | 4 | 0 |
 | [filter-fanout](GAPS.md#filter-fanout) | AshSQL | implementation | 7 | 9 |
 | [from-many](GAPS.md#from-many) | AshSQL | implementation | 1 | 1 |
+| [grapheme-length](GAPS.md#grapheme-length) | AshSQL | limitation | 1 | 1 |
 | [many-to-many-paths](GAPS.md#many-to-many-paths) | AshSQL | implementation | 4 | 0 |
 | [prepared-query](GAPS.md#prepared-query) | AshSQL | implementation | 0 | 1 |
 | [record-identity](GAPS.md#record-identity) | AshSQL | implementation | 4 | 0 |
@@ -1049,14 +1068,14 @@ The first owner is where the fix starts. Counts are scenarios linked to each gap
 | [unsorted-list-nil](GAPS.md#unsorted-list-nil) | AshSQL | implementation | 0 | 2 |
 | [parent-through-load](GAPS.md#parent-through-load) | AshSQL, then Ash | implementation | 1 | 1 |
 | [bind-parameter-limit](GAPS.md#bind-parameter-limit) | AshSQL, then AshPostgres, then AshSQLite | implementation | 1 | 1 |
-| [array-functions](GAPS.md#array-functions) | AshSQL, then AshSQLite | implementation | 14 | 0 |
+| [array-functions](GAPS.md#array-functions) | AshSQL, then AshSQLite | implementation | 16 | 0 |
 | [duration-forms](GAPS.md#duration-forms) | AshSQL, then AshSQLite | implementation | 5 | 0 |
 | [elixir-and](GAPS.md#elixir-and) | AshSQL, then AshSQLite | implementation | 1 | 0 |
 | [manual](GAPS.md#manual) | AshSQL, then AshSQLite | implementation | 1 | 0 |
 | [no-attributes](GAPS.md#no-attributes) | AshSQL, then AshSQLite | implementation | 2 | 1 |
 | [parent-correlation](GAPS.md#parent-correlation) | AshSQL, then AshSQLite | implementation | 8 | 0 |
 | [root-kinds](GAPS.md#root-kinds) | AshSQL, then AshSQLite | implementation | 8 | 0 |
-| [round-syntax](GAPS.md#round-syntax) | AshSQL, then AshSQLite | implementation | 9 | 0 |
+| [round-syntax](GAPS.md#round-syntax) | AshSQL, then AshSQLite | implementation | 11 | 0 |
 | [start-of-day](GAPS.md#start-of-day) | AshSQL, then AshSQLite | implementation | 5 | 0 |
 | [temporal-difference](GAPS.md#temporal-difference) | AshSQL, then AshSQLite | implementation | 7 | 6 |
 | [binary-in-lists](GAPS.md#binary-in-lists) | AshSQLite | implementation | 1 | 0 |
@@ -1071,7 +1090,8 @@ The first owner is where the fix starts. Counts are scenarios linked to each gap
 | [query-combinations](GAPS.md#query-combinations) | AshSQLite | implementation | 4 | 0 |
 | [query-distinct](GAPS.md#query-distinct) | AshSQLite | implementation | 1 | 0 |
 | [row-locks](GAPS.md#row-locks) | AshSQLite | limitation | 1 | 0 |
-| [string-join](GAPS.md#string-join) | AshSQLite | implementation | 6 | 0 |
+| [string-join](GAPS.md#string-join) | AshSQLite | implementation | 7 | 0 |
+| [trim-whitespace](GAPS.md#trim-whitespace) | AshSQLite | implementation | 1 | 0 |
 | [unicode-case](GAPS.md#unicode-case) | AshSQLite | implementation | 2 | 0 |
 | [upsert-conditions](GAPS.md#upsert-conditions) | AshSQLite | implementation | 2 | 0 |
 | [sorted-distinct-reads](GAPS.md#sorted-distinct-reads) | AshSQLite, then AshSQL | implementation | 13 | 0 |

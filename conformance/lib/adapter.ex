@@ -30,8 +30,9 @@ defmodule Ash.Conformance.Adapter do
   @doc """
   Whether this integration runs a fixture's scenarios. By default every
   fixture but `:context_tenancy` (schema-based tenancy), `:combination` (the
-  combination grid), `:large` (thousands of rows) and `:signatures` (a column
-  of every argument type, including arrays and `citext`), which run on the
+  combination grid), `:large` (thousands of rows), and `:signatures` and
+  `:edges` (a column of every argument type, including arrays and `citext`),
+  which run on the
   reviewed data layers to keep the ecosystem run short. An adapter opts in
   by returning true.
   """
@@ -157,7 +158,7 @@ defmodule Ash.Conformance.Adapter do
       def variant_expectations, do: %{}
 
       def fixture?(fixture),
-        do: fixture not in [:context_tenancy, :combination, :large, :signatures]
+        do: fixture not in [:context_tenancy, :combination, :large, :signatures, :edges]
 
       def custom_aggregate, do: Ash.Conformance.Resources.NoCustomAggregate
       def manual_relationship, do: Ash.Conformance.Resources.PlainManual

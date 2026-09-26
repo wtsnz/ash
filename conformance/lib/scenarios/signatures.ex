@@ -105,8 +105,8 @@ defmodule Ash.Conformance.Scenarios.Signatures do
     flag: :boolean
   }
 
-  # The tier-1 cells of the columns the expression reads.
-  defp requires(expression) do
+  @doc "The tier-1 cells of the columns an expression reads."
+  def requires(expression) do
     expression
     |> Ash.Filter.list_refs()
     |> Enum.map(& &1.attribute)

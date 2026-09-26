@@ -89,6 +89,20 @@ defmodule Ash.Conformance.SQL.Gaps do
         """
       },
       %{
+        id: "grapheme-length",
+        title: "Grapheme length",
+        kind: :limitation,
+        owners: [:ash_sql],
+        body: ~S"""
+        Limitation: SQL data layers can't count graphemes, as
+        `Ash.Query.Function.StringLength` documents, so `string_length(s, :graphemes)` is rejected with an unsupported
+        expression error. Without a unit, `string_length/1` counts codepoints, which
+        both data layers do. The expressions guide still describes `string_length/1`
+        as `String.length/1` (graphemes), which disagrees with the module and should
+        be updated (`edge.string_length.*`).
+        """
+      },
+      %{
         id: "root-relationship",
         title: "Root relationship",
         kind: :implementation,

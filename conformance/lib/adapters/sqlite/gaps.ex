@@ -333,6 +333,19 @@ defmodule Ash.Conformance.Sqlite.Gaps do
         """
       },
       %{
+        id: "trim-whitespace",
+        title: "Trim whitespace",
+        kind: :implementation,
+        owners: [:ash_sqlite],
+        body: ~S"""
+        Trim all whitespace in `string_trim/1`, as `String.trim/1` does. AshSqlite
+        renders SQLite's `TRIM(?)`, which removes only spaces, so tabs and newlines
+        stay: `"  \t padded \n "` trims to `"\t padded \n"`. Postgres, through AshSQL's
+        regular expression, returns "padded". `TRIM(?, ' ' || char(9, 10, 11, 12, 13))`
+        would match for ASCII whitespace (`edge.string_trim.whitespace`).
+        """
+      },
+      %{
         id: "ci-string-sort",
         title: "CI-string sort",
         kind: :implementation,

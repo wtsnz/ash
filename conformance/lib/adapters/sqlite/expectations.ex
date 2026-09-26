@@ -13,6 +13,46 @@ defmodule Ash.Conformance.Sqlite.Expectations do
   def rules do
     [
       supported("*"),
+      expect(
+        "edge.plus.integer_overflow",
+        unresolved_value(
+          %{11 => 9_223_372_036_854_775_807, 12 => -4, 13 => nil},
+          "integer-overflow"
+        )
+      ),
+      expect(
+        "edge.at.negative_index",
+        unresolved_error(
+          ~r/near "\[CAST\(\? AS INTEGER\) \+ 1\]": syntax error/,
+          "array-functions"
+        )
+      ),
+      expect(
+        "edge.string_length.graphemes",
+        unsupported(
+          ~r/Unsupported expression in Elixir\.AshSqlite\.SqlImplementation query: .*name: :string_length/s,
+          "grapheme-length"
+        )
+      ),
+      expect(
+        "edge.string_join.empty_items",
+        unsupported(~r/does not support the function string_join/, "string-join")
+      ),
+      expect(
+        "edge.string_split.empty_items",
+        defect_error(~r/no such function: string_to_array/, "array-functions")
+      ),
+      expect(
+        ~w(edge.round.half edge.round.decimal_half),
+        defect_error(~r/unrecognized token: ":"/, "round-syntax")
+      ),
+      expect(
+        "edge.string_trim.whitespace",
+        defect_value(
+          %{11 => "e\u0301te\u0301", 12 => "\t padded \n", 13 => "👩\u200D👩\u200D👧"},
+          "trim-whitespace"
+        )
+      ),
       # Ash stops at `/`'s first signature before any query runs.
       expect(
         ~w(sig.div.decimal_decimal sig.div.float_decimal sig.div.integer_decimal),
