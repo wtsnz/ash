@@ -83,9 +83,10 @@ defmodule Ash.Conformance.EcosystemTest do
     @moduledoc false
     def persist!(:child, [%{visible: true}], _opts), do: raise("stored value could not be cast")
     def persist!(_role, _rows, _opts), do: :ok
+    def resource(role), do: Ash.Conformance.Ets.resource(role)
   end
 
-  test "seeding names the role, row and reason of a row that cannot be stored" do
+  test "seeding names the role, row, reason and storage cells of a row that cannot be stored" do
     error =
       assert_raise Ash.Conformance.Fixtures.SetupError, fn ->
         Ash.Conformance.Fixtures.seed!(RejectsFlags, :child, [
@@ -95,6 +96,8 @@ defmodule Ash.Conformance.EcosystemTest do
       end
 
     assert {error.role, error.row} == {:child, 12}
+    # The storage cells the row depends on, so reports can name what blocked it.
+    assert error.cells == ["storage.boolean.ordinary", "storage.integer.ordinary"]
 
     assert Exception.message(error) ==
              "Could not store child row 12: stored value could not be cast"

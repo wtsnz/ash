@@ -4,8 +4,9 @@
 defmodule Ash.Conformance.Report.PolicyGrid do
   @moduledoc """
   The policy grid in reports: each policy case on each path. A cell counts
-  against the policy only when the same path works without authorization
-  (its control); otherwise the path itself is the problem, shown as ◌.
+  against the policy only when the same path works without authorization:
+  each cell requires its path's control, so a failing control blocks it and
+  the path itself is the problem, shown as ◌.
   `markdown/1` is the overview across data layers; `detail/1` is one data
   layer's case × path table.
   """
@@ -106,11 +107,8 @@ defmodule Ash.Conformance.Report.PolicyGrid do
       nil -> "–"
       %{classification: :works} -> "✅"
       %{classification: :setup_failed} -> "❔"
-      _row when case_id == "control" -> "❌"
-      _row -> if control_works?(by_id, path), do: "❌", else: "◌"
+      %{blocked_by: [_ | _]} -> "◌"
+      _row -> "❌"
     end
   end
-
-  defp control_works?(by_id, path),
-    do: match?(%{classification: :works}, Map.get(by_id, "policy.control.#{path}"))
 end

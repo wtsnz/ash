@@ -4,7 +4,7 @@
 
 Generated from an unreviewed run: each result was classified automatically against the intended answer. Nothing here has been reviewed.
 
-Feature catalog version 1: 118 features and 581 scenarios.
+Feature catalog version 1: 118 features and 582 scenarios.
 
 | Status | Meaning |
 | --- | --- |
@@ -20,8 +20,9 @@ Feature catalog version 1: 118 features and 581 scenarios.
 | ⚠️ Changed | A result no longer matches its recorded contract. |
 
 Counts are passing scenarios out of those that ran, then how many could
-not run. Gap links explain everything that is not fully working, and who
-owns the fix.
+not run, then how many failures have a failing prerequisite (blocked).
+Gap links explain everything that is not fully working, and who owns the
+fix.
 
 ## 1. Storage
 
@@ -69,8 +70,8 @@ owns the fix.
 | Feature | mysql | Not working |
 | --- | --- | --- |
 | Strings, integers, booleans, atoms and nil round-trip | ✅ Works 3/3 |  |
-| Large integers, floats and decimals round-trip | 🟡 Partial 1/2 | `record.types_numeric` wrong |
-| Dates, microsecond datetimes and times round-trip | ✅ Works 1/1 |  |
+| Large integers, floats and decimals round-trip | 🟡 Partial 1/2 · 1 blocked | `record.types_numeric` wrong (blocked by `storage.decimal.ordinary`) |
+| Dates, microsecond datetimes and times round-trip | ✅ Works 2/2 |  |
 | UUIDs round-trip | ✅ Works 1/1 |  |
 | Arrays round-trip, keeping order and duplicates | ✅ Works 1/1 |  |
 | Maps round-trip, including nested values | ✅ Works 1/1 |  |
@@ -86,7 +87,7 @@ owns the fix.
 | Filter strings: contains, case, unicode and empty | 🟡 Partial 3/4 | `record.filter_contains` wrong |
 | Filter inside arrays, maps and embedded resources | 🟡 Partial 2/3 | `record.filter_array_member` crashed |
 | Filter by a calculation | ✅ Works 1/1 |  |
-| Sort by one or more fields, with explicit nil order | 🟡 Partial 2/6 | `record.sort_asc_nils_first` crashed, `record.sort_date` crashed, `record.sort_decimal` crashed, `record.sort_desc_nils_last` crashed |
+| Sort by one or more fields, with explicit nil order | 🟡 Partial 2/6 · 1 blocked | `record.sort_asc_nils_first` crashed, `record.sort_date` crashed, `record.sort_decimal` crashed (blocked by `storage.decimal.ordinary`), `record.sort_desc_nils_last` crashed |
 | Sort by a calculation | ✅ Works 1/1 |  |
 | Limit and offset a query | ✅ Works 1/1 |  |
 | Count and check existence | ✅ Works 1/1 |  |
@@ -127,14 +128,14 @@ owns the fix.
 | Filter the records an aggregate uses | ⛔ Not supported 0/6 | `filter.exists` rejected, `filter.join` rejected, `filter.not_exists` rejected, `filter.or_exists` rejected, `filter.ordinary` rejected, `filter.sibling_independence` rejected |
 | Aggregate filters through to-many relationships count each record once | ⛔ Not supported 0/11 | `filter.fanout_and` rejected, `filter.fanout_avg` rejected, `filter.fanout_count` rejected, `filter.fanout_count_records` rejected, `filter.fanout_custom` rejected, `filter.fanout_list` rejected, `filter.fanout_nil_count` rejected, `filter.fanout_not_count` rejected, `filter.fanout_or` rejected, `filter.fanout_sum` rejected, `identity.composite_fanout_count` rejected |
 | Aggregate filters that use other aggregates | ⛔ Not supported 0/5 | `filter.aggregate_dependency` rejected, `filter.aggregate_dependency_calculation` rejected, `filter.aggregate_dependency_filtered` rejected, `filter.aggregate_dependency_many_to_many` rejected, `filter.aggregate_dependency_to_one` rejected |
-| Aggregate filters that reference the parent record | ⛔ Not supported 0/8 | `filter.nested_parent` rejected, `filter.parent` rejected, `filter.parent_join` rejected, `filter.parent_relationship` rejected, `filter.parent_through` rejected, `filter.parent_unrelated` rejected, `use.parent_filter` rejected, `use.parent_sort` rejected |
+| Aggregate filters that reference the parent record | ⛔ Not supported 0/8 · 2 blocked | `filter.nested_parent` rejected (blocked by `filter.nested_parent_control`), `filter.parent` rejected, `filter.parent_join` rejected, `filter.parent_relationship` rejected, `filter.parent_through` rejected (blocked by `filter.parent_through_control`), `filter.parent_unrelated` rejected, `use.parent_filter` rejected, `use.parent_sort` rejected |
 | Aggregate over to-one, multi-hop and many-to-many paths | ❌ Broken 0/17 | `path.final_many_to_many_custom` rejected, `path.final_many_to_many_first` rejected, `path.final_many_to_many_list` rejected, `path.final_many_to_many_scalar` rejected, `path.intermediate_many_to_many` rejected, `path.many_to_many` rejected, `path.many_to_many_first` rejected, `path.many_to_many_list` rejected, `path.multi_hop` rejected, `path.repeated_many_to_many` open question, `path.root_relationship` crashed, `path.through_count` rejected, `path.to_one` rejected, `path.to_one_to_many_first` rejected, `path.to_one_to_many_list` rejected, `path.to_one_to_many_sum` rejected, `path.unrelated` rejected |
 | Aggregate over manual and attribute-free relationships | ⛔ Not supported 0/3 | `path.manual` rejected, `path.no_attributes` rejected, `path.no_attributes_parent` rejected |
-| Aggregate over limited, offset and from-many relationships | ⛔ Not supported 0/9 | `bounds.default_sort` rejected, `bounds.filter_after_limit` rejected, `bounds.from_many` rejected, `bounds.list_filter_after_limit` rejected, `bounds.many_to_many_query_limit` open question, `bounds.relationship_limit` rejected, `bounds.relationship_offset` rejected, `bounds.relationship_offset_only` rejected, `bounds.unsorted_limit` rejected |
+| Aggregate over limited, offset and from-many relationships | ⛔ Not supported 0/9 · 1 blocked | `bounds.default_sort` rejected (blocked by `bounds.default_sort_control`), `bounds.filter_after_limit` rejected, `bounds.from_many` rejected, `bounds.list_filter_after_limit` rejected, `bounds.many_to_many_query_limit` open question, `bounds.relationship_limit` rejected, `bounds.relationship_offset` rejected, `bounds.relationship_offset_only` rejected, `bounds.unsorted_limit` rejected |
 | Root aggregates over sorted, limited and offset queries | ❌ Broken 0/7 | `bounds.root_custom_limit` crashed, `bounds.root_first_distinct_sort` crashed, `bounds.root_limit` crashed, `bounds.root_list_limit` crashed, `bounds.root_offset_only` crashed, `bounds.root_order_then_limit` crashed, `bounds.root_zero` crashed |
 | Distinct counts over composite and missing keys | 🟡 Partial 1/5 | `identity.composite_count` rejected, `identity.keyless_count` rejected, `identity.keyless_distinct` open question, `identity.keyless_source` rejected |
 | Filter, sort, paginate and calculate with aggregates | ⛔ Not supported 0/10 | `use.calculation` rejected, `use.filter` rejected, `use.keyset_pagination` rejected, `use.nested_limited_load` rejected, `use.pagination` rejected, `use.related_exists` rejected, `use.related_filter` rejected, `use.sort` rejected, `use.to_one_filter` rejected, `use.to_one_sort` rejected |
-| Aggregates respect read actions, arguments, actor and context | ⛔ Not supported 0/9 | `context.actor` rejected, `context.arguments` rejected, `context.intermediate_action` rejected, `context.intermediate_actor` rejected, `context.prepared_query_arguments` rejected, `context.read_action` rejected, `context.relationship_context` rejected, `context.shared` rejected, `context.through_arguments` rejected |
+| Aggregates respect read actions, arguments, actor and context | ⛔ Not supported 0/9 · 2 blocked | `context.actor` rejected, `context.arguments` rejected, `context.intermediate_action` rejected, `context.intermediate_actor` rejected, `context.prepared_query_arguments` rejected, `context.read_action` rejected, `context.relationship_context` rejected (blocked by `context.relationship_context_control`), `context.shared` rejected (blocked by `context.relationship_context_control`), `context.through_arguments` rejected |
 | Seeded filtered aggregates match an in-memory reference | ⛔ Not supported 0/1 | `generated.filtered_aggregates` rejected |
 
 ## 7. Writes
@@ -171,7 +172,7 @@ owns the fix.
 | --- | --- | --- |
 | Policies filter reads | ✅ Works 3/3 |  |
 | Policies filter related records before bounds | 🟡 Partial 2/5 | `auth.bounds` crashed, `auth.from_many` crashed, `context.authorization_bounds_control` crashed |
-| Policies filter what aggregates count | 🟡 Partial 2/8 | `auth.aggregate_filter` rejected, `auth.aggregate_sort` rejected, `auth.context_aggregates` rejected, `auth.loaded_aggregates` rejected, `context.authorization` rejected, `context.authorization_before_bounds` rejected |
+| Policies filter what aggregates count | 🟡 Partial 2/8 · 1 blocked | `auth.aggregate_filter` rejected, `auth.aggregate_sort` rejected, `auth.context_aggregates` rejected, `auth.loaded_aggregates` rejected, `context.authorization` rejected, `context.authorization_before_bounds` rejected (blocked by `context.authorization_bounds_control`) |
 | Policies filter pages and counts | ⛔ Not supported 0/3 | `auth.keyset_pages` rejected, `auth.offset_page` rejected, `auth.tenant_interaction` rejected |
 | Policies filter and forbid writes | 🟡 Partial 2/4 | `auth.write_bulk_update_atomic` crashed, `auth.write_bulk_update_stream` crashed |
 
@@ -179,19 +180,19 @@ owns the fix.
 
 | Feature | mysql | Not working |
 | --- | --- | --- |
-| A filter policy on the actor | 🟡 Partial 12/16 | `policy.owner.aggregate_filter` rejected, `policy.owner.get_error` crashed, `policy.owner.loaded_count` rejected, `policy.owner.loaded_sum` rejected |
-| The same policy with no actor | 🟡 Partial 11/16 | `policy.owner_nil_actor.aggregate_filter` rejected, `policy.owner_nil_actor.bulk_destroy` wrong, `policy.owner_nil_actor.bulk_update` wrong, `policy.owner_nil_actor.loaded_count` rejected, `policy.owner_nil_actor.loaded_sum` rejected |
-| forbid_if before authorize_if | 🟡 Partial 12/16 | `policy.forbid.aggregate_filter` rejected, `policy.forbid.get_error` crashed, `policy.forbid.loaded_count` rejected, `policy.forbid.loaded_sum` rejected |
-| A bypass policy, for an actor it does not let through | 🟡 Partial 12/16 | `policy.bypass.aggregate_filter` rejected, `policy.bypass.get_error` crashed, `policy.bypass.loaded_count` rejected, `policy.bypass.loaded_sum` rejected |
-| A bypass policy, for an actor it lets through | 🟡 Partial 10/13 | `policy.bypass_admin.aggregate_filter` rejected, `policy.bypass_admin.loaded_count` rejected, `policy.bypass_admin.loaded_sum` rejected |
-| Two policies that must both pass | 🟡 Partial 12/16 | `policy.all_of.aggregate_filter` rejected, `policy.all_of.get_error` crashed, `policy.all_of.loaded_count` rejected, `policy.all_of.loaded_sum` rejected |
-| One policy whose checks either pass | 🟡 Partial 12/16 | `policy.any_of.aggregate_filter` rejected, `policy.any_of.get_error` crashed, `policy.any_of.loaded_count` rejected, `policy.any_of.loaded_sum` rejected |
-| A policy on a to-one relationship | 🟡 Partial 12/16 | `policy.related.aggregate_filter` rejected, `policy.related.get_error` crashed, `policy.related.loaded_count` rejected, `policy.related.loaded_sum` rejected |
-| A policy on a multi-hop exists | 🟡 Partial 12/16 | `policy.member.aggregate_filter` rejected, `policy.member.get_error` crashed, `policy.member.loaded_count` rejected, `policy.member.loaded_sum` rejected |
-| A policy composed with can_read | 🟡 Partial 12/16 | `policy.can_read.aggregate_filter` rejected, `policy.can_read.get_error` crashed, `policy.can_read.loaded_count` rejected, `policy.can_read.loaded_sum` rejected |
-| A strict policy, for an actor it forbids | 🟡 Partial 11/16 | `policy.strict.aggregate_filter` rejected, `policy.strict.bulk_destroy` wrong, `policy.strict.bulk_update` wrong, `policy.strict.loaded_count` rejected, `policy.strict.loaded_sum` rejected |
-| A strict policy, for an actor it allows | 🟡 Partial 10/13 | `policy.strict_admin.aggregate_filter` rejected, `policy.strict_admin.loaded_count` rejected, `policy.strict_admin.loaded_sum` rejected |
-| Field policies hide values, in reads, filters and aggregates | 🟡 Partial 2/4 | `policy.field.field_aggregate` rejected, `policy.field.field_read` wrong |
+| A filter policy on the actor | 🟡 Partial 12/16 · 3 blocked | `policy.owner.aggregate_filter` rejected (blocked by `policy.control.aggregate_filter`), `policy.owner.get_error` crashed, `policy.owner.loaded_count` rejected (blocked by `policy.control.loaded_count`), `policy.owner.loaded_sum` rejected (blocked by `policy.control.loaded_sum`) |
+| The same policy with no actor | 🟡 Partial 11/16 · 3 blocked | `policy.owner_nil_actor.aggregate_filter` rejected (blocked by `policy.control.aggregate_filter`), `policy.owner_nil_actor.bulk_destroy` wrong, `policy.owner_nil_actor.bulk_update` wrong, `policy.owner_nil_actor.loaded_count` rejected (blocked by `policy.control.loaded_count`), `policy.owner_nil_actor.loaded_sum` rejected (blocked by `policy.control.loaded_sum`) |
+| forbid_if before authorize_if | 🟡 Partial 12/16 · 3 blocked | `policy.forbid.aggregate_filter` rejected (blocked by `policy.control.aggregate_filter`), `policy.forbid.get_error` crashed, `policy.forbid.loaded_count` rejected (blocked by `policy.control.loaded_count`), `policy.forbid.loaded_sum` rejected (blocked by `policy.control.loaded_sum`) |
+| A bypass policy, for an actor it does not let through | 🟡 Partial 12/16 · 3 blocked | `policy.bypass.aggregate_filter` rejected (blocked by `policy.control.aggregate_filter`), `policy.bypass.get_error` crashed, `policy.bypass.loaded_count` rejected (blocked by `policy.control.loaded_count`), `policy.bypass.loaded_sum` rejected (blocked by `policy.control.loaded_sum`) |
+| A bypass policy, for an actor it lets through | 🟡 Partial 10/13 · 3 blocked | `policy.bypass_admin.aggregate_filter` rejected (blocked by `policy.control.aggregate_filter`), `policy.bypass_admin.loaded_count` rejected (blocked by `policy.control.loaded_count`), `policy.bypass_admin.loaded_sum` rejected (blocked by `policy.control.loaded_sum`) |
+| Two policies that must both pass | 🟡 Partial 12/16 · 3 blocked | `policy.all_of.aggregate_filter` rejected (blocked by `policy.control.aggregate_filter`), `policy.all_of.get_error` crashed, `policy.all_of.loaded_count` rejected (blocked by `policy.control.loaded_count`), `policy.all_of.loaded_sum` rejected (blocked by `policy.control.loaded_sum`) |
+| One policy whose checks either pass | 🟡 Partial 12/16 · 3 blocked | `policy.any_of.aggregate_filter` rejected (blocked by `policy.control.aggregate_filter`), `policy.any_of.get_error` crashed, `policy.any_of.loaded_count` rejected (blocked by `policy.control.loaded_count`), `policy.any_of.loaded_sum` rejected (blocked by `policy.control.loaded_sum`) |
+| A policy on a to-one relationship | 🟡 Partial 12/16 · 3 blocked | `policy.related.aggregate_filter` rejected (blocked by `policy.control.aggregate_filter`), `policy.related.get_error` crashed, `policy.related.loaded_count` rejected (blocked by `policy.control.loaded_count`), `policy.related.loaded_sum` rejected (blocked by `policy.control.loaded_sum`) |
+| A policy on a multi-hop exists | 🟡 Partial 12/16 · 3 blocked | `policy.member.aggregate_filter` rejected (blocked by `policy.control.aggregate_filter`), `policy.member.get_error` crashed, `policy.member.loaded_count` rejected (blocked by `policy.control.loaded_count`), `policy.member.loaded_sum` rejected (blocked by `policy.control.loaded_sum`) |
+| A policy composed with can_read | 🟡 Partial 12/16 · 3 blocked | `policy.can_read.aggregate_filter` rejected (blocked by `policy.control.aggregate_filter`), `policy.can_read.get_error` crashed, `policy.can_read.loaded_count` rejected (blocked by `policy.control.loaded_count`), `policy.can_read.loaded_sum` rejected (blocked by `policy.control.loaded_sum`) |
+| A strict policy, for an actor it forbids | 🟡 Partial 11/16 · 3 blocked | `policy.strict.aggregate_filter` rejected (blocked by `policy.control.aggregate_filter`), `policy.strict.bulk_destroy` wrong, `policy.strict.bulk_update` wrong, `policy.strict.loaded_count` rejected (blocked by `policy.control.loaded_count`), `policy.strict.loaded_sum` rejected (blocked by `policy.control.loaded_sum`) |
+| A strict policy, for an actor it allows | 🟡 Partial 10/13 · 3 blocked | `policy.strict_admin.aggregate_filter` rejected (blocked by `policy.control.aggregate_filter`), `policy.strict_admin.loaded_count` rejected (blocked by `policy.control.loaded_count`), `policy.strict_admin.loaded_sum` rejected (blocked by `policy.control.loaded_sum`) |
+| Field policies hide values, in reads, filters and aggregates | 🟡 Partial 2/4 · 1 blocked | `policy.field.field_aggregate` rejected (blocked by `policy.control.field_aggregate`), `policy.field.field_read` wrong |
 | A filter check on create runs after the insert | ❌ Broken 0/2 | `policy.owner.create_other` wrong, `policy.owner.create_own` wrong |
 | Every policy path, without authorization | 🟡 Partial 18/22 | `policy.control.aggregate_filter` rejected, `policy.control.field_aggregate` rejected, `policy.control.loaded_count` rejected, `policy.control.loaded_sum` rejected |
 
@@ -289,3 +290,18 @@ apply, such as getting a hidden record when the actor may read every note.
 | strict_admin | ✅ | – | – | ✅ | ✅ | ✅ | ✅ | ✅ | ◌ | ◌ | ◌ | ✅ | ✅ | ✅ | ✅ | – | – | – | – | – | – | – |
 | field | – | – | – | – | – | – | – | – | – | – | – | – | – | – | – | – | ❌ | ✅ | ✅ | ◌ | – | – |
 | control (no authorization) | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ | ✅ | ✅ |
+
+## Blockers
+
+| Blocker | Its result | Not run | Failing | Only blocker of |
+| --- | --- | ---: | ---: | ---: |
+| `policy.control.aggregate_filter` | rejected | 0 | 12 | 12 |
+| `policy.control.loaded_count` | rejected | 0 | 12 | 12 |
+| `policy.control.loaded_sum` | rejected | 0 | 12 | 12 |
+| `context.relationship_context_control` | wrong | 0 | 2 | 2 |
+| `storage.decimal.ordinary` | lost at read: Decimal.new("2") | 0 | 2 | 2 |
+| `bounds.default_sort_control` | crashed | 0 | 1 | 1 |
+| `context.authorization_bounds_control` | crashed | 0 | 1 | 1 |
+| `filter.nested_parent_control` | crashed | 0 | 1 | 1 |
+| `filter.parent_through_control` | crashed | 0 | 1 | 1 |
+| `policy.control.field_aggregate` | rejected | 0 | 1 | 1 |

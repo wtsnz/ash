@@ -38,7 +38,7 @@ instead.
   opens with the storage grid (which Ash types each can store and read back
   unchanged), then the policy grid (every policy shape on every read and
   write path), then every feature from basic reads up to multitenancy and
-  authorization.
+  authorization, then the blockers to fix first.
 - **[FEATURES.md](FEATURES.md)**: the same features for the reviewed data
   layers, from their recorded contracts, with a gap link for everything that
   is not fully working.
@@ -53,6 +53,14 @@ Statuses are strict about what they claim. "Works" means every scenario ran
 and returned Ash's answer. A scenario that could not run, because the data
 layer could not store its test data, is "unknown", never "broken" or "not
 supported".
+
+A failure is labelled "blocked" when a prerequisite also fails. The
+prerequisite is either a control that runs the same path without the
+feature under test, or the storage of a type the scenario needs.
+`ECOSYSTEM.md` ranks these blockers, so you can see which one fix unblocks
+the most scenarios. For example, AshCsv cannot read a boolean back. That
+stops 247 scenarios from running, and for 189 of them it is the only
+cause.
 
 ## How it decides
 

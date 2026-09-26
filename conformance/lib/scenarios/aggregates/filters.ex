@@ -4,7 +4,7 @@
 
 defmodule Ash.Conformance.Scenarios.Aggregates.Filters do
   @moduledoc false
-  import Ash.Conformance.Scenario, only: [new: 4]
+  import Ash.Conformance.Scenario, only: [new: 4, new: 5]
   import Ash.Conformance.Scenarios.Aggregates.Helpers
   require Ash.Query
   require Ash.Expr
@@ -63,11 +63,18 @@ defmodule Ash.Conformance.Scenarios.Aggregates.Filters do
       # Inside `exists`, `parent` is the child, so `parent(parent(...))` is the
       # aggregate's source. Parent 1 has children rated at least 3; parent 2's
       # only child has no ratings.
-      new("filter.nested_parent", :filters, %{1 => 2, 2 => 0, 3 => 0}, fn ctx ->
-        loaded(ctx, :count, :children,
-          query: Ash.Query.filter(ctx.child, exists(ratings, score >= parent(parent(threshold))))
-        )
-      end),
+      new(
+        "filter.nested_parent",
+        :filters,
+        %{1 => 2, 2 => 0, 3 => 0},
+        fn ctx ->
+          loaded(ctx, :count, :children,
+            query:
+              Ash.Query.filter(ctx.child, exists(ratings, score >= parent(parent(threshold))))
+          )
+        end,
+        requires: ["filter.nested_parent_control"]
+      ),
       new("filter.nested_parent_control", :filters, [1], fn ctx ->
         ctx.parent
         |> Ash.Query.filter(exists(children, exists(ratings, score >= parent(parent(threshold)))))
@@ -102,9 +109,15 @@ defmodule Ash.Conformance.Scenarios.Aggregates.Filters do
           join_filters: %{[:children] => Ash.Expr.expr(value >= parent(threshold))}
         )
       end),
-      new("filter.fanout_count_records", :filters, %{1 => 2, 2 => 0, 3 => 0}, fn ctx ->
-        loaded(ctx, :count, :children, query: Ash.Query.filter(ctx.child, ratings.score > 5))
-      end),
+      new(
+        "filter.fanout_count_records",
+        :filters,
+        %{1 => 2, 2 => 0, 3 => 0},
+        fn ctx ->
+          loaded(ctx, :count, :children, query: Ash.Query.filter(ctx.child, ratings.score > 5))
+        end,
+        requires: ["filter.fanout_read_control"]
+      ),
       new("filter.fanout_read_control", :filters, [11, 12], fn ctx ->
         ctx.child
         |> Ash.Query.filter(ratings.score > 5)
@@ -139,9 +152,11 @@ defmodule Ash.Conformance.Scenarios.Aggregates.Filters do
     ] ++ fanout() ++ fanout_predicates() ++ parent_uses()
   end
 
+  @fanout [requires: ["filter.fanout_read_control"]]
+
   defp fanout do
     for {kind, expected} <- [sum: 4, avg: 3.666667, count: 2, list: [2, 2], custom: 4] do
-      new("filter.fanout_#{kind}", :filters, expected, fn ctx ->
+      run = fn ctx ->
         query = ctx.child |> Ash.Query.filter(ratings.score > 5) |> Ash.Query.sort(value: :asc)
 
         opts =
@@ -156,7 +171,9 @@ defmodule Ash.Conformance.Scenarios.Aggregates.Filters do
           Keyword.put(opts, :query, query)
         )
         |> Map.fetch!(1)
-      end)
+      end
+
+      new("filter.fanout_#{kind}", :filters, expected, run, @fanout)
     end
   end
 
@@ -165,23 +182,41 @@ defmodule Ash.Conformance.Scenarios.Aggregates.Filters do
   # to-many reference matches a child with a rating that fails the predicate.
   defp fanout_predicates do
     [
-      new("filter.fanout_and", :filters, %{1 => 4, 2 => nil, 3 => nil}, fn ctx ->
-        loaded(ctx, :sum, :children,
-          field: :value,
-          query: Ash.Query.filter(ctx.child, ratings.score > 5 and value == 2)
-        )
-      end),
-      new("filter.fanout_or", :filters, %{1 => 11, 2 => nil, 3 => nil}, fn ctx ->
-        loaded(ctx, :sum, :children,
-          field: :value,
-          query: Ash.Query.filter(ctx.child, ratings.score > 5 or value == 7)
-        )
-      end),
-      new("filter.fanout_not_count", :filters, %{1 => 1, 2 => 0, 3 => 0}, fn ctx ->
-        loaded(ctx, :count, :children,
-          query: Ash.Query.filter(ctx.child, not (ratings.score > 5))
-        )
-      end),
+      new(
+        "filter.fanout_and",
+        :filters,
+        %{1 => 4, 2 => nil, 3 => nil},
+        fn ctx ->
+          loaded(ctx, :sum, :children,
+            field: :value,
+            query: Ash.Query.filter(ctx.child, ratings.score > 5 and value == 2)
+          )
+        end,
+        requires: ["filter.fanout_read_control"]
+      ),
+      new(
+        "filter.fanout_or",
+        :filters,
+        %{1 => 11, 2 => nil, 3 => nil},
+        fn ctx ->
+          loaded(ctx, :sum, :children,
+            field: :value,
+            query: Ash.Query.filter(ctx.child, ratings.score > 5 or value == 7)
+          )
+        end,
+        requires: ["filter.fanout_read_control"]
+      ),
+      new(
+        "filter.fanout_not_count",
+        :filters,
+        %{1 => 1, 2 => 0, 3 => 0},
+        fn ctx ->
+          loaded(ctx, :count, :children,
+            query: Ash.Query.filter(ctx.child, not (ratings.score > 5))
+          )
+        end,
+        requires: ["filter.fanout_read_control"]
+      ),
       new("filter.fanout_nil_count", :filters, %{1 => 1, 2 => 1, 3 => 0}, fn ctx ->
         loaded(ctx, :count, :children, query: Ash.Query.filter(ctx.child, is_nil(ratings.score)))
       end)
@@ -192,9 +227,15 @@ defmodule Ash.Conformance.Scenarios.Aggregates.Filters do
   # `above_threshold` keeps children whose value reaches the parent's threshold.
   defp parent_uses do
     [
-      new("filter.parent_through", :filters, %{1 => 3, 2 => nil, 3 => nil}, fn ctx ->
-        loaded(ctx, :sum, :same_tenant_tags, field: :value)
-      end),
+      new(
+        "filter.parent_through",
+        :filters,
+        %{1 => 3, 2 => nil, 3 => nil},
+        fn ctx ->
+          loaded(ctx, :sum, :same_tenant_tags, field: :value)
+        end,
+        requires: ["filter.parent_through_control"]
+      ),
       new(
         "filter.parent_through_control",
         :filters,

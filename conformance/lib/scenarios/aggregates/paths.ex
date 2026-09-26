@@ -4,7 +4,7 @@
 
 defmodule Ash.Conformance.Scenarios.Aggregates.Paths do
   @moduledoc false
-  import Ash.Conformance.Scenario, only: [new: 4]
+  import Ash.Conformance.Scenario, only: [new: 4, new: 5]
   import Ash.Conformance.Scenarios.Aggregates.Helpers
   require Ash.Query
 
@@ -100,9 +100,15 @@ defmodule Ash.Conformance.Scenarios.Aggregates.Paths do
       new("path.unrelated", :relationships, %{1 => 5, 2 => 5, 3 => 5}, fn ctx ->
         loaded(ctx, :count, ctx.child)
       end),
-      new("path.no_attributes", :relationships, %{1 => 5, 2 => 5, 3 => 5}, fn ctx ->
-        loaded(ctx, :count, :all_children)
-      end),
+      new(
+        "path.no_attributes",
+        :relationships,
+        %{1 => 5, 2 => 5, 3 => 5},
+        fn ctx ->
+          loaded(ctx, :count, :all_children)
+        end,
+        requires: ["path.no_attributes_control"]
+      ),
       new(
         "path.no_attributes_control",
         :relationships,

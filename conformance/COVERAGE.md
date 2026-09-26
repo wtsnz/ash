@@ -59,7 +59,7 @@ Claims never decide what runs.
 | --- | --- | --- | ---: |
 | `types.scalar` | Strings, integers, booleans, atoms and nil round-trip | implemented | 3 |
 | `types.numeric` | Large integers, floats and decimals round-trip | implemented | 2 |
-| `types.temporal` | Dates, microsecond datetimes and times round-trip | implemented | 1 |
+| `types.temporal` | Dates, microsecond datetimes and times round-trip | implemented | 2 |
 | `types.uuid` | UUIDs round-trip | implemented | 1 |
 | `types.array` | Arrays round-trip, keeping order and duplicates | implemented | 1 |
 | `types.map` | Maps round-trip, including nested values | implemented | 1 |
@@ -195,4 +195,4 @@ obligation. Fallback evidence comes from instrumented core dispatch tests and
 from scenarios that name a fallback. Other adapter scenarios report
 `unobserved`.
 
-581 executable scenarios are registered. See [MATRIX.md](MATRIX.md) for individual contracts.
+582 executable scenarios are registered. See [MATRIX.md](MATRIX.md) for individual contracts.

@@ -17,52 +17,66 @@ defmodule Ash.Conformance.Survey do
     ran. Its status is `unknown`: it says nothing about the feature;
   - `open question`: the scenario awaits a semantic decision.
 
+  Each row also gets `blocked_by`: the failing prerequisites that may explain
+  a result that is not working (`Ash.Conformance.Blockers`).
+
   A rejection is recognised only from Ash's error classes and wording, so it
   can misclassify. Review each result before recording expectations.
   """
-  alias Ash.Conformance.{Catalog, Report, Report.FeatureReport, Runner}
+  alias Ash.Conformance.{Blockers, Catalog, Report, Report.FeatureReport, Runner}
 
   @rejection ~r/does not support|not supported|unsupported|cannot be done|Cannot set/i
 
   def run(adapter) do
     adapter.setup!()
+    scenarios = Enum.filter(Catalog.for_adapter(adapter), &adapter.fixture?(&1.fixture))
 
-    for scenario <- Catalog.for_adapter(adapter), adapter.fixture?(scenario.fixture) do
-      {outcome, {classification, status}, setup} =
-        try do
-          outcome = Runner.observe_both_orders(scenario, adapter)
-          {outcome, classify(scenario, outcome), nil}
-        rescue
-          # The operation's own errors are captured; this is fixture setup.
-          exception ->
-            {{:error, exception.__struct__, "Setup failed: " <> Exception.message(exception)},
-             {:setup_failed, :unknown}, setup_failure(exception)}
-        end
+    scenarios
+    |> Enum.map(&observe(&1, adapter))
+    |> Blockers.label(Map.new(scenarios, &{&1.id, &1.requires}))
+  end
 
-      %{
-        scenario: scenario.id,
-        adapter: adapter.id(),
-        status: status,
-        classification: classification,
-        task: nil,
-        execution: :matched,
-        expected: Report.value(scenario.expected),
-        actual: Report.outcome(outcome),
-        setup: setup,
-        detail: if(scenario.detail && !setup, do: scenario.detail.(adapter, outcome))
-      }
-    end
+  defp observe(scenario, adapter) do
+    {outcome, {classification, status}, setup} =
+      try do
+        outcome = Runner.observe_both_orders(scenario, adapter)
+        {outcome, classify(scenario, outcome), nil}
+      rescue
+        # The operation's own errors are captured; this is fixture setup.
+        exception ->
+          {{:error, exception.__struct__, "Setup failed: " <> Exception.message(exception)},
+           {:setup_failed, :unknown}, setup_failure(exception)}
+      end
+
+    %{
+      scenario: scenario.id,
+      adapter: adapter.id(),
+      status: status,
+      classification: classification,
+      task: nil,
+      execution: :matched,
+      expected: Report.value(scenario.expected),
+      actual: Report.outcome(outcome),
+      setup: setup,
+      detail: if(scenario.detail && !setup, do: scenario.detail.(adapter, outcome))
+    }
   end
 
   # What could not be stored, for grouping setup failures by cause.
   defp setup_failure(%Ash.Conformance.Fixtures.SetupError{} = error),
-    do: %{role: to_string(error.role), row: to_string(error.row), reason: error.reason}
+    do: %{
+      role: to_string(error.role),
+      row: to_string(error.row),
+      reason: error.reason,
+      cells: error.cells
+    }
 
   defp setup_failure(exception),
     do: %{
       role: nil,
       row: nil,
-      reason: exception |> Exception.message() |> String.split("\n") |> hd()
+      reason: exception |> Exception.message() |> String.split("\n") |> hd(),
+      cells: []
     }
 
   def classify(%{expected: :unresolved}, _outcome), do: {:open_question, :unresolved}
@@ -107,11 +121,13 @@ defmodule Ash.Conformance.Survey do
     counts
   end
 
-  @doc "An adapter's survey report: its features, then its storage grid."
+  @doc "An adapter's survey report: its features, storage grid, policy grid and blockers."
   def markdown(adapter, rows) do
     FeatureReport.markdown(rows, [adapter], :unreviewed) <>
       "\n" <>
       Ash.Conformance.Report.StorageGrid.detail(rows) <>
-      "\n" <> Ash.Conformance.Report.PolicyGrid.detail(rows)
+      "\n" <>
+      Ash.Conformance.Report.PolicyGrid.detail(rows) <>
+      "\n## Blockers\n\n" <> Blockers.markdown(rows)
   end
 end

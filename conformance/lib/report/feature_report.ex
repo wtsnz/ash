@@ -53,6 +53,8 @@ defmodule Ash.Conformance.Report.FeatureReport do
       passing: Enum.count(statuses, &(&1 == :supported)),
       total: Enum.count(statuses, &(&1 != :unknown)),
       unknown: Enum.count(statuses, &(&1 == :unknown)),
+      # Failures that ran, with a failing prerequisite (surveys only).
+      blocked: Enum.count(rows, &(&1.status not in [:supported, :unknown] and blocked?(&1))),
       gaps:
         rows
         |> Enum.map(& &1.task)
@@ -63,9 +65,11 @@ defmodule Ash.Conformance.Report.FeatureReport do
       failing:
         rows
         |> Enum.filter(&(&1.status != :supported and Map.has_key?(&1, :classification)))
-        |> Enum.map(&{&1.scenario, &1.classification})
+        |> Enum.map(&{&1.scenario, &1.classification, Map.get(&1, :blocked_by, [])})
     }
   end
+
+  defp blocked?(row), do: Map.get(row, :blocked_by, []) != []
 
   @doc "Whether an adapter's claims for a feature agree with its result."
   # Nothing ran, or it awaits a decision, so there is nothing to compare; the
@@ -120,8 +124,9 @@ defmodule Ash.Conformance.Report.FeatureReport do
     #{legend()}
 
     Counts are passing scenarios out of those that ran, then how many could
-    not run. Gap links explain everything that is not fully working, and who
-    owns the fix.
+    not run, then how many failures have a failing prerequisite (blocked).
+    Gap links explain everything that is not fully working, and who owns the
+    fix.
 
     #{sections}
     #{claims_section(adapters, summaries)}
@@ -211,8 +216,13 @@ defmodule Ash.Conformance.Report.FeatureReport do
   defp detail_cell(:failing, ids, feature, summaries) do
     ids
     |> Enum.flat_map(&Map.fetch!(summaries, {feature.id, &1}).failing)
-    |> Enum.map_join(", ", fn {scenario, classification} ->
-      "`#{scenario}` #{String.replace(to_string(classification), "_", " ")}"
+    |> Enum.map_join(", ", fn {scenario, classification, blocked_by} ->
+      text = "`#{scenario}` #{String.replace(to_string(classification), "_", " ")}"
+
+      case blocked_by do
+        [] -> text
+        blockers -> "#{text} (blocked by #{Enum.map_join(blockers, ", ", &"`#{&1}`")})"
+      end
     end)
   end
 
@@ -234,7 +244,10 @@ defmodule Ash.Conformance.Report.FeatureReport do
     do:
       "Generated from an unreviewed run: each result was classified automatically against the intended answer. Nothing here has been reviewed."
 
-  @doc "A feature's cell: its status, passing out of run, and how many could not run."
+  @doc """
+  A feature's cell: its status, passing out of run, how many could not run,
+  and how many failures have a failing prerequisite.
+  """
   def cell(%{status: status} = summary) when status in [:untested, :not_applicable],
     do: label(summary.status)
 
@@ -242,11 +255,19 @@ defmodule Ash.Conformance.Report.FeatureReport do
     do: "#{label(:unknown)} #{Map.get(summary, :unknown, 0)} not run"
 
   def cell(summary) do
-    base = "#{label(summary.status)} #{summary.passing}/#{summary.total}"
+    [
+      "#{label(summary.status)} #{summary.passing}/#{summary.total}",
+      count(summary, :unknown, "not run"),
+      count(summary, :blocked, "blocked")
+    ]
+    |> Enum.reject(&is_nil/1)
+    |> Enum.join(" · ")
+  end
 
-    case Map.get(summary, :unknown, 0) do
-      0 -> base
-      unknown -> "#{base} · #{unknown} not run"
+  defp count(summary, key, text) do
+    case Map.get(summary, key, 0) do
+      0 -> nil
+      n -> "#{n} #{text}"
     end
   end
 

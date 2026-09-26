@@ -4,7 +4,7 @@
 
 Generated from an unreviewed run: each result was classified automatically against the intended answer. Nothing here has been reviewed.
 
-Feature catalog version 1: 118 features and 581 scenarios.
+Feature catalog version 1: 118 features and 582 scenarios.
 
 | Status | Meaning |
 | --- | --- |
@@ -20,8 +20,9 @@ Feature catalog version 1: 118 features and 581 scenarios.
 | ⚠️ Changed | A result no longer matches its recorded contract. |
 
 Counts are passing scenarios out of those that ran, then how many could
-not run. Gap links explain everything that is not fully working, and who
-owns the fix.
+not run, then how many failures have a failing prerequisite (blocked).
+Gap links explain everything that is not fully working, and who owns the
+fix.
 
 ## 1. Storage
 
@@ -70,7 +71,7 @@ owns the fix.
 | --- | --- | --- |
 | Strings, integers, booleans, atoms and nil round-trip | ✅ Works 3/3 |  |
 | Large integers, floats and decimals round-trip | ✅ Works 2/2 |  |
-| Dates, microsecond datetimes and times round-trip | ✅ Works 1/1 |  |
+| Dates, microsecond datetimes and times round-trip | ✅ Works 2/2 |  |
 | UUIDs round-trip | ✅ Works 1/1 |  |
 | Arrays round-trip, keeping order and duplicates | ✅ Works 1/1 |  |
 | Maps round-trip, including nested values | ✅ Works 1/1 |  |
@@ -127,14 +128,14 @@ owns the fix.
 | Filter the records an aggregate uses | 🟡 Partial 5/6 | `filter.join` wrong |
 | Aggregate filters through to-many relationships count each record once | 🟡 Partial 10/11 | `filter.fanout_custom` rejected |
 | Aggregate filters that use other aggregates | ✅ Works 5/5 |  |
-| Aggregate filters that reference the parent record | 🟡 Partial 4/8 | `filter.nested_parent` wrong, `filter.parent` wrong, `filter.parent_join` wrong, `filter.parent_through` wrong |
+| Aggregate filters that reference the parent record | 🟡 Partial 4/8 · 2 blocked | `filter.nested_parent` wrong (blocked by `filter.nested_parent_control`), `filter.parent` wrong, `filter.parent_join` wrong, `filter.parent_through` wrong (blocked by `filter.parent_through_control`) |
 | Aggregate over to-one, multi-hop and many-to-many paths | 🟡 Partial 14/17 | `path.final_many_to_many_custom` rejected, `path.repeated_many_to_many` open question, `path.root_relationship` wrong |
 | Aggregate over manual and attribute-free relationships | ✅ Works 3/3 |  |
 | Aggregate over limited, offset and from-many relationships | 🟡 Partial 6/9 | `bounds.filter_after_limit` wrong, `bounds.list_filter_after_limit` wrong, `bounds.many_to_many_query_limit` open question |
 | Root aggregates over sorted, limited and offset queries | 🟡 Partial 6/7 | `bounds.root_custom_limit` rejected |
 | Distinct counts over composite and missing keys | 🟡 Partial 1/5 | `identity.composite_count` wrong, `identity.keyless_count` wrong, `identity.keyless_distinct` open question, `identity.root_composite_count` wrong |
 | Filter, sort, paginate and calculate with aggregates | ✅ Works 10/10 |  |
-| Aggregates respect read actions, arguments, actor and context | 🟡 Partial 8/9 | `context.relationship_context` wrong |
+| Aggregates respect read actions, arguments, actor and context | 🟡 Partial 8/9 · 1 blocked | `context.relationship_context` wrong (blocked by `context.relationship_context_control`) |
 | Seeded filtered aggregates match an in-memory reference | ✅ Works 1/1 |  |
 
 ## 7. Writes
@@ -279,3 +280,11 @@ apply, such as getting a hidden record when the actor may read every note.
 | strict_admin | ✅ | – | – | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | – | – | – | – | – | – | – |
 | field | – | – | – | – | – | – | – | – | – | – | – | – | – | – | – | – | ✅ | ✅ | ✅ | ✅ | – | – |
 | control (no authorization) | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+
+## Blockers
+
+| Blocker | Its result | Not run | Failing | Only blocker of |
+| --- | --- | ---: | ---: | ---: |
+| `context.relationship_context_control` | wrong | 0 | 1 | 1 |
+| `filter.nested_parent_control` | wrong | 0 | 1 | 1 |
+| `filter.parent_through_control` | wrong | 0 | 1 | 1 |

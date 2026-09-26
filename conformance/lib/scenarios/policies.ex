@@ -19,14 +19,16 @@ defmodule Ash.Conformance.Scenarios.Policies do
         path <- Policy.paths(),
         Policy.applies?(shape, actor, path) do
       run = fn ctx -> Policy.run(ctx.adapter, shape, actor, path, true) end
-      new("policy.#{case_id}.#{path}", :policies, Policy.expected(shape, actor, path), run, @opts)
+      expected = Policy.expected(shape, actor, path)
+      new("policy.#{case_id}.#{path}", :policies, expected, run, opts(path))
     end
   end
 
   defp fields do
     for path <- Policy.field_paths() do
       run = fn ctx -> Policy.run(ctx.adapter, :field, :user, path, true) end
-      new("policy.field.#{path}", :policies, Policy.expected_field(path, :authorized), run, @opts)
+      expected = Policy.expected_field(path, :authorized)
+      new("policy.field.#{path}", :policies, expected, run, opts(path))
     end
   end
 
@@ -34,9 +36,12 @@ defmodule Ash.Conformance.Scenarios.Policies do
     for path <- Policy.create_paths() do
       run = fn ctx -> Policy.run(ctx.adapter, :owner, :user, path, true) end
       expected = Policy.expected_create(path, :authorized)
-      new("policy.owner.#{path}", :policies, expected, run, @opts)
+      new("policy.owner.#{path}", :policies, expected, run, opts(path))
     end
   end
+
+  # Each policy cell requires its path's control.
+  defp opts(path), do: [requires: ["policy.control.#{path}"]] ++ @opts
 
   # The same operations with authorization off: a policy cell is only
   # meaningful where its path works at all.

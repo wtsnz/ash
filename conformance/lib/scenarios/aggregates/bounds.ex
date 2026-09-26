@@ -4,7 +4,7 @@
 
 defmodule Ash.Conformance.Scenarios.Aggregates.Bounds do
   @moduledoc false
-  import Ash.Conformance.Scenario, only: [new: 4]
+  import Ash.Conformance.Scenario, only: [new: 4, new: 5]
   import Ash.Conformance.Scenarios.Aggregates.Helpers
 
   def all do
@@ -33,9 +33,15 @@ defmodule Ash.Conformance.Scenarios.Aggregates.Bounds do
       new("bounds.from_many", :bounds, %{1 => 1, 2 => 1, 3 => 0}, fn ctx ->
         loaded(ctx, :count, :top_child)
       end),
-      new("bounds.default_sort", :bounds, %{1 => 7, 2 => 4, 3 => nil}, fn ctx ->
-        loaded(ctx, :first, :default_top_child, field: :value)
-      end),
+      new(
+        "bounds.default_sort",
+        :bounds,
+        %{1 => 7, 2 => 4, 3 => nil},
+        fn ctx ->
+          loaded(ctx, :first, :default_top_child, field: :value)
+        end,
+        requires: ["bounds.default_sort_control"]
+      ),
       new("bounds.default_sort_control", :bounds, %{1 => [13], 2 => [21], 3 => []}, fn ctx ->
         relationship_ids(ctx, :default_top_child)
       end),

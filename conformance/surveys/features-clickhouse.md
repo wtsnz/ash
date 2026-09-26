@@ -4,7 +4,7 @@
 
 Generated from an unreviewed run: each result was classified automatically against the intended answer. Nothing here has been reviewed.
 
-Feature catalog version 1: 118 features and 581 scenarios.
+Feature catalog version 1: 118 features and 582 scenarios.
 
 | Status | Meaning |
 | --- | --- |
@@ -20,8 +20,9 @@ Feature catalog version 1: 118 features and 581 scenarios.
 | ⚠️ Changed | A result no longer matches its recorded contract. |
 
 Counts are passing scenarios out of those that ran, then how many could
-not run. Gap links explain everything that is not fully working, and who
-owns the fix.
+not run, then how many failures have a failing prerequisite (blocked).
+Gap links explain everything that is not fully working, and who owns the
+fix.
 
 ## 1. Storage
 
@@ -70,7 +71,7 @@ owns the fix.
 | --- | --- | --- |
 | Strings, integers, booleans, atoms and nil round-trip | ❔ Unknown 3 not run | `record.types_nil` setup failed, `record.types_scalar` setup failed, `record.types_strings` setup failed |
 | Large integers, floats and decimals round-trip | ❌ Broken 0/1 · 1 not run | `record.types_numeric` setup failed, `values.decimal_read_control` wrong |
-| Dates, microsecond datetimes and times round-trip | ❔ Unknown 1 not run | `record.types_temporal` setup failed |
+| Dates, microsecond datetimes and times round-trip | ❌ Broken 0/1 · 1 not run · 1 blocked | `record.types_temporal` setup failed, `values.temporal_read_control` wrong (blocked by `storage.date.ordinary`, `storage.utc_datetime_usec.ordinary`) |
 | UUIDs round-trip | ❔ Unknown 1 not run | `record.types_uuid` setup failed |
 | Arrays round-trip, keeping order and duplicates | ❔ Unknown 1 not run | `record.types_array` setup failed |
 | Maps round-trip, including nested values | ❔ Unknown 1 not run | `record.types_map` setup failed |
@@ -121,20 +122,20 @@ owns the fix.
 | Load each aggregate kind on records | 🟡 Partial 4/9 | `loaded.avg` wrong, `loaded.custom` rejected, `loaded.exists` rejected, `loaded.first` rejected, `loaded.list` rejected |
 | Run each aggregate kind over a whole query | 🟡 Partial 5/15 | `root.custom` rejected, `root.custom_empty` rejected, `root.exists` rejected, `root.first` rejected, `root.list` rejected, `root.list_default_empty` rejected, `root.list_empty` rejected, `root.list_unsorted` rejected, `root.unsorted_first_empty` rejected, `values.root_empty` rejected |
 | Defaults, nils, uniqueness and field counts | 🟡 Partial 4/12 | `values.distinct_count` wrong, `values.distinct_list` rejected, `values.filtered_first_default` rejected, `values.include_nil_first` rejected, `values.include_nil_list` rejected, `values.list_default` rejected, `values.list_unsorted` rejected, `values.same_name_distinct_definitions` wrong |
-| Aggregate decimals, dates, times and constrained types | 🟡 Partial 4/15 | `root.decimal_sum` wrong, `values.constrained_scalar` wrong, `values.date_list` rejected, `values.date_list_desc` rejected, `values.date_max` wrong, `values.date_min` wrong, `values.datetime_first` rejected, `values.decimal_avg` wrong, `values.decimal_max` wrong, `values.decimal_sum` wrong, `values.string_constraints` rejected |
+| Aggregate decimals, dates, times and constrained types | 🟡 Partial 4/15 · 9 blocked | `root.decimal_sum` wrong (blocked by `values.decimal_read_control`), `values.constrained_scalar` wrong, `values.date_list` rejected (blocked by `storage.date.ordinary`, `storage.utc_datetime_usec.ordinary`), `values.date_list_desc` rejected (blocked by `storage.date.ordinary`, `storage.utc_datetime_usec.ordinary`), `values.date_max` wrong (blocked by `storage.date.ordinary`, `storage.utc_datetime_usec.ordinary`), `values.date_min` wrong (blocked by `storage.date.ordinary`, `storage.utc_datetime_usec.ordinary`), `values.datetime_first` rejected (blocked by `storage.date.ordinary`, `storage.utc_datetime_usec.ordinary`), `values.decimal_avg` wrong (blocked by `values.decimal_read_control`), `values.decimal_max` wrong (blocked by `values.decimal_read_control`), `values.decimal_sum` wrong (blocked by `values.decimal_read_control`), `values.string_constraints` rejected |
 | Order first and list aggregates, including nils and ties | ⛔ Not supported 0/9 | `ordering.asc_nils_first` rejected, `ordering.asc_nils_last` rejected, `ordering.desc_nils_first` rejected, `ordering.desc_nils_last` rejected, `ordering.expression_first` rejected, `ordering.expression_list` rejected, `ordering.list_desc` rejected, `ordering.ties` rejected, `ordering.unique_other_field` open question |
 | Aggregate calculations and other aggregates | ❌ Broken 0/3 | `field.aggregate` crashed, `field.calculation` crashed, `field.root_aggregate` crashed |
 | Filter the records an aggregate uses | ❌ Broken 0/6 | `filter.exists` wrong, `filter.join` wrong, `filter.not_exists` wrong, `filter.or_exists` wrong, `filter.ordinary` wrong, `filter.sibling_independence` wrong |
-| Aggregate filters through to-many relationships count each record once | ❌ Broken 0/11 | `filter.fanout_and` crashed, `filter.fanout_avg` crashed, `filter.fanout_count` crashed, `filter.fanout_count_records` crashed, `filter.fanout_custom` rejected, `filter.fanout_list` rejected, `filter.fanout_nil_count` crashed, `filter.fanout_not_count` crashed, `filter.fanout_or` crashed, `filter.fanout_sum` crashed, `identity.composite_fanout_count` crashed |
+| Aggregate filters through to-many relationships count each record once | ❌ Broken 0/11 · 9 blocked | `filter.fanout_and` crashed (blocked by `filter.fanout_read_control`), `filter.fanout_avg` crashed (blocked by `filter.fanout_read_control`), `filter.fanout_count` crashed (blocked by `filter.fanout_read_control`), `filter.fanout_count_records` crashed (blocked by `filter.fanout_read_control`), `filter.fanout_custom` rejected (blocked by `filter.fanout_read_control`), `filter.fanout_list` rejected (blocked by `filter.fanout_read_control`), `filter.fanout_nil_count` crashed, `filter.fanout_not_count` crashed (blocked by `filter.fanout_read_control`), `filter.fanout_or` crashed (blocked by `filter.fanout_read_control`), `filter.fanout_sum` crashed (blocked by `filter.fanout_read_control`), `identity.composite_fanout_count` crashed |
 | Aggregate filters that use other aggregates | ❌ Broken 0/5 | `filter.aggregate_dependency` wrong, `filter.aggregate_dependency_calculation` wrong, `filter.aggregate_dependency_filtered` wrong, `filter.aggregate_dependency_many_to_many` wrong, `filter.aggregate_dependency_to_one` crashed |
-| Aggregate filters that reference the parent record | ❌ Broken 0/8 | `filter.nested_parent` wrong, `filter.parent` wrong, `filter.parent_join` wrong, `filter.parent_relationship` wrong, `filter.parent_through` wrong, `filter.parent_unrelated` rejected, `use.parent_filter` crashed, `use.parent_sort` crashed |
+| Aggregate filters that reference the parent record | ❌ Broken 0/8 · 2 blocked | `filter.nested_parent` wrong (blocked by `filter.nested_parent_control`), `filter.parent` wrong, `filter.parent_join` wrong, `filter.parent_relationship` wrong, `filter.parent_through` wrong (blocked by `filter.parent_through_control`), `filter.parent_unrelated` rejected, `use.parent_filter` crashed, `use.parent_sort` crashed |
 | Aggregate over to-one, multi-hop and many-to-many paths | ❌ Broken 0/17 | `path.final_many_to_many_custom` rejected, `path.final_many_to_many_first` rejected, `path.final_many_to_many_list` rejected, `path.final_many_to_many_scalar` wrong, `path.intermediate_many_to_many` wrong, `path.many_to_many` wrong, `path.many_to_many_first` rejected, `path.many_to_many_list` rejected, `path.multi_hop` wrong, `path.repeated_many_to_many` open question, `path.root_relationship` crashed, `path.through_count` crashed, `path.to_one` crashed, `path.to_one_to_many_first` rejected, `path.to_one_to_many_list` rejected, `path.to_one_to_many_sum` wrong, `path.unrelated` rejected |
 | Aggregate over manual and attribute-free relationships | 🟡 Partial 1/3 | `path.no_attributes` wrong, `path.no_attributes_parent` wrong |
 | Aggregate over limited, offset and from-many relationships | ❌ Broken 0/9 | `bounds.default_sort` rejected, `bounds.filter_after_limit` wrong, `bounds.from_many` wrong, `bounds.list_filter_after_limit` rejected, `bounds.many_to_many_query_limit` open question, `bounds.relationship_limit` wrong, `bounds.relationship_offset` wrong, `bounds.relationship_offset_only` wrong, `bounds.unsorted_limit` wrong |
 | Root aggregates over sorted, limited and offset queries | ❌ Broken 0/7 | `bounds.root_custom_limit` rejected, `bounds.root_first_distinct_sort` rejected, `bounds.root_limit` wrong, `bounds.root_list_limit` rejected, `bounds.root_offset_only` wrong, `bounds.root_order_then_limit` wrong, `bounds.root_zero` rejected |
 | Distinct counts over composite and missing keys | 🟡 Partial 3/5 | `identity.keyless_distinct` open question, `identity.keyless_source` crashed |
 | Filter, sort, paginate and calculate with aggregates | ❌ Broken 0/10 | `use.calculation` crashed, `use.filter` crashed, `use.keyset_pagination` crashed, `use.nested_limited_load` wrong, `use.pagination` crashed, `use.related_exists` crashed, `use.related_filter` crashed, `use.sort` crashed, `use.to_one_filter` crashed, `use.to_one_sort` crashed |
-| Aggregates respect read actions, arguments, actor and context | ❌ Broken 0/9 | `context.actor` wrong, `context.arguments` wrong, `context.intermediate_action` wrong, `context.intermediate_actor` wrong, `context.prepared_query_arguments` wrong, `context.read_action` wrong, `context.relationship_context` wrong, `context.shared` wrong, `context.through_arguments` wrong |
+| Aggregates respect read actions, arguments, actor and context | ❌ Broken 0/9 · 2 blocked | `context.actor` wrong, `context.arguments` wrong, `context.intermediate_action` wrong, `context.intermediate_actor` wrong, `context.prepared_query_arguments` wrong, `context.read_action` wrong, `context.relationship_context` wrong (blocked by `context.relationship_context_control`), `context.shared` wrong (blocked by `context.relationship_context_control`), `context.through_arguments` wrong |
 | Seeded filtered aggregates match an in-memory reference | ⛔ Not supported 0/1 | `generated.filtered_aggregates` rejected |
 
 ## 7. Writes
@@ -179,19 +180,19 @@ owns the fix.
 
 | Feature | clickhouse | Not working |
 | --- | --- | --- |
-| A filter policy on the actor | 🟡 Partial 10/16 | `policy.owner.aggregate_filter` crashed, `policy.owner.bulk_update` wrong, `policy.owner.exists_filter_input` crashed, `policy.owner.get_error` crashed, `policy.owner.loaded_count` wrong, `policy.owner.loaded_sum` wrong |
-| The same policy with no actor | 🟡 Partial 11/16 | `policy.owner_nil_actor.aggregate_filter` crashed, `policy.owner_nil_actor.bulk_destroy` wrong, `policy.owner_nil_actor.exists_filter_input` crashed, `policy.owner_nil_actor.loaded_count` wrong, `policy.owner_nil_actor.loaded_sum` wrong |
-| forbid_if before authorize_if | 🟡 Partial 10/16 | `policy.forbid.aggregate_filter` crashed, `policy.forbid.bulk_update` wrong, `policy.forbid.exists_filter_input` crashed, `policy.forbid.get_error` crashed, `policy.forbid.loaded_count` wrong, `policy.forbid.loaded_sum` wrong |
-| A bypass policy, for an actor it does not let through | 🟡 Partial 10/16 | `policy.bypass.aggregate_filter` crashed, `policy.bypass.bulk_update` wrong, `policy.bypass.exists_filter_input` crashed, `policy.bypass.get_error` crashed, `policy.bypass.loaded_count` wrong, `policy.bypass.loaded_sum` wrong |
-| A bypass policy, for an actor it lets through | 🟡 Partial 8/13 | `policy.bypass_admin.aggregate_filter` crashed, `policy.bypass_admin.bulk_update` wrong, `policy.bypass_admin.exists_filter_input` crashed, `policy.bypass_admin.loaded_count` wrong, `policy.bypass_admin.loaded_sum` wrong |
-| Two policies that must both pass | 🟡 Partial 10/16 | `policy.all_of.aggregate_filter` crashed, `policy.all_of.bulk_update` wrong, `policy.all_of.exists_filter_input` crashed, `policy.all_of.get_error` crashed, `policy.all_of.loaded_count` wrong, `policy.all_of.loaded_sum` wrong |
-| One policy whose checks either pass | 🟡 Partial 10/16 | `policy.any_of.aggregate_filter` crashed, `policy.any_of.bulk_update` wrong, `policy.any_of.exists_filter_input` crashed, `policy.any_of.get_error` crashed, `policy.any_of.loaded_count` wrong, `policy.any_of.loaded_sum` wrong |
-| A policy on a to-one relationship | 🟡 Partial 1/16 | `policy.related.aggregate_filter` crashed, `policy.related.bulk_destroy` crashed, `policy.related.bulk_update` wrong, `policy.related.count` crashed, `policy.related.exists_filter_input` crashed, `policy.related.get_error` crashed, `policy.related.get_hidden` crashed, `policy.related.keyset_pages` crashed, `policy.related.load` crashed, `policy.related.loaded_count` crashed, `policy.related.loaded_sum` crashed, `policy.related.offset_page` crashed, `policy.related.read` crashed, `policy.related.sum` crashed, `policy.related.update_hidden` crashed |
-| A policy on a multi-hop exists | 🟡 Partial 6/16 | `policy.member.aggregate_filter` crashed, `policy.member.bulk_destroy` crashed, `policy.member.bulk_update` crashed, `policy.member.count` crashed, `policy.member.exists_filter_input` crashed, `policy.member.get_error` crashed, `policy.member.loaded_count` wrong, `policy.member.loaded_sum` wrong, `policy.member.sum` crashed, `policy.member.update_hidden` crashed |
-| A policy composed with can_read | 🟡 Partial 6/16 | `policy.can_read.aggregate_filter` crashed, `policy.can_read.bulk_destroy` crashed, `policy.can_read.bulk_update` crashed, `policy.can_read.count` crashed, `policy.can_read.exists_filter_input` crashed, `policy.can_read.get_error` crashed, `policy.can_read.loaded_count` wrong, `policy.can_read.loaded_sum` wrong, `policy.can_read.sum` crashed, `policy.can_read.update_hidden` crashed |
-| A strict policy, for an actor it forbids | 🟡 Partial 11/16 | `policy.strict.aggregate_filter` crashed, `policy.strict.bulk_destroy` wrong, `policy.strict.exists_filter_input` crashed, `policy.strict.loaded_count` wrong, `policy.strict.loaded_sum` wrong |
-| A strict policy, for an actor it allows | 🟡 Partial 8/13 | `policy.strict_admin.aggregate_filter` crashed, `policy.strict_admin.bulk_update` wrong, `policy.strict_admin.exists_filter_input` crashed, `policy.strict_admin.loaded_count` wrong, `policy.strict_admin.loaded_sum` wrong |
-| Field policies hide values, in reads, filters and aggregates | ❌ Broken 0/4 | `policy.field.field_aggregate` wrong, `policy.field.field_filter` crashed, `policy.field.field_filter_input` crashed, `policy.field.field_read` crashed |
+| A filter policy on the actor | 🟡 Partial 10/16 · 5 blocked | `policy.owner.aggregate_filter` crashed (blocked by `policy.control.aggregate_filter`), `policy.owner.bulk_update` wrong (blocked by `policy.control.bulk_update`), `policy.owner.exists_filter_input` crashed (blocked by `policy.control.exists_filter_input`), `policy.owner.get_error` crashed, `policy.owner.loaded_count` wrong (blocked by `policy.control.loaded_count`), `policy.owner.loaded_sum` wrong (blocked by `policy.control.loaded_sum`) |
+| The same policy with no actor | 🟡 Partial 11/16 · 4 blocked | `policy.owner_nil_actor.aggregate_filter` crashed (blocked by `policy.control.aggregate_filter`), `policy.owner_nil_actor.bulk_destroy` wrong, `policy.owner_nil_actor.exists_filter_input` crashed (blocked by `policy.control.exists_filter_input`), `policy.owner_nil_actor.loaded_count` wrong (blocked by `policy.control.loaded_count`), `policy.owner_nil_actor.loaded_sum` wrong (blocked by `policy.control.loaded_sum`) |
+| forbid_if before authorize_if | 🟡 Partial 10/16 · 5 blocked | `policy.forbid.aggregate_filter` crashed (blocked by `policy.control.aggregate_filter`), `policy.forbid.bulk_update` wrong (blocked by `policy.control.bulk_update`), `policy.forbid.exists_filter_input` crashed (blocked by `policy.control.exists_filter_input`), `policy.forbid.get_error` crashed, `policy.forbid.loaded_count` wrong (blocked by `policy.control.loaded_count`), `policy.forbid.loaded_sum` wrong (blocked by `policy.control.loaded_sum`) |
+| A bypass policy, for an actor it does not let through | 🟡 Partial 10/16 · 5 blocked | `policy.bypass.aggregate_filter` crashed (blocked by `policy.control.aggregate_filter`), `policy.bypass.bulk_update` wrong (blocked by `policy.control.bulk_update`), `policy.bypass.exists_filter_input` crashed (blocked by `policy.control.exists_filter_input`), `policy.bypass.get_error` crashed, `policy.bypass.loaded_count` wrong (blocked by `policy.control.loaded_count`), `policy.bypass.loaded_sum` wrong (blocked by `policy.control.loaded_sum`) |
+| A bypass policy, for an actor it lets through | 🟡 Partial 8/13 · 5 blocked | `policy.bypass_admin.aggregate_filter` crashed (blocked by `policy.control.aggregate_filter`), `policy.bypass_admin.bulk_update` wrong (blocked by `policy.control.bulk_update`), `policy.bypass_admin.exists_filter_input` crashed (blocked by `policy.control.exists_filter_input`), `policy.bypass_admin.loaded_count` wrong (blocked by `policy.control.loaded_count`), `policy.bypass_admin.loaded_sum` wrong (blocked by `policy.control.loaded_sum`) |
+| Two policies that must both pass | 🟡 Partial 10/16 · 5 blocked | `policy.all_of.aggregate_filter` crashed (blocked by `policy.control.aggregate_filter`), `policy.all_of.bulk_update` wrong (blocked by `policy.control.bulk_update`), `policy.all_of.exists_filter_input` crashed (blocked by `policy.control.exists_filter_input`), `policy.all_of.get_error` crashed, `policy.all_of.loaded_count` wrong (blocked by `policy.control.loaded_count`), `policy.all_of.loaded_sum` wrong (blocked by `policy.control.loaded_sum`) |
+| One policy whose checks either pass | 🟡 Partial 10/16 · 5 blocked | `policy.any_of.aggregate_filter` crashed (blocked by `policy.control.aggregate_filter`), `policy.any_of.bulk_update` wrong (blocked by `policy.control.bulk_update`), `policy.any_of.exists_filter_input` crashed (blocked by `policy.control.exists_filter_input`), `policy.any_of.get_error` crashed, `policy.any_of.loaded_count` wrong (blocked by `policy.control.loaded_count`), `policy.any_of.loaded_sum` wrong (blocked by `policy.control.loaded_sum`) |
+| A policy on a to-one relationship | 🟡 Partial 1/16 · 5 blocked | `policy.related.aggregate_filter` crashed (blocked by `policy.control.aggregate_filter`), `policy.related.bulk_destroy` crashed, `policy.related.bulk_update` wrong (blocked by `policy.control.bulk_update`), `policy.related.count` crashed, `policy.related.exists_filter_input` crashed (blocked by `policy.control.exists_filter_input`), `policy.related.get_error` crashed, `policy.related.get_hidden` crashed, `policy.related.keyset_pages` crashed, `policy.related.load` crashed, `policy.related.loaded_count` crashed (blocked by `policy.control.loaded_count`), `policy.related.loaded_sum` crashed (blocked by `policy.control.loaded_sum`), `policy.related.offset_page` crashed, `policy.related.read` crashed, `policy.related.sum` crashed, `policy.related.update_hidden` crashed |
+| A policy on a multi-hop exists | 🟡 Partial 6/16 · 5 blocked | `policy.member.aggregate_filter` crashed (blocked by `policy.control.aggregate_filter`), `policy.member.bulk_destroy` crashed, `policy.member.bulk_update` crashed (blocked by `policy.control.bulk_update`), `policy.member.count` crashed, `policy.member.exists_filter_input` crashed (blocked by `policy.control.exists_filter_input`), `policy.member.get_error` crashed, `policy.member.loaded_count` wrong (blocked by `policy.control.loaded_count`), `policy.member.loaded_sum` wrong (blocked by `policy.control.loaded_sum`), `policy.member.sum` crashed, `policy.member.update_hidden` crashed |
+| A policy composed with can_read | 🟡 Partial 6/16 · 5 blocked | `policy.can_read.aggregate_filter` crashed (blocked by `policy.control.aggregate_filter`), `policy.can_read.bulk_destroy` crashed, `policy.can_read.bulk_update` crashed (blocked by `policy.control.bulk_update`), `policy.can_read.count` crashed, `policy.can_read.exists_filter_input` crashed (blocked by `policy.control.exists_filter_input`), `policy.can_read.get_error` crashed, `policy.can_read.loaded_count` wrong (blocked by `policy.control.loaded_count`), `policy.can_read.loaded_sum` wrong (blocked by `policy.control.loaded_sum`), `policy.can_read.sum` crashed, `policy.can_read.update_hidden` crashed |
+| A strict policy, for an actor it forbids | 🟡 Partial 11/16 · 4 blocked | `policy.strict.aggregate_filter` crashed (blocked by `policy.control.aggregate_filter`), `policy.strict.bulk_destroy` wrong, `policy.strict.exists_filter_input` crashed (blocked by `policy.control.exists_filter_input`), `policy.strict.loaded_count` wrong (blocked by `policy.control.loaded_count`), `policy.strict.loaded_sum` wrong (blocked by `policy.control.loaded_sum`) |
+| A strict policy, for an actor it allows | 🟡 Partial 8/13 · 5 blocked | `policy.strict_admin.aggregate_filter` crashed (blocked by `policy.control.aggregate_filter`), `policy.strict_admin.bulk_update` wrong (blocked by `policy.control.bulk_update`), `policy.strict_admin.exists_filter_input` crashed (blocked by `policy.control.exists_filter_input`), `policy.strict_admin.loaded_count` wrong (blocked by `policy.control.loaded_count`), `policy.strict_admin.loaded_sum` wrong (blocked by `policy.control.loaded_sum`) |
+| Field policies hide values, in reads, filters and aggregates | ❌ Broken 0/4 · 1 blocked | `policy.field.field_aggregate` wrong (blocked by `policy.control.field_aggregate`), `policy.field.field_filter` crashed, `policy.field.field_filter_input` crashed, `policy.field.field_read` crashed |
 | A filter check on create runs after the insert | ❌ Broken 0/2 | `policy.owner.create_other` wrong, `policy.owner.create_own` wrong |
 | Every policy path, without authorization | 🟡 Partial 16/22 | `policy.control.aggregate_filter` crashed, `policy.control.bulk_update` wrong, `policy.control.exists_filter_input` crashed, `policy.control.field_aggregate` wrong, `policy.control.loaded_count` wrong, `policy.control.loaded_sum` wrong |
 
@@ -214,6 +215,7 @@ whose claims disagree with the result:
 | --- | --- | --- |
 | Select only some attributes | clickhouse | Advertised, but ❌ Broken |
 | Large integers, floats and decimals round-trip | clickhouse | Advertised, but ❌ Broken |
+| Dates, microsecond datetimes and times round-trip | clickhouse | Advertised, but ❌ Broken |
 | Distinct records by a field | clickhouse | Not advertising `child: :distinct_sort`, but not rejected either: wrong answers |
 | Filter across to-many relationships without duplicates | clickhouse | Not advertising `child: {:filter_relationship, :ratings}`, but not rejected either: wrong answers |
 | Limit and offset a has-many load for each parent | clickhouse | Works without advertising `parent: {:lateral_join, :children}` |
@@ -299,3 +301,28 @@ apply, such as getting a hidden record when the actor may read every note.
 | strict_admin | ✅ | – | – | ✅ | ✅ | ✅ | ✅ | ✅ | ◌ | ◌ | ◌ | ✅ | ◌ | ◌ | ✅ | – | – | – | – | – | – | – |
 | field | – | – | – | – | – | – | – | – | – | – | – | – | – | – | – | – | ❌ | ❌ | ❌ | ◌ | – | – |
 | control (no authorization) | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ | ✅ | ❌ | ❌ | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ | ✅ | ✅ |
+
+## Blockers
+
+| Blocker | Its result | Not run | Failing | Only blocker of |
+| --- | --- | ---: | ---: | ---: |
+| `policy.control.aggregate_filter` | crashed | 0 | 12 | 12 |
+| `policy.control.exists_filter_input` | crashed | 0 | 12 | 12 |
+| `policy.control.loaded_count` | wrong | 0 | 12 | 12 |
+| `policy.control.loaded_sum` | wrong | 0 | 12 | 12 |
+| `policy.control.bulk_update` | wrong | 0 | 10 | 10 |
+| `filter.fanout_read_control` | crashed | 0 | 9 | 9 |
+| `storage.date.ordinary` | lost at read: "2024-02-29" | 0 | 6 | 0 |
+| `storage.utc_datetime_usec.ordinary` | lost at update: ~U[2024-02-29 12:34:56.000000Z] | 0 | 6 | 0 |
+| `values.decimal_read_control` | wrong | 0 | 4 | 4 |
+| `context.relationship_context_control` | wrong | 0 | 2 | 2 |
+| `filter.nested_parent_control` | crashed | 0 | 1 | 1 |
+| `filter.parent_through_control` | crashed | 0 | 1 | 1 |
+| `policy.control.field_aggregate` | wrong | 0 | 1 | 1 |
+
+Setup failures that no storage cell explains: no type in the row
+raised when stored on its own, or tier 1 could not test it.
+
+| Scenarios | Role | Reason |
+| ---: | --- | --- |
+| 58 | `record` | protocol Jason.Encoder not implemented for Ash.Conformance.Resources.Address (a struct), Jason.Encoder protocol must always be explicitly implemented. |

@@ -94,7 +94,7 @@ defmodule Ash.Conformance.Contracts.Features do
            "Dates, microsecond datetimes and times round-trip",
            "#{@docs}/resources/attributes.md",
            claims: [record: :create, record: :read],
-           scenarios: ~w(record.types_temporal)
+           scenarios: ~w(record.types_temporal values.temporal_read_control)
          ),
          feature("types.uuid", "UUIDs round-trip", "#{@docs}/resources/attributes.md",
            claims: [record: :create, record: :read],

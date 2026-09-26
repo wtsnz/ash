@@ -10,7 +10,7 @@ defmodule Ash.Conformance.Report.Ecosystem do
   the same thing. An adapter whose storage cannot be set up, for example
   because its database is not running, is listed as not run with the reason.
   """
-  alias Ash.Conformance.{Adapter, Resources, Survey}
+  alias Ash.Conformance.{Adapter, Blockers, Resources, Survey}
   alias Ash.Conformance.Report.FeatureReport
 
   @classifications ~w(works rejected wrong crashed setup_failed open_question)a
@@ -55,9 +55,13 @@ defmodule Ash.Conformance.Report.Ecosystem do
 
     ## Data layers
 
-    | Column | Data layer | Version | Reviewed | #{Enum.map_join(@classifications, " | ", &heading/1)} | Definition warnings |
-    | --- | --- | --- | --- | #{Enum.map_join(@classifications, " | ", fn _ -> "---:" end)} | ---: |
+    | Column | Data layer | Version | Reviewed | #{Enum.map_join(@classifications, " | ", &heading/1)} | Blocked | Definition warnings |
+    | --- | --- | --- | --- | #{Enum.map_join(@classifications, " | ", fn _ -> "---:" end)} | ---: | ---: |
     #{Enum.map_join(results, "\n", &summary_row/1)}
+
+    Blocked counts results in the columns before it that have a failing
+    prerequisite, such as a type the data layer cannot store; see
+    [Blockers](#blockers).
 
     #{notes_section(adapters)}
     #{Ash.Conformance.Report.StorageGrid.markdown(results)}
@@ -66,16 +70,18 @@ defmodule Ash.Conformance.Report.Ecosystem do
     | ➖ Not run | The data layer's storage could not be set up for this run. |
 
     #{sections}
+    ## Blockers
+
+    A blocker is a failing prerequisite that may explain other results, so
+    fix it first. Prerequisites are either declared by a scenario (a control
+    that runs the same path without the feature under test, or the storage
+    cell of a type it relies on), or, when a fixture row could not be stored,
+    the storage cells of that row's types. A setup failure never ran its
+    operation, so its result is unknown, not broken. A scenario with several
+    blockers counts under each.
+
+    #{Enum.map_join(results, "\n", &blockers_section/1)}
     #{FeatureReport.claims_section(adapters, summaries)}
-    ## Setup failures
-
-    A setup failure means the data layer could not store or read back a
-    scenario's fixture, so the scenario never ran its operation; its result is
-    unknown, not broken. Rows are stored one at a time, so each reason names
-    the resource role that failed. These are the distinct causes, with how
-    many scenarios each stopped.
-
-    #{Enum.map_join(results, "\n", &setup_failures_section/1)}
     ## Definition warnings
 
     Ash checks each shared resource against its data layer when the resource is
@@ -121,15 +127,16 @@ defmodule Ash.Conformance.Report.Ecosystem do
   defp summary_row(%{adapter: adapter, unavailable: reason}) when is_binary(reason) do
     blanks = Enum.map_join(@classifications, " | ", fn _ -> "" end)
 
-    "| #{adapter.id()} | #{adapter.label()} | #{version(adapter)} | #{reviewed(adapter)} | #{blanks} | Not run: #{reason} |"
+    "| #{adapter.id()} | #{adapter.label()} | #{version(adapter)} | #{reviewed(adapter)} | #{blanks} | | Not run: #{reason} |"
   end
 
   defp summary_row(%{adapter: adapter, rows: rows, warnings: warnings}) do
     counts = Enum.frequencies_by(rows, & &1.classification)
     cells = Enum.map_join(@classifications, " | ", &Map.get(counts, &1, 0))
     warning_count = warnings |> Enum.map(&elem(&1, 1)) |> Enum.sum()
+    blocked = Enum.count(rows, &(Map.get(&1, :blocked_by, []) != []))
 
-    "| #{adapter.id()} | #{adapter.label()} | #{version(adapter)} | #{reviewed(adapter)} | #{cells} | #{warning_count} |"
+    "| #{adapter.id()} | #{adapter.label()} | #{version(adapter)} | #{reviewed(adapter)} | #{cells} | #{blocked} | #{warning_count} |"
   end
 
   defp reviewed(adapter), do: if(Adapter.reviewed?(adapter), do: "yes", else: "no")
@@ -149,30 +156,11 @@ defmodule Ash.Conformance.Report.Ecosystem do
     end
   end
 
-  defp setup_failures_section(%{adapter: adapter, unavailable: reason}) when is_binary(reason),
+  defp blockers_section(%{adapter: adapter, unavailable: reason}) when is_binary(reason),
     do: "### #{adapter.label()}\n\nNot run: #{reason}\n"
 
-  defp setup_failures_section(%{adapter: adapter, rows: rows}) do
-    failures =
-      for %{classification: :setup_failed} = row <- rows do
-        setup = Map.get(row, :setup) || %{role: nil, reason: row.actual}
-        role = if setup.role, do: "`#{setup.role}`", else: "—"
-        {role, setup.reason |> String.slice(0, 200) |> String.replace("|", "\\|")}
-      end
-
-    case failures |> Enum.frequencies() |> Enum.sort_by(fn {key, n} -> {-n, key} end) do
-      [] ->
-        "### #{adapter.label()}\n\nNone.\n"
-
-      counts ->
-        rows =
-          Enum.map_join(counts, "\n", fn {{role, reason}, count} ->
-            "| #{count} | #{role} | #{reason} |"
-          end)
-
-        "### #{adapter.label()}\n\n| Scenarios | Role | Reason |\n| ---: | --- | --- |\n#{rows}\n"
-    end
-  end
+  defp blockers_section(%{adapter: adapter, rows: rows}),
+    do: "### #{adapter.label()}\n\n#{Blockers.markdown(rows)}"
 
   defp warnings_section(%{adapter: adapter, warnings: []}),
     do: "### #{adapter.label()}\n\nNone.\n"

@@ -4,7 +4,7 @@
 
 defmodule Ash.Conformance.Scenarios.Aggregates.Context do
   @moduledoc false
-  import Ash.Conformance.Scenario, only: [new: 4]
+  import Ash.Conformance.Scenario, only: [new: 4, new: 5]
   import Ash.Conformance.Scenarios.Aggregates.Helpers
 
   def all do
@@ -15,21 +15,34 @@ defmodule Ash.Conformance.Scenarios.Aggregates.Context do
       new("context.arguments", :context, %{1 => 2, 2 => 0, 3 => 0}, fn ctx ->
         named(ctx, :argument_count)
       end),
-      new("context.relationship_context", :context, %{1 => 2, 2 => 0, 3 => 0}, fn ctx ->
-        named(ctx, :context_count)
-      end),
+      new(
+        "context.relationship_context",
+        :context,
+        %{1 => 2, 2 => 0, 3 => 0},
+        fn ctx ->
+          named(ctx, :context_count)
+        end,
+        requires: ["context.relationship_context_control"]
+      ),
       new(
         "context.relationship_context_control",
         :context,
         %{1 => [11, 12], 2 => [], 3 => []},
         fn ctx ->
           relationship_ids(ctx, :context_children)
-        end
+        end,
+        requires: ["context.prepared_context_control"]
       ),
-      new("context.shared", :context, %{1 => 2, 2 => 0, 3 => 0}, fn ctx ->
-        query = Ash.Query.set_context(ctx.parent, %{shared: %{visible_label: "same"}})
-        named(%{ctx | parent: query}, :context_count)
-      end),
+      new(
+        "context.shared",
+        :context,
+        %{1 => 2, 2 => 0, 3 => 0},
+        fn ctx ->
+          query = Ash.Query.set_context(ctx.parent, %{shared: %{visible_label: "same"}})
+          named(%{ctx | parent: query}, :context_count)
+        end,
+        requires: ["context.relationship_context_control"]
+      ),
       new("context.prepared_context_control", :context, [11, 12], fn ctx ->
         ctx.child
         |> Ash.Query.set_context(%{visible_label: "same"})
@@ -78,9 +91,15 @@ defmodule Ash.Conformance.Scenarios.Aggregates.Context do
       new("context.authorization", :context, %{1 => 3, 2 => 1, 3 => 0}, fn ctx ->
         loaded(ctx, :count, :authorized_children, [], authorize?: true)
       end),
-      new("context.authorization_before_bounds", :context, %{1 => 2, 2 => 4, 3 => nil}, fn ctx ->
-        loaded(ctx, :sum, :authorized_top, [field: :value], authorize?: true)
-      end),
+      new(
+        "context.authorization_before_bounds",
+        :context,
+        %{1 => 2, 2 => 4, 3 => nil},
+        fn ctx ->
+          loaded(ctx, :sum, :authorized_top, [field: :value], authorize?: true)
+        end,
+        requires: ["context.authorization_bounds_control"]
+      ),
       new(
         "context.authorization_bounds_control",
         :context,

@@ -52,14 +52,20 @@ defmodule Ash.Conformance.PolicyTest do
   end
 
   test "a policy cell is blamed on the policy only when its path works without authorization" do
-    rows = [
-      %{scenario: "policy.owner.read", classification: :wrong},
-      %{scenario: "policy.control.read", classification: :works},
-      %{scenario: "policy.owner.count", classification: :wrong},
-      %{scenario: "policy.control.count", classification: :crashed},
-      %{scenario: "policy.owner.sum", classification: :works},
-      %{scenario: "policy.control.sum", classification: :works}
-    ]
+    requires = Map.new(Ash.Conformance.Catalog.all(), &{&1.id, &1.requires})
+
+    rows =
+      Ash.Conformance.Blockers.label(
+        [
+          %{scenario: "policy.owner.read", classification: :wrong},
+          %{scenario: "policy.control.read", classification: :works},
+          %{scenario: "policy.owner.count", classification: :wrong},
+          %{scenario: "policy.control.count", classification: :crashed},
+          %{scenario: "policy.owner.sum", classification: :works},
+          %{scenario: "policy.control.sum", classification: :works}
+        ],
+        requires
+      )
 
     detail = PolicyGrid.detail(rows)
     assert detail =~ ~r/\| owner \| ❌ \| – \| – \| ◌ \| ✅ \|/

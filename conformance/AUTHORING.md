@@ -40,6 +40,26 @@ A scenario matched by two `expect` rules, or a rule that matches nothing,
 fails. `supported` is a claim, not an acceptance: a new scenario it covers
 must still pass, or the run fails and the scenario needs a reviewed record.
 
+Declare what a scenario builds on with `requires:`. It takes scenario IDs,
+for example:
+- a control that runs the same path without the feature under test, such as
+  `values.decimal_read_control`;
+- the tier-1 storage cell of a type the scenario relies on, such as
+  `Storage.stored(:decimal)`, which is `storage.decimal.ordinary`.
+
+Helpers that take no options can pipe into `requires/2` from
+`Ash.Conformance.Scenario`.
+
+When the scenario fails and a prerequisite fails too, surveys label it
+"blocked by" the prerequisite, and `ECOSYSTEM.md` ranks the blockers. A
+blocked scenario keeps its classification, and the label never changes a
+contract. Declare only what the operation really uses: a prerequisite that
+fails for an unrelated reason gives a misleading label. The catalog rejects
+unknown IDs and cycles.
+
+A fixture row that cannot be stored gets its blockers without any
+declaration: the storage cells of the row's types.
+
 Use `fixture: :aggregate`, `:isolation` or `:context_tenancy`. New fixture builders
 are selected in `Fixtures.build!/2`. Scenario-specific extra setup belongs in
 `Fixtures.prepare!/2`, outside capture. A write that is itself the behavior under

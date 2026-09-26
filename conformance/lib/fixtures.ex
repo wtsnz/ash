@@ -28,8 +28,11 @@ defmodule Ash.Conformance.Fixtures do
   end
 
   defmodule SetupError do
-    @moduledoc "A fixture row the data layer could not store or read back."
-    defexception [:role, :row, :reason]
+    @moduledoc """
+    A fixture row the data layer could not store or read back. `cells` are
+    the tier-1 storage cells the row's values depend on.
+    """
+    defexception [:role, :row, :reason, cells: []]
 
     @impl true
     def message(%{role: role, row: row, reason: reason}),
@@ -38,7 +41,8 @@ defmodule Ash.Conformance.Fixtures do
 
   @doc """
   Persists `rows` for `role` one at a time, so a failure names the role, the
-  row and the reason instead of failing the whole batch anonymously.
+  row, the reason and the storage cells the row depends on, instead of
+  failing the whole batch anonymously.
   """
   def seed!(adapter, role, rows, opts \\ []) do
     for row <- rows do
@@ -47,12 +51,31 @@ defmodule Ash.Conformance.Fixtures do
       rescue
         exception ->
           reraise SetupError,
-                  [role: role, row: row_key(row), reason: reason(exception)],
+                  [
+                    role: role,
+                    row: row_key(row),
+                    reason: reason(exception),
+                    cells: cells(adapter, role, row)
+                  ],
                   __STACKTRACE__
       end
     end
 
     :ok
+  end
+
+  defp cells(adapter, role, row) do
+    resource = adapter.resource(role)
+
+    row
+    |> Enum.flat_map(fn {key, value} ->
+      case Ash.Resource.Info.attribute(resource, key) do
+        nil -> []
+        attribute -> List.wrap(Ash.Conformance.Storage.cell(attribute, value))
+      end
+    end)
+    |> Enum.uniq()
+    |> Enum.sort()
   end
 
   defp row_key(row), do: Map.get(row, :id) || inspect(row, limit: 3)

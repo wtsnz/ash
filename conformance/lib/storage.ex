@@ -223,6 +223,39 @@ defmodule Ash.Conformance.Storage do
 
   def scenario_id(name, class), do: "storage.#{name}.#{class}"
 
+  @doc "The storage cells a scenario requires: each named type's cell of `class`."
+  def stored(names, class \\ :ordinary),
+    do: Enum.map(List.wrap(names), &scenario_id(fetch!(&1).name, class))
+
+  @doc """
+  The cell a stored value depends on: the ordinary cell of its attribute's
+  type, or the null cell for nil. Nil when tier 1 has no such type. Edge
+  cells are never used: a fixture's values are ordinary unless a scenario
+  says otherwise, and an edge failure such as a NUL byte would blame the
+  wrong cause.
+  """
+  def cell(attribute, value) do
+    type = resolve(attribute.type)
+
+    case Enum.find(types(), &(resolve(&1.type) == type)) do
+      nil -> nil
+      %{name: name} -> scenario_id(name, if(is_nil(value), do: :null, else: :ordinary))
+    end
+  end
+
+  # Any embedded resource is stored as the embedded cell's `Address` is.
+  defp resolve({:array, type}), do: {:array, resolve(type)}
+
+  defp resolve(type) do
+    type = Ash.Type.get_type(type)
+
+    cond do
+      Ash.Type.embedded_type?(type) -> :embedded
+      Ash.Type.NewType.new_type?(type) -> resolve(Ash.Type.NewType.subtype_of(type))
+      true -> type
+    end
+  end
+
   @doc "The intended observation: every step returns the value unchanged."
   def expected(:null), do: [create: :ok, read: :ok]
   def expected(_class), do: [create: :ok, read: :ok, update: :ok, clear: :ok]

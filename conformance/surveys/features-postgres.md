@@ -4,7 +4,7 @@
 
 Generated from an unreviewed run: each result was classified automatically against the intended answer. Nothing here has been reviewed.
 
-Feature catalog version 1: 118 features and 581 scenarios.
+Feature catalog version 1: 118 features and 582 scenarios.
 
 | Status | Meaning |
 | --- | --- |
@@ -20,8 +20,9 @@ Feature catalog version 1: 118 features and 581 scenarios.
 | ⚠️ Changed | A result no longer matches its recorded contract. |
 
 Counts are passing scenarios out of those that ran, then how many could
-not run. Gap links explain everything that is not fully working, and who
-owns the fix.
+not run, then how many failures have a failing prerequisite (blocked).
+Gap links explain everything that is not fully working, and who owns the
+fix.
 
 ## 1. Storage
 
@@ -70,7 +71,7 @@ owns the fix.
 | --- | --- | --- |
 | Strings, integers, booleans, atoms and nil round-trip | ✅ Works 3/3 |  |
 | Large integers, floats and decimals round-trip | ✅ Works 2/2 |  |
-| Dates, microsecond datetimes and times round-trip | ✅ Works 1/1 |  |
+| Dates, microsecond datetimes and times round-trip | ✅ Works 2/2 |  |
 | UUIDs round-trip | ✅ Works 1/1 |  |
 | Arrays round-trip, keeping order and duplicates | ✅ Works 1/1 |  |
 | Maps round-trip, including nested values | ✅ Works 1/1 |  |
@@ -127,14 +128,14 @@ owns the fix.
 | Filter the records an aggregate uses | ✅ Works 6/6 |  |
 | Aggregate filters through to-many relationships count each record once | 🟡 Partial 2/11 | `filter.fanout_and` wrong, `filter.fanout_avg` wrong, `filter.fanout_count` wrong, `filter.fanout_count_records` wrong, `filter.fanout_custom` wrong, `filter.fanout_list` wrong, `filter.fanout_or` wrong, `filter.fanout_sum` wrong, `identity.composite_fanout_count` wrong |
 | Aggregate filters that use other aggregates | ✅ Works 5/5 |  |
-| Aggregate filters that reference the parent record | 🟡 Partial 7/8 | `filter.nested_parent` crashed |
+| Aggregate filters that reference the parent record | 🟡 Partial 7/8 · 1 blocked | `filter.nested_parent` crashed (blocked by `filter.nested_parent_control`) |
 | Aggregate over to-one, multi-hop and many-to-many paths | 🟡 Partial 15/17 | `path.repeated_many_to_many` open question, `path.root_relationship` crashed |
 | Aggregate over manual and attribute-free relationships | 🟡 Partial 2/3 | `path.no_attributes` crashed |
 | Aggregate over limited, offset and from-many relationships | 🟡 Partial 6/9 | `bounds.default_sort` wrong, `bounds.from_many` wrong, `bounds.many_to_many_query_limit` open question |
 | Root aggregates over sorted, limited and offset queries | 🟡 Partial 2/7 | `bounds.root_custom_limit` wrong, `bounds.root_first_distinct_sort` wrong, `bounds.root_list_limit` wrong, `bounds.root_offset_only` crashed, `bounds.root_order_then_limit` wrong |
 | Distinct counts over composite and missing keys | ❓ Open question 4/5 | `identity.keyless_distinct` open question |
 | Filter, sort, paginate and calculate with aggregates | ✅ Works 10/10 |  |
-| Aggregates respect read actions, arguments, actor and context | 🟡 Partial 7/9 | `context.prepared_query_arguments` crashed, `context.relationship_context` wrong |
+| Aggregates respect read actions, arguments, actor and context | 🟡 Partial 7/9 · 1 blocked | `context.prepared_query_arguments` crashed, `context.relationship_context` wrong (blocked by `context.relationship_context_control`) |
 | Seeded filtered aggregates match an in-memory reference | ✅ Works 1/1 |  |
 
 ## 7. Writes
@@ -276,3 +277,10 @@ apply, such as getting a hidden record when the actor may read every note.
 | strict_admin | ✅ | – | – | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | – | – | – | – | – | – | – |
 | field | – | – | – | – | – | – | – | – | – | – | – | – | – | – | – | – | ✅ | ✅ | ✅ | ✅ | – | – |
 | control (no authorization) | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+
+## Blockers
+
+| Blocker | Its result | Not run | Failing | Only blocker of |
+| --- | --- | ---: | ---: | ---: |
+| `context.relationship_context_control` | wrong | 0 | 1 | 1 |
+| `filter.nested_parent_control` | crashed | 0 | 1 | 1 |

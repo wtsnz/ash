@@ -11,6 +11,7 @@ defmodule Ash.Conformance.Catalog do
   def validate!(scenarios, expectations, adapters) do
     ids = Enum.map(scenarios, & &1.id)
     if length(ids) != length(Enum.uniq(ids)), do: raise(ArgumentError, "Duplicate scenario IDs")
+    validate_requires!(scenarios)
 
     if Enum.sort(ids) != Enum.sort(Map.keys(expectations)) do
       missing = ids -- Map.keys(expectations)
@@ -33,6 +34,29 @@ defmodule Ash.Conformance.Catalog do
     end
 
     :ok
+  end
+
+  @doc "Every prerequisite names a scenario, and none depends on itself."
+  def validate_requires!(scenarios) do
+    requires = Map.new(scenarios, &{&1.id, &1.requires})
+
+    for {id, prerequisites} <- requires, prerequisite <- prerequisites do
+      unless Map.has_key?(requires, prerequisite),
+        do: raise(ArgumentError, "#{id} requires unknown scenario #{prerequisite}")
+    end
+
+    for id <- Map.keys(requires), do: acyclic!(id, requires, [id])
+    :ok
+  end
+
+  defp acyclic!(id, requires, path) do
+    for prerequisite <- Map.fetch!(requires, id) do
+      if prerequisite in path,
+        do:
+          raise(ArgumentError, "Prerequisite cycle: #{Enum.join([prerequisite | path], " <- ")}")
+
+      acyclic!(prerequisite, requires, [prerequisite | path])
+    end
   end
 
   def all do

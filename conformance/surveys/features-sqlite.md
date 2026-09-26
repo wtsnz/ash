@@ -4,7 +4,7 @@
 
 Generated from an unreviewed run: each result was classified automatically against the intended answer. Nothing here has been reviewed.
 
-Feature catalog version 1: 118 features and 581 scenarios.
+Feature catalog version 1: 118 features and 582 scenarios.
 
 | Status | Meaning |
 | --- | --- |
@@ -20,8 +20,9 @@ Feature catalog version 1: 118 features and 581 scenarios.
 | ⚠️ Changed | A result no longer matches its recorded contract. |
 
 Counts are passing scenarios out of those that ran, then how many could
-not run. Gap links explain everything that is not fully working, and who
-owns the fix.
+not run, then how many failures have a failing prerequisite (blocked).
+Gap links explain everything that is not fully working, and who owns the
+fix.
 
 ## 1. Storage
 
@@ -69,8 +70,8 @@ owns the fix.
 | Feature | sqlite | Not working |
 | --- | --- | --- |
 | Strings, integers, booleans, atoms and nil round-trip | ✅ Works 3/3 |  |
-| Large integers, floats and decimals round-trip | 🟡 Partial 1/2 | `values.decimal_read_control` wrong |
-| Dates, microsecond datetimes and times round-trip | ✅ Works 1/1 |  |
+| Large integers, floats and decimals round-trip | 🟡 Partial 1/2 · 1 blocked | `values.decimal_read_control` wrong (blocked by `storage.decimal.edge`) |
+| Dates, microsecond datetimes and times round-trip | ✅ Works 2/2 |  |
 | UUIDs round-trip | ✅ Works 1/1 |  |
 | Arrays round-trip, keeping order and duplicates | ✅ Works 1/1 |  |
 | Maps round-trip, including nested values | ✅ Works 1/1 |  |
@@ -121,20 +122,20 @@ owns the fix.
 | Load each aggregate kind on records | ✅ Works 9/9 |  |
 | Run each aggregate kind over a whole query | 🟡 Partial 9/15 | `root.custom` rejected, `root.custom_empty` rejected, `root.list` rejected, `root.list_default_empty` rejected, `root.list_empty` rejected, `root.list_unsorted` rejected |
 | Defaults, nils, uniqueness and field counts | ✅ Works 12/12 |  |
-| Aggregate decimals, dates, times and constrained types | 🟡 Partial 12/15 | `root.decimal_sum` wrong, `values.decimal_max` wrong, `values.decimal_sum` wrong |
+| Aggregate decimals, dates, times and constrained types | 🟡 Partial 12/15 · 3 blocked | `root.decimal_sum` wrong (blocked by `storage.decimal.edge`), `values.decimal_max` wrong (blocked by `storage.decimal.edge`), `values.decimal_sum` wrong (blocked by `storage.decimal.edge`) |
 | Order first and list aggregates, including nils and ties | ❓ Open question 8/9 | `ordering.unique_other_field` open question |
 | Aggregate calculations and other aggregates | ✅ Works 3/3 |  |
 | Filter the records an aggregate uses | ✅ Works 6/6 |  |
-| Aggregate filters through to-many relationships count each record once | 🟡 Partial 3/11 | `filter.fanout_and` rejected, `filter.fanout_avg` rejected, `filter.fanout_count` rejected, `filter.fanout_custom` rejected, `filter.fanout_list` rejected, `filter.fanout_or` rejected, `filter.fanout_sum` rejected, `identity.composite_fanout_count` crashed |
+| Aggregate filters through to-many relationships count each record once | 🟡 Partial 3/11 · 7 blocked | `filter.fanout_and` rejected (blocked by `filter.fanout_read_control`), `filter.fanout_avg` rejected (blocked by `filter.fanout_read_control`), `filter.fanout_count` rejected (blocked by `filter.fanout_read_control`), `filter.fanout_custom` rejected (blocked by `filter.fanout_read_control`), `filter.fanout_list` rejected (blocked by `filter.fanout_read_control`), `filter.fanout_or` rejected (blocked by `filter.fanout_read_control`), `filter.fanout_sum` rejected (blocked by `filter.fanout_read_control`), `identity.composite_fanout_count` crashed |
 | Aggregate filters that use other aggregates | 🟡 Partial 1/5 | `filter.aggregate_dependency` rejected, `filter.aggregate_dependency_calculation` rejected, `filter.aggregate_dependency_filtered` rejected, `filter.aggregate_dependency_many_to_many` rejected |
-| Aggregate filters that reference the parent record | ⛔ Not supported 0/8 | `filter.nested_parent` rejected, `filter.parent` rejected, `filter.parent_join` rejected, `filter.parent_relationship` rejected, `filter.parent_through` rejected, `filter.parent_unrelated` rejected, `use.parent_filter` rejected, `use.parent_sort` rejected |
+| Aggregate filters that reference the parent record | ⛔ Not supported 0/8 · 2 blocked | `filter.nested_parent` rejected (blocked by `filter.nested_parent_control`), `filter.parent` rejected, `filter.parent_join` rejected, `filter.parent_relationship` rejected, `filter.parent_through` rejected (blocked by `filter.parent_through_control`), `filter.parent_unrelated` rejected, `use.parent_filter` rejected, `use.parent_sort` rejected |
 | Aggregate over to-one, multi-hop and many-to-many paths | 🟡 Partial 10/17 | `path.final_many_to_many_custom` rejected, `path.final_many_to_many_first` rejected, `path.final_many_to_many_list` rejected, `path.intermediate_many_to_many` rejected, `path.repeated_many_to_many` open question, `path.root_relationship` crashed, `path.through_count` wrong |
 | Aggregate over manual and attribute-free relationships | ⛔ Not supported 0/3 | `path.manual` rejected, `path.no_attributes` rejected, `path.no_attributes_parent` rejected |
 | Aggregate over limited, offset and from-many relationships | 🟡 Partial 5/9 | `bounds.default_sort` wrong, `bounds.from_many` wrong, `bounds.many_to_many_query_limit` open question, `bounds.unsorted_limit` crashed |
 | Root aggregates over sorted, limited and offset queries | 🟡 Partial 5/7 | `bounds.root_custom_limit` rejected, `bounds.root_list_limit` rejected |
 | Distinct counts over composite and missing keys | 🟡 Partial 1/5 | `identity.composite_count` crashed, `identity.keyless_distinct` open question, `identity.keyless_source` crashed, `identity.root_composite_count` crashed |
 | Filter, sort, paginate and calculate with aggregates | ✅ Works 10/10 |  |
-| Aggregates respect read actions, arguments, actor and context | 🟡 Partial 8/9 | `context.relationship_context` wrong |
+| Aggregates respect read actions, arguments, actor and context | 🟡 Partial 8/9 · 1 blocked | `context.relationship_context` wrong (blocked by `context.relationship_context_control`) |
 | Seeded filtered aggregates match an in-memory reference | ✅ Works 1/1 |  |
 
 ## 7. Writes
@@ -183,14 +184,14 @@ owns the fix.
 | The same policy with no actor | 🟡 Partial 15/16 | `policy.owner_nil_actor.bulk_destroy` wrong |
 | forbid_if before authorize_if | 🟡 Partial 15/16 | `policy.forbid.get_error` crashed |
 | A bypass policy, for an actor it does not let through | 🟡 Partial 15/16 | `policy.bypass.get_error` crashed |
-| A bypass policy, for an actor it lets through | 🟡 Partial 12/13 | `policy.bypass_admin.exists_filter_input` wrong |
+| A bypass policy, for an actor it lets through | 🟡 Partial 12/13 · 1 blocked | `policy.bypass_admin.exists_filter_input` wrong (blocked by `policy.control.exists_filter_input`) |
 | Two policies that must both pass | 🟡 Partial 15/16 | `policy.all_of.get_error` crashed |
 | One policy whose checks either pass | 🟡 Partial 15/16 | `policy.any_of.get_error` crashed |
-| A policy on a to-one relationship | 🟡 Partial 14/16 | `policy.related.exists_filter_input` wrong, `policy.related.get_error` crashed |
-| A policy on a multi-hop exists | 🟡 Partial 14/16 | `policy.member.exists_filter_input` wrong, `policy.member.get_error` crashed |
-| A policy composed with can_read | 🟡 Partial 14/16 | `policy.can_read.exists_filter_input` wrong, `policy.can_read.get_error` crashed |
+| A policy on a to-one relationship | 🟡 Partial 14/16 · 1 blocked | `policy.related.exists_filter_input` wrong (blocked by `policy.control.exists_filter_input`), `policy.related.get_error` crashed |
+| A policy on a multi-hop exists | 🟡 Partial 14/16 · 1 blocked | `policy.member.exists_filter_input` wrong (blocked by `policy.control.exists_filter_input`), `policy.member.get_error` crashed |
+| A policy composed with can_read | 🟡 Partial 14/16 · 1 blocked | `policy.can_read.exists_filter_input` wrong (blocked by `policy.control.exists_filter_input`), `policy.can_read.get_error` crashed |
 | A strict policy, for an actor it forbids | 🟡 Partial 15/16 | `policy.strict.bulk_destroy` wrong |
-| A strict policy, for an actor it allows | 🟡 Partial 12/13 | `policy.strict_admin.exists_filter_input` wrong |
+| A strict policy, for an actor it allows | 🟡 Partial 12/13 · 1 blocked | `policy.strict_admin.exists_filter_input` wrong (blocked by `policy.control.exists_filter_input`) |
 | Field policies hide values, in reads, filters and aggregates | ✅ Works 4/4 |  |
 | A filter check on create runs after the insert | ✅ Works 2/2 |  |
 | Every policy path, without authorization | 🟡 Partial 21/22 | `policy.control.exists_filter_input` wrong |
@@ -280,3 +281,14 @@ apply, such as getting a hidden record when the actor may read every note.
 | strict_admin | ✅ | – | – | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ◌ | ✅ | ✅ | – | – | – | – | – | – | – |
 | field | – | – | – | – | – | – | – | – | – | – | – | – | – | – | – | – | ✅ | ✅ | ✅ | ✅ | – | – |
 | control (no authorization) | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+
+## Blockers
+
+| Blocker | Its result | Not run | Failing | Only blocker of |
+| --- | --- | ---: | ---: | ---: |
+| `filter.fanout_read_control` | wrong | 0 | 7 | 7 |
+| `policy.control.exists_filter_input` | wrong | 0 | 5 | 5 |
+| `storage.decimal.edge` | lost at read: Decimal.new("12345678901234568") | 0 | 4 | 4 |
+| `context.relationship_context_control` | wrong | 0 | 1 | 1 |
+| `filter.nested_parent_control` | crashed | 0 | 1 | 1 |
+| `filter.parent_through_control` | crashed | 0 | 1 | 1 |

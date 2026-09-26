@@ -11,14 +11,18 @@ their results as observations. Each data layer's failing scenarios are listed in
 
 ## Data layers
 
-| Column | Data layer | Version | Reviewed | Works | Rejected | Wrong | Crashed | Setup failed | Open question | Definition warnings |
-| --- | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| sqlite | AshSqlite | 0.2.19 (`46a4b86`) | yes | 490 | 37 | 26 | 18 | 0 | 5 | 0 |
-| postgres | AshPostgres | 2.13.1 (`945073e`) | yes | 540 | 0 | 28 | 8 | 0 | 5 | 0 |
-| ets | Ash.DataLayer.Ets | 3.33.11 | no | 528 | 7 | 29 | 7 | 0 | 5 | 0 |
-| csv | AshCsv | 0.9.9 | no | 167 | 87 | 43 | 33 | 246 | 0 | 19 |
-| mysql | AshMysql | 0.1.0-dev (`99684ca`) | no | 295 | 189 | 34 | 53 | 0 | 5 | 16 |
-| clickhouse | AshClickhouse | 0.7.3 | no | 204 | 54 | 148 | 108 | 58 | 4 | 16 |
+| Column | Data layer | Version | Reviewed | Works | Rejected | Wrong | Crashed | Setup failed | Open question | Blocked | Definition warnings |
+| --- | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| sqlite | AshSqlite | 0.2.19 (`f489778`) | yes | 491 | 37 | 26 | 18 | 0 | 5 | 19 | 0 |
+| postgres | AshPostgres | 2.13.1 (`945073e`) | yes | 541 | 0 | 28 | 8 | 0 | 5 | 2 | 0 |
+| ets | Ash.DataLayer.Ets | 3.33.11 | no | 529 | 7 | 29 | 7 | 0 | 5 | 3 | 0 |
+| csv | AshCsv | 0.9.9 | no | 167 | 87 | 43 | 33 | 247 | 0 | 338 | 19 |
+| mysql | AshMysql | 0.1.0-dev (`99684ca`) | no | 296 | 189 | 34 | 53 | 0 | 5 | 45 | 16 |
+| clickhouse | AshClickhouse | 0.7.3 | no | 204 | 54 | 149 | 108 | 58 | 4 | 82 | 16 |
+
+Blocked counts results in the columns before it that have a failing
+prerequisite, such as a type the data layer cannot store; see
+[Blockers](#blockers).
 
 ### Setup notes
 
@@ -162,8 +166,8 @@ apply, such as getting a hidden record when the actor may read every note.
 | Feature | sqlite | postgres | ets | csv | mysql | clickhouse |
 | --- | --- | --- | --- | --- | --- | --- |
 | Strings, integers, booleans, atoms and nil round-trip | ✅ Works 3/3 | ✅ Works 3/3 | ✅ Works 3/3 | ❔ Unknown 3 not run | ✅ Works 3/3 | ❔ Unknown 3 not run |
-| Large integers, floats and decimals round-trip | 🟡 Partial 1/2 | ✅ Works 2/2 | ✅ Works 2/2 | ❔ Unknown 2 not run | 🟡 Partial 1/2 | ❌ Broken 0/1 · 1 not run |
-| Dates, microsecond datetimes and times round-trip | ✅ Works 1/1 | ✅ Works 1/1 | ✅ Works 1/1 | ❔ Unknown 1 not run | ✅ Works 1/1 | ❔ Unknown 1 not run |
+| Large integers, floats and decimals round-trip | 🟡 Partial 1/2 · 1 blocked | ✅ Works 2/2 | ✅ Works 2/2 | ❔ Unknown 2 not run | 🟡 Partial 1/2 · 1 blocked | ❌ Broken 0/1 · 1 not run |
+| Dates, microsecond datetimes and times round-trip | ✅ Works 2/2 | ✅ Works 2/2 | ✅ Works 2/2 | ❔ Unknown 2 not run | ✅ Works 2/2 | ❌ Broken 0/1 · 1 not run · 1 blocked |
 | UUIDs round-trip | ✅ Works 1/1 | ✅ Works 1/1 | ✅ Works 1/1 | ❔ Unknown 1 not run | ✅ Works 1/1 | ❔ Unknown 1 not run |
 | Arrays round-trip, keeping order and duplicates | ✅ Works 1/1 | ✅ Works 1/1 | ✅ Works 1/1 | ❔ Unknown 1 not run | ✅ Works 1/1 | ❔ Unknown 1 not run |
 | Maps round-trip, including nested values | ✅ Works 1/1 | ✅ Works 1/1 | ✅ Works 1/1 | ❔ Unknown 1 not run | ✅ Works 1/1 | ❔ Unknown 1 not run |
@@ -179,7 +183,7 @@ apply, such as getting a hidden record when the actor may read every note.
 | Filter strings: contains, case, unicode and empty | ✅ Works 4/4 | ✅ Works 4/4 | ✅ Works 4/4 | ❔ Unknown 4 not run | 🟡 Partial 3/4 | ❔ Unknown 4 not run |
 | Filter inside arrays, maps and embedded resources | ✅ Works 3/3 | ✅ Works 3/3 | ✅ Works 3/3 | ❔ Unknown 3 not run | 🟡 Partial 2/3 | ❔ Unknown 3 not run |
 | Filter by a calculation | ✅ Works 1/1 | ✅ Works 1/1 | ✅ Works 1/1 | ❔ Unknown 1 not run | ✅ Works 1/1 | ❔ Unknown 1 not run |
-| Sort by one or more fields, with explicit nil order | ✅ Works 6/6 | ✅ Works 6/6 | ✅ Works 6/6 | ❔ Unknown 6 not run | 🟡 Partial 2/6 | ❔ Unknown 6 not run |
+| Sort by one or more fields, with explicit nil order | ✅ Works 6/6 | ✅ Works 6/6 | ✅ Works 6/6 | ❔ Unknown 6 not run | 🟡 Partial 2/6 · 1 blocked | ❔ Unknown 6 not run |
 | Sort by a calculation | ✅ Works 1/1 | ✅ Works 1/1 | ✅ Works 1/1 | ❔ Unknown 1 not run | ✅ Works 1/1 | ❔ Unknown 1 not run |
 | Limit and offset a query | ✅ Works 1/1 | ✅ Works 1/1 | ✅ Works 1/1 | ❔ Unknown 1 not run | ✅ Works 1/1 | ❔ Unknown 1 not run |
 | Count and check existence | ✅ Works 1/1 | ✅ Works 1/1 | ✅ Works 1/1 | ❔ Unknown 1 not run | ✅ Works 1/1 | ❔ Unknown 1 not run |
@@ -214,20 +218,20 @@ apply, such as getting a hidden record when the actor may read every note.
 | Load each aggregate kind on records | ✅ Works 9/9 | ✅ Works 9/9 | 🟡 Partial 8/9 | ❔ Unknown 9 not run | ⛔ Not supported 0/9 | 🟡 Partial 4/9 |
 | Run each aggregate kind over a whole query | 🟡 Partial 9/15 | 🟡 Partial 13/15 | 🟡 Partial 10/15 | ❔ Unknown 15 not run | 🟡 Partial 6/15 | 🟡 Partial 5/15 |
 | Defaults, nils, uniqueness and field counts | ✅ Works 12/12 | 🟡 Partial 11/12 | 🟡 Partial 11/12 | ❔ Unknown 12 not run | ⛔ Not supported 0/12 | 🟡 Partial 4/12 |
-| Aggregate decimals, dates, times and constrained types | 🟡 Partial 12/15 | ✅ Works 15/15 | 🟡 Partial 14/15 | ❔ Unknown 15 not run | 🟡 Partial 2/15 | 🟡 Partial 4/15 |
+| Aggregate decimals, dates, times and constrained types | 🟡 Partial 12/15 · 3 blocked | ✅ Works 15/15 | 🟡 Partial 14/15 | ❔ Unknown 15 not run | 🟡 Partial 2/15 | 🟡 Partial 4/15 · 9 blocked |
 | Order first and list aggregates, including nils and ties | ❓ Open question 8/9 | ❓ Open question 8/9 | ❓ Open question 8/9 | ❔ Unknown 9 not run | ⛔ Not supported 0/9 | ⛔ Not supported 0/9 |
 | Aggregate calculations and other aggregates | ✅ Works 3/3 | ✅ Works 3/3 | 🟡 Partial 2/3 | ❔ Unknown 3 not run | ❌ Broken 0/3 | ❌ Broken 0/3 |
 | Filter the records an aggregate uses | ✅ Works 6/6 | ✅ Works 6/6 | 🟡 Partial 5/6 | ❔ Unknown 6 not run | ⛔ Not supported 0/6 | ❌ Broken 0/6 |
-| Aggregate filters through to-many relationships count each record once | 🟡 Partial 3/11 | 🟡 Partial 2/11 | 🟡 Partial 10/11 | ❔ Unknown 11 not run | ⛔ Not supported 0/11 | ❌ Broken 0/11 |
+| Aggregate filters through to-many relationships count each record once | 🟡 Partial 3/11 · 7 blocked | 🟡 Partial 2/11 | 🟡 Partial 10/11 | ❔ Unknown 11 not run | ⛔ Not supported 0/11 | ❌ Broken 0/11 · 9 blocked |
 | Aggregate filters that use other aggregates | 🟡 Partial 1/5 | ✅ Works 5/5 | ✅ Works 5/5 | ❔ Unknown 5 not run | ⛔ Not supported 0/5 | ❌ Broken 0/5 |
-| Aggregate filters that reference the parent record | ⛔ Not supported 0/8 | 🟡 Partial 7/8 | 🟡 Partial 4/8 | ❔ Unknown 8 not run | ⛔ Not supported 0/8 | ❌ Broken 0/8 |
+| Aggregate filters that reference the parent record | ⛔ Not supported 0/8 · 2 blocked | 🟡 Partial 7/8 · 1 blocked | 🟡 Partial 4/8 · 2 blocked | ❔ Unknown 8 not run | ⛔ Not supported 0/8 · 2 blocked | ❌ Broken 0/8 · 2 blocked |
 | Aggregate over to-one, multi-hop and many-to-many paths | 🟡 Partial 10/17 | 🟡 Partial 15/17 | 🟡 Partial 14/17 | ❔ Unknown 17 not run | ❌ Broken 0/17 | ❌ Broken 0/17 |
 | Aggregate over manual and attribute-free relationships | ⛔ Not supported 0/3 | 🟡 Partial 2/3 | ✅ Works 3/3 | ❔ Unknown 3 not run | ⛔ Not supported 0/3 | 🟡 Partial 1/3 |
-| Aggregate over limited, offset and from-many relationships | 🟡 Partial 5/9 | 🟡 Partial 6/9 | 🟡 Partial 6/9 | ❔ Unknown 9 not run | ⛔ Not supported 0/9 | ❌ Broken 0/9 |
+| Aggregate over limited, offset and from-many relationships | 🟡 Partial 5/9 | 🟡 Partial 6/9 | 🟡 Partial 6/9 | ❔ Unknown 9 not run | ⛔ Not supported 0/9 · 1 blocked | ❌ Broken 0/9 |
 | Root aggregates over sorted, limited and offset queries | 🟡 Partial 5/7 | 🟡 Partial 2/7 | 🟡 Partial 6/7 | ❔ Unknown 7 not run | ❌ Broken 0/7 | ❌ Broken 0/7 |
 | Distinct counts over composite and missing keys | 🟡 Partial 1/5 | ❓ Open question 4/5 | 🟡 Partial 1/5 | ❔ Unknown 5 not run | 🟡 Partial 1/5 | 🟡 Partial 3/5 |
 | Filter, sort, paginate and calculate with aggregates | ✅ Works 10/10 | ✅ Works 10/10 | ✅ Works 10/10 | ❔ Unknown 10 not run | ⛔ Not supported 0/10 | ❌ Broken 0/10 |
-| Aggregates respect read actions, arguments, actor and context | 🟡 Partial 8/9 | 🟡 Partial 7/9 | 🟡 Partial 8/9 | ❔ Unknown 9 not run | ⛔ Not supported 0/9 | ❌ Broken 0/9 |
+| Aggregates respect read actions, arguments, actor and context | 🟡 Partial 8/9 · 1 blocked | 🟡 Partial 7/9 · 1 blocked | 🟡 Partial 8/9 · 1 blocked | ❔ Unknown 9 not run | ⛔ Not supported 0/9 · 2 blocked | ❌ Broken 0/9 · 2 blocked |
 | Seeded filtered aggregates match an in-memory reference | ✅ Works 1/1 | ✅ Works 1/1 | ✅ Works 1/1 | ❔ Unknown 1 not run | ⛔ Not supported 0/1 | ⛔ Not supported 0/1 |
 
 ## 7. Writes
@@ -264,7 +268,7 @@ apply, such as getting a hidden record when the actor may read every note.
 | --- | --- | --- | --- | --- | --- | --- |
 | Policies filter reads | ✅ Works 3/3 | ✅ Works 3/3 | ✅ Works 3/3 | ✅ Works 3/3 | ✅ Works 3/3 | ✅ Works 3/3 |
 | Policies filter related records before bounds | ✅ Works 5/5 | ✅ Works 5/5 | ✅ Works 5/5 | 🔸 Incomplete 4/4 · 1 not run | 🟡 Partial 2/5 | ✅ Works 5/5 |
-| Policies filter what aggregates count | 🟡 Partial 7/8 | 🟡 Partial 7/8 | 🟡 Partial 7/8 | ⛔ Not supported 0/6 · 2 not run | 🟡 Partial 2/8 | 🟡 Partial 2/8 |
+| Policies filter what aggregates count | 🟡 Partial 7/8 | 🟡 Partial 7/8 | 🟡 Partial 7/8 | ⛔ Not supported 0/6 · 2 not run | 🟡 Partial 2/8 · 1 blocked | 🟡 Partial 2/8 |
 | Policies filter pages and counts | ✅ Works 3/3 | ✅ Works 3/3 | 🟡 Partial 1/3 | ⛔ Not supported 0/3 | ⛔ Not supported 0/3 | ❌ Broken 0/3 |
 | Policies filter and forbid writes | ✅ Works 4/4 | ✅ Works 4/4 | ✅ Works 4/4 | 🟡 Partial 3/4 | 🟡 Partial 2/4 | 🟡 Partial 3/4 |
 
@@ -272,19 +276,19 @@ apply, such as getting a hidden record when the actor may read every note.
 
 | Feature | sqlite | postgres | ets | csv | mysql | clickhouse |
 | --- | --- | --- | --- | --- | --- | --- |
-| A filter policy on the actor | 🟡 Partial 15/16 | ✅ Works 16/16 | ✅ Works 16/16 | 🟡 Partial 7/16 | 🟡 Partial 12/16 | 🟡 Partial 10/16 |
-| The same policy with no actor | 🟡 Partial 15/16 | ✅ Works 16/16 | ✅ Works 16/16 | 🟡 Partial 10/16 | 🟡 Partial 11/16 | 🟡 Partial 11/16 |
-| forbid_if before authorize_if | 🟡 Partial 15/16 | ✅ Works 16/16 | ✅ Works 16/16 | 🟡 Partial 7/16 | 🟡 Partial 12/16 | 🟡 Partial 10/16 |
-| A bypass policy, for an actor it does not let through | 🟡 Partial 15/16 | ✅ Works 16/16 | ✅ Works 16/16 | 🟡 Partial 7/16 | 🟡 Partial 12/16 | 🟡 Partial 10/16 |
-| A bypass policy, for an actor it lets through | 🟡 Partial 12/13 | ✅ Works 13/13 | ✅ Works 13/13 | 🟡 Partial 5/13 | 🟡 Partial 10/13 | 🟡 Partial 8/13 |
-| Two policies that must both pass | 🟡 Partial 15/16 | ✅ Works 16/16 | ✅ Works 16/16 | 🟡 Partial 7/16 | 🟡 Partial 12/16 | 🟡 Partial 10/16 |
-| One policy whose checks either pass | 🟡 Partial 15/16 | ✅ Works 16/16 | ✅ Works 16/16 | 🟡 Partial 7/16 | 🟡 Partial 12/16 | 🟡 Partial 10/16 |
-| A policy on a to-one relationship | 🟡 Partial 14/16 | ✅ Works 16/16 | ✅ Works 16/16 | 🟡 Partial 1/16 | 🟡 Partial 12/16 | 🟡 Partial 1/16 |
-| A policy on a multi-hop exists | 🟡 Partial 14/16 | ✅ Works 16/16 | ✅ Works 16/16 | 🟡 Partial 7/16 | 🟡 Partial 12/16 | 🟡 Partial 6/16 |
-| A policy composed with can_read | 🟡 Partial 14/16 | ✅ Works 16/16 | ✅ Works 16/16 | 🟡 Partial 7/16 | 🟡 Partial 12/16 | 🟡 Partial 6/16 |
-| A strict policy, for an actor it forbids | 🟡 Partial 15/16 | ✅ Works 16/16 | ✅ Works 16/16 | 🟡 Partial 10/16 | 🟡 Partial 11/16 | 🟡 Partial 11/16 |
-| A strict policy, for an actor it allows | 🟡 Partial 12/13 | ✅ Works 13/13 | ✅ Works 13/13 | 🟡 Partial 5/13 | 🟡 Partial 10/13 | 🟡 Partial 8/13 |
-| Field policies hide values, in reads, filters and aggregates | ✅ Works 4/4 | ✅ Works 4/4 | ✅ Works 4/4 | 🟡 Partial 3/4 | 🟡 Partial 2/4 | ❌ Broken 0/4 |
+| A filter policy on the actor | 🟡 Partial 15/16 | ✅ Works 16/16 | ✅ Works 16/16 | 🟡 Partial 7/16 · 8 blocked | 🟡 Partial 12/16 · 3 blocked | 🟡 Partial 10/16 · 5 blocked |
+| The same policy with no actor | 🟡 Partial 15/16 | ✅ Works 16/16 | ✅ Works 16/16 | 🟡 Partial 10/16 · 5 blocked | 🟡 Partial 11/16 · 3 blocked | 🟡 Partial 11/16 · 4 blocked |
+| forbid_if before authorize_if | 🟡 Partial 15/16 | ✅ Works 16/16 | ✅ Works 16/16 | 🟡 Partial 7/16 · 8 blocked | 🟡 Partial 12/16 · 3 blocked | 🟡 Partial 10/16 · 5 blocked |
+| A bypass policy, for an actor it does not let through | 🟡 Partial 15/16 | ✅ Works 16/16 | ✅ Works 16/16 | 🟡 Partial 7/16 · 8 blocked | 🟡 Partial 12/16 · 3 blocked | 🟡 Partial 10/16 · 5 blocked |
+| A bypass policy, for an actor it lets through | 🟡 Partial 12/13 · 1 blocked | ✅ Works 13/13 | ✅ Works 13/13 | 🟡 Partial 5/13 · 8 blocked | 🟡 Partial 10/13 · 3 blocked | 🟡 Partial 8/13 · 5 blocked |
+| Two policies that must both pass | 🟡 Partial 15/16 | ✅ Works 16/16 | ✅ Works 16/16 | 🟡 Partial 7/16 · 8 blocked | 🟡 Partial 12/16 · 3 blocked | 🟡 Partial 10/16 · 5 blocked |
+| One policy whose checks either pass | 🟡 Partial 15/16 | ✅ Works 16/16 | ✅ Works 16/16 | 🟡 Partial 7/16 · 8 blocked | 🟡 Partial 12/16 · 3 blocked | 🟡 Partial 10/16 · 5 blocked |
+| A policy on a to-one relationship | 🟡 Partial 14/16 · 1 blocked | ✅ Works 16/16 | ✅ Works 16/16 | 🟡 Partial 1/16 · 8 blocked | 🟡 Partial 12/16 · 3 blocked | 🟡 Partial 1/16 · 5 blocked |
+| A policy on a multi-hop exists | 🟡 Partial 14/16 · 1 blocked | ✅ Works 16/16 | ✅ Works 16/16 | 🟡 Partial 7/16 · 8 blocked | 🟡 Partial 12/16 · 3 blocked | 🟡 Partial 6/16 · 5 blocked |
+| A policy composed with can_read | 🟡 Partial 14/16 · 1 blocked | ✅ Works 16/16 | ✅ Works 16/16 | 🟡 Partial 7/16 · 8 blocked | 🟡 Partial 12/16 · 3 blocked | 🟡 Partial 6/16 · 5 blocked |
+| A strict policy, for an actor it forbids | 🟡 Partial 15/16 | ✅ Works 16/16 | ✅ Works 16/16 | 🟡 Partial 10/16 · 5 blocked | 🟡 Partial 11/16 · 3 blocked | 🟡 Partial 11/16 · 4 blocked |
+| A strict policy, for an actor it allows | 🟡 Partial 12/13 · 1 blocked | ✅ Works 13/13 | ✅ Works 13/13 | 🟡 Partial 5/13 · 8 blocked | 🟡 Partial 10/13 · 3 blocked | 🟡 Partial 8/13 · 5 blocked |
+| Field policies hide values, in reads, filters and aggregates | ✅ Works 4/4 | ✅ Works 4/4 | ✅ Works 4/4 | 🟡 Partial 3/4 · 1 blocked | 🟡 Partial 2/4 · 1 blocked | ❌ Broken 0/4 · 1 blocked |
 | A filter check on create runs after the insert | ✅ Works 2/2 | ✅ Works 2/2 | ❌ Broken 0/2 | 🟡 Partial 1/2 | ❌ Broken 0/2 | ❌ Broken 0/2 |
 | Every policy path, without authorization | 🟡 Partial 21/22 | ✅ Works 22/22 | ✅ Works 22/22 | 🟡 Partial 13/22 | 🟡 Partial 18/22 | 🟡 Partial 16/22 |
 
@@ -293,6 +297,101 @@ apply, such as getting a hidden record when the actor may read every note.
 | Feature | sqlite | postgres | ets | csv | mysql | clickhouse |
 | --- | --- | --- | --- | --- | --- | --- |
 | Counts match loads, and root sums match an in-memory reference | ✅ Works 2/2 | ✅ Works 2/2 | ✅ Works 2/2 | ⛔ Not supported 0/2 | 🟡 Partial 1/2 | 🟡 Partial 1/2 |
+
+## Blockers
+
+A blocker is a failing prerequisite that may explain other results, so
+fix it first. Prerequisites are either declared by a scenario (a control
+that runs the same path without the feature under test, or the storage
+cell of a type it relies on), or, when a fixture row could not be stored,
+the storage cells of that row's types. A setup failure never ran its
+operation, so its result is unknown, not broken. A scenario with several
+blockers counts under each.
+
+### AshSqlite
+
+| Blocker | Its result | Not run | Failing | Only blocker of |
+| --- | --- | ---: | ---: | ---: |
+| `filter.fanout_read_control` | wrong | 0 | 7 | 7 |
+| `policy.control.exists_filter_input` | wrong | 0 | 5 | 5 |
+| `storage.decimal.edge` | lost at read: Decimal.new("12345678901234568") | 0 | 4 | 4 |
+| `context.relationship_context_control` | wrong | 0 | 1 | 1 |
+| `filter.nested_parent_control` | crashed | 0 | 1 | 1 |
+| `filter.parent_through_control` | crashed | 0 | 1 | 1 |
+
+### AshPostgres
+
+| Blocker | Its result | Not run | Failing | Only blocker of |
+| --- | --- | ---: | ---: | ---: |
+| `context.relationship_context_control` | wrong | 0 | 1 | 1 |
+| `filter.nested_parent_control` | crashed | 0 | 1 | 1 |
+
+### Ash.DataLayer.Ets
+
+| Blocker | Its result | Not run | Failing | Only blocker of |
+| --- | --- | ---: | ---: | ---: |
+| `context.relationship_context_control` | wrong | 0 | 1 | 1 |
+| `filter.nested_parent_control` | wrong | 0 | 1 | 1 |
+| `filter.parent_through_control` | wrong | 0 | 1 | 1 |
+
+### AshCsv
+
+| Blocker | Its result | Not run | Failing | Only blocker of |
+| --- | --- | ---: | ---: | ---: |
+| `storage.boolean.ordinary` | error at create: stored value for value could not be casted from the stored value to type Ash.Type.Boolean: "true" | 247 | 0 | 189 |
+| `storage.embedded.ordinary` | error at create: ** (Protocol.UndefinedError) protocol String.Chars not implemented for Ash.Conformance.Resources.Address (a struct) | 58 | 0 | 0 |
+| `storage.float.ordinary` | error at create: stored value for value could not be casted from the stored value to type Ash.Type.Float: "1.5" | 58 | 0 | 0 |
+| `storage.map.ordinary` | error at create: ** (Protocol.UndefinedError) protocol String.Chars not implemented for Map | 58 | 0 | 0 |
+| `storage.strings.ordinary` | error at create: ** (Protocol.UndefinedError) protocol Enumerable not implemented for BitString | 58 | 0 | 0 |
+| `policy.control.aggregate_filter` | rejected | 0 | 12 | 12 |
+| `policy.control.bulk_update` | wrong | 0 | 12 | 12 |
+| `policy.control.exists_filter_input` | crashed | 0 | 12 | 12 |
+| `policy.control.loaded_count` | rejected | 0 | 12 | 12 |
+| `policy.control.loaded_sum` | rejected | 0 | 12 | 12 |
+| `policy.control.count` | rejected | 0 | 10 | 10 |
+| `policy.control.offset_page` | rejected | 0 | 10 | 10 |
+| `policy.control.sum` | rejected | 0 | 10 | 10 |
+| `policy.control.field_aggregate` | rejected | 0 | 1 | 1 |
+
+### AshMysql
+
+| Blocker | Its result | Not run | Failing | Only blocker of |
+| --- | --- | ---: | ---: | ---: |
+| `policy.control.aggregate_filter` | rejected | 0 | 12 | 12 |
+| `policy.control.loaded_count` | rejected | 0 | 12 | 12 |
+| `policy.control.loaded_sum` | rejected | 0 | 12 | 12 |
+| `context.relationship_context_control` | wrong | 0 | 2 | 2 |
+| `storage.decimal.ordinary` | lost at read: Decimal.new("2") | 0 | 2 | 2 |
+| `bounds.default_sort_control` | crashed | 0 | 1 | 1 |
+| `context.authorization_bounds_control` | crashed | 0 | 1 | 1 |
+| `filter.nested_parent_control` | crashed | 0 | 1 | 1 |
+| `filter.parent_through_control` | crashed | 0 | 1 | 1 |
+| `policy.control.field_aggregate` | rejected | 0 | 1 | 1 |
+
+### AshClickhouse
+
+| Blocker | Its result | Not run | Failing | Only blocker of |
+| --- | --- | ---: | ---: | ---: |
+| `policy.control.aggregate_filter` | crashed | 0 | 12 | 12 |
+| `policy.control.exists_filter_input` | crashed | 0 | 12 | 12 |
+| `policy.control.loaded_count` | wrong | 0 | 12 | 12 |
+| `policy.control.loaded_sum` | wrong | 0 | 12 | 12 |
+| `policy.control.bulk_update` | wrong | 0 | 10 | 10 |
+| `filter.fanout_read_control` | crashed | 0 | 9 | 9 |
+| `storage.date.ordinary` | lost at read: "2024-02-29" | 0 | 6 | 0 |
+| `storage.utc_datetime_usec.ordinary` | lost at update: ~U[2024-02-29 12:34:56.000000Z] | 0 | 6 | 0 |
+| `values.decimal_read_control` | wrong | 0 | 4 | 4 |
+| `context.relationship_context_control` | wrong | 0 | 2 | 2 |
+| `filter.nested_parent_control` | crashed | 0 | 1 | 1 |
+| `filter.parent_through_control` | crashed | 0 | 1 | 1 |
+| `policy.control.field_aggregate` | wrong | 0 | 1 | 1 |
+
+Setup failures that no storage cell explains: no type in the row
+raised when stored on its own, or tier 1 could not test it.
+
+| Scenarios | Role | Reason |
+| ---: | --- | --- |
+| 58 | `record` | protocol Jason.Encoder not implemented for Ash.Conformance.Resources.Address (a struct), Jason.Encoder protocol must always be explicitly implemented. |
 
 ## Claims versus results
 
@@ -308,6 +407,7 @@ whose claims disagree with the result:
 | Select only some attributes | ets | Works without advertising `record: :select` |
 | Select only some attributes | clickhouse | Advertised, but ❌ Broken |
 | Large integers, floats and decimals round-trip | clickhouse | Advertised, but ❌ Broken |
+| Dates, microsecond datetimes and times round-trip | clickhouse | Advertised, but ❌ Broken |
 | Stream records in batches | sqlite | Works without advertising `record: :keyset` |
 | Stream records in batches | postgres | Works without advertising `record: :keyset` |
 | Stream records in batches | ets | Works without advertising `record: :keyset` |
@@ -377,43 +477,6 @@ whose claims disagree with the result:
 | A filter check on create runs after the insert | ets | Not advertising `policy_owner_note: :transact`, but not rejected either: wrong answers |
 | A filter check on create runs after the insert | mysql | Not advertising `policy_owner_note: :transact`, but not rejected either: wrong answers |
 | A filter check on create runs after the insert | clickhouse | Not advertising `policy_owner_note: :transact`, but not rejected either: wrong answers |
-
-## Setup failures
-
-A setup failure means the data layer could not store or read back a
-scenario's fixture, so the scenario never ran its operation; its result is
-unknown, not broken. Rows are stored one at a time, so each reason names
-the resource role that failed. These are the distinct causes, with how
-many scenarios each stopped.
-
-### AshSqlite
-
-None.
-
-### AshPostgres
-
-None.
-
-### Ash.DataLayer.Ets
-
-None.
-
-### AshCsv
-
-| Scenarios | Role | Reason |
-| ---: | --- | --- |
-| 188 | `child` | stored value for visible could not be casted from the stored value to type Ash.Type.Boolean: "true" |
-| 58 | `record` | protocol String.Chars not implemented for Map |
-
-### AshMysql
-
-None.
-
-### AshClickhouse
-
-| Scenarios | Role | Reason |
-| ---: | --- | --- |
-| 58 | `record` | protocol Jason.Encoder not implemented for Ash.Conformance.Resources.Address (a struct), Jason.Encoder protocol must always be explicitly implemented. |
 
 ## Definition warnings
 

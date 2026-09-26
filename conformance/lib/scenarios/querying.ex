@@ -7,7 +7,8 @@ defmodule Ash.Conformance.Scenarios.Querying do
   `record` and aggregate fixtures. Distinct, combinations and locks are opt-in
   for data layers; Ash rejects them with a documented error when unsupported.
   """
-  import Ash.Conformance.Scenario, only: [new: 5]
+  import Ash.Conformance.Scenario, only: [new: 5, requires: 2]
+  import Ash.Conformance.Storage, only: [stored: 1]
   import Ash.Conformance.Scenarios.RecordHelpers
   require Ash.Query
   require Ash.Expr
@@ -28,16 +29,22 @@ defmodule Ash.Conformance.Scenarios.Querying do
       filter("record.filter_is_nil", [3, 7], Ash.Expr.expr(is_nil(quantity))),
       filter("record.filter_not_nil", [1, 2, 4, 5, 6], Ash.Expr.expr(not is_nil(quantity))),
       filter("record.filter_not", [5, 6], Ash.Expr.expr(not (quantity > 2))),
-      filter("record.filter_boolean", [2, 6], Ash.Expr.expr(active == false)),
-      filter("record.filter_atom", [1, 5, 6], Ash.Expr.expr(status == :live)),
-      filter("record.filter_atom_as_string", [1, 5, 6], Ash.Expr.expr(status == "live")),
-      filter("record.filter_decimal", [2, 4], Ash.Expr.expr(price > 1.5)),
-      filter("record.filter_date", [1, 4], Ash.Expr.expr(born_on >= ^~D[2024-01-01])),
+      filter("record.filter_boolean", [2, 6], Ash.Expr.expr(active == false))
+      |> requires(stored(:boolean)),
+      filter("record.filter_atom", [1, 5, 6], Ash.Expr.expr(status == :live))
+      |> requires(stored(:atom)),
+      filter("record.filter_atom_as_string", [1, 5, 6], Ash.Expr.expr(status == "live"))
+      |> requires(stored(:atom)),
+      filter("record.filter_decimal", [2, 4], Ash.Expr.expr(price > 1.5))
+      |> requires(stored(:decimal)),
+      filter("record.filter_date", [1, 4], Ash.Expr.expr(born_on >= ^~D[2024-01-01]))
+      |> requires(stored(:date)),
       filter(
         "record.filter_datetime_precision",
         [4],
         Ash.Expr.expr(seen_at > ^~U[2024-02-29 12:00:00.000000Z])
-      ),
+      )
+      |> requires(stored(:utc_datetime_usec)),
       filter("record.filter_contains", [1, 2], Ash.Expr.expr(contains(name, "pp"))),
       filter(
         "record.filter_case_insensitive",
@@ -46,9 +53,12 @@ defmodule Ash.Conformance.Scenarios.Querying do
       ),
       filter("record.filter_unicode", [4], Ash.Expr.expr(name == "Ünïcode ✓")),
       filter("record.filter_empty_string", [6], Ash.Expr.expr(name == "")),
-      filter("record.filter_array_member", [1, 4], Ash.Expr.expr("red" in tags)),
-      filter("record.filter_map_key", [2], Ash.Expr.expr(metadata["size"] == "m")),
-      filter("record.filter_embedded", [1, 4], Ash.Expr.expr(address[:city] == "Auckland")),
+      filter("record.filter_array_member", [1, 4], Ash.Expr.expr("red" in tags))
+      |> requires(stored(:strings)),
+      filter("record.filter_map_key", [2], Ash.Expr.expr(metadata["size"] == "m"))
+      |> requires(stored(:map)),
+      filter("record.filter_embedded", [1, 4], Ash.Expr.expr(address[:city] == "Auckland"))
+      |> requires(stored(:embedded)),
       filter("record.filter_calculation", [4], Ash.Expr.expr(double_quantity > 10)),
       # Ash documents `true or nil` as nil, unlike SQL, where it is true.
       filter(
@@ -76,8 +86,10 @@ defmodule Ash.Conformance.Scenarios.Querying do
         Ash.Expr.expr(quantity == 3)
       ),
       sort("record.sort_string", [7, 6, 5, 4, 3, 2, 1], code: :desc),
-      sort("record.sort_decimal", [6, 5, 1, 2, 4, 3, 7], price: :asc_nils_last, id: :asc),
-      sort("record.sort_date", [2, 1, 4, 3, 5, 6, 7], born_on: :asc_nils_last, id: :asc),
+      sort("record.sort_decimal", [6, 5, 1, 2, 4, 3, 7], price: :asc_nils_last, id: :asc)
+      |> requires(stored(:decimal)),
+      sort("record.sort_date", [2, 1, 4, 3, 5, 6, 7], born_on: :asc_nils_last, id: :asc)
+      |> requires(stored(:date)),
       scenario("record.sort_calculation", :ordering, [4, 1, 2, 5, 6], @calculations, fn ctx ->
         ctx.record
         |> Ash.Query.filter(not is_nil(quantity))
