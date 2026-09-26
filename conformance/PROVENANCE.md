@@ -25,15 +25,24 @@ were moved outside operation capture without changing their datasets.
 | Dependency | Source |
 | --- | --- |
 | Ash | Parent checkout, initially fork main `bc9884e08`, version 3.33.11 |
-| AshSQL | `wtsnz/ash_sql` at `0985b9fdcca0a0919defdf76b0c44115fa8b8340` |
-| AshSQLite | `wtsnz/ash_sqlite` at `46a4b869450a2a961ef9af44b5b69da2d5aff29c` |
+| AshSQL | `ash-project/ash_sql` at `0ef973c11a96774f088137f3b2288ef9732d44f7` (main, ash_sql#264) |
+| AshSQLite | `ash-project/ash_sqlite` at `f489778aae1abad8de436ed07dfb3237148a44fd` (main, ash_sqlite#232) |
 | AshPostgres | `ash-project/ash_postgres` at `945073e431ec6eb3fbbb831a8ce5b561d8f8cd35` |
 
-At inspection, AshSQL fork PR #3 and AshSQLite upstream PR #232 remained open
-at those respective revisions. They contain the unreleased aggregate extraction
-and grouped SQLite aggregate integration. The separately stacked from-many and
-schema fixes are intentionally excluded. Updating pins requires rerunning every
-inherited gap, not accepting observations from a neighboring checkout.
+Until 2026-09-25 the pins were the unmerged work on Will's forks:
+`wtsnz/ash_sql` at `0985b9fdcca0a0919defdf76b0c44115fa8b8340` and
+`wtsnz/ash_sqlite` at `46a4b869450a2a961ef9af44b5b69da2d5aff29c`. Both were
+squash-merged upstream that day, as ash_sql#264 (the aggregate extraction)
+and ash_sqlite#232 (grouped SQLite aggregates). The pins moved to the merge
+commits on ash-project `main`:
+
+- ash_sql's merge commit has the same tree as the old pin.
+- ash_sqlite's merge commit differs only in its own `mix.lock`, a `mint`
+  bump merged separately (#234).
+
+The separately stacked from-many and schema fixes are intentionally
+excluded. Updating pins requires rerunning every inherited gap, not
+accepting observations from a neighboring checkout.
 
 `override: true` on Ash forces every adapter/transitive dependency to the parent
 checkout. The AshSQL override forces both adapters to the same unreleased commit

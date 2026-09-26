@@ -52,7 +52,8 @@ defmodule Ash.Conformance.MixProject do
     ]
   end
 
-  # `pinned` (the default) is the unreleased aggregate work under review.
+  # `pinned` (the default) is an exact ash-project commit for each adapter:
+  # the SQL aggregate work, merged in ash_sql#264 and ash_sqlite#232.
   # `upstream` is ash-project main for every adapter, locked in
   # mix.upstream.lock; `mix deps.update` moves it forward deliberately.
   defp dependency_set do
@@ -69,8 +70,8 @@ defmodule Ash.Conformance.MixProject do
     case dependency_set() do
       "pinned" ->
         [
-          git: "https://github.com/wtsnz/ash_sql.git",
-          ref: "0985b9fdcca0a0919defdf76b0c44115fa8b8340",
+          git: "https://github.com/ash-project/ash_sql.git",
+          ref: "0ef973c11a96774f088137f3b2288ef9732d44f7",
           override: true
         ]
 
@@ -83,8 +84,8 @@ defmodule Ash.Conformance.MixProject do
     case dependency_set() do
       "pinned" ->
         [
-          git: "https://github.com/wtsnz/ash_sqlite.git",
-          ref: "46a4b869450a2a961ef9af44b5b69da2d5aff29c"
+          git: "https://github.com/ash-project/ash_sqlite.git",
+          ref: "f489778aae1abad8de436ed07dfb3237148a44fd"
         ]
 
       "upstream" ->
