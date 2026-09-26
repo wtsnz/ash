@@ -22,7 +22,7 @@ defmodule Ash.Conformance.Resources.Combination do
     link = module.(:combo_link)
 
     quote context: Elixir do
-      unquote(item(item, adapter))
+      unquote(item(item, owner, adapter))
       unquote(link(link, adapter))
       unquote(owner(owner, item, link, adapter))
     end
@@ -47,7 +47,19 @@ defmodule Ash.Conformance.Resources.Combination do
           defaults([:read, :destroy, create: :*, update: :*])
 
           read :paged do
-            pagination(offset?: true, countable: true, required?: false)
+            pagination(offset?: true, keyset?: true, countable: true, required?: false)
+          end
+
+          create :create_with_items do
+            accept([:id, :label])
+            argument(:items, {:array, :map})
+            change(manage_relationship(:items, type: :create))
+          end
+
+          update :replace_items do
+            require_atomic?(false)
+            argument(:items, {:array, :map})
+            change(manage_relationship(:items, type: :direct_control))
           end
         end
 
@@ -71,6 +83,11 @@ defmodule Ash.Conformance.Resources.Combination do
 
         aggregates do
           (unquote_splicing(aggregates))
+          sum(:double_sum, :items, :double_value, public?: true)
+        end
+
+        calculations do
+          calculate(:count_doubled, :integer, expr(count_items_none * 2), public?: true)
         end
 
         policies do
@@ -122,7 +139,7 @@ defmodule Ash.Conformance.Resources.Combination do
     end
   end
 
-  defp item(module, adapter) do
+  defp item(module, owner, adapter) do
     quote context: Elixir do
       defmodule unquote(module) do
         use Ash.Conformance.Resources.Base,
@@ -147,6 +164,23 @@ defmodule Ash.Conformance.Resources.Combination do
 
         actions do
           defaults([:read, :destroy, create: :*, update: :*])
+        end
+
+        relationships do
+          belongs_to(:owner, unquote(owner),
+            source_attribute: :owner_id,
+            define_attribute?: false,
+            public?: true
+          )
+        end
+
+        calculations do
+          calculate(:double_value, :integer, expr(value * 2), public?: true)
+
+          calculate :value_plus, :integer, expr(value + ^arg(:amount)) do
+            argument(:amount, :integer, allow_nil?: false)
+            public?(true)
+          end
         end
 
         policies do

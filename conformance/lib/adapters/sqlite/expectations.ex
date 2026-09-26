@@ -13,6 +13,31 @@ defmodule Ash.Conformance.Sqlite.Expectations do
   def rules do
     [
       supported("*"),
+      expect("expr.and_then", defect_value(%{1 => 2, 2 => 3, 3 => nil, 4 => 0}, "elixir-and")),
+      expect(
+        "expr.date_add_month",
+        defect_value(
+          %{1 => ~D[2024-03-28], 2 => ~D[2025-01-31], 3 => nil, 4 => ~D[2023-03-03]},
+          "month-overflow"
+        )
+      ),
+      expect("expr.filter.date_add_month", defect_value([], "month-overflow")),
+      expect(
+        ~w(expr.round expr.round_decimal expr.filter.round),
+        defect_error(~r/unrecognized token: ":"/, "round-syntax")
+      ),
+      expect("expr.start_of_day", defect_error(~r/no such function: date_trunc/, "start-of-day")),
+      expect(
+        "expr.string_downcase",
+        defect_value(%{1 => "Ünïcode ✓", 2 => "abc", 3 => "x", 4 => nil}, "unicode-case")
+      ),
+      expect("expr.filter.string_downcase", defect_value([], "unicode-case")),
+      expect(
+        "expr.string_join",
+        unsupported(~r/does not support the function string_join/, "string-join")
+      ),
+      expect("nil.not_in_with_nil", unresolved_value([], "in-list-nil")),
+      expect("nil.or", unresolved_value([1, 3], "true-or-nil")),
       # The item policy applies after the relationship's limit, as in
       # context.authorization_before_bounds.
       expect(
@@ -212,7 +237,7 @@ defmodule Ash.Conformance.Sqlite.Expectations do
         )
       ),
       expect(
-        "query.union",
+        ~w(query.union query.union_all query.intersect query.except),
         unsupported(~r/Data layer does not support combining queries/, "query-combinations")
       ),
       expect("record.filter_true_or_nil", unresolved_value([1, 4, 5, 7], "true-or-nil")),
@@ -299,6 +324,14 @@ defmodule Ash.Conformance.Sqlite.Expectations do
         defect_value([], "json-null")
       ),
       expect("use.fanout_read_page", defect_value({[11, 11], 2}, "sorted-distinct-reads")),
+      expect("read.join_to_many", defect_value([1, 1, 2], "sorted-distinct-reads")),
+      expect(
+        "read.join_or_paths",
+        defect_value([1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2], "sorted-distinct-reads")
+      ),
+      expect("read.join_negated", defect_value([1, 1, 2, 2], "sorted-distinct-reads")),
+      expect("read.join_limit", defect_value([1, 1], "sorted-distinct-reads")),
+      expect("read.join_page", defect_value({[1], 3}, "sorted-distinct-reads")),
       expect(
         "values.decimal_max",
         defect_value(%{1 => "0.2", 2 => "12345678901234568", 3 => nil}, "decimal-precision")

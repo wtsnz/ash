@@ -13,6 +13,8 @@ defmodule Ash.Conformance.Postgres.Expectations do
   def rules do
     [
       supported("*"),
+      expect("nil.not_in_with_nil", unresolved_value([], "in-list-nil")),
+      expect("nil.or", unresolved_value([1, 3], "true-or-nil")),
       # The item policy applies after the relationship's limit, as in
       # context.authorization_before_bounds.
       expect(

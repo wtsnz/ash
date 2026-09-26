@@ -10,6 +10,8 @@ defmodule Ash.Conformance.Tiers do
   - Tier 1, storage: each type stored and read back (`storage.*`).
   - Tier 2, operations: each filter, sort and aggregate on each type
     (`ops.*`).
+  - Expressions: each expression function, and nil logic, on one small
+    fixture (`expr.*`, `nil.*`).
   - The policy grid: each policy shape on each path (`policy.*`).
   - The combination grid: features alone and in pairs (`combo.*`).
   - Tier 4, integration: every other scenario. These run on the richly
@@ -21,6 +23,7 @@ defmodule Ash.Conformance.Tiers do
   @tiers [
     {:storage, "Storage (tier 1)", "storage."},
     {:operations, "Operations (tier 2)", "ops."},
+    {:expressions, "Expressions", ["expr.", "nil."]},
     {:policies, "Policy grid", "policy."},
     {:combinations, "Combinations", "combo."},
     {:integration, "Integration (tier 4)", nil}
@@ -30,7 +33,7 @@ defmodule Ash.Conformance.Tiers do
 
   def of(scenario_id) do
     Enum.find_value(@tiers, :integration, fn
-      {tier, _label, prefix} when is_binary(prefix) ->
+      {tier, _label, prefix} when not is_nil(prefix) ->
         if String.starts_with?(scenario_id, prefix), do: tier
 
       _tier ->

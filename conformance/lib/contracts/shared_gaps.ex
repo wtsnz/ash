@@ -10,6 +10,22 @@ defmodule Ash.Conformance.Contracts.SharedGaps do
   def all do
     [
       %{
+        id: "in-list-nil",
+        title: "In list nil",
+        kind: :decision,
+        owners: [:ash],
+        body: ~S"""
+
+        Decision: is `x in [7, nil]` nil or false when `x` is neither 7 nor nil? The
+        expressions guide says nil behaves like SQL `NULL`, where `-7 IN (7, NULL)`
+        is `NULL`, so `not (a in [7, nil])` keeps no row but 7's. Ash's in-memory
+        evaluation says `false`, so the negation keeps `-7` and `0`. The positive
+        filter agrees either way (`record.filter_in_with_nil`). Until Ash decides,
+        `nil.not_in_with_nil` is unresolved and each reviewed data layer pins what
+        it returns.
+        """
+      },
+      %{
         id: "decimal-avg",
         title: "Decimal avg",
         kind: :decision,

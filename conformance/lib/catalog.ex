@@ -66,6 +66,8 @@ defmodule Ash.Conformance.Catalog do
       Scenarios.Records,
       Scenarios.Types,
       Scenarios.Querying,
+      Scenarios.Expressions,
+      Scenarios.Joins,
       Scenarios.Relationships,
       Scenarios.Aggregates.Kinds,
       Scenarios.Aggregates.Results,

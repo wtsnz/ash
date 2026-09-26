@@ -4,7 +4,7 @@
 
 Generated from an unreviewed run: each result was classified automatically against the intended answer. Nothing here has been reviewed.
 
-Feature catalog version 1: 143 features and 785 scenarios.
+Feature catalog version 1: 152 features and 850 scenarios.
 
 | Status | Meaning |
 | --- | --- |
@@ -114,6 +114,14 @@ fix.
 | Filter booleans and atoms, including atoms as strings | ✅ Works 3/3 |  |
 | Filter strings: contains, case, unicode and empty | ✅ Works 4/4 |  |
 | Filter inside arrays, maps and embedded resources | ✅ Works 3/3 |  |
+| Arithmetic and rounding, with integer division as a float | ✅ Works 10/10 |  |
+| String functions, including non-ASCII text | ✅ Works 11/11 |  |
+| if, cond, || and && | ✅ Works 5/5 |  |
+| Date and datetime arithmetic | ✅ Works 5/5 |  |
+| Negation, column comparisons and and/or with nil | ❓ Open question 8/10 | `nil.not_in_with_nil` open question, `nil.or` open question |
+| Filters through to-many relationships return each record once | ✅ Works 9/9 |  |
+| Sort by a related record's attribute | ✅ Works 1/1 |  |
+| Calculations feed aggregates, filters and sorts | ✅ Works 5/5 |  |
 | Filter by a calculation | ✅ Works 1/1 |  |
 | Sort by one or more fields, with explicit nil order | ✅ Works 6/6 |  |
 | Sort by a calculation | ✅ Works 1/1 |  |
@@ -122,7 +130,7 @@ fix.
 | Stream records in batches | ✅ Works 1/1 |  |
 | Distinct records by a field | ✅ Works 1/1 |  |
 | Combine queries with union | ✅ Works 1/1 |  |
-| Combine queries with union all and intersection | ⚪ Untested |  |
+| Combine queries with union all, intersect and except | ✅ Works 3/3 |  |
 | Load expression calculations, with arguments | ✅ Works 3/3 |  |
 | Offset pagination with counts | ✅ Works 1/1 |  |
 | Keyset pagination, forwards and backwards | ✅ Works 1/1 |  |
@@ -141,7 +149,7 @@ fix.
 | Relationship context reaches the read action | 🟡 Partial 1/2 | `context.relationship_context_control` wrong |
 | Parent references in nested and through relationship filters | ❌ Broken 0/2 | `filter.nested_parent_control` wrong, `filter.parent_through_control` wrong |
 | Load belongs-to, has-one, has-many and many-to-many relationships | ✅ Works 4/4 |  |
-| Create and update related records with manage_relationship | ⚪ Untested |  |
+| Create and update related records with manage_relationship | ✅ Works 2/2 |  |
 
 ## 7. Aggregates
 
@@ -174,6 +182,7 @@ fix.
 | Bulk create with partial success | ✅ Works 1/1 |  |
 | Bulk update atomically | ✅ Works 1/1 |  |
 | Writes that filter by or read aggregates | ✅ Works 4/4 |  |
+| Atomic updates with expressions, and bulk writes over sorted, limited queries | ✅ Works 4/4 |  |
 
 ## 9. Transactions and locks
 

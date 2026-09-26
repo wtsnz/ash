@@ -84,11 +84,12 @@ defmodule Ash.Conformance.Adapter do
           authorized_child ledger record tenant_parent tenant_item secure_parent secure_item
           context_parent context_item)a ++
         Ash.Conformance.Storage.roles() ++
-        Ash.Conformance.Policy.roles() ++ ~w(combo_owner combo_item combo_link)a
+        Ash.Conformance.Policy.roles() ++ ~w(combo_owner combo_item combo_link expr_row)a
 
   def table_roles,
-    do: ~w(parent child rating tag link child_tag event reading ledger record tenant_parent
-          tenant_item policy_doc policy_note policy_member combo_owner combo_item combo_link)a
+    do:
+      ~w(parent child rating tag link child_tag event reading ledger record tenant_parent
+          tenant_item policy_doc policy_note policy_member combo_owner combo_item combo_link expr_row)a
 
   def find!(name) do
     Enum.find(every(), &(to_string(&1.id()) == name)) ||

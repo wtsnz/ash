@@ -197,6 +197,29 @@ defmodule Ash.Conformance.Scenarios.Querying do
         semantic_basis: "../documentation/topics/advanced/combination-queries.md",
         capabilities: [child: :combine, parent: {:combine, :union}]
       ),
+      # Children: 11 and 12 are 2, 13 is 7, 21 is 4 and 14 is nil. `union_all`
+      # keeps duplicates, `intersect` keeps rows in both, `except` drops them.
+      new(
+        "query.union_all",
+        :reads,
+        [11, 11, 12, 12],
+        &combined(&1, Ash.Expr.expr(value == 2), :union_all, Ash.Expr.expr(value == 2)),
+        combination_opts(:union_all)
+      ),
+      new(
+        "query.intersect",
+        :reads,
+        [11, 12, 21],
+        &combined(&1, Ash.Expr.expr(value >= 2), :intersect, Ash.Expr.expr(value <= 4)),
+        combination_opts(:intersect)
+      ),
+      new(
+        "query.except",
+        :reads,
+        [13, 21],
+        &combined(&1, Ash.Expr.expr(value >= 2), :except, Ash.Expr.expr(value == 2)),
+        combination_opts(:except)
+      ),
       # Ash evaluates an expression calculation with explicit references in
       # memory before it would ask the data layer, on every data layer. The
       # evidence shows Ash did the work; it does not compare capabilities.
@@ -211,4 +234,21 @@ defmodule Ash.Conformance.Scenarios.Querying do
       )
     ]
   end
+
+  defp combined(ctx, base, type, filter) do
+    ctx.child
+    |> Ash.Query.combination_of([
+      Ash.Query.Combination.base(filter: base),
+      struct(Ash.Query.Combination, type: type, filter: filter)
+    ])
+    |> Ash.Query.sort(:id)
+    |> Ash.read!(authorize?: false)
+    |> Enum.map(& &1.id)
+  end
+
+  defp combination_opts(type),
+    do: [
+      semantic_basis: "../lib/ash/query/combination.ex",
+      capabilities: [child: :combine, child: {:combine, type}]
+    ]
 end

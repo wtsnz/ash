@@ -164,6 +164,68 @@ defmodule Ash.Conformance.Contracts.Features do
            scenarios: ~w(record.filter_array_member record.filter_map_key record.filter_embedded)
          ),
          feature(
+           "expressions.arithmetic",
+           "Arithmetic and rounding, with integer division as a float",
+           "#{@docs}/reference/expressions.md",
+           claims: [],
+           scenarios:
+             ~w(expr.add expr.subtract expr.multiply expr.divide expr.divide_float expr.decimal_multiply expr.round expr.round_decimal expr.filter.divide expr.filter.round)
+         ),
+         feature(
+           "expressions.strings",
+           "String functions, including non-ASCII text",
+           "#{@docs}/reference/expressions.md",
+           claims: [],
+           scenarios:
+             ~w(expr.concat expr.string_length expr.string_downcase expr.string_trim expr.string_position expr.string_join expr.contains_unicode expr.type_to_string expr.filter.string_length expr.filter.string_downcase expr.filter.concat)
+         ),
+         feature(
+           "expressions.conditionals",
+           "if, cond, || and &&",
+           "#{@docs}/reference/expressions.md",
+           claims: [],
+           scenarios: ~w(expr.if expr.cond expr.or_else expr.and_then expr.filter.or_else)
+         ),
+         feature(
+           "expressions.dates",
+           "Date and datetime arithmetic",
+           "#{@docs}/reference/expressions.md",
+           claims: [],
+           scenarios:
+             ~w(expr.date_add_day expr.date_add_month expr.datetime_add expr.start_of_day expr.filter.date_add_month)
+         ),
+         feature(
+           "filter.nil_logic",
+           "Negation, column comparisons and and/or with nil",
+           "#{@docs}/reference/expressions.md",
+           claims: [],
+           scenarios:
+             ~w(nil.not_equal nil.not_equal_negated nil.compare_columns nil.compare_columns_negated nil.pinned_nil nil.and nil.not_and nil.partition nil.not_in_with_nil nil.or)
+         ),
+         feature(
+           "filter.joins",
+           "Filters through to-many relationships return each record once",
+           "#{@docs}/reference/expressions.md",
+           claims: [],
+           scenarios:
+             ~w(read.join_to_many read.join_or_paths read.join_same_row read.join_exists_or read.join_negated read.join_count read.join_many_to_many_count read.join_limit read.join_page)
+         ),
+         feature(
+           "sort.to_one",
+           "Sort by a related record's attribute",
+           "#{@docs}/actions/read-actions.md",
+           claims: [],
+           scenarios: ~w(read.sort_to_one)
+         ),
+         feature(
+           "calc.inputs",
+           "Calculations feed aggregates, filters and sorts",
+           "#{@docs}/resources/calculations.md",
+           claims: [],
+           scenarios:
+             ~w(calc.aggregate_over_calculation calc.over_aggregate calc.filter_over_aggregate calc.argument_filter calc.argument_sort)
+         ),
+         feature(
            "filter.calculation",
            "Filter by a calculation",
            "#{@docs}/resources/calculations.md",
@@ -213,10 +275,14 @@ defmodule Ash.Conformance.Contracts.Features do
          ),
          feature(
            "query.union_all",
-           "Combine queries with union all and intersection",
+           "Combine queries with union all, intersect and except",
            "#{@docs}/advanced/combination-queries.md",
-           claims: [parent: {:combine, :union_all}, parent: {:combine, :intersection}],
-           scenarios: []
+           claims: [
+             child: {:combine, :union_all},
+             child: {:combine, :intersect},
+             child: {:combine, :except}
+           ],
+           scenarios: ~w(query.union_all query.intersect query.except)
          ),
          feature(
            "calc.expression",
@@ -317,7 +383,7 @@ defmodule Ash.Conformance.Contracts.Features do
            "Create and update related records with manage_relationship",
            "#{@docs}/resources/relationships.md",
            claims: [],
-           scenarios: []
+           scenarios: ~w(write.manage_create write.manage_direct_control)
          )
        ]},
       {7, "Aggregates",
@@ -510,6 +576,14 @@ defmodule Ash.Conformance.Contracts.Features do
            claims: [parent: :update_query, parent: :destroy_query],
            scenarios:
              ~w(write.bulk_update_filter write.bulk_destroy_filter write.atomic_update write.single_atomic_update)
+         ),
+         feature(
+           "writes.expressions",
+           "Atomic updates with expressions, and bulk writes over sorted, limited queries",
+           "#{@docs}/actions/update-actions.md",
+           claims: [],
+           scenarios:
+             ~w(write.atomic_expression write.bulk_update_sorted_limit write.bulk_destroy_sorted_limit write.bulk_create_sorted)
          )
        ]},
       {9, "Transactions and locks",

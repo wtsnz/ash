@@ -131,6 +131,13 @@ defmodule Ash.Conformance.Sqlite.Gaps do
         `DISTINCT` keeps every joined row, so a sorted page of two returns child 11
         twice and omits child 12 while the page count is two. Unsorted reads and
         `Ash.count` are unaffected.
+
+        Plain sorted reads show it too, not only aggregate pages: owners filtered
+        through their items come back once per matching item (`read.join_to_many`),
+        twelve times for an `or` across two relationships (`read.join_or_paths`), and
+        a limit or page then returns the wrong owners (`read.join_limit` gives `[1,
+        1]`, `read.join_page` gives owner 1 on page two while counting three). #232 is
+        merged, so this is on AshSqlite `main`.
         """
       },
       %{
@@ -177,7 +184,7 @@ defmodule Ash.Conformance.Sqlite.Gaps do
 
         Support combination queries such as `union`. AshSQLite does not advertise
         `:combine`, so Ash rejects the read with "Data layer does not support combining
-        queries". SQLite has `UNION`, `UNION ALL` and `INTERSECT`, so this is
+        queries". SQLite has `UNION`, `UNION ALL`, `INTERSECT` and `EXCEPT`, so this is
         implementation work. Postgres returns children 11, 12 and 13.
         """
       },
@@ -314,6 +321,86 @@ defmodule Ash.Conformance.Sqlite.Gaps do
         `Ecto.QueryError` ("invalid keyword list in query"): AshSqlite's IN list
         binds each binary as an Exqlite `{:blob, value}` tuple, and Ecto reads the
         list of tuples as a keyword list. Equality on a single binary works.
+        """
+      },
+      %{
+        id: "elixir-and",
+        title: "Elixir and",
+        kind: :implementation,
+        owners: [:ash_sql, :ash_sqlite],
+        body: ~S"""
+
+        Treat `0` as truthy in `&&`, as Elixir does. Without Postgres's
+        `ash-functions`, AshSQL translates `a && b` for non-booleans to `CASE WHEN a =
+        FALSE OR a IS NULL THEN a ELSE b END`. SQLite has no boolean type, so `0 =
+        FALSE` is true and `0 && nil` returns `0` instead of nil (`expr.and_then`).
+        Postgres uses `ash_elixir_and` and passes.
+        """
+      },
+      %{
+        id: "month-overflow",
+        title: "Month overflow",
+        kind: :implementation,
+        owners: [:ash_sqlite],
+        body: ~S"""
+
+        Add months without overflowing into the next month. `date_add(day, 1,
+        :month)` from 2023-01-31 is 2023-02-28 in Ash's evaluation (`Date.shift/2`) and
+        on Postgres, but SQLite's `date(?, '+1 month')`, which Ecto's `date_add`
+        becomes, normalizes the 31st of February to 2023-03-03. Filters by the result
+        miss the row.
+        """
+      },
+      %{
+        id: "round-syntax",
+        title: "Round syntax",
+        kind: :implementation,
+        owners: [:ash_sql, :ash_sqlite],
+        body: ~S"""
+
+        Translate `round/1-2` for SQLite. AshSQL's shared translation emits
+        `ROUND((?)::numeric, ?)`, and `::` is Postgres cast syntax, so every `round`
+        in a calculation or filter fails with "unrecognized token". AshSQLite should
+        supply its own translation or reject the function.
+        """
+      },
+      %{
+        id: "start-of-day",
+        title: "Start of day",
+        kind: :implementation,
+        owners: [:ash_sql, :ash_sqlite],
+        body: ~S"""
+
+        Translate `start_of_day/1` for SQLite. AshSQL emits Postgres's
+        `date_trunc('day', ?)`, which SQLite does not have ("no such function"). SQLite
+        can express it with `datetime(?, 'start of day')`, or AshSQLite could reject
+        the function.
+        """
+      },
+      %{
+        id: "unicode-case",
+        title: "Unicode case",
+        kind: :implementation,
+        owners: [:ash_sqlite],
+        body: ~S"""
+
+        Downcase non-ASCII text, or reject it. SQLite's built-in `lower()` only folds
+        ASCII unless SQLite is built with ICU, so `string_downcase("Ünïcode ✓")`
+        returns it unchanged and a filter comparing with the lowercase text misses the
+        row. Ash's evaluation and Postgres return "ünïcode ✓". ASCII-only cases, such
+        as `record.filter_case_insensitive`, pass.
+        """
+      },
+      %{
+        id: "string-join",
+        title: "String join",
+        kind: :implementation,
+        owners: [:ash_sqlite],
+        body: ~S"""
+
+        Support `string_join/1-2`. AshSqlite rejects it with a documented error
+        ("does not support the function"). SQLite can express it by concatenating
+        the non-nil values with `||` and `COALESCE`, as Ash's evaluation skips nils.
         """
       }
     ]

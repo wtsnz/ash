@@ -48,7 +48,12 @@ Elixir scenarios and expectations define the contract. CI runs each adapter inde
 | [`bounds.unsorted_limit`](lib/scenarios/aggregates/bounds.ex#L30) | [known_defect](GAPS.md#unsorted-bounds) · AshSQL | supported |
 | [`bulk.atomic_increment`](lib/scenarios/writes.ex#L137) | supported | supported |
 | [`bulk.partial_success`](lib/scenarios/writes.ex#L99) | supported | supported |
-| [`calc.in_memory`](lib/scenarios/querying.ex#L203) | supported | supported |
+| [`calc.aggregate_over_calculation`](lib/scenarios/joins.ex#L144) | supported | supported |
+| [`calc.argument_filter`](lib/scenarios/joins.ex#L165) | supported | supported |
+| [`calc.argument_sort`](lib/scenarios/joins.ex#L178) | supported | supported |
+| [`calc.filter_over_aggregate`](lib/scenarios/joins.ex#L158) | supported | supported |
+| [`calc.in_memory`](lib/scenarios/querying.ex#L226) | supported | supported |
+| [`calc.over_aggregate`](lib/scenarios/joins.ex#L151) | supported | supported |
 | [`combo.base`](lib/scenarios/combinations.ex#L27) | supported | supported |
 | [`combo.count.linked_items.value_gt.tenant.off.page`](lib/scenarios/combinations.ex#L27) | supported | supported |
 | [`combo.count.top_items.none.tenant.off.filter`](lib/scenarios/combinations.ex#L27) | supported | supported |
@@ -101,6 +106,37 @@ Elixir scenarios and expectations define the contract. CI runs each adapter inde
 | [`context.through_tenant`](lib/scenarios/aggregates/context.ex#L85) | supported | supported |
 | [`equivalence.root_reference`](lib/scenarios/consistency.ex#L35) | supported | supported |
 | [`equivalence.visible_count_load`](lib/scenarios/consistency.ex#L21) | supported | supported |
+| [`expr.add`](lib/scenarios/expressions.ex#L39) | supported | supported |
+| [`expr.and_then`](lib/scenarios/expressions.ex#L146) | [known_defect](GAPS.md#elixir-and) · AshSQL | supported |
+| [`expr.concat`](lib/scenarios/expressions.ex#L74) | supported | supported |
+| [`expr.cond`](lib/scenarios/expressions.ex#L130) | supported | supported |
+| [`expr.contains_unicode`](lib/scenarios/expressions.ex#L101) | supported | supported |
+| [`expr.date_add_day`](lib/scenarios/expressions.ex#L152) | supported | supported |
+| [`expr.date_add_month`](lib/scenarios/expressions.ex#L160) | [known_defect](GAPS.md#month-overflow) · AshSQLite | supported |
+| [`expr.datetime_add`](lib/scenarios/expressions.ex#L167) | supported | supported |
+| [`expr.decimal_multiply`](lib/scenarios/expressions.ex#L51) | supported | supported |
+| [`expr.divide`](lib/scenarios/expressions.ex#L43) | supported | supported |
+| [`expr.divide_float`](lib/scenarios/expressions.ex#L44) | supported | supported |
+| [`expr.filter.concat`](lib/scenarios/expressions.ex#L201) | supported | supported |
+| [`expr.filter.date_add_month`](lib/scenarios/expressions.ex#L203) | [known_defect](GAPS.md#month-overflow) · AshSQLite | supported |
+| [`expr.filter.divide`](lib/scenarios/expressions.ex#L187) | supported | supported |
+| [`expr.filter.or_else`](lib/scenarios/expressions.ex#L202) | supported | supported |
+| [`expr.filter.round`](lib/scenarios/expressions.ex#L188) | [known_defect](GAPS.md#round-syntax) · AshSQL | supported |
+| [`expr.filter.string_downcase`](lib/scenarios/expressions.ex#L195) | [known_defect](GAPS.md#unicode-case) · AshSQLite | supported |
+| [`expr.filter.string_length`](lib/scenarios/expressions.ex#L189) | supported | supported |
+| [`expr.if`](lib/scenarios/expressions.ex#L123) | supported | supported |
+| [`expr.multiply`](lib/scenarios/expressions.ex#L41) | supported | supported |
+| [`expr.or_else`](lib/scenarios/expressions.ex#L144) | supported | supported |
+| [`expr.round`](lib/scenarios/expressions.ex#L59) | [known_defect](GAPS.md#round-syntax) · AshSQL | supported |
+| [`expr.round_decimal`](lib/scenarios/expressions.ex#L60) | [known_defect](GAPS.md#round-syntax) · AshSQL | supported |
+| [`expr.start_of_day`](lib/scenarios/expressions.ex#L174) | [known_defect](GAPS.md#start-of-day) · AshSQL | supported |
+| [`expr.string_downcase`](lib/scenarios/expressions.ex#L77) | [known_defect](GAPS.md#unicode-case) · AshSQLite | supported |
+| [`expr.string_join`](lib/scenarios/expressions.ex#L94) | [unsupported](GAPS.md#string-join) · AshSQLite | supported |
+| [`expr.string_length`](lib/scenarios/expressions.ex#L76) | supported | supported |
+| [`expr.string_position`](lib/scenarios/expressions.ex#L86) | supported | supported |
+| [`expr.string_trim`](lib/scenarios/expressions.ex#L84) | supported | supported |
+| [`expr.subtract`](lib/scenarios/expressions.ex#L40) | supported | supported |
+| [`expr.type_to_string`](lib/scenarios/expressions.ex#L108) | supported | supported |
 | [`field.aggregate`](lib/scenarios/aggregates/usage.ex#L47) | supported | supported |
 | [`field.calculation`](lib/scenarios/aggregates/usage.ex#L44) | supported | supported |
 | [`field.root_aggregate`](lib/scenarios/aggregates/usage.ex#L50) | supported | supported |
@@ -180,6 +216,16 @@ Elixir scenarios and expectations define the contract. CI runs each adapter inde
 | [`loaded.max`](lib/scenarios/aggregates/kinds.ex#L25) | supported | supported |
 | [`loaded.min`](lib/scenarios/aggregates/kinds.ex#L25) | supported | supported |
 | [`loaded.sum`](lib/scenarios/aggregates/kinds.ex#L25) | supported | supported |
+| [`nil.and`](lib/scenarios/expressions.ex#L223) | supported | supported |
+| [`nil.compare_columns`](lib/scenarios/expressions.ex#L219) | supported | supported |
+| [`nil.compare_columns_negated`](lib/scenarios/expressions.ex#L220) | supported | supported |
+| [`nil.not_and`](lib/scenarios/expressions.ex#L224) | supported | supported |
+| [`nil.not_equal`](lib/scenarios/expressions.ex#L217) | supported | supported |
+| [`nil.not_equal_negated`](lib/scenarios/expressions.ex#L218) | supported | supported |
+| [`nil.not_in_with_nil`](lib/scenarios/expressions.ex#L237) | [unresolved](GAPS.md#in-list-nil) · Ash | [unresolved](GAPS.md#in-list-nil) · Ash |
+| [`nil.or`](lib/scenarios/expressions.ex#L240) | [unresolved](GAPS.md#true-or-nil) · Ash | [unresolved](GAPS.md#true-or-nil) · Ash |
+| [`nil.partition`](lib/scenarios/expressions.ex#L226) | supported | supported |
+| [`nil.pinned_nil`](lib/scenarios/expressions.ex#L222) | supported | supported |
 | [`ops.atom.count`](lib/scenarios/operations.ex#L26) | supported | supported |
 | [`ops.atom.eq`](lib/scenarios/operations.ex#L26) | supported | supported |
 | [`ops.atom.first`](lib/scenarios/operations.ex#L26) | supported | supported |
@@ -575,10 +621,23 @@ Elixir scenarios and expectations define the contract. CI runs each adapter inde
 | [`policy.strict_admin.read`](lib/scenarios/policies.ex#L23) | supported | supported |
 | [`policy.strict_admin.sum`](lib/scenarios/policies.ex#L23) | supported | supported |
 | [`query.distinct`](lib/scenarios/querying.ex#L169) | [unsupported](GAPS.md#query-distinct) · AshSQLite | supported |
+| [`query.except`](lib/scenarios/querying.ex#L216) | [unsupported](GAPS.md#query-combinations) · AshSQLite | supported |
+| [`query.intersect`](lib/scenarios/querying.ex#L209) | [unsupported](GAPS.md#query-combinations) · AshSQLite | supported |
 | [`query.lock_for_update`](lib/scenarios/transactions.ex#L92) | [unsupported](GAPS.md#row-locks) · AshSQLite | supported |
 | [`query.union`](lib/scenarios/querying.ex#L183) | [unsupported](GAPS.md#query-combinations) · AshSQLite | supported |
+| [`query.union_all`](lib/scenarios/querying.ex#L202) | [unsupported](GAPS.md#query-combinations) · AshSQLite | supported |
 | [`query.uniq_sum_rejected`](lib/scenarios/aggregates/results.ex#L187) | supported | supported |
+| [`read.join_count`](lib/scenarios/joins.ex#L74) | supported | supported |
+| [`read.join_exists_or`](lib/scenarios/joins.ex#L59) | supported | supported |
+| [`read.join_limit`](lib/scenarios/joins.ex#L96) | [known_defect](GAPS.md#sorted-distinct-reads) · AshSQLite | supported |
+| [`read.join_many_to_many_count`](lib/scenarios/joins.ex#L85) | supported | supported |
+| [`read.join_negated`](lib/scenarios/joins.ex#L67) | [known_defect](GAPS.md#sorted-distinct-reads) · AshSQLite | supported |
+| [`read.join_or_paths`](lib/scenarios/joins.ex#L44) | [known_defect](GAPS.md#sorted-distinct-reads) · AshSQLite | supported |
+| [`read.join_page`](lib/scenarios/joins.ex#L110) | [known_defect](GAPS.md#sorted-distinct-reads) · AshSQLite | supported |
+| [`read.join_same_row`](lib/scenarios/joins.ex#L52) | supported | supported |
+| [`read.join_to_many`](lib/scenarios/joins.ex#L43) | [known_defect](GAPS.md#sorted-distinct-reads) · AshSQLite | supported |
 | [`read.selection_expression`](lib/scenarios/consistency.ex#L51) | supported | supported |
+| [`read.sort_to_one`](lib/scenarios/joins.ex#L126) | supported | supported |
 | [`record.atomic_update`](lib/scenarios/records.ex#L68) | supported | supported |
 | [`record.calculation_argument`](lib/scenarios/querying.ex#L156) | supported | supported |
 | [`record.calculation_load`](lib/scenarios/querying.ex#L142) | supported | supported |
@@ -789,10 +848,16 @@ Elixir scenarios and expectations define the contract. CI runs each adapter inde
 | [`values.string_name`](lib/scenarios/aggregates/results.ex#L153) | supported | supported |
 | [`values.temporal_read_control`](lib/scenarios/aggregates/types.ex#L83) | supported | supported |
 | [`values.time_min`](lib/scenarios/aggregates/types.ex#L162) | supported | supported |
+| [`write.atomic_expression`](lib/scenarios/joins.ex#L195) | supported | supported |
 | [`write.atomic_update`](lib/scenarios/aggregates/writes.ex#L33) | supported | supported |
+| [`write.bulk_create_sorted`](lib/scenarios/joins.ex#L252) | supported | supported |
 | [`write.bulk_destroy_filter`](lib/scenarios/aggregates/writes.ex#L26) | supported | supported |
+| [`write.bulk_destroy_sorted_limit`](lib/scenarios/joins.ex#L235) | supported | supported |
 | [`write.bulk_update_filter`](lib/scenarios/aggregates/writes.ex#L14) | supported | supported |
+| [`write.bulk_update_sorted_limit`](lib/scenarios/joins.ex#L214) | supported | supported |
 | [`write.lifecycle`](lib/scenarios/tenancy.ex#L194) | supported | supported |
+| [`write.manage_create`](lib/scenarios/joins.ex#L270) | supported | supported |
+| [`write.manage_direct_control`](lib/scenarios/joins.ex#L287) | supported | supported |
 | [`write.single_atomic_update`](lib/scenarios/aggregates/writes.ex#L41) | supported | supported |
 
 ## Gaps by owner
@@ -803,11 +868,12 @@ The first owner is where the fix starts. Counts are scenarios linked to each gap
 | --- | --- | --- | ---: | ---: |
 | [bulk-stream-forbidden](GAPS.md#bulk-stream-forbidden) | Ash | implementation | 2 | 0 |
 | [decimal-avg](GAPS.md#decimal-avg) | Ash | decision | 1 | 1 |
+| [in-list-nil](GAPS.md#in-list-nil) | Ash | decision | 1 | 1 |
 | [keyless-identity](GAPS.md#keyless-identity) | Ash | decision | 1 | 1 |
 | [many-to-many-bounds-api](GAPS.md#many-to-many-bounds-api) | Ash | decision | 1 | 1 |
 | [path-multiplicity](GAPS.md#path-multiplicity) | Ash | decision | 1 | 1 |
 | [relationship-context](GAPS.md#relationship-context) | Ash | implementation | 2 | 2 |
-| [true-or-nil](GAPS.md#true-or-nil) | Ash | decision | 1 | 1 |
+| [true-or-nil](GAPS.md#true-or-nil) | Ash | decision | 2 | 2 |
 | [union-nil](GAPS.md#union-nil) | Ash | implementation | 1 | 1 |
 | [unique-list-order](GAPS.md#unique-list-order) | Ash | decision | 1 | 1 |
 | [value-representation](GAPS.md#value-representation) | Ash | decision | 0 | 2 |
@@ -831,18 +897,24 @@ The first owner is where the fix starts. Counts are scenarios linked to each gap
 | [unsorted-list-nil](GAPS.md#unsorted-list-nil) | AshSQL | implementation | 0 | 2 |
 | [nested-parent](GAPS.md#nested-parent) | AshSQL, then Ash | implementation | 1 | 2 |
 | [parent-through-load](GAPS.md#parent-through-load) | AshSQL, then Ash | implementation | 1 | 1 |
+| [elixir-and](GAPS.md#elixir-and) | AshSQL, then AshSQLite | implementation | 1 | 0 |
 | [manual](GAPS.md#manual) | AshSQL, then AshSQLite | implementation | 1 | 0 |
 | [no-attributes](GAPS.md#no-attributes) | AshSQL, then AshSQLite | implementation | 2 | 1 |
 | [parent-correlation](GAPS.md#parent-correlation) | AshSQL, then AshSQLite | implementation | 8 | 0 |
 | [root-kinds](GAPS.md#root-kinds) | AshSQL, then AshSQLite | implementation | 8 | 0 |
+| [round-syntax](GAPS.md#round-syntax) | AshSQL, then AshSQLite | implementation | 3 | 0 |
+| [start-of-day](GAPS.md#start-of-day) | AshSQL, then AshSQLite | implementation | 1 | 0 |
 | [binary-in-lists](GAPS.md#binary-in-lists) | AshSQLite | implementation | 1 | 0 |
 | [ci-string-sort](GAPS.md#ci-string-sort) | AshSQLite | implementation | 1 | 0 |
 | [decimal-precision](GAPS.md#decimal-precision) | AshSQLite | implementation | 5 | 0 |
 | [duration-storage](GAPS.md#duration-storage) | AshSQLite | implementation | 7 | 0 |
 | [error-expressions](GAPS.md#error-expressions) | AshSQLite | limitation | 8 | 0 |
-| [query-combinations](GAPS.md#query-combinations) | AshSQLite | implementation | 1 | 0 |
+| [month-overflow](GAPS.md#month-overflow) | AshSQLite | implementation | 2 | 0 |
+| [query-combinations](GAPS.md#query-combinations) | AshSQLite | implementation | 4 | 0 |
 | [query-distinct](GAPS.md#query-distinct) | AshSQLite | implementation | 1 | 0 |
 | [row-locks](GAPS.md#row-locks) | AshSQLite | limitation | 1 | 0 |
+| [string-join](GAPS.md#string-join) | AshSQLite | implementation | 1 | 0 |
+| [unicode-case](GAPS.md#unicode-case) | AshSQLite | implementation | 2 | 0 |
 | [upsert-conditions](GAPS.md#upsert-conditions) | AshSQLite | implementation | 2 | 0 |
-| [sorted-distinct-reads](GAPS.md#sorted-distinct-reads) | AshSQLite, then AshSQL | implementation | 8 | 0 |
+| [sorted-distinct-reads](GAPS.md#sorted-distinct-reads) | AshSQLite, then AshSQL | implementation | 13 | 0 |
 | [json-null](GAPS.md#json-null) | ecto_sqlite3, then AshSQLite | implementation | 12 | 0 |

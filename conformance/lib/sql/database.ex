@@ -34,7 +34,8 @@ defmodule Ash.Conformance.SQL.Database do
       {5, Ash.Conformance.SQL.Migrations.Ledger},
       {6, Ash.Conformance.SQL.Migrations.Records},
       {8, Ash.Conformance.SQL.Migrations.Policy},
-      {10, Ash.Conformance.SQL.Migrations.Combination}
+      {10, Ash.Conformance.SQL.Migrations.Combination},
+      {11, Ash.Conformance.SQL.Migrations.Expressions}
     ]
 
     migrations =
