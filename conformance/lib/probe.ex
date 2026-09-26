@@ -26,7 +26,7 @@ defmodule Ash.Conformance.Probe do
     %{
       scenario: scenario.id,
       semantic_basis: scenario.semantic_basis,
-      fixture: scenario.fixture,
+      fixture: Ash.Conformance.Scenario.fixture_name(scenario.fixture),
       profile: scenario.profile,
       classification: :unreviewed,
       semantic_pass: false,

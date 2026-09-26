@@ -13,12 +13,12 @@ their results as observations. Each data layer's failing scenarios are listed in
 
 | Column | Data layer | Version | Reviewed | Works | Rejected | Wrong | Crashed | Setup failed | Open question | Blocked | Definition warnings |
 | --- | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| sqlite | AshSqlite | 0.2.19 (`f489778`) | yes | 491 | 37 | 26 | 18 | 0 | 5 | 19 | 0 |
-| postgres | AshPostgres | 2.13.1 (`945073e`) | yes | 541 | 0 | 28 | 8 | 0 | 5 | 2 | 0 |
-| ets | Ash.DataLayer.Ets | 3.33.11 | no | 529 | 7 | 29 | 7 | 0 | 5 | 3 | 0 |
-| csv | AshCsv | 0.9.9 | no | 167 | 87 | 43 | 33 | 247 | 0 | 338 | 19 |
-| mysql | AshMysql | 0.1.0-dev (`99684ca`) | no | 296 | 189 | 34 | 53 | 0 | 5 | 45 | 16 |
-| clickhouse | AshClickhouse | 0.7.3 | no | 204 | 54 | 149 | 108 | 58 | 4 | 82 | 16 |
+| sqlite | AshSqlite | 0.2.19 (`f489778`) | yes | 622 | 37 | 39 | 19 | 5 | 5 | 24 | 0 |
+| postgres | AshPostgres | 2.13.1 (`945073e`) | yes | 691 | 0 | 28 | 8 | 0 | 5 | 2 | 0 |
+| ets | Ash.DataLayer.Ets | 3.33.11 | no | 679 | 7 | 29 | 7 | 0 | 5 | 3 | 0 |
+| csv | AshCsv | 0.9.9 | no | 229 | 137 | 43 | 33 | 285 | 0 | 421 | 19 |
+| mysql | AshMysql | 0.1.0-dev (`99684ca`) | no | 382 | 189 | 49 | 88 | 14 | 5 | 93 | 16 |
+| clickhouse | AshClickhouse | 0.7.3 | no | 282 | 69 | 162 | 119 | 91 | 4 | 141 | 16 |
 
 Blocked counts results in the columns before it that have a failing
 prerequisite, such as a type the data layer cannot store; see
@@ -75,6 +75,45 @@ values of that class.
 | Embedded resources | ✅ ✅ ✅ | ✅ ✅ ✅ | ✅ ✅ ✅ | ❌ ❌ ✅ | ✅ ✅ ✅ | 🚫 no table |
 | Arrays of embedded resources | ✅ ✅ ✅ | ✅ ✅ ✅ | ✅ ✅ ✅ | ❌ ❌ ✅ | 🚫 no table | 🚫 no table |
 | Unions | ❌ – ✅ | ❌ – ✅ | ❌ – ✅ | ❌ – ✅ | ❌ – ✅ | 🚫 no table |
+
+## Operations
+
+Tier 2: every filter, sort and aggregate on every type it applies to,
+over the type's tier-1 table (`lib/operations.ex`). Integers are the
+control. Counts are cells that work, out of those not blocked; ◌ counts
+the blocked ones. Each data layer's survey file has the full type ×
+operation table.
+
+✅ returns the answer Ash defines; ❌ does not, while the same operation
+works on integers and the type stores; ◌ blocked: the operation fails on
+integers too, or the type does not store; ❔ did not run; – does not apply
+to the type.
+
+| Type | sqlite | postgres | ets | csv | mysql | clickhouse |
+| --- | --- | --- | --- | --- | --- | --- |
+| Integers | ✅ 10/10 | ✅ 10/10 | ✅ 10/10 | ❌ 5/10 | ❌ 8/10 | ❌ 9/10 |
+| Floats | ✅ 10/10 | ✅ 10/10 | ✅ 10/10 | ❔ 0/0 · 10 ❔ | ◌ 8/8 · 2 ◌ | ◌ 9/9 · 1 ◌ |
+| Decimals | ✅ 10/10 | ✅ 10/10 | ✅ 10/10 | ◌ 5/5 · 5 ◌ | ◌ 2/2 · 8 ◌ | ❔ 0/0 · 10 ❔ |
+| Strings | ✅ 9/9 | ✅ 9/9 | ✅ 9/9 | ◌ 5/5 · 4 ◌ | ◌ 7/7 · 2 ◌ | ◌ 8/8 · 1 ◌ |
+| Case-insensitive strings | ❌ 8/9 | ✅ 9/9 | ✅ 9/9 | ◌ 5/5 · 4 ◌ | ❌ 6/7 · 2 ◌ | ❌ 2/8 · 1 ◌ |
+| Binaries | ❌ 4/5 | ✅ 5/5 | ✅ 5/5 | ◌ 3/3 · 2 ◌ | ❌ 0/4 · 1 ◌ | ◌ 4/4 · 1 ◌ |
+| Booleans | ✅ 5/5 | ✅ 5/5 | ✅ 5/5 | ❔ 0/0 · 5 ❔ | ❌ 1/4 · 1 ◌ | ◌ 4/4 · 1 ◌ |
+| Atoms with one_of | ✅ 5/5 | ✅ 5/5 | ✅ 5/5 | ◌ 3/3 · 2 ◌ | ❌ 3/4 · 1 ◌ | ◌ 4/4 · 1 ◌ |
+| Dates | ✅ 9/9 | ✅ 9/9 | ✅ 9/9 | ◌ 5/5 · 4 ◌ | ◌ 7/7 · 2 ◌ | ◌ 6/6 · 3 ◌ |
+| Times | ✅ 9/9 | ✅ 9/9 | ✅ 9/9 | ◌ 5/5 · 4 ◌ | ◌ 7/7 · 2 ◌ | ❌ 5/8 · 1 ◌ |
+| Microsecond times | ✅ 9/9 | ✅ 9/9 | ✅ 9/9 | ◌ 5/5 · 4 ◌ | ❌ 3/7 · 2 ◌ | ◌ 3/3 · 6 ◌ |
+| UTC datetimes | ✅ 9/9 | ✅ 9/9 | ✅ 9/9 | ◌ 5/5 · 4 ◌ | ◌ 7/7 · 2 ◌ | ◌ 8/8 · 1 ◌ |
+| Microsecond UTC datetimes | ✅ 9/9 | ✅ 9/9 | ✅ 9/9 | ◌ 5/5 · 4 ◌ | ◌ 7/7 · 2 ◌ | ❌ 5/8 · 1 ◌ |
+| Naive datetimes | ✅ 9/9 | ✅ 9/9 | ✅ 9/9 | ◌ 5/5 · 4 ◌ | ◌ 7/7 · 2 ◌ | ◌ 3/3 · 6 ◌ |
+| Durations | ❔ 0/0 · 5 ❔ | ✅ 5/5 | ✅ 5/5 | ❔ 0/0 · 5 ❔ | ❔ 0/0 · 5 ❔ | ❔ 0/0 · 5 ❔ |
+| UUIDs | ✅ 5/5 | ✅ 5/5 | ✅ 5/5 | ◌ 3/3 · 2 ◌ | ◌ 4/4 · 1 ◌ | ◌ 4/4 · 1 ◌ |
+| UUIDv7s | ✅ 5/5 | ✅ 5/5 | ✅ 5/5 | ◌ 3/3 · 2 ◌ | ❌ 3/4 · 1 ◌ | ◌ 4/4 · 1 ◌ |
+| Maps | ❌ 1/3 | ✅ 3/3 | ✅ 3/3 | ❔ 0/0 · 3 ❔ | ◌ 2/2 · 1 ◌ | ❔ 0/0 · 3 ❔ |
+| Arrays of strings | ❌ 1/3 | ✅ 3/3 | ✅ 3/3 | ❔ 0/0 · 3 ❔ | ❔ 0/0 · 3 ❔ | ❔ 0/0 · 3 ❔ |
+| Arrays of integers | ❌ 1/3 | ✅ 3/3 | ✅ 3/3 | ❔ 0/0 · 3 ❔ | ❔ 0/0 · 3 ❔ | ❔ 0/0 · 3 ❔ |
+| Embedded resources | ❌ 1/3 | ✅ 3/3 | ✅ 3/3 | ❔ 0/0 · 3 ❔ | ◌ 2/2 · 1 ◌ | ❔ 0/0 · 3 ❔ |
+| Arrays of embedded resources | ❌ 1/3 | ✅ 3/3 | ✅ 3/3 | ❔ 0/0 · 3 ❔ | ❔ 0/0 · 3 ❔ | ❔ 0/0 · 3 ❔ |
+| Unions | ❌ 1/3 | ✅ 3/3 | ✅ 3/3 | ❔ 0/0 · 3 ❔ | ◌ 2/2 · 1 ◌ | ❔ 0/0 · 3 ❔ |
 
 ## Policies
 
@@ -148,7 +187,35 @@ apply, such as getting a hidden record when the actor may read every note.
 | Arrays of embedded resources | ✅ Works 3/3 | ✅ Works 3/3 | ✅ Works 3/3 | 🟡 Partial 1/3 | ❌ Broken 0/3 | ❌ Broken 0/3 |
 | Unions | 🟡 Partial 1/2 | 🟡 Partial 1/2 | 🟡 Partial 1/2 | 🟡 Partial 1/2 | 🟡 Partial 1/2 | ❌ Broken 0/2 |
 
-## 2. Records
+## 2. Operations on each type
+
+| Feature | sqlite | postgres | ets | csv | mysql | clickhouse |
+| --- | --- | --- | --- | --- | --- | --- |
+| Integers | ✅ Works 10/10 | ✅ Works 10/10 | ✅ Works 10/10 | 🟡 Partial 5/10 | 🟡 Partial 8/10 | 🟡 Partial 9/10 |
+| Floats | ✅ Works 10/10 | ✅ Works 10/10 | ✅ Works 10/10 | ❔ Unknown 10 not run | 🟡 Partial 8/10 · 2 blocked | 🟡 Partial 9/10 · 1 blocked |
+| Decimals | ✅ Works 10/10 | ✅ Works 10/10 | ✅ Works 10/10 | 🟡 Partial 5/10 · 5 blocked | 🟡 Partial 2/10 · 8 blocked | ❔ Unknown 10 not run |
+| Strings | ✅ Works 9/9 | ✅ Works 9/9 | ✅ Works 9/9 | 🟡 Partial 5/9 · 4 blocked | 🟡 Partial 7/9 · 2 blocked | 🟡 Partial 8/9 · 1 blocked |
+| Case-insensitive strings | 🟡 Partial 8/9 | ✅ Works 9/9 | ✅ Works 9/9 | 🟡 Partial 5/9 · 4 blocked | 🟡 Partial 6/9 · 2 blocked | 🟡 Partial 2/9 · 1 blocked |
+| Binaries | 🟡 Partial 4/5 | ✅ Works 5/5 | ✅ Works 5/5 | 🟡 Partial 3/5 · 2 blocked | ❌ Broken 0/5 · 1 blocked | 🟡 Partial 4/5 · 1 blocked |
+| Booleans | ✅ Works 5/5 | ✅ Works 5/5 | ✅ Works 5/5 | ❔ Unknown 5 not run | 🟡 Partial 1/5 · 1 blocked | 🟡 Partial 4/5 · 1 blocked |
+| Atoms with one_of | ✅ Works 5/5 | ✅ Works 5/5 | ✅ Works 5/5 | 🟡 Partial 3/5 · 2 blocked | 🟡 Partial 3/5 · 1 blocked | 🟡 Partial 4/5 · 1 blocked |
+| Dates | ✅ Works 9/9 | ✅ Works 9/9 | ✅ Works 9/9 | 🟡 Partial 5/9 · 4 blocked | 🟡 Partial 7/9 · 2 blocked | 🟡 Partial 6/9 · 3 blocked |
+| Times | ✅ Works 9/9 | ✅ Works 9/9 | ✅ Works 9/9 | 🟡 Partial 5/9 · 4 blocked | 🟡 Partial 7/9 · 2 blocked | 🟡 Partial 5/9 · 1 blocked |
+| Microsecond times | ✅ Works 9/9 | ✅ Works 9/9 | ✅ Works 9/9 | 🟡 Partial 5/9 · 4 blocked | 🟡 Partial 3/9 · 2 blocked | 🟡 Partial 3/9 · 6 blocked |
+| UTC datetimes | ✅ Works 9/9 | ✅ Works 9/9 | ✅ Works 9/9 | 🟡 Partial 5/9 · 4 blocked | 🟡 Partial 7/9 · 2 blocked | 🟡 Partial 8/9 · 1 blocked |
+| Microsecond UTC datetimes | ✅ Works 9/9 | ✅ Works 9/9 | ✅ Works 9/9 | 🟡 Partial 5/9 · 4 blocked | 🟡 Partial 7/9 · 2 blocked | 🟡 Partial 5/9 · 1 blocked |
+| Naive datetimes | ✅ Works 9/9 | ✅ Works 9/9 | ✅ Works 9/9 | 🟡 Partial 5/9 · 4 blocked | 🟡 Partial 7/9 · 2 blocked | 🟡 Partial 3/9 · 6 blocked |
+| Durations | ❔ Unknown 5 not run | ✅ Works 5/5 | ✅ Works 5/5 | ❔ Unknown 5 not run | ❔ Unknown 5 not run | ❔ Unknown 5 not run |
+| UUIDs | ✅ Works 5/5 | ✅ Works 5/5 | ✅ Works 5/5 | 🟡 Partial 3/5 · 2 blocked | 🟡 Partial 4/5 · 1 blocked | 🟡 Partial 4/5 · 1 blocked |
+| UUIDv7s | ✅ Works 5/5 | ✅ Works 5/5 | ✅ Works 5/5 | 🟡 Partial 3/5 · 2 blocked | 🟡 Partial 3/5 · 1 blocked | 🟡 Partial 4/5 · 1 blocked |
+| Maps | 🟡 Partial 1/3 | ✅ Works 3/3 | ✅ Works 3/3 | ❔ Unknown 3 not run | 🟡 Partial 2/3 · 1 blocked | ❔ Unknown 3 not run |
+| Arrays of strings | 🟡 Partial 1/3 | ✅ Works 3/3 | ✅ Works 3/3 | ❔ Unknown 3 not run | ❔ Unknown 3 not run | ❔ Unknown 3 not run |
+| Arrays of integers | 🟡 Partial 1/3 | ✅ Works 3/3 | ✅ Works 3/3 | ❔ Unknown 3 not run | ❔ Unknown 3 not run | ❔ Unknown 3 not run |
+| Embedded resources | 🟡 Partial 1/3 | ✅ Works 3/3 | ✅ Works 3/3 | ❔ Unknown 3 not run | 🟡 Partial 2/3 · 1 blocked | ❔ Unknown 3 not run |
+| Arrays of embedded resources | 🟡 Partial 1/3 | ✅ Works 3/3 | ✅ Works 3/3 | ❔ Unknown 3 not run | ❔ Unknown 3 not run | ❔ Unknown 3 not run |
+| Unions | 🟡 Partial 1/3 | ✅ Works 3/3 | ✅ Works 3/3 | ❔ Unknown 3 not run | 🟡 Partial 2/3 · 1 blocked | ❔ Unknown 3 not run |
+
+## 3. Records
 
 | Feature | sqlite | postgres | ets | csv | mysql | clickhouse |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -161,7 +228,7 @@ apply, such as getting a hidden record when the actor may read every note.
 | Update a record atomically from its current value | ✅ Works 1/1 | ✅ Works 1/1 | ✅ Works 1/1 | ❔ Unknown 1 not run | ✅ Works 1/1 | ❔ Unknown 1 not run |
 | Not found, invalid, missing and duplicate values are errors | ✅ Works 4/4 | ✅ Works 4/4 | 🟡 Partial 3/4 | ❔ Unknown 4 not run | ✅ Works 4/4 | ❔ Unknown 4 not run |
 
-## 3. Types
+## 4. Types
 
 | Feature | sqlite | postgres | ets | csv | mysql | clickhouse |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -173,7 +240,7 @@ apply, such as getting a hidden record when the actor may read every note.
 | Maps round-trip, including nested values | ✅ Works 1/1 | ✅ Works 1/1 | ✅ Works 1/1 | ❔ Unknown 1 not run | ✅ Works 1/1 | ❔ Unknown 1 not run |
 | Embedded resources round-trip | ✅ Works 1/1 | ✅ Works 1/1 | ✅ Works 1/1 | ❔ Unknown 1 not run | ✅ Works 1/1 | ❔ Unknown 1 not run |
 
-## 4. Querying
+## 5. Querying
 
 | Feature | sqlite | postgres | ets | csv | mysql | clickhouse |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -196,7 +263,7 @@ apply, such as getting a hidden record when the actor may read every note.
 | Keyset pagination, forwards and backwards | ✅ Works 1/1 | ✅ Works 1/1 | ✅ Works 1/1 | ❔ Unknown 1 not run | ✅ Works 1/1 | ❔ Unknown 1 not run |
 | Pagination while records change | ⚪ Untested | ⚪ Untested | ⚪ Untested | ⚪ Untested | ⚪ Untested | ⚪ Untested |
 
-## 5. Relationships
+## 6. Relationships
 
 | Feature | sqlite | postgres | ets | csv | mysql | clickhouse |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -211,7 +278,7 @@ apply, such as getting a hidden record when the actor may read every note.
 | Load belongs-to, has-one, has-many and many-to-many relationships | ✅ Works 4/4 | ✅ Works 4/4 | ✅ Works 4/4 | ❔ Unknown 4 not run | 🟡 Partial 3/4 | ✅ Works 4/4 |
 | Create and update related records with manage_relationship | ⚪ Untested | ⚪ Untested | ⚪ Untested | ⚪ Untested | ⚪ Untested | ⚪ Untested |
 
-## 6. Aggregates
+## 7. Aggregates
 
 | Feature | sqlite | postgres | ets | csv | mysql | clickhouse |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -234,7 +301,7 @@ apply, such as getting a hidden record when the actor may read every note.
 | Aggregates respect read actions, arguments, actor and context | 🟡 Partial 8/9 · 1 blocked | 🟡 Partial 7/9 · 1 blocked | 🟡 Partial 8/9 · 1 blocked | ❔ Unknown 9 not run | ⛔ Not supported 0/9 · 2 blocked | ❌ Broken 0/9 · 2 blocked |
 | Seeded filtered aggregates match an in-memory reference | ✅ Works 1/1 | ✅ Works 1/1 | ✅ Works 1/1 | ❔ Unknown 1 not run | ⛔ Not supported 0/1 | ⛔ Not supported 0/1 |
 
-## 7. Writes
+## 8. Writes
 
 | Feature | sqlite | postgres | ets | csv | mysql | clickhouse |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -243,7 +310,7 @@ apply, such as getting a hidden record when the actor may read every note.
 | Bulk update atomically | ✅ Works 1/1 | ✅ Works 1/1 | ✅ Works 1/1 | ❌ Broken 0/1 | ❌ Broken 0/1 | ❌ Broken 0/1 |
 | Writes that filter by or read aggregates | ✅ Works 4/4 | ✅ Works 4/4 | ✅ Works 4/4 | ❔ Unknown 4 not run | ❌ Broken 0/4 | ❌ Broken 0/4 |
 
-## 8. Transactions and locks
+## 9. Transactions and locks
 
 | Feature | sqlite | postgres | ets | csv | mysql | clickhouse |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -251,7 +318,7 @@ apply, such as getting a hidden record when the actor may read every note.
 | Lock rows for update | ⛔ Not supported 0/1 | ✅ Works 1/1 | ⛔ Not supported 0/1 | ❔ Unknown 1 not run | ⛔ Not supported 0/1 | ⛔ Not supported 0/1 |
 | Isolation between concurrent transactions | ⚪ Untested | ⚪ Untested | ⚪ Untested | ⚪ Untested | ⚪ Untested | ⚪ Untested |
 
-## 9. Multitenancy
+## 10. Multitenancy
 
 | Feature | sqlite | postgres | ets | csv | mysql | clickhouse |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -262,7 +329,7 @@ apply, such as getting a hidden record when the actor may read every note.
 | Tenancy scopes creates, updates and destroys | ✅ Works 3/3 | ✅ Works 3/3 | ✅ Works 3/3 | ✅ Works 3/3 | 🟡 Partial 1/3 | ✅ Works 3/3 |
 | Schema-based (context) tenancy | ➖ Not applicable | ✅ Works 5/5 | ➖ Not applicable | ➖ Not applicable | ➖ Not applicable | ➖ Not applicable |
 
-## 10. Authorization
+## 11. Authorization
 
 | Feature | sqlite | postgres | ets | csv | mysql | clickhouse |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -272,7 +339,7 @@ apply, such as getting a hidden record when the actor may read every note.
 | Policies filter pages and counts | ✅ Works 3/3 | ✅ Works 3/3 | 🟡 Partial 1/3 | ⛔ Not supported 0/3 | ⛔ Not supported 0/3 | ❌ Broken 0/3 |
 | Policies filter and forbid writes | ✅ Works 4/4 | ✅ Works 4/4 | ✅ Works 4/4 | 🟡 Partial 3/4 | 🟡 Partial 2/4 | 🟡 Partial 3/4 |
 
-## 11. Policies
+## 12. Policies
 
 | Feature | sqlite | postgres | ets | csv | mysql | clickhouse |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -292,7 +359,7 @@ apply, such as getting a hidden record when the actor may read every note.
 | A filter check on create runs after the insert | ✅ Works 2/2 | ✅ Works 2/2 | ❌ Broken 0/2 | 🟡 Partial 1/2 | ❌ Broken 0/2 | ❌ Broken 0/2 |
 | Every policy path, without authorization | 🟡 Partial 21/22 | ✅ Works 22/22 | ✅ Works 22/22 | 🟡 Partial 13/22 | 🟡 Partial 18/22 | 🟡 Partial 16/22 |
 
-## 12. Consistency checks
+## 13. Consistency checks
 
 | Feature | sqlite | postgres | ets | csv | mysql | clickhouse |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -314,6 +381,7 @@ blockers counts under each.
 | --- | --- | ---: | ---: | ---: |
 | `filter.fanout_read_control` | wrong | 0 | 7 | 7 |
 | `policy.control.exists_filter_input` | wrong | 0 | 5 | 5 |
+| `storage.duration.ordinary` | error at create: ** (Exqlite.Error) unsupported type: %Duration{hour: 1, minute: 30} | 5 | 0 | 5 |
 | `storage.decimal.edge` | lost at read: Decimal.new("12345678901234568") | 0 | 4 | 4 |
 | `context.relationship_context_control` | wrong | 0 | 1 | 1 |
 | `filter.nested_parent_control` | crashed | 0 | 1 | 1 |
@@ -338,11 +406,13 @@ blockers counts under each.
 
 | Blocker | Its result | Not run | Failing | Only blocker of |
 | --- | --- | ---: | ---: | ---: |
-| `storage.boolean.ordinary` | error at create: stored value for value could not be casted from the stored value to type Ash.Type.Boolean: "true" | 247 | 0 | 189 |
-| `storage.embedded.ordinary` | error at create: ** (Protocol.UndefinedError) protocol String.Chars not implemented for Ash.Conformance.Resources.Address (a struct) | 58 | 0 | 0 |
-| `storage.float.ordinary` | error at create: stored value for value could not be casted from the stored value to type Ash.Type.Float: "1.5" | 58 | 0 | 0 |
-| `storage.map.ordinary` | error at create: ** (Protocol.UndefinedError) protocol String.Chars not implemented for Map | 58 | 0 | 0 |
-| `storage.strings.ordinary` | error at create: ** (Protocol.UndefinedError) protocol Enumerable not implemented for BitString | 58 | 0 | 0 |
+| `storage.boolean.ordinary` | error at create: stored value for value could not be casted from the stored value to type Ash.Type.Boolean: "true" | 252 | 0 | 194 |
+| `storage.float.ordinary` | error at create: stored value for value could not be casted from the stored value to type Ash.Type.Float: "1.5" | 68 | 0 | 10 |
+| `storage.embedded.ordinary` | error at create: ** (Protocol.UndefinedError) protocol String.Chars not implemented for Ash.Conformance.Resources.Address (a struct) | 61 | 0 | 3 |
+| `storage.map.ordinary` | error at create: ** (Protocol.UndefinedError) protocol String.Chars not implemented for Map | 61 | 0 | 3 |
+| `storage.strings.ordinary` | error at create: ** (Protocol.UndefinedError) protocol Enumerable not implemented for BitString | 61 | 0 | 3 |
+| `ops.integer.count` | rejected | 0 | 13 | 13 |
+| `ops.integer.first` | rejected | 0 | 13 | 13 |
 | `policy.control.aggregate_filter` | rejected | 0 | 12 | 12 |
 | `policy.control.bulk_update` | wrong | 0 | 12 | 12 |
 | `policy.control.exists_filter_input` | crashed | 0 | 12 | 12 |
@@ -351,17 +421,30 @@ blockers counts under each.
 | `policy.control.count` | rejected | 0 | 10 | 10 |
 | `policy.control.offset_page` | rejected | 0 | 10 | 10 |
 | `policy.control.sum` | rejected | 0 | 10 | 10 |
+| `ops.integer.max` | rejected | 0 | 9 | 9 |
+| `ops.integer.min` | rejected | 0 | 9 | 9 |
+| `storage.duration.ordinary` | error at create: ** (Protocol.UndefinedError) protocol String.Chars not implemented for Duration (a struct) | 5 | 0 | 5 |
+| `storage.embeddeds.ordinary` | error at create: ** (ArgumentError) cannot convert the given list to a string. | 3 | 0 | 3 |
+| `storage.integers.ordinary` | error at create: ** (Protocol.UndefinedError) protocol Enumerable not implemented for BitString | 3 | 0 | 3 |
+| `storage.union.ordinary` | error at create: ** (Protocol.UndefinedError) protocol String.Chars not implemented for Ash.Union (a struct) | 3 | 0 | 3 |
+| `ops.integer.sum` | rejected | 0 | 1 | 1 |
 | `policy.control.field_aggregate` | rejected | 0 | 1 | 1 |
 
 ### AshMysql
 
 | Blocker | Its result | Not run | Failing | Only blocker of |
 | --- | --- | ---: | ---: | ---: |
+| `ops.integer.first` | crashed | 0 | 18 | 17 |
 | `policy.control.aggregate_filter` | rejected | 0 | 12 | 12 |
 | `policy.control.loaded_count` | rejected | 0 | 12 | 12 |
 | `policy.control.loaded_sum` | rejected | 0 | 12 | 12 |
+| `ops.integer.sort` | crashed | 0 | 10 | 9 |
+| `storage.decimal.ordinary` | lost at read: Decimal.new("2") | 0 | 10 | 8 |
+| `storage.duration.ordinary` | no_table at table: (1064) You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'duration, PRIMARY  | 5 | 0 | 5 |
+| `storage.embeddeds.ordinary` | no_table at table: Array type is not supported by MySQL | 3 | 0 | 3 |
+| `storage.integers.ordinary` | no_table at table: Array type is not supported by MySQL | 3 | 0 | 3 |
+| `storage.strings.ordinary` | no_table at table: Array type is not supported by MySQL | 3 | 0 | 3 |
 | `context.relationship_context_control` | wrong | 0 | 2 | 2 |
-| `storage.decimal.ordinary` | lost at read: Decimal.new("2") | 0 | 2 | 2 |
 | `bounds.default_sort_control` | crashed | 0 | 1 | 1 |
 | `context.authorization_bounds_control` | crashed | 0 | 1 | 1 |
 | `filter.nested_parent_control` | crashed | 0 | 1 | 1 |
@@ -372,15 +455,25 @@ blockers counts under each.
 
 | Blocker | Its result | Not run | Failing | Only blocker of |
 | --- | --- | ---: | ---: | ---: |
+| `ops.integer.first` | rejected | 0 | 14 | 11 |
 | `policy.control.aggregate_filter` | crashed | 0 | 12 | 12 |
 | `policy.control.exists_filter_input` | crashed | 0 | 12 | 12 |
 | `policy.control.loaded_count` | wrong | 0 | 12 | 12 |
 | `policy.control.loaded_sum` | wrong | 0 | 12 | 12 |
 | `policy.control.bulk_update` | wrong | 0 | 10 | 10 |
+| `storage.decimal.ordinary` | no_table at table: ["Code: 43. DB::Exception: Decimal argument precision is invalid. (ILLEGAL_TYPE_OF_ARGUMENT) (version 25.8.33.6 (official build))"] | 10 | 0 | 10 |
 | `filter.fanout_read_control` | crashed | 0 | 9 | 9 |
-| `storage.date.ordinary` | lost at read: "2024-02-29" | 0 | 6 | 0 |
-| `storage.utc_datetime_usec.ordinary` | lost at update: ~U[2024-02-29 12:34:56.000000Z] | 0 | 6 | 0 |
+| `storage.date.ordinary` | lost at read: "2024-02-29" | 0 | 9 | 8 |
+| `storage.naive_datetime.ordinary` | lost at read: ~U[2024-02-29 12:34:56.000000Z] | 0 | 6 | 5 |
+| `storage.time_usec.ordinary` | lost at read: "12:34:56.123456" | 0 | 6 | 5 |
+| `storage.duration.ordinary` | error at create: ** (Protocol.UndefinedError) protocol Jason.Encoder not implemented for Duration (a struct), Jason.Encoder protocol must always be explicitly implemented. | 5 | 0 | 5 |
 | `values.decimal_read_control` | wrong | 0 | 4 | 4 |
+| `storage.embedded.ordinary` | no_table at table: ClickHouse does not support Nullable(Map(String, String)) because the inner type is a | 3 | 0 | 3 |
+| `storage.embeddeds.ordinary` | no_table at table: ClickHouse does not support Nullable(Array(String)) because the inner type is a | 3 | 0 | 3 |
+| `storage.integers.ordinary` | no_table at table: ClickHouse does not support Nullable(Array(Int64)) because the inner type is a | 3 | 0 | 3 |
+| `storage.map.ordinary` | no_table at table: ClickHouse does not support Nullable(Map(String, String)) because the inner type is a | 3 | 0 | 3 |
+| `storage.strings.ordinary` | no_table at table: ClickHouse does not support Nullable(Array(String)) because the inner type is a | 3 | 0 | 3 |
+| `storage.union.ordinary` | no_table at table: ClickHouse does not support Nullable(Map(String, String)) because the inner type is a | 3 | 0 | 3 |
 | `context.relationship_context_control` | wrong | 0 | 2 | 2 |
 | `filter.nested_parent_control` | crashed | 0 | 1 | 1 |
 | `filter.parent_through_control` | crashed | 0 | 1 | 1 |

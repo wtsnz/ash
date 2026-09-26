@@ -105,6 +105,37 @@ defmodule Ash.Conformance.RunnerTest do
     end
   end
 
+  defmodule SetupAdapter do
+    @moduledoc false
+    def id, do: :setup_adapter
+    def checkout!, do: :ok
+    def checkin!, do: :ok
+    def instrumentation, do: nil
+    def resource(role), do: Ash.Conformance.Ets.resource(role)
+    def persist!(_role, _rows, _opts), do: raise("cannot store this")
+  end
+
+  test "a not-run record needs the fixture to fail with its reason, and nothing else" do
+    record = fn result -> send(self(), {:recorded, result}) end
+    not_run = Ash.Conformance.Contracts.Records.not_run(~r/cannot store this/, "example")
+    stores = %{scenario() | fixture: :empty}
+    fails = %{scenario() | fixture: :records}
+
+    assert Runner.execute_expectation!(fails, SetupAdapter, not_run, record, record)
+    assert_received {:recorded, {:error, Ash.Conformance.Fixtures.SetupError, _message}}
+
+    # A fixture that starts storing is a change to review, not a pass.
+    assert_raise ExUnit.AssertionError, ~r/the fixture now stores/, fn ->
+      Runner.execute_expectation!(stores, SetupAdapter, not_run, record, record)
+    end
+
+    other = Ash.Conformance.Contracts.Records.not_run(~r/another reason/, "example")
+
+    assert_raise ExUnit.AssertionError, ~r/setup failure changed/, fn ->
+      Runner.execute_expectation!(fails, SetupAdapter, other, record, record)
+    end
+  end
+
   defmodule CountingInstrumentation do
     def measure(_adapter, operation), do: {operation.(), %{query_count: 2}}
   end

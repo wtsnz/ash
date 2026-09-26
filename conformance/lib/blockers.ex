@@ -17,13 +17,16 @@ defmodule Ash.Conformance.Blockers do
   classification, and a scenario that works is never labelled. Only a
   demonstrated failure blocks:
 
-  - A declared storage cell blocks when its value is lost or rejected. A
-    different representation (≈) does not. Neither does a table that could
-    not be created: that shows the migration generator's gap, not whether
-    the fixture's own table stores the type.
+  - A declared storage cell blocks when storing or reading its value back
+    loses or rejects it. A failure only when updating or clearing it does
+    not, since scenarios read what their fixtures stored. A different
+    representation (≈) does not block. Neither does a table that could not
+    be created: that shows the migration generator's gap, not whether the
+    fixture's own table stores the type.
   - A storage cell explains a setup failure only when storing or reading
     its type raised. A setup failure is an exception, which a lost value
-    does not cause.
+    does not cause. Where the row went into the tier-1 table itself (tier
+    2), a table tier 1 could not create explains it too.
   - Any other prerequisite blocks when it ran and does not work. One that
     could not run blocks only through its own blockers, and an open
     question never blocks.
@@ -48,7 +51,8 @@ defmodule Ash.Conformance.Blockers do
   end
 
   # Prerequisites are `{id, why}`: `:setup` for a stored row's cells,
-  # `:declared` for `requires:`.
+  # `:own_table` when that row went into the tier-1 table, `:declared` for
+  # `requires:`.
   defp roots(prerequisites, by_id, requires, seen) do
     prerequisites
     |> Enum.flat_map(fn {id, why} ->
@@ -76,6 +80,7 @@ defmodule Ash.Conformance.Blockers do
 
   defp prerequisites(%{classification: :setup_failed} = row, _requires) do
     case Map.get(row, :setup) do
+      %{cells: cells, own_table: true} -> Enum.map(cells, &{&1, :own_table})
       %{cells: cells} -> Enum.map(cells, &{&1, :setup})
       _ -> []
     end
@@ -89,9 +94,17 @@ defmodule Ash.Conformance.Blockers do
 
   defp storage_blocks?(row, why) do
     case {Map.get(row, :detail), why} do
-      {%{result: "error", step: step}, :setup} -> step in ["create", "read", "run"]
-      {%{result: result}, :declared} -> result in ["lost", "error"]
-      _ -> false
+      {%{result: "error", step: step}, why} when why in [:setup, :own_table] ->
+        step in ["create", "read", "run"]
+
+      {%{result: "no_table"}, :own_table} ->
+        true
+
+      {%{result: result, step: step}, :declared} ->
+        result in ["lost", "error"] and step in ["create", "read", "run"]
+
+      _ ->
+        false
     end
   end
 

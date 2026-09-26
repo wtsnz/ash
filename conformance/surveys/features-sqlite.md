@@ -4,7 +4,7 @@
 
 Generated from an unreviewed run: each result was classified automatically against the intended answer. Nothing here has been reviewed.
 
-Feature catalog version 1: 118 features and 582 scenarios.
+Feature catalog version 1: 141 features and 732 scenarios.
 
 | Status | Meaning |
 | --- | --- |
@@ -52,7 +52,35 @@ fix.
 | Arrays of embedded resources | ✅ Works 3/3 |  |
 | Unions | 🟡 Partial 1/2 | `storage.union.ordinary` wrong |
 
-## 2. Records
+## 2. Operations on each type
+
+| Feature | sqlite | Not working |
+| --- | --- | --- |
+| Integers | ✅ Works 10/10 |  |
+| Floats | ✅ Works 10/10 |  |
+| Decimals | ✅ Works 10/10 |  |
+| Strings | ✅ Works 9/9 |  |
+| Case-insensitive strings | 🟡 Partial 8/9 | `ops.ci_string.sort` wrong |
+| Binaries | 🟡 Partial 4/5 | `ops.binary.in` crashed |
+| Booleans | ✅ Works 5/5 |  |
+| Atoms with one_of | ✅ Works 5/5 |  |
+| Dates | ✅ Works 9/9 |  |
+| Times | ✅ Works 9/9 |  |
+| Microsecond times | ✅ Works 9/9 |  |
+| UTC datetimes | ✅ Works 9/9 |  |
+| Microsecond UTC datetimes | ✅ Works 9/9 |  |
+| Naive datetimes | ✅ Works 9/9 |  |
+| Durations | ❔ Unknown 5 not run | `ops.duration.count` setup failed (blocked by `storage.duration.ordinary`), `ops.duration.eq` setup failed (blocked by `storage.duration.ordinary`), `ops.duration.first` setup failed (blocked by `storage.duration.ordinary`), `ops.duration.in` setup failed (blocked by `storage.duration.ordinary`), `ops.duration.is_nil` setup failed (blocked by `storage.duration.ordinary`) |
+| UUIDs | ✅ Works 5/5 |  |
+| UUIDv7s | ✅ Works 5/5 |  |
+| Maps | 🟡 Partial 1/3 | `ops.map.count` wrong, `ops.map.is_nil` wrong |
+| Arrays of strings | 🟡 Partial 1/3 | `ops.strings.count` wrong, `ops.strings.is_nil` wrong |
+| Arrays of integers | 🟡 Partial 1/3 | `ops.integers.count` wrong, `ops.integers.is_nil` wrong |
+| Embedded resources | 🟡 Partial 1/3 | `ops.embedded.count` wrong, `ops.embedded.is_nil` wrong |
+| Arrays of embedded resources | 🟡 Partial 1/3 | `ops.embeddeds.count` wrong, `ops.embeddeds.is_nil` wrong |
+| Unions | 🟡 Partial 1/3 | `ops.union.count` wrong, `ops.union.is_nil` wrong |
+
+## 3. Records
 
 | Feature | sqlite | Not working |
 | --- | --- | --- |
@@ -65,7 +93,7 @@ fix.
 | Update a record atomically from its current value | ✅ Works 1/1 |  |
 | Not found, invalid, missing and duplicate values are errors | ✅ Works 4/4 |  |
 
-## 3. Types
+## 4. Types
 
 | Feature | sqlite | Not working |
 | --- | --- | --- |
@@ -77,7 +105,7 @@ fix.
 | Maps round-trip, including nested values | ✅ Works 1/1 |  |
 | Embedded resources round-trip | ✅ Works 1/1 |  |
 
-## 4. Querying
+## 5. Querying
 
 | Feature | sqlite | Not working |
 | --- | --- | --- |
@@ -100,7 +128,7 @@ fix.
 | Keyset pagination, forwards and backwards | ✅ Works 1/1 |  |
 | Pagination while records change | ⚪ Untested |  |
 
-## 5. Relationships
+## 6. Relationships
 
 | Feature | sqlite | Not working |
 | --- | --- | --- |
@@ -115,7 +143,7 @@ fix.
 | Load belongs-to, has-one, has-many and many-to-many relationships | ✅ Works 4/4 |  |
 | Create and update related records with manage_relationship | ⚪ Untested |  |
 
-## 6. Aggregates
+## 7. Aggregates
 
 | Feature | sqlite | Not working |
 | --- | --- | --- |
@@ -138,7 +166,7 @@ fix.
 | Aggregates respect read actions, arguments, actor and context | 🟡 Partial 8/9 · 1 blocked | `context.relationship_context` wrong (blocked by `context.relationship_context_control`) |
 | Seeded filtered aggregates match an in-memory reference | ✅ Works 1/1 |  |
 
-## 7. Writes
+## 8. Writes
 
 | Feature | sqlite | Not working |
 | --- | --- | --- |
@@ -147,7 +175,7 @@ fix.
 | Bulk update atomically | ✅ Works 1/1 |  |
 | Writes that filter by or read aggregates | ✅ Works 4/4 |  |
 
-## 8. Transactions and locks
+## 9. Transactions and locks
 
 | Feature | sqlite | Not working |
 | --- | --- | --- |
@@ -155,7 +183,7 @@ fix.
 | Lock rows for update | ⛔ Not supported 0/1 | `query.lock_for_update` rejected |
 | Isolation between concurrent transactions | ⚪ Untested |  |
 
-## 9. Multitenancy
+## 10. Multitenancy
 
 | Feature | sqlite | Not working |
 | --- | --- | --- |
@@ -166,7 +194,7 @@ fix.
 | Tenancy scopes creates, updates and destroys | ✅ Works 3/3 |  |
 | Schema-based (context) tenancy | ➖ Not applicable |  |
 
-## 10. Authorization
+## 11. Authorization
 
 | Feature | sqlite | Not working |
 | --- | --- | --- |
@@ -176,7 +204,7 @@ fix.
 | Policies filter pages and counts | ✅ Works 3/3 |  |
 | Policies filter and forbid writes | ✅ Works 4/4 |  |
 
-## 11. Policies
+## 12. Policies
 
 | Feature | sqlite | Not working |
 | --- | --- | --- |
@@ -196,7 +224,7 @@ fix.
 | A filter check on create runs after the insert | ✅ Works 2/2 |  |
 | Every policy path, without authorization | 🟡 Partial 21/22 | `policy.control.exists_filter_input` wrong |
 
-## 12. Consistency checks
+## 13. Consistency checks
 
 | Feature | sqlite | Not working |
 | --- | --- | --- |
@@ -258,6 +286,39 @@ values of that class.
 | Arrays of embedded resources | `{:array, :map}` | ✅ | ✅ | ✅ |  |
 | Unions | `:map` | ❌ | – | ✅ | ordinary, clear: %Ash.Union{value: nil, type: :text} |
 
+## Operations
+
+✅ returns the answer Ash defines; ❌ does not, while the same operation
+works on integers and the type stores; ◌ blocked: the operation fails on
+integers too, or the type does not store; ❔ did not run; – does not apply
+to the type.
+
+| Type | `eq` | `in` | `is_nil` | `gt` | `sort` | `count` | `min` | `max` | `sum` | `first` |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| Integers | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Floats | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Decimals | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Strings | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | – | ✅ |
+| Case-insensitive strings | ✅ | ✅ | ✅ | ✅ | ❌ | ✅ | ✅ | ✅ | – | ✅ |
+| Binaries | ✅ | ❌ | ✅ | – | – | ✅ | – | – | – | ✅ |
+| Booleans | ✅ | ✅ | ✅ | – | – | ✅ | – | – | – | ✅ |
+| Atoms with one_of | ✅ | ✅ | ✅ | – | – | ✅ | – | – | – | ✅ |
+| Dates | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | – | ✅ |
+| Times | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | – | ✅ |
+| Microsecond times | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | – | ✅ |
+| UTC datetimes | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | – | ✅ |
+| Microsecond UTC datetimes | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | – | ✅ |
+| Naive datetimes | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | – | ✅ |
+| Durations | ❔ | ❔ | ❔ | – | – | ❔ | – | – | – | ❔ |
+| UUIDs | ✅ | ✅ | ✅ | – | – | ✅ | – | – | – | ✅ |
+| UUIDv7s | ✅ | ✅ | ✅ | – | – | ✅ | – | – | – | ✅ |
+| Maps | – | – | ❌ | – | – | ❌ | – | – | – | ✅ |
+| Arrays of strings | – | – | ❌ | – | – | ❌ | – | – | – | ✅ |
+| Arrays of integers | – | – | ❌ | – | – | ❌ | – | – | – | ✅ |
+| Embedded resources | – | – | ❌ | – | – | ❌ | – | – | – | ✅ |
+| Arrays of embedded resources | – | – | ❌ | – | – | ❌ | – | – | – | ✅ |
+| Unions | – | – | ❌ | – | – | ❌ | – | – | – | ✅ |
+
 ## Policies
 
 ✅ returns the answer Ash's policy semantics define; ❌ does not, while the
@@ -288,6 +349,7 @@ apply, such as getting a hidden record when the actor may read every note.
 | --- | --- | ---: | ---: | ---: |
 | `filter.fanout_read_control` | wrong | 0 | 7 | 7 |
 | `policy.control.exists_filter_input` | wrong | 0 | 5 | 5 |
+| `storage.duration.ordinary` | error at create: ** (Exqlite.Error) unsupported type: %Duration{hour: 1, minute: 30} | 5 | 0 | 5 |
 | `storage.decimal.edge` | lost at read: Decimal.new("12345678901234568") | 0 | 4 | 4 |
 | `context.relationship_context_control` | wrong | 0 | 1 | 1 |
 | `filter.nested_parent_control` | crashed | 0 | 1 | 1 |

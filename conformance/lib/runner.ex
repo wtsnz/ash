@@ -33,9 +33,40 @@ defmodule Ash.Conformance.Runner do
         record_fallback \\ fn _ -> :ok end
       ) do
     expectation = Ash.Conformance.Contracts.Expectations.for(scenario.id, adapter.id())
-    outcome = observe_both_orders(scenario, adapter, record_fallback)
+    execute_expectation!(scenario, adapter, expectation, record_result, record_fallback)
+  end
+
+  @doc false
+  def execute_expectation!(scenario, adapter, expectation, record_result, record_fallback) do
+    case expectation do
+      {:unknown, {:setup_error, pattern}, task} ->
+        expect_setup_failure!(scenario, adapter, pattern, task, record_result)
+
+      expectation ->
+        outcome = observe_both_orders(scenario, adapter, record_fallback)
+        record_result.(outcome)
+        assert_outcome!(scenario, expectation, outcome)
+    end
+  end
+
+  # A `not_run` record: the fixture must fail to store, with the recorded
+  # reason. Only a `SetupError` counts, so an operation's failure never does.
+  defp expect_setup_failure!(scenario, adapter, pattern, task, record_result) do
+    outcome = observe_both_orders(scenario, adapter)
     record_result.(outcome)
-    assert_outcome!(scenario, expectation, outcome)
+
+    flunk(
+      "#{scenario.id}: the fixture now stores and the operation ran (#{format(outcome)}); " <>
+        "review it and replace this not-run record (#{task})"
+    )
+  rescue
+    error in Ash.Conformance.Fixtures.SetupError ->
+      message = Exception.message(error)
+      record_result.({:error, Ash.Conformance.Fixtures.SetupError, message})
+
+      assert Regex.match?(pattern, message),
+             "#{scenario.id}: setup failure changed (#{task})\n" <>
+               "Expected: #{inspect(pattern)}\nObserved: #{message}"
   end
 
   def orders, do: @orders

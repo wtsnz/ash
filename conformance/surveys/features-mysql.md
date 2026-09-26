@@ -4,7 +4,7 @@
 
 Generated from an unreviewed run: each result was classified automatically against the intended answer. Nothing here has been reviewed.
 
-Feature catalog version 1: 118 features and 582 scenarios.
+Feature catalog version 1: 141 features and 732 scenarios.
 
 | Status | Meaning |
 | --- | --- |
@@ -52,7 +52,35 @@ fix.
 | Arrays of embedded resources | ❌ Broken 0/3 | `storage.embeddeds.edge` wrong, `storage.embeddeds.null` wrong, `storage.embeddeds.ordinary` wrong |
 | Unions | 🟡 Partial 1/2 | `storage.union.ordinary` wrong |
 
-## 2. Records
+## 2. Operations on each type
+
+| Feature | mysql | Not working |
+| --- | --- | --- |
+| Integers | 🟡 Partial 8/10 | `ops.integer.first` crashed, `ops.integer.sort` crashed |
+| Floats | 🟡 Partial 8/10 · 2 blocked | `ops.float.first` crashed (blocked by `ops.integer.first`), `ops.float.sort` crashed (blocked by `ops.integer.sort`) |
+| Decimals | 🟡 Partial 2/10 · 8 blocked | `ops.decimal.eq` wrong (blocked by `storage.decimal.ordinary`), `ops.decimal.first` crashed (blocked by `ops.integer.first`, `storage.decimal.ordinary`), `ops.decimal.gt` wrong (blocked by `storage.decimal.ordinary`), `ops.decimal.in` wrong (blocked by `storage.decimal.ordinary`), `ops.decimal.max` wrong (blocked by `storage.decimal.ordinary`), `ops.decimal.min` wrong (blocked by `storage.decimal.ordinary`), `ops.decimal.sort` crashed (blocked by `ops.integer.sort`, `storage.decimal.ordinary`), `ops.decimal.sum` wrong (blocked by `storage.decimal.ordinary`) |
+| Strings | 🟡 Partial 7/9 · 2 blocked | `ops.string.first` crashed (blocked by `ops.integer.first`), `ops.string.sort` crashed (blocked by `ops.integer.sort`) |
+| Case-insensitive strings | 🟡 Partial 6/9 · 2 blocked | `ops.ci_string.first` crashed (blocked by `ops.integer.first`), `ops.ci_string.in` wrong, `ops.ci_string.sort` crashed (blocked by `ops.integer.sort`) |
+| Binaries | ❌ Broken 0/5 · 1 blocked | `ops.binary.count` crashed, `ops.binary.eq` crashed, `ops.binary.first` crashed (blocked by `ops.integer.first`), `ops.binary.in` crashed, `ops.binary.is_nil` crashed |
+| Booleans | 🟡 Partial 1/5 · 1 blocked | `ops.boolean.count` wrong, `ops.boolean.first` crashed (blocked by `ops.integer.first`), `ops.boolean.in` wrong, `ops.boolean.is_nil` wrong |
+| Atoms with one_of | 🟡 Partial 3/5 · 1 blocked | `ops.atom.first` crashed (blocked by `ops.integer.first`), `ops.atom.in` crashed |
+| Dates | 🟡 Partial 7/9 · 2 blocked | `ops.date.first` crashed (blocked by `ops.integer.first`), `ops.date.sort` crashed (blocked by `ops.integer.sort`) |
+| Times | 🟡 Partial 7/9 · 2 blocked | `ops.time.first` crashed (blocked by `ops.integer.first`), `ops.time.sort` crashed (blocked by `ops.integer.sort`) |
+| Microsecond times | 🟡 Partial 3/9 · 2 blocked | `ops.time_usec.eq` wrong, `ops.time_usec.first` crashed (blocked by `ops.integer.first`), `ops.time_usec.gt` wrong, `ops.time_usec.in` wrong, `ops.time_usec.max` wrong, `ops.time_usec.sort` crashed (blocked by `ops.integer.sort`) |
+| UTC datetimes | 🟡 Partial 7/9 · 2 blocked | `ops.utc_datetime.first` crashed (blocked by `ops.integer.first`), `ops.utc_datetime.sort` crashed (blocked by `ops.integer.sort`) |
+| Microsecond UTC datetimes | 🟡 Partial 7/9 · 2 blocked | `ops.utc_datetime_usec.first` crashed (blocked by `ops.integer.first`), `ops.utc_datetime_usec.sort` crashed (blocked by `ops.integer.sort`) |
+| Naive datetimes | 🟡 Partial 7/9 · 2 blocked | `ops.naive_datetime.first` crashed (blocked by `ops.integer.first`), `ops.naive_datetime.sort` crashed (blocked by `ops.integer.sort`) |
+| Durations | ❔ Unknown 5 not run | `ops.duration.count` setup failed (blocked by `storage.duration.ordinary`), `ops.duration.eq` setup failed (blocked by `storage.duration.ordinary`), `ops.duration.first` setup failed (blocked by `storage.duration.ordinary`), `ops.duration.in` setup failed (blocked by `storage.duration.ordinary`), `ops.duration.is_nil` setup failed (blocked by `storage.duration.ordinary`) |
+| UUIDs | 🟡 Partial 4/5 · 1 blocked | `ops.uuid.first` crashed (blocked by `ops.integer.first`) |
+| UUIDv7s | 🟡 Partial 3/5 · 1 blocked | `ops.uuid_v7.first` crashed (blocked by `ops.integer.first`), `ops.uuid_v7.in` wrong |
+| Maps | 🟡 Partial 2/3 · 1 blocked | `ops.map.first` crashed (blocked by `ops.integer.first`) |
+| Arrays of strings | ❔ Unknown 3 not run | `ops.strings.count` setup failed (blocked by `storage.strings.ordinary`), `ops.strings.first` setup failed (blocked by `storage.strings.ordinary`), `ops.strings.is_nil` setup failed (blocked by `storage.strings.ordinary`) |
+| Arrays of integers | ❔ Unknown 3 not run | `ops.integers.count` setup failed (blocked by `storage.integers.ordinary`), `ops.integers.first` setup failed (blocked by `storage.integers.ordinary`), `ops.integers.is_nil` setup failed (blocked by `storage.integers.ordinary`) |
+| Embedded resources | 🟡 Partial 2/3 · 1 blocked | `ops.embedded.first` crashed (blocked by `ops.integer.first`) |
+| Arrays of embedded resources | ❔ Unknown 3 not run | `ops.embeddeds.count` setup failed (blocked by `storage.embeddeds.ordinary`), `ops.embeddeds.first` setup failed (blocked by `storage.embeddeds.ordinary`), `ops.embeddeds.is_nil` setup failed (blocked by `storage.embeddeds.ordinary`) |
+| Unions | 🟡 Partial 2/3 · 1 blocked | `ops.union.first` crashed (blocked by `ops.integer.first`) |
+
+## 3. Records
 
 | Feature | mysql | Not working |
 | --- | --- | --- |
@@ -65,7 +93,7 @@ fix.
 | Update a record atomically from its current value | ✅ Works 1/1 |  |
 | Not found, invalid, missing and duplicate values are errors | ✅ Works 4/4 |  |
 
-## 3. Types
+## 4. Types
 
 | Feature | mysql | Not working |
 | --- | --- | --- |
@@ -77,7 +105,7 @@ fix.
 | Maps round-trip, including nested values | ✅ Works 1/1 |  |
 | Embedded resources round-trip | ✅ Works 1/1 |  |
 
-## 4. Querying
+## 5. Querying
 
 | Feature | mysql | Not working |
 | --- | --- | --- |
@@ -100,7 +128,7 @@ fix.
 | Keyset pagination, forwards and backwards | ✅ Works 1/1 |  |
 | Pagination while records change | ⚪ Untested |  |
 
-## 5. Relationships
+## 6. Relationships
 
 | Feature | mysql | Not working |
 | --- | --- | --- |
@@ -115,7 +143,7 @@ fix.
 | Load belongs-to, has-one, has-many and many-to-many relationships | 🟡 Partial 3/4 | `load.has_one` crashed |
 | Create and update related records with manage_relationship | ⚪ Untested |  |
 
-## 6. Aggregates
+## 7. Aggregates
 
 | Feature | mysql | Not working |
 | --- | --- | --- |
@@ -138,7 +166,7 @@ fix.
 | Aggregates respect read actions, arguments, actor and context | ⛔ Not supported 0/9 · 2 blocked | `context.actor` rejected, `context.arguments` rejected, `context.intermediate_action` rejected, `context.intermediate_actor` rejected, `context.prepared_query_arguments` rejected, `context.read_action` rejected, `context.relationship_context` rejected (blocked by `context.relationship_context_control`), `context.shared` rejected (blocked by `context.relationship_context_control`), `context.through_arguments` rejected |
 | Seeded filtered aggregates match an in-memory reference | ⛔ Not supported 0/1 | `generated.filtered_aggregates` rejected |
 
-## 7. Writes
+## 8. Writes
 
 | Feature | mysql | Not working |
 | --- | --- | --- |
@@ -147,7 +175,7 @@ fix.
 | Bulk update atomically | ❌ Broken 0/1 | `bulk.atomic_increment` crashed |
 | Writes that filter by or read aggregates | ❌ Broken 0/4 | `write.atomic_update` crashed, `write.bulk_destroy_filter` rejected, `write.bulk_update_filter` rejected, `write.single_atomic_update` crashed |
 
-## 8. Transactions and locks
+## 9. Transactions and locks
 
 | Feature | mysql | Not working |
 | --- | --- | --- |
@@ -155,7 +183,7 @@ fix.
 | Lock rows for update | ⛔ Not supported 0/1 | `query.lock_for_update` rejected |
 | Isolation between concurrent transactions | ⚪ Untested |  |
 
-## 9. Multitenancy
+## 10. Multitenancy
 
 | Feature | mysql | Not working |
 | --- | --- | --- |
@@ -166,7 +194,7 @@ fix.
 | Tenancy scopes creates, updates and destroys | 🟡 Partial 1/3 | `tenant.write_local_identity` crashed, `write.lifecycle` crashed |
 | Schema-based (context) tenancy | ➖ Not applicable |  |
 
-## 10. Authorization
+## 11. Authorization
 
 | Feature | mysql | Not working |
 | --- | --- | --- |
@@ -176,7 +204,7 @@ fix.
 | Policies filter pages and counts | ⛔ Not supported 0/3 | `auth.keyset_pages` rejected, `auth.offset_page` rejected, `auth.tenant_interaction` rejected |
 | Policies filter and forbid writes | 🟡 Partial 2/4 | `auth.write_bulk_update_atomic` crashed, `auth.write_bulk_update_stream` crashed |
 
-## 11. Policies
+## 12. Policies
 
 | Feature | mysql | Not working |
 | --- | --- | --- |
@@ -196,7 +224,7 @@ fix.
 | A filter check on create runs after the insert | ❌ Broken 0/2 | `policy.owner.create_other` wrong, `policy.owner.create_own` wrong |
 | Every policy path, without authorization | 🟡 Partial 18/22 | `policy.control.aggregate_filter` rejected, `policy.control.field_aggregate` rejected, `policy.control.loaded_count` rejected, `policy.control.loaded_sum` rejected |
 
-## 12. Consistency checks
+## 13. Consistency checks
 
 | Feature | mysql | Not working |
 | --- | --- | --- |
@@ -267,6 +295,39 @@ values of that class.
 | Arrays of embedded resources | `{:array, :map}` | 🚫 | 🚫 | 🚫 | ordinary, table: Array type is not supported by MySQL |
 | Unions | `:map` | ❌ | – | ✅ | ordinary, clear: %Ash.Union{value: nil, type: :text} |
 
+## Operations
+
+✅ returns the answer Ash defines; ❌ does not, while the same operation
+works on integers and the type stores; ◌ blocked: the operation fails on
+integers too, or the type does not store; ❔ did not run; – does not apply
+to the type.
+
+| Type | `eq` | `in` | `is_nil` | `gt` | `sort` | `count` | `min` | `max` | `sum` | `first` |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| Integers | ✅ | ✅ | ✅ | ✅ | ❌ | ✅ | ✅ | ✅ | ✅ | ❌ |
+| Floats | ✅ | ✅ | ✅ | ✅ | ◌ | ✅ | ✅ | ✅ | ✅ | ◌ |
+| Decimals | ◌ | ◌ | ✅ | ◌ | ◌ | ✅ | ◌ | ◌ | ◌ | ◌ |
+| Strings | ✅ | ✅ | ✅ | ✅ | ◌ | ✅ | ✅ | ✅ | – | ◌ |
+| Case-insensitive strings | ✅ | ❌ | ✅ | ✅ | ◌ | ✅ | ✅ | ✅ | – | ◌ |
+| Binaries | ❌ | ❌ | ❌ | – | – | ❌ | – | – | – | ◌ |
+| Booleans | ✅ | ❌ | ❌ | – | – | ❌ | – | – | – | ◌ |
+| Atoms with one_of | ✅ | ❌ | ✅ | – | – | ✅ | – | – | – | ◌ |
+| Dates | ✅ | ✅ | ✅ | ✅ | ◌ | ✅ | ✅ | ✅ | – | ◌ |
+| Times | ✅ | ✅ | ✅ | ✅ | ◌ | ✅ | ✅ | ✅ | – | ◌ |
+| Microsecond times | ❌ | ❌ | ✅ | ❌ | ◌ | ✅ | ✅ | ❌ | – | ◌ |
+| UTC datetimes | ✅ | ✅ | ✅ | ✅ | ◌ | ✅ | ✅ | ✅ | – | ◌ |
+| Microsecond UTC datetimes | ✅ | ✅ | ✅ | ✅ | ◌ | ✅ | ✅ | ✅ | – | ◌ |
+| Naive datetimes | ✅ | ✅ | ✅ | ✅ | ◌ | ✅ | ✅ | ✅ | – | ◌ |
+| Durations | ❔ | ❔ | ❔ | – | – | ❔ | – | – | – | ❔ |
+| UUIDs | ✅ | ✅ | ✅ | – | – | ✅ | – | – | – | ◌ |
+| UUIDv7s | ✅ | ❌ | ✅ | – | – | ✅ | – | – | – | ◌ |
+| Maps | – | – | ✅ | – | – | ✅ | – | – | – | ◌ |
+| Arrays of strings | – | – | ❔ | – | – | ❔ | – | – | – | ❔ |
+| Arrays of integers | – | – | ❔ | – | – | ❔ | – | – | – | ❔ |
+| Embedded resources | – | – | ✅ | – | – | ✅ | – | – | – | ◌ |
+| Arrays of embedded resources | – | – | ❔ | – | – | ❔ | – | – | – | ❔ |
+| Unions | – | – | ✅ | – | – | ✅ | – | – | – | ◌ |
+
 ## Policies
 
 ✅ returns the answer Ash's policy semantics define; ❌ does not, while the
@@ -295,11 +356,17 @@ apply, such as getting a hidden record when the actor may read every note.
 
 | Blocker | Its result | Not run | Failing | Only blocker of |
 | --- | --- | ---: | ---: | ---: |
+| `ops.integer.first` | crashed | 0 | 18 | 17 |
 | `policy.control.aggregate_filter` | rejected | 0 | 12 | 12 |
 | `policy.control.loaded_count` | rejected | 0 | 12 | 12 |
 | `policy.control.loaded_sum` | rejected | 0 | 12 | 12 |
+| `ops.integer.sort` | crashed | 0 | 10 | 9 |
+| `storage.decimal.ordinary` | lost at read: Decimal.new("2") | 0 | 10 | 8 |
+| `storage.duration.ordinary` | no_table at table: (1064) You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'duration, PRIMARY  | 5 | 0 | 5 |
+| `storage.embeddeds.ordinary` | no_table at table: Array type is not supported by MySQL | 3 | 0 | 3 |
+| `storage.integers.ordinary` | no_table at table: Array type is not supported by MySQL | 3 | 0 | 3 |
+| `storage.strings.ordinary` | no_table at table: Array type is not supported by MySQL | 3 | 0 | 3 |
 | `context.relationship_context_control` | wrong | 0 | 2 | 2 |
-| `storage.decimal.ordinary` | lost at read: Decimal.new("2") | 0 | 2 | 2 |
 | `bounds.default_sort_control` | crashed | 0 | 1 | 1 |
 | `context.authorization_bounds_control` | crashed | 0 | 1 | 1 |
 | `filter.nested_parent_control` | crashed | 0 | 1 | 1 |

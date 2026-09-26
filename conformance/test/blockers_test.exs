@@ -59,6 +59,19 @@ defmodule Ash.Conformance.BlockersTest do
     end
   end
 
+  test "a declared storage cell that fails only when updated or cleared blocks nothing" do
+    # Scenarios read what their fixtures stored, as with Ash's union-nil bug,
+    # which only shows when a union is set to nil.
+    for step <- ["update", "clear"] do
+      rows = [
+        row("storage.union.ordinary", :wrong, %{detail: %{result: "lost", step: step, note: "n"}}),
+        row("a", :wrong)
+      ]
+
+      assert blocked(rows, %{"a" => ["storage.union.ordinary"]})["a"] == [], step
+    end
+  end
+
   test "a setup failure is blocked by the failing storage cells of its row's types" do
     setup = %{
       role: "child",

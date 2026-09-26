@@ -28,7 +28,7 @@ defmodule Ash.Conformance.Adapter do
   @callback instrumentation() :: module() | nil
   @callback benchmark_persist!(atom(), [map()]) :: term()
   @doc "Whether this integration provides the resources for a fixture."
-  @callback fixture?(atom()) :: boolean()
+  @callback fixture?(atom() | {:operations, atom()}) :: boolean()
   @doc "Expectation records by scenario ID, for every scenario in the adapter's profiles."
   @callback expectations() :: %{String.t() => term()}
   @doc """

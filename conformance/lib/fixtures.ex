@@ -30,9 +30,11 @@ defmodule Ash.Conformance.Fixtures do
   defmodule SetupError do
     @moduledoc """
     A fixture row the data layer could not store or read back. `cells` are
-    the tier-1 storage cells the row's values depend on.
+    the tier-1 storage cells the row's values depend on. `own_table` is set
+    when the row went into the tier-1 table itself, so a table tier 1 could
+    not create also explains the failure.
     """
-    defexception [:role, :row, :reason, cells: []]
+    defexception [:role, :row, :reason, cells: [], own_table: false]
 
     @impl true
     def message(%{role: role, row: row, reason: reason}),
@@ -76,6 +78,15 @@ defmodule Ash.Conformance.Fixtures do
     end)
     |> Enum.uniq()
     |> Enum.sort()
+  end
+
+  defp raise_no_table!(role, name, reason) do
+    raise SetupError,
+      role: role,
+      row: "table",
+      reason: "its table could not be created: #{reason}",
+      cells: Ash.Conformance.Storage.stored(name),
+      own_table: true
   end
 
   defp row_key(row), do: Map.get(row, :id) || inspect(row, limit: 3)
@@ -122,6 +133,26 @@ defmodule Ash.Conformance.Fixtures do
 
   defp build_fixture!(adapter, :records), do: Ash.Conformance.Fixtures.Records.seed!(adapter)
   defp build_fixture!(adapter, :policy), do: Ash.Conformance.Fixtures.Policy.seed!(adapter)
+
+  # Tier 2: one type's operation rows, in its tier-1 table.
+  defp build_fixture!(adapter, {:operations, name}) do
+    alias Ash.Conformance.Storage
+    role = Storage.role(name)
+
+    case Storage.provisioned(adapter, name) do
+      {:error, reason} -> raise_no_table!(role, name, reason)
+      {:error, reason, _column} -> raise_no_table!(role, name, reason)
+      _provisioned -> :ok
+    end
+
+    try do
+      seed!(adapter, role, ordered(Ash.Conformance.Operations.rows(name)))
+    rescue
+      error in SetupError -> reraise %{error | own_table: true}, __STACKTRACE__
+    end
+
+    %{adapter: adapter}
+  end
 
   def prepare!(context, "values.string_constraints") do
     seed!(context.adapter, :child, [

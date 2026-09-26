@@ -62,6 +62,7 @@ defmodule Ash.Conformance.Catalog do
   def all do
     [
       Scenarios.Storage,
+      Scenarios.Operations,
       Scenarios.Records,
       Scenarios.Types,
       Scenarios.Querying,

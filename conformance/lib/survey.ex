@@ -68,7 +68,8 @@ defmodule Ash.Conformance.Survey do
       role: to_string(error.role),
       row: to_string(error.row),
       reason: error.reason,
-      cells: error.cells
+      cells: error.cells,
+      own_table: error.own_table
     }
 
   defp setup_failure(exception),
@@ -121,11 +122,13 @@ defmodule Ash.Conformance.Survey do
     counts
   end
 
-  @doc "An adapter's survey report: its features, storage grid, policy grid and blockers."
+  @doc "An adapter's survey report: its features, storage, operation and policy grids, and blockers."
   def markdown(adapter, rows) do
     FeatureReport.markdown(rows, [adapter], :unreviewed) <>
       "\n" <>
       Ash.Conformance.Report.StorageGrid.detail(rows) <>
+      "\n" <>
+      Ash.Conformance.Report.OperationGrid.detail(rows) <>
       "\n" <>
       Ash.Conformance.Report.PolicyGrid.detail(rows) <>
       "\n## Blockers\n\n" <> Blockers.markdown(rows)

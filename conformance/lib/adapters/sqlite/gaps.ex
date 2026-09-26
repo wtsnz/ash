@@ -264,6 +264,56 @@ defmodule Ash.Conformance.Sqlite.Gaps do
         create fails with "unsupported type: %Duration{...}" before anything is
         stored. AshPostgres stores them once the repo decodes intervals as `Duration`,
         which its documentation requires.
+
+        Tier 2 cannot store its duration rows either, so every `ops.duration.*`
+        cell is recorded as not run.
+        """
+      },
+      %{
+        id: "ci-string-sort",
+        title: "CI-string sort",
+        kind: :implementation,
+        owners: [:ash_sqlite],
+        body: ~S"""
+
+        Sort case-insensitive strings case-insensitively. Ash compares them
+        ignoring case (`Ash.CiString.compare/2`), and AshPostgres sorts `citext`
+        that way. AshSqlite's migration generator gives them a `citext` column,
+        which SQLite does not know: it has text affinity and the default binary
+        collation, so `ops.ci_string.sort` returns Banana, Cherry, apple. Equality
+        filters already ignore case. A `COLLATE NOCASE` column, or sorting on
+        `lower(...)`, would match Ash.
+        """
+      },
+      %{
+        id: "json-null",
+        title: "JSON null",
+        kind: :implementation,
+        owners: [:ecto_sqlite3, :ash_sqlite],
+        body: ~S"""
+
+        Store nil maps, arrays, embedded resources and unions as SQL `NULL`. They
+        are stored as the JSON text `null`: Ecto passes nil through each adapter
+        dumper, and `ecto_sqlite3`'s `Codec.json_encode/1` encodes it with Jason
+        (checked with a direct `SELECT typeof(value)`, which returns `text`). Reads
+        decode it back to nil, so tier 1 passes, but `is_nil(value)` finds none
+        of these rows and `count` of the field counts them. A plain Ecto schema
+        with a nil `:map` field stores the same. `ecto_sqlite3` main encodes nil
+        the same way; no issue was found upstream. AshSqlite could bind nil
+        itself until it is fixed there.
+        """
+      },
+      %{
+        id: "binary-in-lists",
+        title: "Binary IN lists",
+        kind: :implementation,
+        owners: [:ash_sqlite],
+        body: ~S"""
+
+        Filter binaries with `in`. `value in ^[<<1, 0>>, <<2, 0>>]` crashes with an
+        `Ecto.QueryError` ("invalid keyword list in query"): AshSqlite's IN list
+        binds each binary as an Exqlite `{:blob, value}` tuple, and Ecto reads the
+        list of tuples as a keyword list. Equality on a single binary works.
         """
       }
     ]

@@ -20,7 +20,7 @@ defmodule Ash.Conformance.Report do
         scenario: scenario.id,
         description: scenario.description,
         profile: scenario.profile,
-        fixture: scenario.fixture,
+        fixture: Ash.Conformance.Scenario.fixture_name(scenario.fixture),
         semantic_basis: scenario.semantic_basis,
         benchmark: scenario.benchmark,
         capabilities: Capabilities.for_scenario(adapter, scenario),
@@ -75,6 +75,9 @@ defmodule Ash.Conformance.Report do
   defp expected(scenario), do: value(scenario.expected)
   defp accepted(scenario, :supported), do: expected(scenario)
   defp accepted(_, {_, {:value, actual}, _}), do: value(actual)
+
+  defp accepted(_, {:unknown, {:setup_error, pattern}, _}),
+    do: "Not run: setup fails with #{inspect(pattern)}"
 
   defp accepted(scenario, {status, {:order_dependent, signatures}, task}) do
     seeds =

@@ -22,7 +22,8 @@ defmodule Ash.Conformance.Contracts.Features do
   def sections do
     [
       {1, "Storage", storage()},
-      {2, "Records",
+      {2, "Operations on each type", operations()},
+      {3, "Records",
        [
          feature("records.read", "Read records", "#{@docs}/actions/read-actions.md",
            claims: [record: :read],
@@ -73,7 +74,7 @@ defmodule Ash.Conformance.Contracts.Features do
              ~w(record.not_found record.invalid_value record.required record.identity_conflict)
          )
        ]},
-      {3, "Types",
+      {4, "Types",
        [
          feature(
            "types.scalar",
@@ -122,7 +123,7 @@ defmodule Ash.Conformance.Contracts.Features do
            scenarios: ~w(record.types_embedded)
          )
        ]},
-      {4, "Querying",
+      {5, "Querying",
        [
          feature(
            "filter.comparison",
@@ -246,7 +247,7 @@ defmodule Ash.Conformance.Contracts.Features do
            scenarios: []
          )
        ]},
-      {5, "Relationships",
+      {6, "Relationships",
        [
          feature(
            "relationships.filter_to_many",
@@ -319,7 +320,7 @@ defmodule Ash.Conformance.Contracts.Features do
            scenarios: []
          )
        ]},
-      {6, "Aggregates",
+      {7, "Aggregates",
        [
          feature(
            "aggregates.loaded",
@@ -474,7 +475,7 @@ defmodule Ash.Conformance.Contracts.Features do
            scenarios: ~w(generated.filtered_aggregates)
          )
        ]},
-      {7, "Writes",
+      {8, "Writes",
        [
          feature(
            "writes.upsert",
@@ -511,7 +512,7 @@ defmodule Ash.Conformance.Contracts.Features do
              ~w(write.bulk_update_filter write.bulk_destroy_filter write.atomic_update write.single_atomic_update)
          )
        ]},
-      {8, "Transactions and locks",
+      {9, "Transactions and locks",
        [
          feature(
            "transactions.rollback",
@@ -533,7 +534,7 @@ defmodule Ash.Conformance.Contracts.Features do
            scenarios: []
          )
        ]},
-      {9, "Multitenancy",
+      {10, "Multitenancy",
        [
          feature(
            "tenancy.reads",
@@ -582,7 +583,7 @@ defmodule Ash.Conformance.Contracts.Features do
              ~w(schema.direct schema.relationships schema.loaded_aggregates schema.root_aggregate schema.filtered_page)
          )
        ]},
-      {10, "Authorization",
+      {11, "Authorization",
        [
          feature(
            "authorization.reads",
@@ -620,8 +621,8 @@ defmodule Ash.Conformance.Contracts.Features do
              ~w(auth.write_bulk_update_atomic auth.write_bulk_update_stream auth.write_bulk_destroy auth.write_forbidden)
          )
        ]},
-      {11, "Policies", policies()},
-      {12, "Consistency checks",
+      {12, "Policies", policies()},
+      {13, "Consistency checks",
        [
          feature(
            "consistency.equivalences",
@@ -646,6 +647,23 @@ defmodule Ash.Conformance.Contracts.Features do
           Enum.map(
             Ash.Conformance.Storage.cells(type),
             &Ash.Conformance.Storage.scenario_id(type.name, &1)
+          )
+      )
+    end
+  end
+
+  defp operations do
+    for type <- Ash.Conformance.Storage.types() do
+      feature(
+        "operations.#{type.name}",
+        type.label,
+        "../documentation/topics/reference/expressions.md",
+        claims: [],
+        scenarios:
+          for(
+            operation <- Ash.Conformance.Operations.operations(),
+            Ash.Conformance.Operations.applies?(operation, type.name),
+            do: Ash.Conformance.Operations.scenario_id(type.name, operation)
           )
       )
     end

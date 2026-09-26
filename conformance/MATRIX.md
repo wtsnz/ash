@@ -127,6 +127,156 @@ Elixir scenarios and expectations define the contract. CI runs each adapter inde
 | [`loaded.max`](lib/scenarios/aggregates/kinds.ex#L25) | supported | supported |
 | [`loaded.min`](lib/scenarios/aggregates/kinds.ex#L25) | supported | supported |
 | [`loaded.sum`](lib/scenarios/aggregates/kinds.ex#L25) | supported | supported |
+| [`ops.atom.count`](lib/scenarios/operations.ex#L26) | supported | supported |
+| [`ops.atom.eq`](lib/scenarios/operations.ex#L26) | supported | supported |
+| [`ops.atom.first`](lib/scenarios/operations.ex#L26) | supported | supported |
+| [`ops.atom.in`](lib/scenarios/operations.ex#L26) | supported | supported |
+| [`ops.atom.is_nil`](lib/scenarios/operations.ex#L26) | supported | supported |
+| [`ops.binary.count`](lib/scenarios/operations.ex#L26) | supported | supported |
+| [`ops.binary.eq`](lib/scenarios/operations.ex#L26) | supported | supported |
+| [`ops.binary.first`](lib/scenarios/operations.ex#L26) | supported | supported |
+| [`ops.binary.in`](lib/scenarios/operations.ex#L26) | [known_defect](GAPS.md#binary-in-lists) · AshSQLite | supported |
+| [`ops.binary.is_nil`](lib/scenarios/operations.ex#L26) | supported | supported |
+| [`ops.boolean.count`](lib/scenarios/operations.ex#L26) | supported | supported |
+| [`ops.boolean.eq`](lib/scenarios/operations.ex#L26) | supported | supported |
+| [`ops.boolean.first`](lib/scenarios/operations.ex#L26) | supported | supported |
+| [`ops.boolean.in`](lib/scenarios/operations.ex#L26) | supported | supported |
+| [`ops.boolean.is_nil`](lib/scenarios/operations.ex#L26) | supported | supported |
+| [`ops.ci_string.count`](lib/scenarios/operations.ex#L26) | supported | supported |
+| [`ops.ci_string.eq`](lib/scenarios/operations.ex#L26) | supported | supported |
+| [`ops.ci_string.first`](lib/scenarios/operations.ex#L26) | supported | supported |
+| [`ops.ci_string.gt`](lib/scenarios/operations.ex#L26) | supported | supported |
+| [`ops.ci_string.in`](lib/scenarios/operations.ex#L26) | supported | supported |
+| [`ops.ci_string.is_nil`](lib/scenarios/operations.ex#L26) | supported | supported |
+| [`ops.ci_string.max`](lib/scenarios/operations.ex#L26) | supported | supported |
+| [`ops.ci_string.min`](lib/scenarios/operations.ex#L26) | supported | supported |
+| [`ops.ci_string.sort`](lib/scenarios/operations.ex#L26) | [known_defect](GAPS.md#ci-string-sort) · AshSQLite | supported |
+| [`ops.date.count`](lib/scenarios/operations.ex#L26) | supported | supported |
+| [`ops.date.eq`](lib/scenarios/operations.ex#L26) | supported | supported |
+| [`ops.date.first`](lib/scenarios/operations.ex#L26) | supported | supported |
+| [`ops.date.gt`](lib/scenarios/operations.ex#L26) | supported | supported |
+| [`ops.date.in`](lib/scenarios/operations.ex#L26) | supported | supported |
+| [`ops.date.is_nil`](lib/scenarios/operations.ex#L26) | supported | supported |
+| [`ops.date.max`](lib/scenarios/operations.ex#L26) | supported | supported |
+| [`ops.date.min`](lib/scenarios/operations.ex#L26) | supported | supported |
+| [`ops.date.sort`](lib/scenarios/operations.ex#L26) | supported | supported |
+| [`ops.decimal.count`](lib/scenarios/operations.ex#L26) | supported | supported |
+| [`ops.decimal.eq`](lib/scenarios/operations.ex#L26) | supported | supported |
+| [`ops.decimal.first`](lib/scenarios/operations.ex#L26) | supported | supported |
+| [`ops.decimal.gt`](lib/scenarios/operations.ex#L26) | supported | supported |
+| [`ops.decimal.in`](lib/scenarios/operations.ex#L26) | supported | supported |
+| [`ops.decimal.is_nil`](lib/scenarios/operations.ex#L26) | supported | supported |
+| [`ops.decimal.max`](lib/scenarios/operations.ex#L26) | supported | supported |
+| [`ops.decimal.min`](lib/scenarios/operations.ex#L26) | supported | supported |
+| [`ops.decimal.sort`](lib/scenarios/operations.ex#L26) | supported | supported |
+| [`ops.decimal.sum`](lib/scenarios/operations.ex#L26) | supported | supported |
+| [`ops.duration.count`](lib/scenarios/operations.ex#L26) | [unknown](GAPS.md#duration-storage) · AshSQLite | supported |
+| [`ops.duration.eq`](lib/scenarios/operations.ex#L26) | [unknown](GAPS.md#duration-storage) · AshSQLite | supported |
+| [`ops.duration.first`](lib/scenarios/operations.ex#L26) | [unknown](GAPS.md#duration-storage) · AshSQLite | supported |
+| [`ops.duration.in`](lib/scenarios/operations.ex#L26) | [unknown](GAPS.md#duration-storage) · AshSQLite | supported |
+| [`ops.duration.is_nil`](lib/scenarios/operations.ex#L26) | [unknown](GAPS.md#duration-storage) · AshSQLite | supported |
+| [`ops.embedded.count`](lib/scenarios/operations.ex#L26) | [known_defect](GAPS.md#json-null) · ecto_sqlite3 | supported |
+| [`ops.embedded.first`](lib/scenarios/operations.ex#L26) | supported | supported |
+| [`ops.embedded.is_nil`](lib/scenarios/operations.ex#L26) | [known_defect](GAPS.md#json-null) · ecto_sqlite3 | supported |
+| [`ops.embeddeds.count`](lib/scenarios/operations.ex#L26) | [known_defect](GAPS.md#json-null) · ecto_sqlite3 | supported |
+| [`ops.embeddeds.first`](lib/scenarios/operations.ex#L26) | supported | supported |
+| [`ops.embeddeds.is_nil`](lib/scenarios/operations.ex#L26) | [known_defect](GAPS.md#json-null) · ecto_sqlite3 | supported |
+| [`ops.float.count`](lib/scenarios/operations.ex#L26) | supported | supported |
+| [`ops.float.eq`](lib/scenarios/operations.ex#L26) | supported | supported |
+| [`ops.float.first`](lib/scenarios/operations.ex#L26) | supported | supported |
+| [`ops.float.gt`](lib/scenarios/operations.ex#L26) | supported | supported |
+| [`ops.float.in`](lib/scenarios/operations.ex#L26) | supported | supported |
+| [`ops.float.is_nil`](lib/scenarios/operations.ex#L26) | supported | supported |
+| [`ops.float.max`](lib/scenarios/operations.ex#L26) | supported | supported |
+| [`ops.float.min`](lib/scenarios/operations.ex#L26) | supported | supported |
+| [`ops.float.sort`](lib/scenarios/operations.ex#L26) | supported | supported |
+| [`ops.float.sum`](lib/scenarios/operations.ex#L26) | supported | supported |
+| [`ops.integer.count`](lib/scenarios/operations.ex#L26) | supported | supported |
+| [`ops.integer.eq`](lib/scenarios/operations.ex#L26) | supported | supported |
+| [`ops.integer.first`](lib/scenarios/operations.ex#L26) | supported | supported |
+| [`ops.integer.gt`](lib/scenarios/operations.ex#L26) | supported | supported |
+| [`ops.integer.in`](lib/scenarios/operations.ex#L26) | supported | supported |
+| [`ops.integer.is_nil`](lib/scenarios/operations.ex#L26) | supported | supported |
+| [`ops.integer.max`](lib/scenarios/operations.ex#L26) | supported | supported |
+| [`ops.integer.min`](lib/scenarios/operations.ex#L26) | supported | supported |
+| [`ops.integer.sort`](lib/scenarios/operations.ex#L26) | supported | supported |
+| [`ops.integer.sum`](lib/scenarios/operations.ex#L26) | supported | supported |
+| [`ops.integers.count`](lib/scenarios/operations.ex#L26) | [known_defect](GAPS.md#json-null) · ecto_sqlite3 | supported |
+| [`ops.integers.first`](lib/scenarios/operations.ex#L26) | supported | supported |
+| [`ops.integers.is_nil`](lib/scenarios/operations.ex#L26) | [known_defect](GAPS.md#json-null) · ecto_sqlite3 | supported |
+| [`ops.map.count`](lib/scenarios/operations.ex#L26) | [known_defect](GAPS.md#json-null) · ecto_sqlite3 | supported |
+| [`ops.map.first`](lib/scenarios/operations.ex#L26) | supported | supported |
+| [`ops.map.is_nil`](lib/scenarios/operations.ex#L26) | [known_defect](GAPS.md#json-null) · ecto_sqlite3 | supported |
+| [`ops.naive_datetime.count`](lib/scenarios/operations.ex#L26) | supported | supported |
+| [`ops.naive_datetime.eq`](lib/scenarios/operations.ex#L26) | supported | supported |
+| [`ops.naive_datetime.first`](lib/scenarios/operations.ex#L26) | supported | supported |
+| [`ops.naive_datetime.gt`](lib/scenarios/operations.ex#L26) | supported | supported |
+| [`ops.naive_datetime.in`](lib/scenarios/operations.ex#L26) | supported | supported |
+| [`ops.naive_datetime.is_nil`](lib/scenarios/operations.ex#L26) | supported | supported |
+| [`ops.naive_datetime.max`](lib/scenarios/operations.ex#L26) | supported | supported |
+| [`ops.naive_datetime.min`](lib/scenarios/operations.ex#L26) | supported | supported |
+| [`ops.naive_datetime.sort`](lib/scenarios/operations.ex#L26) | supported | supported |
+| [`ops.string.count`](lib/scenarios/operations.ex#L26) | supported | supported |
+| [`ops.string.eq`](lib/scenarios/operations.ex#L26) | supported | supported |
+| [`ops.string.first`](lib/scenarios/operations.ex#L26) | supported | supported |
+| [`ops.string.gt`](lib/scenarios/operations.ex#L26) | supported | supported |
+| [`ops.string.in`](lib/scenarios/operations.ex#L26) | supported | supported |
+| [`ops.string.is_nil`](lib/scenarios/operations.ex#L26) | supported | supported |
+| [`ops.string.max`](lib/scenarios/operations.ex#L26) | supported | supported |
+| [`ops.string.min`](lib/scenarios/operations.ex#L26) | supported | supported |
+| [`ops.string.sort`](lib/scenarios/operations.ex#L26) | supported | supported |
+| [`ops.strings.count`](lib/scenarios/operations.ex#L26) | [known_defect](GAPS.md#json-null) · ecto_sqlite3 | supported |
+| [`ops.strings.first`](lib/scenarios/operations.ex#L26) | supported | supported |
+| [`ops.strings.is_nil`](lib/scenarios/operations.ex#L26) | [known_defect](GAPS.md#json-null) · ecto_sqlite3 | supported |
+| [`ops.time.count`](lib/scenarios/operations.ex#L26) | supported | supported |
+| [`ops.time.eq`](lib/scenarios/operations.ex#L26) | supported | supported |
+| [`ops.time.first`](lib/scenarios/operations.ex#L26) | supported | supported |
+| [`ops.time.gt`](lib/scenarios/operations.ex#L26) | supported | supported |
+| [`ops.time.in`](lib/scenarios/operations.ex#L26) | supported | supported |
+| [`ops.time.is_nil`](lib/scenarios/operations.ex#L26) | supported | supported |
+| [`ops.time.max`](lib/scenarios/operations.ex#L26) | supported | supported |
+| [`ops.time.min`](lib/scenarios/operations.ex#L26) | supported | supported |
+| [`ops.time.sort`](lib/scenarios/operations.ex#L26) | supported | supported |
+| [`ops.time_usec.count`](lib/scenarios/operations.ex#L26) | supported | supported |
+| [`ops.time_usec.eq`](lib/scenarios/operations.ex#L26) | supported | supported |
+| [`ops.time_usec.first`](lib/scenarios/operations.ex#L26) | supported | supported |
+| [`ops.time_usec.gt`](lib/scenarios/operations.ex#L26) | supported | supported |
+| [`ops.time_usec.in`](lib/scenarios/operations.ex#L26) | supported | supported |
+| [`ops.time_usec.is_nil`](lib/scenarios/operations.ex#L26) | supported | supported |
+| [`ops.time_usec.max`](lib/scenarios/operations.ex#L26) | supported | supported |
+| [`ops.time_usec.min`](lib/scenarios/operations.ex#L26) | supported | supported |
+| [`ops.time_usec.sort`](lib/scenarios/operations.ex#L26) | supported | supported |
+| [`ops.union.count`](lib/scenarios/operations.ex#L26) | [known_defect](GAPS.md#json-null) · ecto_sqlite3 | supported |
+| [`ops.union.first`](lib/scenarios/operations.ex#L26) | supported | supported |
+| [`ops.union.is_nil`](lib/scenarios/operations.ex#L26) | [known_defect](GAPS.md#json-null) · ecto_sqlite3 | supported |
+| [`ops.utc_datetime.count`](lib/scenarios/operations.ex#L26) | supported | supported |
+| [`ops.utc_datetime.eq`](lib/scenarios/operations.ex#L26) | supported | supported |
+| [`ops.utc_datetime.first`](lib/scenarios/operations.ex#L26) | supported | supported |
+| [`ops.utc_datetime.gt`](lib/scenarios/operations.ex#L26) | supported | supported |
+| [`ops.utc_datetime.in`](lib/scenarios/operations.ex#L26) | supported | supported |
+| [`ops.utc_datetime.is_nil`](lib/scenarios/operations.ex#L26) | supported | supported |
+| [`ops.utc_datetime.max`](lib/scenarios/operations.ex#L26) | supported | supported |
+| [`ops.utc_datetime.min`](lib/scenarios/operations.ex#L26) | supported | supported |
+| [`ops.utc_datetime.sort`](lib/scenarios/operations.ex#L26) | supported | supported |
+| [`ops.utc_datetime_usec.count`](lib/scenarios/operations.ex#L26) | supported | supported |
+| [`ops.utc_datetime_usec.eq`](lib/scenarios/operations.ex#L26) | supported | supported |
+| [`ops.utc_datetime_usec.first`](lib/scenarios/operations.ex#L26) | supported | supported |
+| [`ops.utc_datetime_usec.gt`](lib/scenarios/operations.ex#L26) | supported | supported |
+| [`ops.utc_datetime_usec.in`](lib/scenarios/operations.ex#L26) | supported | supported |
+| [`ops.utc_datetime_usec.is_nil`](lib/scenarios/operations.ex#L26) | supported | supported |
+| [`ops.utc_datetime_usec.max`](lib/scenarios/operations.ex#L26) | supported | supported |
+| [`ops.utc_datetime_usec.min`](lib/scenarios/operations.ex#L26) | supported | supported |
+| [`ops.utc_datetime_usec.sort`](lib/scenarios/operations.ex#L26) | supported | supported |
+| [`ops.uuid.count`](lib/scenarios/operations.ex#L26) | supported | supported |
+| [`ops.uuid.eq`](lib/scenarios/operations.ex#L26) | supported | supported |
+| [`ops.uuid.first`](lib/scenarios/operations.ex#L26) | supported | supported |
+| [`ops.uuid.in`](lib/scenarios/operations.ex#L26) | supported | supported |
+| [`ops.uuid.is_nil`](lib/scenarios/operations.ex#L26) | supported | supported |
+| [`ops.uuid_v7.count`](lib/scenarios/operations.ex#L26) | supported | supported |
+| [`ops.uuid_v7.eq`](lib/scenarios/operations.ex#L26) | supported | supported |
+| [`ops.uuid_v7.first`](lib/scenarios/operations.ex#L26) | supported | supported |
+| [`ops.uuid_v7.in`](lib/scenarios/operations.ex#L26) | supported | supported |
+| [`ops.uuid_v7.is_nil`](lib/scenarios/operations.ex#L26) | supported | supported |
 | [`ordering.asc_nils_first`](lib/scenarios/aggregates/results.ex#L164) | supported | supported |
 | [`ordering.asc_nils_last`](lib/scenarios/aggregates/results.ex#L164) | supported | supported |
 | [`ordering.desc_nils_first`](lib/scenarios/aggregates/results.ex#L164) | supported | supported |
@@ -631,11 +781,14 @@ The first owner is where the fix starts. Counts are scenarios linked to each gap
 | [no-attributes](GAPS.md#no-attributes) | AshSQL, then AshSQLite | implementation | 2 | 1 |
 | [parent-correlation](GAPS.md#parent-correlation) | AshSQL, then AshSQLite | implementation | 8 | 0 |
 | [root-kinds](GAPS.md#root-kinds) | AshSQL, then AshSQLite | implementation | 8 | 0 |
+| [binary-in-lists](GAPS.md#binary-in-lists) | AshSQLite | implementation | 1 | 0 |
+| [ci-string-sort](GAPS.md#ci-string-sort) | AshSQLite | implementation | 1 | 0 |
 | [decimal-precision](GAPS.md#decimal-precision) | AshSQLite | implementation | 5 | 0 |
-| [duration-storage](GAPS.md#duration-storage) | AshSQLite | implementation | 2 | 0 |
+| [duration-storage](GAPS.md#duration-storage) | AshSQLite | implementation | 7 | 0 |
 | [error-expressions](GAPS.md#error-expressions) | AshSQLite | limitation | 8 | 0 |
 | [query-combinations](GAPS.md#query-combinations) | AshSQLite | implementation | 1 | 0 |
 | [query-distinct](GAPS.md#query-distinct) | AshSQLite | implementation | 1 | 0 |
 | [row-locks](GAPS.md#row-locks) | AshSQLite | limitation | 1 | 0 |
 | [upsert-conditions](GAPS.md#upsert-conditions) | AshSQLite | implementation | 2 | 0 |
 | [sorted-distinct-reads](GAPS.md#sorted-distinct-reads) | AshSQLite, then AshSQL | implementation | 8 | 0 |
+| [json-null](GAPS.md#json-null) | ecto_sqlite3, then AshSQLite | implementation | 12 | 0 |

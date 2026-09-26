@@ -53,6 +53,11 @@ defmodule Ash.Conformance.CatalogTest do
           {:unresolved, _signature, task} ->
             assert scenario.expected == :unresolved
             assert is_binary(task)
+
+          # A fixture the data layer cannot store: only a setup failure matches.
+          {:unknown, {:setup_error, %Regex{}}, task} ->
+            refute scenario.expected == :unresolved
+            assert is_binary(task)
         end
       end
     end

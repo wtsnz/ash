@@ -370,6 +370,13 @@ defmodule Ash.Conformance.Storage do
     end
   end
 
+  @doc """
+  Whether `got` is `want` for an attribute by the type's own equality, in any
+  representation. Tier 1 reports representation; later tiers only need the
+  value.
+  """
+  def same?(attribute, want, got), do: compare(attribute, want, got) != {:lost, got}
+
   defp compare(_attribute, nil, nil), do: :ok
   defp compare(_attribute, nil, got), do: {:lost, got}
 

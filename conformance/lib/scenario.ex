@@ -29,6 +29,10 @@ defmodule Ash.Conformance.Scenario do
     semantic_basis: "../documentation/topics/resources/aggregates.md"
   ]
 
+  @doc "A fixture's name for reports: `aggregate`, or `operations.integer` for a tier-2 type."
+  def fixture_name({:operations, type}), do: "operations.#{type}"
+  def fixture_name(fixture), do: to_string(fixture)
+
   @doc "Adds prerequisites to a scenario built by a helper that takes no options."
   def requires(%__MODULE__{} = scenario, ids),
     do: %{scenario | requires: scenario.requires ++ ids}

@@ -4,7 +4,7 @@
 
 Generated from an unreviewed run: each result was classified automatically against the intended answer. Nothing here has been reviewed.
 
-Feature catalog version 1: 118 features and 582 scenarios.
+Feature catalog version 1: 141 features and 732 scenarios.
 
 | Status | Meaning |
 | --- | --- |
@@ -52,7 +52,35 @@ fix.
 | Arrays of embedded resources | ✅ Works 3/3 |  |
 | Unions | 🟡 Partial 1/2 | `storage.union.ordinary` wrong |
 
-## 2. Records
+## 2. Operations on each type
+
+| Feature | ets | Not working |
+| --- | --- | --- |
+| Integers | ✅ Works 10/10 |  |
+| Floats | ✅ Works 10/10 |  |
+| Decimals | ✅ Works 10/10 |  |
+| Strings | ✅ Works 9/9 |  |
+| Case-insensitive strings | ✅ Works 9/9 |  |
+| Binaries | ✅ Works 5/5 |  |
+| Booleans | ✅ Works 5/5 |  |
+| Atoms with one_of | ✅ Works 5/5 |  |
+| Dates | ✅ Works 9/9 |  |
+| Times | ✅ Works 9/9 |  |
+| Microsecond times | ✅ Works 9/9 |  |
+| UTC datetimes | ✅ Works 9/9 |  |
+| Microsecond UTC datetimes | ✅ Works 9/9 |  |
+| Naive datetimes | ✅ Works 9/9 |  |
+| Durations | ✅ Works 5/5 |  |
+| UUIDs | ✅ Works 5/5 |  |
+| UUIDv7s | ✅ Works 5/5 |  |
+| Maps | ✅ Works 3/3 |  |
+| Arrays of strings | ✅ Works 3/3 |  |
+| Arrays of integers | ✅ Works 3/3 |  |
+| Embedded resources | ✅ Works 3/3 |  |
+| Arrays of embedded resources | ✅ Works 3/3 |  |
+| Unions | ✅ Works 3/3 |  |
+
+## 3. Records
 
 | Feature | ets | Not working |
 | --- | --- | --- |
@@ -65,7 +93,7 @@ fix.
 | Update a record atomically from its current value | ✅ Works 1/1 |  |
 | Not found, invalid, missing and duplicate values are errors | 🟡 Partial 3/4 | `record.identity_conflict` wrong |
 
-## 3. Types
+## 4. Types
 
 | Feature | ets | Not working |
 | --- | --- | --- |
@@ -77,7 +105,7 @@ fix.
 | Maps round-trip, including nested values | ✅ Works 1/1 |  |
 | Embedded resources round-trip | ✅ Works 1/1 |  |
 
-## 4. Querying
+## 5. Querying
 
 | Feature | ets | Not working |
 | --- | --- | --- |
@@ -100,7 +128,7 @@ fix.
 | Keyset pagination, forwards and backwards | ✅ Works 1/1 |  |
 | Pagination while records change | ⚪ Untested |  |
 
-## 5. Relationships
+## 6. Relationships
 
 | Feature | ets | Not working |
 | --- | --- | --- |
@@ -115,7 +143,7 @@ fix.
 | Load belongs-to, has-one, has-many and many-to-many relationships | ✅ Works 4/4 |  |
 | Create and update related records with manage_relationship | ⚪ Untested |  |
 
-## 6. Aggregates
+## 7. Aggregates
 
 | Feature | ets | Not working |
 | --- | --- | --- |
@@ -138,7 +166,7 @@ fix.
 | Aggregates respect read actions, arguments, actor and context | 🟡 Partial 8/9 · 1 blocked | `context.relationship_context` wrong (blocked by `context.relationship_context_control`) |
 | Seeded filtered aggregates match an in-memory reference | ✅ Works 1/1 |  |
 
-## 7. Writes
+## 8. Writes
 
 | Feature | ets | Not working |
 | --- | --- | --- |
@@ -147,7 +175,7 @@ fix.
 | Bulk update atomically | ✅ Works 1/1 |  |
 | Writes that filter by or read aggregates | ✅ Works 4/4 |  |
 
-## 8. Transactions and locks
+## 9. Transactions and locks
 
 | Feature | ets | Not working |
 | --- | --- | --- |
@@ -155,7 +183,7 @@ fix.
 | Lock rows for update | ⛔ Not supported 0/1 | `query.lock_for_update` rejected |
 | Isolation between concurrent transactions | ⚪ Untested |  |
 
-## 9. Multitenancy
+## 10. Multitenancy
 
 | Feature | ets | Not working |
 | --- | --- | --- |
@@ -166,7 +194,7 @@ fix.
 | Tenancy scopes creates, updates and destroys | ✅ Works 3/3 |  |
 | Schema-based (context) tenancy | ➖ Not applicable |  |
 
-## 10. Authorization
+## 11. Authorization
 
 | Feature | ets | Not working |
 | --- | --- | --- |
@@ -176,7 +204,7 @@ fix.
 | Policies filter pages and counts | 🟡 Partial 1/3 | `auth.keyset_pages` crashed, `auth.offset_page` crashed |
 | Policies filter and forbid writes | ✅ Works 4/4 |  |
 
-## 11. Policies
+## 12. Policies
 
 | Feature | ets | Not working |
 | --- | --- | --- |
@@ -196,7 +224,7 @@ fix.
 | A filter check on create runs after the insert | ❌ Broken 0/2 | `policy.owner.create_other` wrong, `policy.owner.create_own` wrong |
 | Every policy path, without authorization | ✅ Works 22/22 |  |
 
-## 12. Consistency checks
+## 13. Consistency checks
 
 | Feature | ets | Not working |
 | --- | --- | --- |
@@ -256,6 +284,39 @@ values of that class.
 | Embedded resources | `—` | ✅ | ✅ | ✅ |  |
 | Arrays of embedded resources | `—` | ✅ | ✅ | ✅ |  |
 | Unions | `—` | ❌ | – | ✅ | ordinary, clear: %Ash.Union{value: nil, type: :text} |
+
+## Operations
+
+✅ returns the answer Ash defines; ❌ does not, while the same operation
+works on integers and the type stores; ◌ blocked: the operation fails on
+integers too, or the type does not store; ❔ did not run; – does not apply
+to the type.
+
+| Type | `eq` | `in` | `is_nil` | `gt` | `sort` | `count` | `min` | `max` | `sum` | `first` |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| Integers | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Floats | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Decimals | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Strings | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | – | ✅ |
+| Case-insensitive strings | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | – | ✅ |
+| Binaries | ✅ | ✅ | ✅ | – | – | ✅ | – | – | – | ✅ |
+| Booleans | ✅ | ✅ | ✅ | – | – | ✅ | – | – | – | ✅ |
+| Atoms with one_of | ✅ | ✅ | ✅ | – | – | ✅ | – | – | – | ✅ |
+| Dates | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | – | ✅ |
+| Times | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | – | ✅ |
+| Microsecond times | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | – | ✅ |
+| UTC datetimes | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | – | ✅ |
+| Microsecond UTC datetimes | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | – | ✅ |
+| Naive datetimes | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | – | ✅ |
+| Durations | ✅ | ✅ | ✅ | – | – | ✅ | – | – | – | ✅ |
+| UUIDs | ✅ | ✅ | ✅ | – | – | ✅ | – | – | – | ✅ |
+| UUIDv7s | ✅ | ✅ | ✅ | – | – | ✅ | – | – | – | ✅ |
+| Maps | – | – | ✅ | – | – | ✅ | – | – | – | ✅ |
+| Arrays of strings | – | – | ✅ | – | – | ✅ | – | – | – | ✅ |
+| Arrays of integers | – | – | ✅ | – | – | ✅ | – | – | – | ✅ |
+| Embedded resources | – | – | ✅ | – | – | ✅ | – | – | – | ✅ |
+| Arrays of embedded resources | – | – | ✅ | – | – | ✅ | – | – | – | ✅ |
+| Unions | – | – | ✅ | – | – | ✅ | – | – | – | ✅ |
 
 ## Policies
 

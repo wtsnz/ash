@@ -4,7 +4,7 @@
 
 Generated from an unreviewed run: each result was classified automatically against the intended answer. Nothing here has been reviewed.
 
-Feature catalog version 1: 118 features and 582 scenarios.
+Feature catalog version 1: 141 features and 732 scenarios.
 
 | Status | Meaning |
 | --- | --- |
@@ -52,7 +52,35 @@ fix.
 | Arrays of embedded resources | ❌ Broken 0/3 | `storage.embeddeds.edge` wrong, `storage.embeddeds.null` wrong, `storage.embeddeds.ordinary` wrong |
 | Unions | ❌ Broken 0/2 | `storage.union.null` wrong, `storage.union.ordinary` wrong |
 
-## 2. Records
+## 2. Operations on each type
+
+| Feature | clickhouse | Not working |
+| --- | --- | --- |
+| Integers | 🟡 Partial 9/10 | `ops.integer.first` rejected |
+| Floats | 🟡 Partial 9/10 · 1 blocked | `ops.float.first` rejected (blocked by `ops.integer.first`) |
+| Decimals | ❔ Unknown 10 not run | `ops.decimal.count` setup failed (blocked by `storage.decimal.ordinary`), `ops.decimal.eq` setup failed (blocked by `storage.decimal.ordinary`), `ops.decimal.first` setup failed (blocked by `storage.decimal.ordinary`), `ops.decimal.gt` setup failed (blocked by `storage.decimal.ordinary`), `ops.decimal.in` setup failed (blocked by `storage.decimal.ordinary`), `ops.decimal.is_nil` setup failed (blocked by `storage.decimal.ordinary`), `ops.decimal.max` setup failed (blocked by `storage.decimal.ordinary`), `ops.decimal.min` setup failed (blocked by `storage.decimal.ordinary`), `ops.decimal.sort` setup failed (blocked by `storage.decimal.ordinary`), `ops.decimal.sum` setup failed (blocked by `storage.decimal.ordinary`) |
+| Strings | 🟡 Partial 8/9 · 1 blocked | `ops.string.first` rejected (blocked by `ops.integer.first`) |
+| Case-insensitive strings | 🟡 Partial 2/9 · 1 blocked | `ops.ci_string.eq` wrong, `ops.ci_string.first` rejected (blocked by `ops.integer.first`), `ops.ci_string.gt` crashed, `ops.ci_string.in` crashed, `ops.ci_string.max` wrong, `ops.ci_string.min` wrong, `ops.ci_string.sort` wrong |
+| Binaries | 🟡 Partial 4/5 · 1 blocked | `ops.binary.first` rejected (blocked by `ops.integer.first`) |
+| Booleans | 🟡 Partial 4/5 · 1 blocked | `ops.boolean.first` rejected (blocked by `ops.integer.first`) |
+| Atoms with one_of | 🟡 Partial 4/5 · 1 blocked | `ops.atom.first` rejected (blocked by `ops.integer.first`) |
+| Dates | 🟡 Partial 6/9 · 3 blocked | `ops.date.first` rejected (blocked by `ops.integer.first`, `storage.date.ordinary`), `ops.date.max` wrong (blocked by `storage.date.ordinary`), `ops.date.min` wrong (blocked by `storage.date.ordinary`) |
+| Times | 🟡 Partial 5/9 · 1 blocked | `ops.time.eq` crashed, `ops.time.first` rejected (blocked by `ops.integer.first`), `ops.time.gt` crashed, `ops.time.in` crashed |
+| Microsecond times | 🟡 Partial 3/9 · 6 blocked | `ops.time_usec.eq` crashed (blocked by `storage.time_usec.ordinary`), `ops.time_usec.first` rejected (blocked by `ops.integer.first`, `storage.time_usec.ordinary`), `ops.time_usec.gt` crashed (blocked by `storage.time_usec.ordinary`), `ops.time_usec.in` crashed (blocked by `storage.time_usec.ordinary`), `ops.time_usec.max` wrong (blocked by `storage.time_usec.ordinary`), `ops.time_usec.min` wrong (blocked by `storage.time_usec.ordinary`) |
+| UTC datetimes | 🟡 Partial 8/9 · 1 blocked | `ops.utc_datetime.first` rejected (blocked by `ops.integer.first`) |
+| Microsecond UTC datetimes | 🟡 Partial 5/9 · 1 blocked | `ops.utc_datetime_usec.eq` wrong, `ops.utc_datetime_usec.first` rejected (blocked by `ops.integer.first`), `ops.utc_datetime_usec.gt` wrong, `ops.utc_datetime_usec.in` wrong |
+| Naive datetimes | 🟡 Partial 3/9 · 6 blocked | `ops.naive_datetime.eq` crashed (blocked by `storage.naive_datetime.ordinary`), `ops.naive_datetime.first` rejected (blocked by `ops.integer.first`, `storage.naive_datetime.ordinary`), `ops.naive_datetime.gt` crashed (blocked by `storage.naive_datetime.ordinary`), `ops.naive_datetime.in` crashed (blocked by `storage.naive_datetime.ordinary`), `ops.naive_datetime.max` wrong (blocked by `storage.naive_datetime.ordinary`), `ops.naive_datetime.min` wrong (blocked by `storage.naive_datetime.ordinary`) |
+| Durations | ❔ Unknown 5 not run | `ops.duration.count` setup failed (blocked by `storage.duration.ordinary`), `ops.duration.eq` setup failed (blocked by `storage.duration.ordinary`), `ops.duration.first` setup failed (blocked by `storage.duration.ordinary`), `ops.duration.in` setup failed (blocked by `storage.duration.ordinary`), `ops.duration.is_nil` setup failed (blocked by `storage.duration.ordinary`) |
+| UUIDs | 🟡 Partial 4/5 · 1 blocked | `ops.uuid.first` rejected (blocked by `ops.integer.first`) |
+| UUIDv7s | 🟡 Partial 4/5 · 1 blocked | `ops.uuid_v7.first` rejected (blocked by `ops.integer.first`) |
+| Maps | ❔ Unknown 3 not run | `ops.map.count` setup failed (blocked by `storage.map.ordinary`), `ops.map.first` setup failed (blocked by `storage.map.ordinary`), `ops.map.is_nil` setup failed (blocked by `storage.map.ordinary`) |
+| Arrays of strings | ❔ Unknown 3 not run | `ops.strings.count` setup failed (blocked by `storage.strings.ordinary`), `ops.strings.first` setup failed (blocked by `storage.strings.ordinary`), `ops.strings.is_nil` setup failed (blocked by `storage.strings.ordinary`) |
+| Arrays of integers | ❔ Unknown 3 not run | `ops.integers.count` setup failed (blocked by `storage.integers.ordinary`), `ops.integers.first` setup failed (blocked by `storage.integers.ordinary`), `ops.integers.is_nil` setup failed (blocked by `storage.integers.ordinary`) |
+| Embedded resources | ❔ Unknown 3 not run | `ops.embedded.count` setup failed (blocked by `storage.embedded.ordinary`), `ops.embedded.first` setup failed (blocked by `storage.embedded.ordinary`), `ops.embedded.is_nil` setup failed (blocked by `storage.embedded.ordinary`) |
+| Arrays of embedded resources | ❔ Unknown 3 not run | `ops.embeddeds.count` setup failed (blocked by `storage.embeddeds.ordinary`), `ops.embeddeds.first` setup failed (blocked by `storage.embeddeds.ordinary`), `ops.embeddeds.is_nil` setup failed (blocked by `storage.embeddeds.ordinary`) |
+| Unions | ❔ Unknown 3 not run | `ops.union.count` setup failed (blocked by `storage.union.ordinary`), `ops.union.first` setup failed (blocked by `storage.union.ordinary`), `ops.union.is_nil` setup failed (blocked by `storage.union.ordinary`) |
+
+## 3. Records
 
 | Feature | clickhouse | Not working |
 | --- | --- | --- |
@@ -65,19 +93,19 @@ fix.
 | Update a record atomically from its current value | ❔ Unknown 1 not run | `record.atomic_update` setup failed |
 | Not found, invalid, missing and duplicate values are errors | ❔ Unknown 4 not run | `record.identity_conflict` setup failed, `record.invalid_value` setup failed, `record.not_found` setup failed, `record.required` setup failed |
 
-## 3. Types
+## 4. Types
 
 | Feature | clickhouse | Not working |
 | --- | --- | --- |
 | Strings, integers, booleans, atoms and nil round-trip | ❔ Unknown 3 not run | `record.types_nil` setup failed, `record.types_scalar` setup failed, `record.types_strings` setup failed |
 | Large integers, floats and decimals round-trip | ❌ Broken 0/1 · 1 not run | `record.types_numeric` setup failed, `values.decimal_read_control` wrong |
-| Dates, microsecond datetimes and times round-trip | ❌ Broken 0/1 · 1 not run · 1 blocked | `record.types_temporal` setup failed, `values.temporal_read_control` wrong (blocked by `storage.date.ordinary`, `storage.utc_datetime_usec.ordinary`) |
+| Dates, microsecond datetimes and times round-trip | ❌ Broken 0/1 · 1 not run · 1 blocked | `record.types_temporal` setup failed, `values.temporal_read_control` wrong (blocked by `storage.date.ordinary`) |
 | UUIDs round-trip | ❔ Unknown 1 not run | `record.types_uuid` setup failed |
 | Arrays round-trip, keeping order and duplicates | ❔ Unknown 1 not run | `record.types_array` setup failed |
 | Maps round-trip, including nested values | ❔ Unknown 1 not run | `record.types_map` setup failed |
 | Embedded resources round-trip | ❔ Unknown 1 not run | `record.types_embedded` setup failed |
 
-## 4. Querying
+## 5. Querying
 
 | Feature | clickhouse | Not working |
 | --- | --- | --- |
@@ -100,7 +128,7 @@ fix.
 | Keyset pagination, forwards and backwards | ❔ Unknown 1 not run | `record.keyset_pages` setup failed |
 | Pagination while records change | ⚪ Untested |  |
 
-## 5. Relationships
+## 6. Relationships
 
 | Feature | clickhouse | Not working |
 | --- | --- | --- |
@@ -115,14 +143,14 @@ fix.
 | Load belongs-to, has-one, has-many and many-to-many relationships | ✅ Works 4/4 |  |
 | Create and update related records with manage_relationship | ⚪ Untested |  |
 
-## 6. Aggregates
+## 7. Aggregates
 
 | Feature | clickhouse | Not working |
 | --- | --- | --- |
 | Load each aggregate kind on records | 🟡 Partial 4/9 | `loaded.avg` wrong, `loaded.custom` rejected, `loaded.exists` rejected, `loaded.first` rejected, `loaded.list` rejected |
 | Run each aggregate kind over a whole query | 🟡 Partial 5/15 | `root.custom` rejected, `root.custom_empty` rejected, `root.exists` rejected, `root.first` rejected, `root.list` rejected, `root.list_default_empty` rejected, `root.list_empty` rejected, `root.list_unsorted` rejected, `root.unsorted_first_empty` rejected, `values.root_empty` rejected |
 | Defaults, nils, uniqueness and field counts | 🟡 Partial 4/12 | `values.distinct_count` wrong, `values.distinct_list` rejected, `values.filtered_first_default` rejected, `values.include_nil_first` rejected, `values.include_nil_list` rejected, `values.list_default` rejected, `values.list_unsorted` rejected, `values.same_name_distinct_definitions` wrong |
-| Aggregate decimals, dates, times and constrained types | 🟡 Partial 4/15 · 9 blocked | `root.decimal_sum` wrong (blocked by `values.decimal_read_control`), `values.constrained_scalar` wrong, `values.date_list` rejected (blocked by `storage.date.ordinary`, `storage.utc_datetime_usec.ordinary`), `values.date_list_desc` rejected (blocked by `storage.date.ordinary`, `storage.utc_datetime_usec.ordinary`), `values.date_max` wrong (blocked by `storage.date.ordinary`, `storage.utc_datetime_usec.ordinary`), `values.date_min` wrong (blocked by `storage.date.ordinary`, `storage.utc_datetime_usec.ordinary`), `values.datetime_first` rejected (blocked by `storage.date.ordinary`, `storage.utc_datetime_usec.ordinary`), `values.decimal_avg` wrong (blocked by `values.decimal_read_control`), `values.decimal_max` wrong (blocked by `values.decimal_read_control`), `values.decimal_sum` wrong (blocked by `values.decimal_read_control`), `values.string_constraints` rejected |
+| Aggregate decimals, dates, times and constrained types | 🟡 Partial 4/15 · 9 blocked | `root.decimal_sum` wrong (blocked by `values.decimal_read_control`), `values.constrained_scalar` wrong, `values.date_list` rejected (blocked by `storage.date.ordinary`), `values.date_list_desc` rejected (blocked by `storage.date.ordinary`), `values.date_max` wrong (blocked by `storage.date.ordinary`), `values.date_min` wrong (blocked by `storage.date.ordinary`), `values.datetime_first` rejected (blocked by `storage.date.ordinary`), `values.decimal_avg` wrong (blocked by `values.decimal_read_control`), `values.decimal_max` wrong (blocked by `values.decimal_read_control`), `values.decimal_sum` wrong (blocked by `values.decimal_read_control`), `values.string_constraints` rejected |
 | Order first and list aggregates, including nils and ties | ⛔ Not supported 0/9 | `ordering.asc_nils_first` rejected, `ordering.asc_nils_last` rejected, `ordering.desc_nils_first` rejected, `ordering.desc_nils_last` rejected, `ordering.expression_first` rejected, `ordering.expression_list` rejected, `ordering.list_desc` rejected, `ordering.ties` rejected, `ordering.unique_other_field` open question |
 | Aggregate calculations and other aggregates | ❌ Broken 0/3 | `field.aggregate` crashed, `field.calculation` crashed, `field.root_aggregate` crashed |
 | Filter the records an aggregate uses | ❌ Broken 0/6 | `filter.exists` wrong, `filter.join` wrong, `filter.not_exists` wrong, `filter.or_exists` wrong, `filter.ordinary` wrong, `filter.sibling_independence` wrong |
@@ -138,7 +166,7 @@ fix.
 | Aggregates respect read actions, arguments, actor and context | ❌ Broken 0/9 · 2 blocked | `context.actor` wrong, `context.arguments` wrong, `context.intermediate_action` wrong, `context.intermediate_actor` wrong, `context.prepared_query_arguments` wrong, `context.read_action` wrong, `context.relationship_context` wrong (blocked by `context.relationship_context_control`), `context.shared` wrong (blocked by `context.relationship_context_control`), `context.through_arguments` wrong |
 | Seeded filtered aggregates match an in-memory reference | ⛔ Not supported 0/1 | `generated.filtered_aggregates` rejected |
 
-## 7. Writes
+## 8. Writes
 
 | Feature | clickhouse | Not working |
 | --- | --- | --- |
@@ -147,7 +175,7 @@ fix.
 | Bulk update atomically | ❌ Broken 0/1 | `bulk.atomic_increment` crashed |
 | Writes that filter by or read aggregates | ❌ Broken 0/4 | `write.atomic_update` crashed, `write.bulk_destroy_filter` crashed, `write.bulk_update_filter` crashed, `write.single_atomic_update` rejected |
 
-## 8. Transactions and locks
+## 9. Transactions and locks
 
 | Feature | clickhouse | Not working |
 | --- | --- | --- |
@@ -155,7 +183,7 @@ fix.
 | Lock rows for update | ⛔ Not supported 0/1 | `query.lock_for_update` rejected |
 | Isolation between concurrent transactions | ⚪ Untested |  |
 
-## 9. Multitenancy
+## 10. Multitenancy
 
 | Feature | clickhouse | Not working |
 | --- | --- | --- |
@@ -166,7 +194,7 @@ fix.
 | Tenancy scopes creates, updates and destroys | ✅ Works 3/3 |  |
 | Schema-based (context) tenancy | ➖ Not applicable |  |
 
-## 10. Authorization
+## 11. Authorization
 
 | Feature | clickhouse | Not working |
 | --- | --- | --- |
@@ -176,7 +204,7 @@ fix.
 | Policies filter pages and counts | ❌ Broken 0/3 | `auth.keyset_pages` crashed, `auth.offset_page` crashed, `auth.tenant_interaction` wrong |
 | Policies filter and forbid writes | 🟡 Partial 3/4 | `auth.write_bulk_update_stream` wrong |
 
-## 11. Policies
+## 12. Policies
 
 | Feature | clickhouse | Not working |
 | --- | --- | --- |
@@ -196,7 +224,7 @@ fix.
 | A filter check on create runs after the insert | ❌ Broken 0/2 | `policy.owner.create_other` wrong, `policy.owner.create_own` wrong |
 | Every policy path, without authorization | 🟡 Partial 16/22 | `policy.control.aggregate_filter` crashed, `policy.control.bulk_update` wrong, `policy.control.exists_filter_input` crashed, `policy.control.field_aggregate` wrong, `policy.control.loaded_count` wrong, `policy.control.loaded_sum` wrong |
 
-## 12. Consistency checks
+## 13. Consistency checks
 
 | Feature | clickhouse | Not working |
 | --- | --- | --- |
@@ -278,6 +306,39 @@ values of that class.
 | Arrays of embedded resources | `—` | 🚫 | 🚫 | 🚫 | ordinary, table: ClickHouse does not support Nullable(Array(String)) because the inner type is a |
 | Unions | `—` | 🚫 | – | 🚫 | ordinary, table: ClickHouse does not support Nullable(Map(String, String)) because the inner type is a |
 
+## Operations
+
+✅ returns the answer Ash defines; ❌ does not, while the same operation
+works on integers and the type stores; ◌ blocked: the operation fails on
+integers too, or the type does not store; ❔ did not run; – does not apply
+to the type.
+
+| Type | `eq` | `in` | `is_nil` | `gt` | `sort` | `count` | `min` | `max` | `sum` | `first` |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| Integers | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ |
+| Floats | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ◌ |
+| Decimals | ❔ | ❔ | ❔ | ❔ | ❔ | ❔ | ❔ | ❔ | ❔ | ❔ |
+| Strings | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | – | ◌ |
+| Case-insensitive strings | ❌ | ❌ | ✅ | ❌ | ❌ | ✅ | ❌ | ❌ | – | ◌ |
+| Binaries | ✅ | ✅ | ✅ | – | – | ✅ | – | – | – | ◌ |
+| Booleans | ✅ | ✅ | ✅ | – | – | ✅ | – | – | – | ◌ |
+| Atoms with one_of | ✅ | ✅ | ✅ | – | – | ✅ | – | – | – | ◌ |
+| Dates | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ◌ | ◌ | – | ◌ |
+| Times | ❌ | ❌ | ✅ | ❌ | ✅ | ✅ | ✅ | ✅ | – | ◌ |
+| Microsecond times | ◌ | ◌ | ✅ | ◌ | ✅ | ✅ | ◌ | ◌ | – | ◌ |
+| UTC datetimes | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | – | ◌ |
+| Microsecond UTC datetimes | ❌ | ❌ | ✅ | ❌ | ✅ | ✅ | ✅ | ✅ | – | ◌ |
+| Naive datetimes | ◌ | ◌ | ✅ | ◌ | ✅ | ✅ | ◌ | ◌ | – | ◌ |
+| Durations | ❔ | ❔ | ❔ | – | – | ❔ | – | – | – | ❔ |
+| UUIDs | ✅ | ✅ | ✅ | – | – | ✅ | – | – | – | ◌ |
+| UUIDv7s | ✅ | ✅ | ✅ | – | – | ✅ | – | – | – | ◌ |
+| Maps | – | – | ❔ | – | – | ❔ | – | – | – | ❔ |
+| Arrays of strings | – | – | ❔ | – | – | ❔ | – | – | – | ❔ |
+| Arrays of integers | – | – | ❔ | – | – | ❔ | – | – | – | ❔ |
+| Embedded resources | – | – | ❔ | – | – | ❔ | – | – | – | ❔ |
+| Arrays of embedded resources | – | – | ❔ | – | – | ❔ | – | – | – | ❔ |
+| Unions | – | – | ❔ | – | – | ❔ | – | – | – | ❔ |
+
 ## Policies
 
 ✅ returns the answer Ash's policy semantics define; ❌ does not, while the
@@ -306,15 +367,25 @@ apply, such as getting a hidden record when the actor may read every note.
 
 | Blocker | Its result | Not run | Failing | Only blocker of |
 | --- | --- | ---: | ---: | ---: |
+| `ops.integer.first` | rejected | 0 | 14 | 11 |
 | `policy.control.aggregate_filter` | crashed | 0 | 12 | 12 |
 | `policy.control.exists_filter_input` | crashed | 0 | 12 | 12 |
 | `policy.control.loaded_count` | wrong | 0 | 12 | 12 |
 | `policy.control.loaded_sum` | wrong | 0 | 12 | 12 |
 | `policy.control.bulk_update` | wrong | 0 | 10 | 10 |
+| `storage.decimal.ordinary` | no_table at table: ["Code: 43. DB::Exception: Decimal argument precision is invalid. (ILLEGAL_TYPE_OF_ARGUMENT) (version 25.8.33.6 (official build))"] | 10 | 0 | 10 |
 | `filter.fanout_read_control` | crashed | 0 | 9 | 9 |
-| `storage.date.ordinary` | lost at read: "2024-02-29" | 0 | 6 | 0 |
-| `storage.utc_datetime_usec.ordinary` | lost at update: ~U[2024-02-29 12:34:56.000000Z] | 0 | 6 | 0 |
+| `storage.date.ordinary` | lost at read: "2024-02-29" | 0 | 9 | 8 |
+| `storage.naive_datetime.ordinary` | lost at read: ~U[2024-02-29 12:34:56.000000Z] | 0 | 6 | 5 |
+| `storage.time_usec.ordinary` | lost at read: "12:34:56.123456" | 0 | 6 | 5 |
+| `storage.duration.ordinary` | error at create: ** (Protocol.UndefinedError) protocol Jason.Encoder not implemented for Duration (a struct), Jason.Encoder protocol must always be explicitly implemented. | 5 | 0 | 5 |
 | `values.decimal_read_control` | wrong | 0 | 4 | 4 |
+| `storage.embedded.ordinary` | no_table at table: ClickHouse does not support Nullable(Map(String, String)) because the inner type is a | 3 | 0 | 3 |
+| `storage.embeddeds.ordinary` | no_table at table: ClickHouse does not support Nullable(Array(String)) because the inner type is a | 3 | 0 | 3 |
+| `storage.integers.ordinary` | no_table at table: ClickHouse does not support Nullable(Array(Int64)) because the inner type is a | 3 | 0 | 3 |
+| `storage.map.ordinary` | no_table at table: ClickHouse does not support Nullable(Map(String, String)) because the inner type is a | 3 | 0 | 3 |
+| `storage.strings.ordinary` | no_table at table: ClickHouse does not support Nullable(Array(String)) because the inner type is a | 3 | 0 | 3 |
+| `storage.union.ordinary` | no_table at table: ClickHouse does not support Nullable(Map(String, String)) because the inner type is a | 3 | 0 | 3 |
 | `context.relationship_context_control` | wrong | 0 | 2 | 2 |
 | `filter.nested_parent_control` | crashed | 0 | 1 | 1 |
 | `filter.parent_through_control` | crashed | 0 | 1 | 1 |

@@ -39,6 +39,11 @@ rules: `supported("*")` claims the rest are supported, and each
 A scenario matched by two `expect` rules, or a rule that matches nothing,
 fails. `supported` is a claim, not an acceptance: a new scenario it covers
 must still pass, or the run fails and the scenario needs a reviewed record.
+When a data layer cannot store a scenario's fixture at all, such as
+SQLite's durations, record `not_run(pattern, gap)`. The fixture must then
+fail with a setup error matching `pattern`. An operation's outcome never
+matches it, and a fixture that starts storing fails until someone reviews
+it. Its status is unknown, as in surveys.
 
 Declare what a scenario builds on with `requires:`. It takes scenario IDs,
 for example:

@@ -4,7 +4,7 @@
 
 Generated from an unreviewed run: each result was classified automatically against the intended answer. Nothing here has been reviewed.
 
-Feature catalog version 1: 118 features and 582 scenarios.
+Feature catalog version 1: 141 features and 732 scenarios.
 
 | Status | Meaning |
 | --- | --- |
@@ -52,7 +52,35 @@ fix.
 | Arrays of embedded resources | 🟡 Partial 1/3 | `storage.embeddeds.edge` wrong, `storage.embeddeds.ordinary` wrong |
 | Unions | 🟡 Partial 1/2 | `storage.union.ordinary` wrong |
 
-## 2. Records
+## 2. Operations on each type
+
+| Feature | csv | Not working |
+| --- | --- | --- |
+| Integers | 🟡 Partial 5/10 | `ops.integer.count` rejected, `ops.integer.first` rejected, `ops.integer.max` rejected, `ops.integer.min` rejected, `ops.integer.sum` rejected |
+| Floats | ❔ Unknown 10 not run | `ops.float.count` setup failed (blocked by `storage.float.ordinary`), `ops.float.eq` setup failed (blocked by `storage.float.ordinary`), `ops.float.first` setup failed (blocked by `storage.float.ordinary`), `ops.float.gt` setup failed (blocked by `storage.float.ordinary`), `ops.float.in` setup failed (blocked by `storage.float.ordinary`), `ops.float.is_nil` setup failed (blocked by `storage.float.ordinary`), `ops.float.max` setup failed (blocked by `storage.float.ordinary`), `ops.float.min` setup failed (blocked by `storage.float.ordinary`), `ops.float.sort` setup failed (blocked by `storage.float.ordinary`), `ops.float.sum` setup failed (blocked by `storage.float.ordinary`) |
+| Decimals | 🟡 Partial 5/10 · 5 blocked | `ops.decimal.count` rejected (blocked by `ops.integer.count`), `ops.decimal.first` rejected (blocked by `ops.integer.first`), `ops.decimal.max` rejected (blocked by `ops.integer.max`), `ops.decimal.min` rejected (blocked by `ops.integer.min`), `ops.decimal.sum` rejected (blocked by `ops.integer.sum`) |
+| Strings | 🟡 Partial 5/9 · 4 blocked | `ops.string.count` rejected (blocked by `ops.integer.count`), `ops.string.first` rejected (blocked by `ops.integer.first`), `ops.string.max` rejected (blocked by `ops.integer.max`), `ops.string.min` rejected (blocked by `ops.integer.min`) |
+| Case-insensitive strings | 🟡 Partial 5/9 · 4 blocked | `ops.ci_string.count` rejected (blocked by `ops.integer.count`), `ops.ci_string.first` rejected (blocked by `ops.integer.first`), `ops.ci_string.max` rejected (blocked by `ops.integer.max`), `ops.ci_string.min` rejected (blocked by `ops.integer.min`) |
+| Binaries | 🟡 Partial 3/5 · 2 blocked | `ops.binary.count` rejected (blocked by `ops.integer.count`), `ops.binary.first` rejected (blocked by `ops.integer.first`) |
+| Booleans | ❔ Unknown 5 not run | `ops.boolean.count` setup failed (blocked by `storage.boolean.ordinary`), `ops.boolean.eq` setup failed (blocked by `storage.boolean.ordinary`), `ops.boolean.first` setup failed (blocked by `storage.boolean.ordinary`), `ops.boolean.in` setup failed (blocked by `storage.boolean.ordinary`), `ops.boolean.is_nil` setup failed (blocked by `storage.boolean.ordinary`) |
+| Atoms with one_of | 🟡 Partial 3/5 · 2 blocked | `ops.atom.count` rejected (blocked by `ops.integer.count`), `ops.atom.first` rejected (blocked by `ops.integer.first`) |
+| Dates | 🟡 Partial 5/9 · 4 blocked | `ops.date.count` rejected (blocked by `ops.integer.count`), `ops.date.first` rejected (blocked by `ops.integer.first`), `ops.date.max` rejected (blocked by `ops.integer.max`), `ops.date.min` rejected (blocked by `ops.integer.min`) |
+| Times | 🟡 Partial 5/9 · 4 blocked | `ops.time.count` rejected (blocked by `ops.integer.count`), `ops.time.first` rejected (blocked by `ops.integer.first`), `ops.time.max` rejected (blocked by `ops.integer.max`), `ops.time.min` rejected (blocked by `ops.integer.min`) |
+| Microsecond times | 🟡 Partial 5/9 · 4 blocked | `ops.time_usec.count` rejected (blocked by `ops.integer.count`), `ops.time_usec.first` rejected (blocked by `ops.integer.first`), `ops.time_usec.max` rejected (blocked by `ops.integer.max`), `ops.time_usec.min` rejected (blocked by `ops.integer.min`) |
+| UTC datetimes | 🟡 Partial 5/9 · 4 blocked | `ops.utc_datetime.count` rejected (blocked by `ops.integer.count`), `ops.utc_datetime.first` rejected (blocked by `ops.integer.first`), `ops.utc_datetime.max` rejected (blocked by `ops.integer.max`), `ops.utc_datetime.min` rejected (blocked by `ops.integer.min`) |
+| Microsecond UTC datetimes | 🟡 Partial 5/9 · 4 blocked | `ops.utc_datetime_usec.count` rejected (blocked by `ops.integer.count`), `ops.utc_datetime_usec.first` rejected (blocked by `ops.integer.first`), `ops.utc_datetime_usec.max` rejected (blocked by `ops.integer.max`), `ops.utc_datetime_usec.min` rejected (blocked by `ops.integer.min`) |
+| Naive datetimes | 🟡 Partial 5/9 · 4 blocked | `ops.naive_datetime.count` rejected (blocked by `ops.integer.count`), `ops.naive_datetime.first` rejected (blocked by `ops.integer.first`), `ops.naive_datetime.max` rejected (blocked by `ops.integer.max`), `ops.naive_datetime.min` rejected (blocked by `ops.integer.min`) |
+| Durations | ❔ Unknown 5 not run | `ops.duration.count` setup failed (blocked by `storage.duration.ordinary`), `ops.duration.eq` setup failed (blocked by `storage.duration.ordinary`), `ops.duration.first` setup failed (blocked by `storage.duration.ordinary`), `ops.duration.in` setup failed (blocked by `storage.duration.ordinary`), `ops.duration.is_nil` setup failed (blocked by `storage.duration.ordinary`) |
+| UUIDs | 🟡 Partial 3/5 · 2 blocked | `ops.uuid.count` rejected (blocked by `ops.integer.count`), `ops.uuid.first` rejected (blocked by `ops.integer.first`) |
+| UUIDv7s | 🟡 Partial 3/5 · 2 blocked | `ops.uuid_v7.count` rejected (blocked by `ops.integer.count`), `ops.uuid_v7.first` rejected (blocked by `ops.integer.first`) |
+| Maps | ❔ Unknown 3 not run | `ops.map.count` setup failed (blocked by `storage.map.ordinary`), `ops.map.first` setup failed (blocked by `storage.map.ordinary`), `ops.map.is_nil` setup failed (blocked by `storage.map.ordinary`) |
+| Arrays of strings | ❔ Unknown 3 not run | `ops.strings.count` setup failed (blocked by `storage.strings.ordinary`), `ops.strings.first` setup failed (blocked by `storage.strings.ordinary`), `ops.strings.is_nil` setup failed (blocked by `storage.strings.ordinary`) |
+| Arrays of integers | ❔ Unknown 3 not run | `ops.integers.count` setup failed (blocked by `storage.integers.ordinary`), `ops.integers.first` setup failed (blocked by `storage.integers.ordinary`), `ops.integers.is_nil` setup failed (blocked by `storage.integers.ordinary`) |
+| Embedded resources | ❔ Unknown 3 not run | `ops.embedded.count` setup failed (blocked by `storage.embedded.ordinary`), `ops.embedded.first` setup failed (blocked by `storage.embedded.ordinary`), `ops.embedded.is_nil` setup failed (blocked by `storage.embedded.ordinary`) |
+| Arrays of embedded resources | ❔ Unknown 3 not run | `ops.embeddeds.count` setup failed (blocked by `storage.embeddeds.ordinary`), `ops.embeddeds.first` setup failed (blocked by `storage.embeddeds.ordinary`), `ops.embeddeds.is_nil` setup failed (blocked by `storage.embeddeds.ordinary`) |
+| Unions | ❔ Unknown 3 not run | `ops.union.count` setup failed (blocked by `storage.union.ordinary`), `ops.union.first` setup failed (blocked by `storage.union.ordinary`), `ops.union.is_nil` setup failed (blocked by `storage.union.ordinary`) |
+
+## 3. Records
 
 | Feature | csv | Not working |
 | --- | --- | --- |
@@ -65,7 +93,7 @@ fix.
 | Update a record atomically from its current value | ❔ Unknown 1 not run | `record.atomic_update` setup failed (blocked by `storage.boolean.ordinary`, `storage.embedded.ordinary`, `storage.float.ordinary`, `storage.map.ordinary`, `storage.strings.ordinary`) |
 | Not found, invalid, missing and duplicate values are errors | ❔ Unknown 4 not run | `record.identity_conflict` setup failed (blocked by `storage.boolean.ordinary`, `storage.embedded.ordinary`, `storage.float.ordinary`, `storage.map.ordinary`, `storage.strings.ordinary`), `record.invalid_value` setup failed (blocked by `storage.boolean.ordinary`, `storage.embedded.ordinary`, `storage.float.ordinary`, `storage.map.ordinary`, `storage.strings.ordinary`), `record.not_found` setup failed (blocked by `storage.boolean.ordinary`, `storage.embedded.ordinary`, `storage.float.ordinary`, `storage.map.ordinary`, `storage.strings.ordinary`), `record.required` setup failed (blocked by `storage.boolean.ordinary`, `storage.embedded.ordinary`, `storage.float.ordinary`, `storage.map.ordinary`, `storage.strings.ordinary`) |
 
-## 3. Types
+## 4. Types
 
 | Feature | csv | Not working |
 | --- | --- | --- |
@@ -77,7 +105,7 @@ fix.
 | Maps round-trip, including nested values | ❔ Unknown 1 not run | `record.types_map` setup failed (blocked by `storage.boolean.ordinary`, `storage.embedded.ordinary`, `storage.float.ordinary`, `storage.map.ordinary`, `storage.strings.ordinary`) |
 | Embedded resources round-trip | ❔ Unknown 1 not run | `record.types_embedded` setup failed (blocked by `storage.boolean.ordinary`, `storage.embedded.ordinary`, `storage.float.ordinary`, `storage.map.ordinary`, `storage.strings.ordinary`) |
 
-## 4. Querying
+## 5. Querying
 
 | Feature | csv | Not working |
 | --- | --- | --- |
@@ -100,7 +128,7 @@ fix.
 | Keyset pagination, forwards and backwards | ❔ Unknown 1 not run | `record.keyset_pages` setup failed (blocked by `storage.boolean.ordinary`, `storage.embedded.ordinary`, `storage.float.ordinary`, `storage.map.ordinary`, `storage.strings.ordinary`) |
 | Pagination while records change | ⚪ Untested |  |
 
-## 5. Relationships
+## 6. Relationships
 
 | Feature | csv | Not working |
 | --- | --- | --- |
@@ -115,7 +143,7 @@ fix.
 | Load belongs-to, has-one, has-many and many-to-many relationships | ❔ Unknown 4 not run | `load.belongs_to` setup failed (blocked by `storage.boolean.ordinary`), `load.has_many` setup failed (blocked by `storage.boolean.ordinary`), `load.has_one` setup failed (blocked by `storage.boolean.ordinary`), `load.many_to_many` setup failed (blocked by `storage.boolean.ordinary`) |
 | Create and update related records with manage_relationship | ⚪ Untested |  |
 
-## 6. Aggregates
+## 7. Aggregates
 
 | Feature | csv | Not working |
 | --- | --- | --- |
@@ -138,7 +166,7 @@ fix.
 | Aggregates respect read actions, arguments, actor and context | ❔ Unknown 9 not run | `context.actor` setup failed (blocked by `storage.boolean.ordinary`), `context.arguments` setup failed (blocked by `storage.boolean.ordinary`), `context.intermediate_action` setup failed (blocked by `storage.boolean.ordinary`), `context.intermediate_actor` setup failed (blocked by `storage.boolean.ordinary`), `context.prepared_query_arguments` setup failed (blocked by `storage.boolean.ordinary`), `context.read_action` setup failed (blocked by `storage.boolean.ordinary`), `context.relationship_context` setup failed (blocked by `storage.boolean.ordinary`), `context.shared` setup failed (blocked by `storage.boolean.ordinary`), `context.through_arguments` setup failed (blocked by `storage.boolean.ordinary`) |
 | Seeded filtered aggregates match an in-memory reference | ❔ Unknown 1 not run | `generated.filtered_aggregates` setup failed (blocked by `storage.boolean.ordinary`) |
 
-## 7. Writes
+## 8. Writes
 
 | Feature | csv | Not working |
 | --- | --- | --- |
@@ -147,7 +175,7 @@ fix.
 | Bulk update atomically | ❌ Broken 0/1 | `bulk.atomic_increment` wrong |
 | Writes that filter by or read aggregates | ❔ Unknown 4 not run | `write.atomic_update` setup failed (blocked by `storage.boolean.ordinary`), `write.bulk_destroy_filter` setup failed (blocked by `storage.boolean.ordinary`), `write.bulk_update_filter` setup failed (blocked by `storage.boolean.ordinary`), `write.single_atomic_update` setup failed (blocked by `storage.boolean.ordinary`) |
 
-## 8. Transactions and locks
+## 9. Transactions and locks
 
 | Feature | csv | Not working |
 | --- | --- | --- |
@@ -155,7 +183,7 @@ fix.
 | Lock rows for update | ❔ Unknown 1 not run | `query.lock_for_update` setup failed (blocked by `storage.boolean.ordinary`) |
 | Isolation between concurrent transactions | ⚪ Untested |  |
 
-## 9. Multitenancy
+## 10. Multitenancy
 
 | Feature | csv | Not working |
 | --- | --- | --- |
@@ -166,7 +194,7 @@ fix.
 | Tenancy scopes creates, updates and destroys | ✅ Works 3/3 |  |
 | Schema-based (context) tenancy | ➖ Not applicable |  |
 
-## 10. Authorization
+## 11. Authorization
 
 | Feature | csv | Not working |
 | --- | --- | --- |
@@ -176,7 +204,7 @@ fix.
 | Policies filter pages and counts | ⛔ Not supported 0/3 | `auth.keyset_pages` rejected, `auth.offset_page` rejected, `auth.tenant_interaction` rejected |
 | Policies filter and forbid writes | 🟡 Partial 3/4 | `auth.write_bulk_update_stream` wrong |
 
-## 11. Policies
+## 12. Policies
 
 | Feature | csv | Not working |
 | --- | --- | --- |
@@ -196,7 +224,7 @@ fix.
 | A filter check on create runs after the insert | 🟡 Partial 1/2 | `policy.owner.create_other` wrong |
 | Every policy path, without authorization | 🟡 Partial 13/22 | `policy.control.aggregate_filter` rejected, `policy.control.bulk_update` wrong, `policy.control.count` rejected, `policy.control.exists_filter_input` crashed, `policy.control.field_aggregate` rejected, `policy.control.loaded_count` rejected, `policy.control.loaded_sum` rejected, `policy.control.offset_page` rejected, `policy.control.sum` rejected |
 
-## 12. Consistency checks
+## 13. Consistency checks
 
 | Feature | csv | Not working |
 | --- | --- | --- |
@@ -253,6 +281,39 @@ values of that class.
 | Arrays of embedded resources | `—` | ❌ | ❌ | ✅ | ordinary, create: ** (ArgumentError) cannot convert the given list to a string. |
 | Unions | `—` | ❌ | – | ✅ | ordinary, create: ** (Protocol.UndefinedError) protocol String.Chars not implemented for Ash.Union (a struct) |
 
+## Operations
+
+✅ returns the answer Ash defines; ❌ does not, while the same operation
+works on integers and the type stores; ◌ blocked: the operation fails on
+integers too, or the type does not store; ❔ did not run; – does not apply
+to the type.
+
+| Type | `eq` | `in` | `is_nil` | `gt` | `sort` | `count` | `min` | `max` | `sum` | `first` |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| Integers | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| Floats | ❔ | ❔ | ❔ | ❔ | ❔ | ❔ | ❔ | ❔ | ❔ | ❔ |
+| Decimals | ✅ | ✅ | ✅ | ✅ | ✅ | ◌ | ◌ | ◌ | ◌ | ◌ |
+| Strings | ✅ | ✅ | ✅ | ✅ | ✅ | ◌ | ◌ | ◌ | – | ◌ |
+| Case-insensitive strings | ✅ | ✅ | ✅ | ✅ | ✅ | ◌ | ◌ | ◌ | – | ◌ |
+| Binaries | ✅ | ✅ | ✅ | – | – | ◌ | – | – | – | ◌ |
+| Booleans | ❔ | ❔ | ❔ | – | – | ❔ | – | – | – | ❔ |
+| Atoms with one_of | ✅ | ✅ | ✅ | – | – | ◌ | – | – | – | ◌ |
+| Dates | ✅ | ✅ | ✅ | ✅ | ✅ | ◌ | ◌ | ◌ | – | ◌ |
+| Times | ✅ | ✅ | ✅ | ✅ | ✅ | ◌ | ◌ | ◌ | – | ◌ |
+| Microsecond times | ✅ | ✅ | ✅ | ✅ | ✅ | ◌ | ◌ | ◌ | – | ◌ |
+| UTC datetimes | ✅ | ✅ | ✅ | ✅ | ✅ | ◌ | ◌ | ◌ | – | ◌ |
+| Microsecond UTC datetimes | ✅ | ✅ | ✅ | ✅ | ✅ | ◌ | ◌ | ◌ | – | ◌ |
+| Naive datetimes | ✅ | ✅ | ✅ | ✅ | ✅ | ◌ | ◌ | ◌ | – | ◌ |
+| Durations | ❔ | ❔ | ❔ | – | – | ❔ | – | – | – | ❔ |
+| UUIDs | ✅ | ✅ | ✅ | – | – | ◌ | – | – | – | ◌ |
+| UUIDv7s | ✅ | ✅ | ✅ | – | – | ◌ | – | – | – | ◌ |
+| Maps | – | – | ❔ | – | – | ❔ | – | – | – | ❔ |
+| Arrays of strings | – | – | ❔ | – | – | ❔ | – | – | – | ❔ |
+| Arrays of integers | – | – | ❔ | – | – | ❔ | – | – | – | ❔ |
+| Embedded resources | – | – | ❔ | – | – | ❔ | – | – | – | ❔ |
+| Arrays of embedded resources | – | – | ❔ | – | – | ❔ | – | – | – | ❔ |
+| Unions | – | – | ❔ | – | – | ❔ | – | – | – | ❔ |
+
 ## Policies
 
 ✅ returns the answer Ash's policy semantics define; ❌ does not, while the
@@ -281,11 +342,13 @@ apply, such as getting a hidden record when the actor may read every note.
 
 | Blocker | Its result | Not run | Failing | Only blocker of |
 | --- | --- | ---: | ---: | ---: |
-| `storage.boolean.ordinary` | error at create: stored value for value could not be casted from the stored value to type Ash.Type.Boolean: "true" | 247 | 0 | 189 |
-| `storage.embedded.ordinary` | error at create: ** (Protocol.UndefinedError) protocol String.Chars not implemented for Ash.Conformance.Resources.Address (a struct) | 58 | 0 | 0 |
-| `storage.float.ordinary` | error at create: stored value for value could not be casted from the stored value to type Ash.Type.Float: "1.5" | 58 | 0 | 0 |
-| `storage.map.ordinary` | error at create: ** (Protocol.UndefinedError) protocol String.Chars not implemented for Map | 58 | 0 | 0 |
-| `storage.strings.ordinary` | error at create: ** (Protocol.UndefinedError) protocol Enumerable not implemented for BitString | 58 | 0 | 0 |
+| `storage.boolean.ordinary` | error at create: stored value for value could not be casted from the stored value to type Ash.Type.Boolean: "true" | 252 | 0 | 194 |
+| `storage.float.ordinary` | error at create: stored value for value could not be casted from the stored value to type Ash.Type.Float: "1.5" | 68 | 0 | 10 |
+| `storage.embedded.ordinary` | error at create: ** (Protocol.UndefinedError) protocol String.Chars not implemented for Ash.Conformance.Resources.Address (a struct) | 61 | 0 | 3 |
+| `storage.map.ordinary` | error at create: ** (Protocol.UndefinedError) protocol String.Chars not implemented for Map | 61 | 0 | 3 |
+| `storage.strings.ordinary` | error at create: ** (Protocol.UndefinedError) protocol Enumerable not implemented for BitString | 61 | 0 | 3 |
+| `ops.integer.count` | rejected | 0 | 13 | 13 |
+| `ops.integer.first` | rejected | 0 | 13 | 13 |
 | `policy.control.aggregate_filter` | rejected | 0 | 12 | 12 |
 | `policy.control.bulk_update` | wrong | 0 | 12 | 12 |
 | `policy.control.exists_filter_input` | crashed | 0 | 12 | 12 |
@@ -294,4 +357,11 @@ apply, such as getting a hidden record when the actor may read every note.
 | `policy.control.count` | rejected | 0 | 10 | 10 |
 | `policy.control.offset_page` | rejected | 0 | 10 | 10 |
 | `policy.control.sum` | rejected | 0 | 10 | 10 |
+| `ops.integer.max` | rejected | 0 | 9 | 9 |
+| `ops.integer.min` | rejected | 0 | 9 | 9 |
+| `storage.duration.ordinary` | error at create: ** (Protocol.UndefinedError) protocol String.Chars not implemented for Duration (a struct) | 5 | 0 | 5 |
+| `storage.embeddeds.ordinary` | error at create: ** (ArgumentError) cannot convert the given list to a string. | 3 | 0 | 3 |
+| `storage.integers.ordinary` | error at create: ** (Protocol.UndefinedError) protocol Enumerable not implemented for BitString | 3 | 0 | 3 |
+| `storage.union.ordinary` | error at create: ** (Protocol.UndefinedError) protocol String.Chars not implemented for Ash.Union (a struct) | 3 | 0 | 3 |
+| `ops.integer.sum` | rejected | 0 | 1 | 1 |
 | `policy.control.field_aggregate` | rejected | 0 | 1 | 1 |

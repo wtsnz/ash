@@ -272,6 +272,22 @@ defmodule Ash.Conformance.Sqlite.Expectations do
           "upsert-conditions"
         )
       ),
+      expect("ops.binary.in", defect_error(~r/invalid keyword list in query/, "binary-in-lists")),
+      expect("ops.ci_string.sort", defect_value([1, 3, 2, 4], "ci-string-sort")),
+      expect(
+        "ops.duration.*",
+        not_run(~r/^Could not store storage_duration row \d+: .*Duration/, "duration-storage")
+      ),
+      expect(
+        ~w(ops.map.count ops.strings.count ops.integers.count ops.embedded.count
+           ops.embeddeds.count ops.union.count),
+        defect_value(3, "json-null")
+      ),
+      expect(
+        ~w(ops.map.is_nil ops.strings.is_nil ops.integers.is_nil ops.embedded.is_nil
+           ops.embeddeds.is_nil ops.union.is_nil),
+        defect_value([], "json-null")
+      ),
       expect("use.fanout_read_page", defect_value({[11, 11], 2}, "sorted-distinct-reads")),
       expect(
         "values.decimal_max",

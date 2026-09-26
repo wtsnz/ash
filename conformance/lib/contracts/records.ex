@@ -110,6 +110,14 @@ defmodule Ash.Conformance.Contracts.Records do
        {:order_dependent, Map.new(values, fn {order, value} -> {order, {:value, value}} end)},
        task(gap)}
 
+  @doc """
+  A scenario whose fixture the data layer cannot store, so its operation
+  never runs: the fixture must fail with a `SetupError` matching `pattern`.
+  Its status is `:unknown`, as in surveys. It never matches an operation's
+  outcome, and a fixture that starts storing fails until reviewed.
+  """
+  def not_run(pattern, gap), do: {:unknown, {:setup_error, pattern}, task(gap)}
+
   @doc "The observation for a scenario whose intended answer awaits a decision."
   def unresolved_value(value, gap), do: {:unresolved, {:value, value}, task(gap)}
 
