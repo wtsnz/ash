@@ -733,6 +733,128 @@ Elixir scenarios and expectations define the contract. CI runs each adapter inde
 | [`schema.loaded_aggregates`](lib/scenarios/context_tenancy.ex#L49) | profile unavailable | supported |
 | [`schema.relationships`](lib/scenarios/context_tenancy.ex#L33) | profile unavailable | supported |
 | [`schema.root_aggregate`](lib/scenarios/context_tenancy.ex#L65) | profile unavailable | supported |
+| [`sig.ago.duration`](lib/scenarios/signatures.ex#L86) | [known_defect](GAPS.md#duration-forms) · AshSQL | supported |
+| [`sig.ago.integer`](lib/scenarios/signatures.ex#L86) | supported | supported |
+| [`sig.at.index`](lib/scenarios/signatures.ex#L86) | [known_defect](GAPS.md#array-functions) · AshSQL | supported |
+| [`sig.concat.ci_ci`](lib/scenarios/signatures.ex#L86) | supported | supported |
+| [`sig.concat.ci_string`](lib/scenarios/signatures.ex#L86) | supported | supported |
+| [`sig.concat.string`](lib/scenarios/signatures.ex#L86) | supported | supported |
+| [`sig.concat.string_ci`](lib/scenarios/signatures.ex#L86) | supported | supported |
+| [`sig.contains.ci_ci`](lib/scenarios/signatures.ex#L86) | [known_defect](GAPS.md#ci-string-functions) · AshSQLite | supported |
+| [`sig.contains.ci_string`](lib/scenarios/signatures.ex#L86) | [known_defect](GAPS.md#ci-string-functions) · AshSQLite | supported |
+| [`sig.contains.string`](lib/scenarios/signatures.ex#L86) | supported | supported |
+| [`sig.contains.string_ci`](lib/scenarios/signatures.ex#L86) | [known_defect](GAPS.md#ci-string-functions) · AshSQLite | supported |
+| [`sig.count_nils.list`](lib/scenarios/signatures.ex#L86) | [known_defect](GAPS.md#array-functions) · AshSQL | supported |
+| [`sig.date_add.duration`](lib/scenarios/signatures.ex#L86) | [known_defect](GAPS.md#duration-forms) · AshSQL | supported |
+| [`sig.date_add.integer`](lib/scenarios/signatures.ex#L86) | supported | supported |
+| [`sig.datetime_add.duration`](lib/scenarios/signatures.ex#L86) | [known_defect](GAPS.md#duration-forms) · AshSQL | supported |
+| [`sig.datetime_add.integer`](lib/scenarios/signatures.ex#L86) | supported | supported |
+| [`sig.datetime_add.naive_duration`](lib/scenarios/signatures.ex#L86) | [known_defect](GAPS.md#duration-forms) · AshSQL | supported |
+| [`sig.datetime_add.naive_integer`](lib/scenarios/signatures.ex#L86) | supported | supported |
+| [`sig.div.decimal_decimal`](lib/scenarios/signatures.ex#L86) | [known_defect](GAPS.md#operator-signature-cast) · Ash | [known_defect](GAPS.md#operator-signature-cast) · Ash |
+| [`sig.div.decimal_float`](lib/scenarios/signatures.ex#L86) | supported | supported |
+| [`sig.div.decimal_integer`](lib/scenarios/signatures.ex#L86) | supported | supported |
+| [`sig.div.float_decimal`](lib/scenarios/signatures.ex#L86) | [known_defect](GAPS.md#operator-signature-cast) · Ash | [known_defect](GAPS.md#operator-signature-cast) · Ash |
+| [`sig.div.float_float`](lib/scenarios/signatures.ex#L86) | supported | supported |
+| [`sig.div.float_integer`](lib/scenarios/signatures.ex#L86) | supported | supported |
+| [`sig.div.integer_decimal`](lib/scenarios/signatures.ex#L86) | [known_defect](GAPS.md#operator-signature-cast) · Ash | [known_defect](GAPS.md#operator-signature-cast) · Ash |
+| [`sig.div.integer_float`](lib/scenarios/signatures.ex#L86) | supported | supported |
+| [`sig.div.integer_integer`](lib/scenarios/signatures.ex#L86) | supported | supported |
+| [`sig.from_now.duration`](lib/scenarios/signatures.ex#L86) | [known_defect](GAPS.md#duration-forms) · AshSQL | supported |
+| [`sig.from_now.integer`](lib/scenarios/signatures.ex#L86) | supported | supported |
+| [`sig.get_path.key`](lib/scenarios/signatures.ex#L86) | supported | supported |
+| [`sig.get_path.path`](lib/scenarios/signatures.ex#L86) | supported | supported |
+| [`sig.has.array`](lib/scenarios/signatures.ex#L86) | [known_defect](GAPS.md#array-functions) · AshSQL | supported |
+| [`sig.if.else`](lib/scenarios/signatures.ex#L86) | supported | supported |
+| [`sig.if.no_else`](lib/scenarios/signatures.ex#L86) | supported | supported |
+| [`sig.intersects.array`](lib/scenarios/signatures.ex#L86) | [known_defect](GAPS.md#array-functions) · AshSQL | supported |
+| [`sig.is_distinct_from.integer`](lib/scenarios/signatures.ex#L86) | supported | supported |
+| [`sig.is_nil.column`](lib/scenarios/signatures.ex#L86) | supported | supported |
+| [`sig.is_not_distinct_from.integer`](lib/scenarios/signatures.ex#L86) | supported | supported |
+| [`sig.length.array`](lib/scenarios/signatures.ex#L86) | [known_defect](GAPS.md#array-functions) · AshSQL | supported |
+| [`sig.minus.date_date`](lib/scenarios/signatures.ex#L86) | [known_defect](GAPS.md#temporal-difference) · AshSQL | supported |
+| [`sig.minus.date_duration`](lib/scenarios/signatures.ex#L86) | [known_defect](GAPS.md#duration-params) · AshSQLite | supported |
+| [`sig.minus.datetime_datetime`](lib/scenarios/signatures.ex#L86) | [known_defect](GAPS.md#temporal-difference) · AshSQL | [known_defect](GAPS.md#temporal-difference) · AshSQL |
+| [`sig.minus.datetime_duration`](lib/scenarios/signatures.ex#L86) | [known_defect](GAPS.md#duration-params) · AshSQLite | supported |
+| [`sig.minus.integer`](lib/scenarios/signatures.ex#L86) | supported | supported |
+| [`sig.minus.naive_duration`](lib/scenarios/signatures.ex#L86) | [known_defect](GAPS.md#duration-params) · AshSQLite | supported |
+| [`sig.minus.naive_naive`](lib/scenarios/signatures.ex#L86) | [known_defect](GAPS.md#temporal-difference) · AshSQL | [known_defect](GAPS.md#temporal-difference) · AshSQL |
+| [`sig.minus.negate`](lib/scenarios/signatures.ex#L86) | supported | supported |
+| [`sig.minus.time_duration`](lib/scenarios/signatures.ex#L86) | [known_defect](GAPS.md#duration-params) · AshSQLite | supported |
+| [`sig.minus.time_time`](lib/scenarios/signatures.ex#L86) | [known_defect](GAPS.md#temporal-difference) · AshSQL | [known_defect](GAPS.md#temporal-difference) · AshSQL |
+| [`sig.minus.time_usec_duration`](lib/scenarios/signatures.ex#L86) | [known_defect](GAPS.md#duration-params) · AshSQLite | supported |
+| [`sig.minus.time_usec_time_usec`](lib/scenarios/signatures.ex#L86) | [known_defect](GAPS.md#temporal-difference) · AshSQL | [known_defect](GAPS.md#temporal-difference) · AshSQL |
+| [`sig.minus.usec_duration`](lib/scenarios/signatures.ex#L86) | [known_defect](GAPS.md#duration-params) · AshSQLite | supported |
+| [`sig.minus.usec_usec`](lib/scenarios/signatures.ex#L86) | [known_defect](GAPS.md#temporal-difference) · AshSQL | [known_defect](GAPS.md#temporal-difference) · AshSQL |
+| [`sig.minus.utc_datetime_duration`](lib/scenarios/signatures.ex#L86) | [known_defect](GAPS.md#duration-params) · AshSQLite | supported |
+| [`sig.minus.utc_datetime_utc_datetime`](lib/scenarios/signatures.ex#L86) | [known_defect](GAPS.md#temporal-difference) · AshSQL | [known_defect](GAPS.md#temporal-difference) · AshSQL |
+| [`sig.now.compare`](lib/scenarios/signatures.ex#L86) | supported | supported |
+| [`sig.plus.date_duration`](lib/scenarios/signatures.ex#L86) | [known_defect](GAPS.md#duration-params) · AshSQLite | supported |
+| [`sig.plus.datetime_duration`](lib/scenarios/signatures.ex#L86) | [known_defect](GAPS.md#duration-params) · AshSQLite | supported |
+| [`sig.plus.duration_date`](lib/scenarios/signatures.ex#L86) | [known_defect](GAPS.md#duration-params) · AshSQLite | supported |
+| [`sig.plus.duration_datetime`](lib/scenarios/signatures.ex#L86) | [known_defect](GAPS.md#duration-params) · AshSQLite | supported |
+| [`sig.plus.duration_naive`](lib/scenarios/signatures.ex#L86) | [known_defect](GAPS.md#duration-params) · AshSQLite | supported |
+| [`sig.plus.duration_time`](lib/scenarios/signatures.ex#L86) | [known_defect](GAPS.md#duration-params) · AshSQLite | supported |
+| [`sig.plus.duration_time_usec`](lib/scenarios/signatures.ex#L86) | [known_defect](GAPS.md#duration-params) · AshSQLite | supported |
+| [`sig.plus.duration_usec`](lib/scenarios/signatures.ex#L86) | [known_defect](GAPS.md#duration-params) · AshSQLite | supported |
+| [`sig.plus.duration_utc_datetime`](lib/scenarios/signatures.ex#L86) | [known_defect](GAPS.md#duration-params) · AshSQLite | supported |
+| [`sig.plus.integer`](lib/scenarios/signatures.ex#L86) | supported | supported |
+| [`sig.plus.naive_duration`](lib/scenarios/signatures.ex#L86) | [known_defect](GAPS.md#duration-params) · AshSQLite | supported |
+| [`sig.plus.time_duration`](lib/scenarios/signatures.ex#L86) | [known_defect](GAPS.md#duration-params) · AshSQLite | supported |
+| [`sig.plus.time_usec_duration`](lib/scenarios/signatures.ex#L86) | [known_defect](GAPS.md#duration-params) · AshSQLite | supported |
+| [`sig.plus.usec_duration`](lib/scenarios/signatures.ex#L86) | [known_defect](GAPS.md#duration-params) · AshSQLite | supported |
+| [`sig.plus.utc_datetime_duration`](lib/scenarios/signatures.ex#L86) | [known_defect](GAPS.md#duration-params) · AshSQLite | supported |
+| [`sig.rem.integer`](lib/scenarios/signatures.ex#L86) | supported | supported |
+| [`sig.round.decimal`](lib/scenarios/signatures.ex#L86) | [known_defect](GAPS.md#round-syntax) · AshSQL | supported |
+| [`sig.round.decimal_places`](lib/scenarios/signatures.ex#L86) | [known_defect](GAPS.md#round-syntax) · AshSQL | supported |
+| [`sig.round.float`](lib/scenarios/signatures.ex#L86) | [known_defect](GAPS.md#round-syntax) · AshSQL | supported |
+| [`sig.round.float_places`](lib/scenarios/signatures.ex#L86) | [known_defect](GAPS.md#round-syntax) · AshSQL | supported |
+| [`sig.round.integer`](lib/scenarios/signatures.ex#L86) | [known_defect](GAPS.md#round-syntax) · AshSQL | supported |
+| [`sig.round.integer_places`](lib/scenarios/signatures.ex#L86) | [known_defect](GAPS.md#round-syntax) · AshSQL | supported |
+| [`sig.start_of_day.date`](lib/scenarios/signatures.ex#L86) | [known_defect](GAPS.md#start-of-day) · AshSQL | supported |
+| [`sig.start_of_day.date_zone`](lib/scenarios/signatures.ex#L86) | [known_defect](GAPS.md#start-of-day) · AshSQL | [known_defect](GAPS.md#start-of-day-zone) · AshSQL |
+| [`sig.start_of_day.datetime`](lib/scenarios/signatures.ex#L86) | [known_defect](GAPS.md#start-of-day) · AshSQL | supported |
+| [`sig.start_of_day.datetime_zone`](lib/scenarios/signatures.ex#L86) | [known_defect](GAPS.md#start-of-day) · AshSQL | [known_defect](GAPS.md#start-of-day-zone) · AshSQL |
+| [`sig.string_downcase.ci`](lib/scenarios/signatures.ex#L86) | supported | supported |
+| [`sig.string_downcase.string`](lib/scenarios/signatures.ex#L86) | supported | supported |
+| [`sig.string_ends_with.ci_ci`](lib/scenarios/signatures.ex#L86) | [known_defect](GAPS.md#ci-string-functions) · AshSQLite | supported |
+| [`sig.string_ends_with.ci_string`](lib/scenarios/signatures.ex#L86) | [known_defect](GAPS.md#ci-string-functions) · AshSQLite | supported |
+| [`sig.string_ends_with.string`](lib/scenarios/signatures.ex#L86) | supported | supported |
+| [`sig.string_ends_with.string_ci`](lib/scenarios/signatures.ex#L86) | [known_defect](GAPS.md#ci-string-functions) · AshSQLite | supported |
+| [`sig.string_join.array`](lib/scenarios/signatures.ex#L86) | [unsupported](GAPS.md#string-join) · AshSQLite | supported |
+| [`sig.string_join.array_ci_separator`](lib/scenarios/signatures.ex#L86) | [unsupported](GAPS.md#string-join) · AshSQLite | supported |
+| [`sig.string_join.array_separator`](lib/scenarios/signatures.ex#L86) | [unsupported](GAPS.md#string-join) · AshSQLite | supported |
+| [`sig.string_join.ci_list`](lib/scenarios/signatures.ex#L86) | [unsupported](GAPS.md#string-join) · AshSQLite | supported |
+| [`sig.string_join.ci_list_separator`](lib/scenarios/signatures.ex#L86) | [unsupported](GAPS.md#string-join) · AshSQLite | supported |
+| [`sig.string_length.ci`](lib/scenarios/signatures.ex#L86) | supported | supported |
+| [`sig.string_length.ci_bytes`](lib/scenarios/signatures.ex#L86) | supported | supported |
+| [`sig.string_length.codepoints`](lib/scenarios/signatures.ex#L86) | supported | supported |
+| [`sig.string_length.string`](lib/scenarios/signatures.ex#L86) | supported | supported |
+| [`sig.string_position.ci_ci`](lib/scenarios/signatures.ex#L86) | [known_defect](GAPS.md#ci-string-functions) · AshSQLite | supported |
+| [`sig.string_position.ci_string`](lib/scenarios/signatures.ex#L86) | [known_defect](GAPS.md#ci-string-functions) · AshSQLite | supported |
+| [`sig.string_position.string`](lib/scenarios/signatures.ex#L86) | supported | supported |
+| [`sig.string_position.string_ci`](lib/scenarios/signatures.ex#L86) | [known_defect](GAPS.md#string-position-ci) · AshSQL | [known_defect](GAPS.md#string-position-ci) · AshSQL |
+| [`sig.string_split.ci`](lib/scenarios/signatures.ex#L86) | [known_defect](GAPS.md#array-functions) · AshSQL | [known_defect](GAPS.md#string-split-empty) · AshSQL |
+| [`sig.string_split.ci_ci`](lib/scenarios/signatures.ex#L86) | [known_defect](GAPS.md#array-functions) · AshSQL | [known_defect](GAPS.md#string-split-empty) · AshSQL |
+| [`sig.string_split.ci_ci_trim`](lib/scenarios/signatures.ex#L86) | [unsupported](GAPS.md#array-functions) · AshSQL | [known_defect](GAPS.md#string-split-empty) · AshSQL |
+| [`sig.string_split.ci_separator`](lib/scenarios/signatures.ex#L86) | [known_defect](GAPS.md#array-functions) · AshSQL | [known_defect](GAPS.md#string-split-empty) · AshSQL |
+| [`sig.string_split.ci_separator_trim`](lib/scenarios/signatures.ex#L86) | [unsupported](GAPS.md#array-functions) · AshSQL | [known_defect](GAPS.md#string-split-empty) · AshSQL |
+| [`sig.string_split.ci_trim`](lib/scenarios/signatures.ex#L86) | [unsupported](GAPS.md#array-functions) · AshSQL | [known_defect](GAPS.md#string-split-empty) · AshSQL |
+| [`sig.string_split.default`](lib/scenarios/signatures.ex#L86) | [known_defect](GAPS.md#array-functions) · AshSQL | [known_defect](GAPS.md#string-split-empty) · AshSQL |
+| [`sig.string_split.separator`](lib/scenarios/signatures.ex#L86) | [known_defect](GAPS.md#array-functions) · AshSQL | [known_defect](GAPS.md#string-split-empty) · AshSQL |
+| [`sig.string_split.trim`](lib/scenarios/signatures.ex#L86) | [unsupported](GAPS.md#array-functions) · AshSQL | [known_defect](GAPS.md#string-split-empty) · AshSQL |
+| [`sig.string_starts_with.ci_ci`](lib/scenarios/signatures.ex#L86) | [known_defect](GAPS.md#ci-string-functions) · AshSQLite | supported |
+| [`sig.string_starts_with.ci_string`](lib/scenarios/signatures.ex#L86) | [known_defect](GAPS.md#ci-string-functions) · AshSQLite | supported |
+| [`sig.string_starts_with.string`](lib/scenarios/signatures.ex#L86) | supported | supported |
+| [`sig.string_starts_with.string_ci`](lib/scenarios/signatures.ex#L86) | [known_defect](GAPS.md#ci-string-functions) · AshSQLite | supported |
+| [`sig.string_trim.ci`](lib/scenarios/signatures.ex#L86) | supported | supported |
+| [`sig.string_trim.string`](lib/scenarios/signatures.ex#L86) | supported | supported |
+| [`sig.times.duration_integer`](lib/scenarios/signatures.ex#L86) | [known_defect](GAPS.md#duration-params) · AshSQLite | supported |
+| [`sig.times.integer`](lib/scenarios/signatures.ex#L86) | supported | supported |
+| [`sig.times.integer_duration`](lib/scenarios/signatures.ex#L86) | [known_defect](GAPS.md#duration-params) · AshSQLite | supported |
+| [`sig.today.compare`](lib/scenarios/signatures.ex#L86) | supported | supported |
+| [`sig.type.constraints`](lib/scenarios/signatures.ex#L86) | supported | supported |
+| [`sig.type.string`](lib/scenarios/signatures.ex#L86) | supported | supported |
 | [`storage.atom.null`](lib/scenarios/storage.ex#L24) | supported | supported |
 | [`storage.atom.ordinary`](lib/scenarios/storage.ex#L24) | supported | supported |
 | [`storage.binary.edge`](lib/scenarios/storage.ex#L24) | supported | supported |
@@ -892,9 +1014,13 @@ The first owner is where the fix starts. Counts are scenarios linked to each gap
 | [in-simplification](GAPS.md#in-simplification) | Ash | implementation | 1 | 1 |
 | [keyless-identity](GAPS.md#keyless-identity) | Ash | decision | 1 | 1 |
 | [many-to-many-bounds-api](GAPS.md#many-to-many-bounds-api) | Ash | decision | 1 | 1 |
+| [operator-signature-cast](GAPS.md#operator-signature-cast) | Ash | implementation | 3 | 3 |
 | [path-multiplicity](GAPS.md#path-multiplicity) | Ash | decision | 1 | 1 |
 | [relationship-context](GAPS.md#relationship-context) | Ash | implementation | 2 | 2 |
+| [runtime-ci-split](GAPS.md#runtime-ci-split) | Ash | implementation | 0 | 0 |
 | [runtime-nil-logic](GAPS.md#runtime-nil-logic) | Ash | implementation | 0 | 0 |
+| [runtime-round-integer](GAPS.md#runtime-round-integer) | Ash | implementation | 0 | 0 |
+| [runtime-usec-calculation](GAPS.md#runtime-usec-calculation) | Ash | implementation | 0 | 0 |
 | [true-or-nil](GAPS.md#true-or-nil) | Ash | decision | 2 | 2 |
 | [union-nil](GAPS.md#union-nil) | Ash | implementation | 1 | 1 |
 | [unique-list-order](GAPS.md#unique-list-order) | Ash | decision | 1 | 1 |
@@ -915,21 +1041,29 @@ The first owner is where the fix starts. Counts are scenarios linked to each gap
 | [root-bounds](GAPS.md#root-bounds) | AshSQL | implementation | 0 | 5 |
 | [root-first](GAPS.md#root-first) | AshSQL | implementation | 0 | 1 |
 | [root-relationship](GAPS.md#root-relationship) | AshSQL | implementation | 1 | 1 |
+| [start-of-day-zone](GAPS.md#start-of-day-zone) | AshSQL | implementation | 0 | 2 |
+| [string-position-ci](GAPS.md#string-position-ci) | AshSQL | implementation | 1 | 1 |
+| [string-split-empty](GAPS.md#string-split-empty) | AshSQL | implementation | 0 | 9 |
 | [tenant-bypass](GAPS.md#tenant-bypass) | AshSQL | implementation | 0 | 3 |
 | [unsorted-bounds](GAPS.md#unsorted-bounds) | AshSQL | implementation | 1 | 0 |
 | [unsorted-list-nil](GAPS.md#unsorted-list-nil) | AshSQL | implementation | 0 | 2 |
 | [parent-through-load](GAPS.md#parent-through-load) | AshSQL, then Ash | implementation | 1 | 1 |
 | [bind-parameter-limit](GAPS.md#bind-parameter-limit) | AshSQL, then AshPostgres, then AshSQLite | implementation | 1 | 1 |
+| [array-functions](GAPS.md#array-functions) | AshSQL, then AshSQLite | implementation | 14 | 0 |
+| [duration-forms](GAPS.md#duration-forms) | AshSQL, then AshSQLite | implementation | 5 | 0 |
 | [elixir-and](GAPS.md#elixir-and) | AshSQL, then AshSQLite | implementation | 1 | 0 |
 | [manual](GAPS.md#manual) | AshSQL, then AshSQLite | implementation | 1 | 0 |
 | [no-attributes](GAPS.md#no-attributes) | AshSQL, then AshSQLite | implementation | 2 | 1 |
 | [parent-correlation](GAPS.md#parent-correlation) | AshSQL, then AshSQLite | implementation | 8 | 0 |
 | [root-kinds](GAPS.md#root-kinds) | AshSQL, then AshSQLite | implementation | 8 | 0 |
-| [round-syntax](GAPS.md#round-syntax) | AshSQL, then AshSQLite | implementation | 3 | 0 |
-| [start-of-day](GAPS.md#start-of-day) | AshSQL, then AshSQLite | implementation | 1 | 0 |
+| [round-syntax](GAPS.md#round-syntax) | AshSQL, then AshSQLite | implementation | 9 | 0 |
+| [start-of-day](GAPS.md#start-of-day) | AshSQL, then AshSQLite | implementation | 5 | 0 |
+| [temporal-difference](GAPS.md#temporal-difference) | AshSQL, then AshSQLite | implementation | 7 | 6 |
 | [binary-in-lists](GAPS.md#binary-in-lists) | AshSQLite | implementation | 1 | 0 |
+| [ci-string-functions](GAPS.md#ci-string-functions) | AshSQLite | implementation | 11 | 0 |
 | [ci-string-sort](GAPS.md#ci-string-sort) | AshSQLite | implementation | 1 | 0 |
 | [decimal-precision](GAPS.md#decimal-precision) | AshSQLite | implementation | 5 | 0 |
+| [duration-params](GAPS.md#duration-params) | AshSQLite | implementation | 23 | 0 |
 | [duration-storage](GAPS.md#duration-storage) | AshSQLite | implementation | 7 | 0 |
 | [error-expressions](GAPS.md#error-expressions) | AshSQLite | limitation | 8 | 0 |
 | [month-overflow](GAPS.md#month-overflow) | AshSQLite | implementation | 2 | 0 |
@@ -937,7 +1071,7 @@ The first owner is where the fix starts. Counts are scenarios linked to each gap
 | [query-combinations](GAPS.md#query-combinations) | AshSQLite | implementation | 4 | 0 |
 | [query-distinct](GAPS.md#query-distinct) | AshSQLite | implementation | 1 | 0 |
 | [row-locks](GAPS.md#row-locks) | AshSQLite | limitation | 1 | 0 |
-| [string-join](GAPS.md#string-join) | AshSQLite | implementation | 1 | 0 |
+| [string-join](GAPS.md#string-join) | AshSQLite | implementation | 6 | 0 |
 | [unicode-case](GAPS.md#unicode-case) | AshSQLite | implementation | 2 | 0 |
 | [upsert-conditions](GAPS.md#upsert-conditions) | AshSQLite | implementation | 2 | 0 |
 | [sorted-distinct-reads](GAPS.md#sorted-distinct-reads) | AshSQLite, then AshSQL | implementation | 13 | 0 |

@@ -139,6 +139,9 @@ defmodule Ash.Conformance.Fixtures do
   defp build_fixture!(adapter, :expressions),
     do: Ash.Conformance.Fixtures.Expressions.seed!(adapter)
 
+  defp build_fixture!(adapter, :signatures),
+    do: Ash.Conformance.Fixtures.Signatures.seed!(adapter)
+
   # The combination grid's tables, for scenarios every data layer runs.
   defp build_fixture!(adapter, :joins), do: Ash.Conformance.Fixtures.Combination.seed!(adapter)
 

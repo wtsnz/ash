@@ -48,7 +48,8 @@ defmodule Ash.Conformance.Mysql do
       replace: %{
         4 => Ash.Conformance.Mysql.Values,
         6 => Ash.Conformance.Mysql.Records,
-        13 => Ash.Conformance.SQL.Migrations.IdentitiesPlain
+        13 => Ash.Conformance.SQL.Migrations.IdentitiesPlain,
+        14 => Ash.Conformance.SQL.Migrations.SignaturesPlain
       },
       storage: {__MODULE__, &column/1}
     )

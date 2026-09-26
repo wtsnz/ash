@@ -56,6 +56,47 @@ in `Ash.Filter` takes the action name from the prepared query but builds a
 new query with only the relationship's `read_action_arguments`. Reproduced on
 ETS. Found by the `authorize` variant (`context.prepared_query_arguments`).
 
+## Operator signature cast
+
+Owner: Ash.
+Try the next operator signature when a literal can't be cast to this one.
+`Ash.Query.Operator.try_cast_with_ref/3` walks the operator's `types/0` with
+`Enum.find_value/2`, and `cast_one/2` returns `{:error, ...}` when a literal
+doesn't fit, which ends the search. So `d / ^Decimal.new("0.5")` stops at
+`/`'s first signature, `[:float, :float]`, and raises "Could not cast
+Decimal.new(\"0.5\") as :float" on every data layer, before any query runs
+(`sig.div.decimal_decimal`, `sig.div.float_decimal`, `sig.div.integer_decimal`).
+Dividing by a column or a plain number works. Found by the signature tier.
+
+## Runtime round integer
+
+Owner: Ash.
+Return an integer from `round/1-2` of an integer. `Round` declares `:integer`
+for `[:integer]` and `[:integer, :integer]`, but Ash's in-memory evaluation
+returns `7.0` for `round(7)`, so an integer calculation over it fails to cast
+("is invalid") on ETS and in any in-memory calculation. SQL data layers are
+right (`sig.round.integer`, `sig.round.integer_places`).
+
+## Runtime CI split
+
+Owner: Ash.
+Split a case-insensitive string into a list. Ash's in-memory evaluation of
+`string_split(ci, "e")` on `"HeLLo"` returns the single value
+`#Ash.CiString<"hllo">` (downcased, with the separator removed) instead of
+`["H", "LLo"]`, and a calculation over it then crashes. It also happens when
+only the separator is case-insensitive. Postgres returns the list
+(`sig.string_split.ci*`, `sig.string_split.ci_separator_trim`).
+
+## Runtime usec calculation
+
+Owner: Ash.
+Keep microseconds when an in-memory calculation adds a duration to a
+`utc_datetime_usec` or `time_usec`. `Ash.Expr.eval/2` of `at + ^hour` against a
+record keeps them, but the same expression read as a calculation on ETS
+returns whole seconds, so the loss is in the calculation path, not the
+arithmetic. Postgres keeps them (`sig.plus.usec_duration`,
+`sig.minus.time_usec_duration` and their mirrors).
+
 ## In list nil
 
 Decision owner: Ash.
@@ -198,6 +239,46 @@ transaction is lost with it, so the fixture's 2,000 rows are gone when the
 scenario counts afterwards. If Ash decides batches past the limit are the
 caller's problem, the intended result becomes a clean error, but never a
 dropped connection.
+
+## Temporal difference
+
+Owner: AshSQL, then AshSQLite.
+Subtract datetimes and times as whole seconds, and dates as days, as Ash's
+evaluation does (`DateTime.diff/2`, `Date.diff/2`). AshSQL casts the difference
+to `bigint`: on Postgres a datetime or time difference is an `interval`, which
+cannot be cast ("ERROR 42846 cannot cast type interval to bigint"), so every
+`sig.minus.*_*` of two datetimes, naive datetimes or times crashes. Date minus
+date is an integer there and works. On SQLite the values are text, and `-`
+subtracts their leading digits, so every difference is 0 (the year minus the
+year), or 13 for `23:59:59 - 10:00:00`, silently. Found by the signature tier.
+
+## String position CI
+
+Owner: AshSQL.
+Compare case-insensitively in `string_position/2` when the substring is a
+`ci_string` and the string isn't. `string_position("Hello World", ^ci("WORLD"))`
+is 6 in Ash's evaluation, but nil on Postgres and SQLite. `contains/2` gets the
+same combination right on Postgres (`sig.string_position.string_ci`).
+
+## Start of day zone
+
+Owner: AshSQL.
+Convert from UTC before truncating in `start_of_day/2`. AshSQL emits
+`timezone('UTC', timezone(zone, date_trunc('day', timezone(zone, value))))`,
+which assumes a `timestamptz`. AshPostgres stores `utc_datetime` as `timestamp`
+without a time zone, so the innermost `timezone(zone, value)` reads the stored
+UTC value as local time and the offset applies in the wrong direction: for
+"Etc/GMT+5" (UTC-5), 2024-01-31 10:30 UTC starts its day at 2024-01-30 19:00 UTC
+instead of 2024-01-31 05:00 UTC. A date lands a day early. Ash's evaluation
+shifts the value into the zone first (`sig.start_of_day.*_zone`).
+
+## String split empty
+
+Owner: AshSQL.
+Split an empty string as `String.split/3` does. Ash's evaluation of
+`string_split("", "o")` is `[""]`, and `[]` with `trim?: true`. Postgres's
+`string_to_array('', ...)` returns `{}`, and the `trim?: true` path returns nil,
+which reads as if the input were nil (`sig.string_split.*`, row 2).
 
 ## Root relationship
 
@@ -512,6 +593,46 @@ which its documentation requires.
 Tier 2 cannot store its duration rows either, so every `ops.duration.*`
 cell is recorded as not run.
 
+## Duration params
+
+Owner: AshSQLite.
+Bind a `Duration` in date and time arithmetic. Every `+`, `-` and `*` with a
+`^Duration.new!(...)` operand fails with "unsupported type: %Duration{...}",
+because Exqlite cannot bind one (as in duration-storage). AshSqlite could
+translate it into SQLite's date modifiers, or reject the operator
+(`sig.plus.*duration*`, `sig.minus.*_duration`, `sig.times.*duration*`).
+
+## Duration forms
+
+Owner: AshSQL, then AshSQLite.
+Translate the `Duration` forms of `ago/1`, `from_now/1`, `date_add/2` and
+`datetime_add/2` for SQLite. AshSQL emits a Postgres `::` cast for them, so
+each fails with "unrecognized token". The integer-and-unit forms work
+(`sig.*.duration`, `sig.datetime_add.naive_duration`). ash_sql#245 added these
+forms for Postgres.
+
+## Array functions
+
+Owner: AshSQL, then AshSQLite.
+Translate or reject the array functions on SQLite, which stores arrays as JSON
+text. AshSQL emits Postgres array SQL for `at/2` (`(?)[? + 1]`), `has/2`
+(`ANY`), `intersects/2` (`&&`), `length/1` (`cardinality`), `count_nils/1`
+(`unnest`) and `string_split/1-2` (`string_to_array`), so each fails with a
+syntax error or "no such function". `string_split/3` with `trim?: true` raises
+a clear error asking for the `ash-functions` extension, which SQLite can't
+install. SQLite's `json_each` and `json_array_length` could express most of
+them.
+
+## CI-string functions
+
+Owner: AshSQLite.
+Ignore case in `contains/2`, `string_starts_with/2`, `string_ends_with/2` and
+`string_position/2` when either side is a `ci_string`. SQLite has no `citext`
+(see ci-string-sort), so these compare case-sensitively and silently return
+false or nil: `contains("HeLLo", "hel")` is false. Postgres and Ash's
+evaluation match either case. Comparing `lower(...)` on both sides would
+match Ash.
+
 ## CI-string sort
 
 Owner: AshSQLite.
@@ -597,7 +718,8 @@ Owner: AshSQL, then AshSQLite.
 Translate `start_of_day/1` for SQLite. AshSQL emits Postgres's
 `date_trunc('day', ?)`, which SQLite does not have ("no such function"). SQLite
 can express it with `datetime(?, 'start of day')`, or AshSQLite could reject
-the function.
+the function. With a time zone, `start_of_day/2` also uses Postgres's
+`timezone()` ("no such function: timezone").
 
 ## Unicode case
 

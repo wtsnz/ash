@@ -60,6 +60,63 @@ defmodule Ash.Conformance.Contracts.SharedGaps do
         """
       },
       %{
+        id: "operator-signature-cast",
+        title: "Operator signature cast",
+        kind: :implementation,
+        owners: [:ash],
+        body: ~S"""
+        Try the next operator signature when a literal can't be cast to this one.
+        `Ash.Query.Operator.try_cast_with_ref/3` walks the operator's `types/0` with
+        `Enum.find_value/2`, and `cast_one/2` returns `{:error, ...}` when a literal
+        doesn't fit, which ends the search. So `d / ^Decimal.new("0.5")` stops at
+        `/`'s first signature, `[:float, :float]`, and raises "Could not cast
+        Decimal.new(\"0.5\") as :float" on every data layer, before any query runs
+        (`sig.div.decimal_decimal`, `sig.div.float_decimal`, `sig.div.integer_decimal`).
+        Dividing by a column or a plain number works. Found by the signature tier.
+        """
+      },
+      %{
+        id: "runtime-round-integer",
+        title: "Runtime round integer",
+        kind: :implementation,
+        owners: [:ash],
+        body: ~S"""
+        Return an integer from `round/1-2` of an integer. `Round` declares `:integer`
+        for `[:integer]` and `[:integer, :integer]`, but Ash's in-memory evaluation
+        returns `7.0` for `round(7)`, so an integer calculation over it fails to cast
+        ("is invalid") on ETS and in any in-memory calculation. SQL data layers are
+        right (`sig.round.integer`, `sig.round.integer_places`).
+        """
+      },
+      %{
+        id: "runtime-ci-split",
+        title: "Runtime CI split",
+        kind: :implementation,
+        owners: [:ash],
+        body: ~S"""
+        Split a case-insensitive string into a list. Ash's in-memory evaluation of
+        `string_split(ci, "e")` on `"HeLLo"` returns the single value
+        `#Ash.CiString<"hllo">` (downcased, with the separator removed) instead of
+        `["H", "LLo"]`, and a calculation over it then crashes. It also happens when
+        only the separator is case-insensitive. Postgres returns the list
+        (`sig.string_split.ci*`, `sig.string_split.ci_separator_trim`).
+        """
+      },
+      %{
+        id: "runtime-usec-calculation",
+        title: "Runtime usec calculation",
+        kind: :implementation,
+        owners: [:ash],
+        body: ~S"""
+        Keep microseconds when an in-memory calculation adds a duration to a
+        `utc_datetime_usec` or `time_usec`. `Ash.Expr.eval/2` of `at + ^hour` against a
+        record keeps them, but the same expression read as a calculation on ETS
+        returns whole seconds, so the loss is in the calculation path, not the
+        arithmetic. Postgres keeps them (`sig.plus.usec_duration`,
+        `sig.minus.time_usec_duration` and their mirrors).
+        """
+      },
+      %{
         id: "in-list-nil",
         title: "In list nil",
         kind: :decision,

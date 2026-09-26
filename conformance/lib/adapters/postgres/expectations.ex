@@ -13,6 +13,72 @@ defmodule Ash.Conformance.Postgres.Expectations do
   def rules do
     [
       supported("*"),
+      # Ash stops at `/`'s first signature before any query runs.
+      expect(
+        ~w(sig.div.decimal_decimal sig.div.float_decimal sig.div.integer_decimal),
+        defect_error(
+          ~r/Could not cast Decimal\.new\("0\.5"\) as :float/,
+          "operator-signature-cast"
+        )
+      ),
+      expect(
+        ~w(sig.minus.datetime_datetime sig.minus.utc_datetime_utc_datetime sig.minus.usec_usec
+           sig.minus.naive_naive sig.minus.time_time sig.minus.time_usec_time_usec),
+        defect_error(
+          ~r/ERROR 42846 \(cannot_coerce\) cannot cast type interval to bigint/,
+          "temporal-difference"
+        )
+      ),
+      expect(
+        "sig.string_split.default",
+        defect_value(%{1 => ["Hello", "World"], 2 => [], 3 => nil}, "string-split-empty")
+      ),
+      expect(
+        "sig.string_split.separator",
+        defect_value(%{1 => ["Hell", " W", "rld"], 2 => [], 3 => nil}, "string-split-empty")
+      ),
+      expect(
+        "sig.string_split.ci",
+        defect_value(%{1 => ["HeLLo"], 2 => [], 3 => nil}, "string-split-empty")
+      ),
+      expect(
+        ~w(sig.string_split.ci_separator sig.string_split.ci_ci),
+        defect_value(%{1 => ["H", "LLo"], 2 => [], 3 => nil}, "string-split-empty")
+      ),
+      expect(
+        ~w(sig.string_split.trim sig.string_split.ci_separator_trim),
+        defect_value(%{1 => ["Hell", " W", "rld"], 2 => nil, 3 => nil}, "string-split-empty")
+      ),
+      expect(
+        ~w(sig.string_split.ci_trim sig.string_split.ci_ci_trim),
+        defect_value(%{1 => ["H", "LLo"], 2 => nil, 3 => nil}, "string-split-empty")
+      ),
+      expect(
+        "sig.string_position.string_ci",
+        defect_value(%{1 => nil, 2 => nil, 3 => nil}, "string-position-ci")
+      ),
+      expect(
+        "sig.start_of_day.datetime_zone",
+        defect_value(
+          %{
+            1 => {:datetime, 1_706_641_200_000_000},
+            2 => {:datetime, 1_709_233_200_000_000},
+            3 => nil
+          },
+          "start-of-day-zone"
+        )
+      ),
+      expect(
+        "sig.start_of_day.date_zone",
+        defect_value(
+          %{
+            1 => {:datetime, 1_706_590_800_000_000},
+            2 => {:datetime, 1_709_096_400_000_000},
+            3 => nil
+          },
+          "start-of-day-zone"
+        )
+      ),
       expect("nil.not_contradictory_in", defect_value([1, 2, 3, 4], "in-simplification")),
       expect("large.bulk_create_parameters", defect_value({:error, 0}, "bind-parameter-limit")),
       expect("nil.not_in_with_nil", unresolved_value([], "in-list-nil")),

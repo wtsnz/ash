@@ -30,7 +30,8 @@ defmodule Ash.Conformance.Adapter do
   @doc """
   Whether this integration runs a fixture's scenarios. By default every
   fixture but `:context_tenancy` (schema-based tenancy), `:combination` (the
-  combination grid) and `:large` (thousands of rows), which run on the
+  combination grid), `:large` (thousands of rows) and `:signatures` (a column
+  of every argument type, including arrays and `citext`), which run on the
   reviewed data layers to keep the ecosystem run short. An adapter opts in
   by returning true.
   """
@@ -91,7 +92,8 @@ defmodule Ash.Conformance.Adapter do
           context_parent context_item)a ++
         Ash.Conformance.Storage.roles() ++
         Ash.Conformance.Policy.roles() ++
-        ~w(combo_owner combo_item combo_link expr_row large_row identity_row strict_identity_row)a
+        ~w(combo_owner combo_item combo_link expr_row large_row identity_row strict_identity_row
+          sig_row)a
 
   def table_roles,
     do: ~w(parent child rating tag link child_tag event reading ledger record tenant_parent
@@ -153,7 +155,10 @@ defmodule Ash.Conformance.Adapter do
       def instrumentation, do: nil
       def expectations, do: %{}
       def variant_expectations, do: %{}
-      def fixture?(fixture), do: fixture not in [:context_tenancy, :combination, :large]
+
+      def fixture?(fixture),
+        do: fixture not in [:context_tenancy, :combination, :large, :signatures]
+
       def custom_aggregate, do: Ash.Conformance.Resources.NoCustomAggregate
       def manual_relationship, do: Ash.Conformance.Resources.PlainManual
       def checkout!, do: :ok

@@ -13,6 +13,84 @@ defmodule Ash.Conformance.Sqlite.Expectations do
   def rules do
     [
       supported("*"),
+      # Ash stops at `/`'s first signature before any query runs.
+      expect(
+        ~w(sig.div.decimal_decimal sig.div.float_decimal sig.div.integer_decimal),
+        defect_error(
+          ~r/Could not cast Decimal\.new\("0\.5"\) as :float/,
+          "operator-signature-cast"
+        )
+      ),
+      expect(
+        ~w(sig.plus.*duration* sig.minus.*_duration sig.times.*duration*),
+        defect_error(~r/unsupported type: %Duration\{/, "duration-params")
+      ),
+      expect(
+        ~w(sig.ago.duration sig.from_now.duration sig.date_add.duration sig.datetime_add.duration
+           sig.datetime_add.naive_duration),
+        defect_error(~r/unrecognized token: ":"/, "duration-forms")
+      ),
+      expect("sig.round.*", defect_error(~r/unrecognized token: ":"/, "round-syntax")),
+      expect(
+        ~w(sig.start_of_day.datetime sig.start_of_day.date),
+        defect_error(~r/no such function: date_trunc/, "start-of-day")
+      ),
+      expect(
+        ~w(sig.start_of_day.datetime_zone sig.start_of_day.date_zone),
+        defect_error(~r/no such function: timezone/, "start-of-day")
+      ),
+      expect(
+        "sig.at.index",
+        defect_error(~r/near "\[CAST\(\? AS INTEGER\) \+ 1\]": syntax error/, "array-functions")
+      ),
+      expect("sig.has.array", defect_error(~r/no such function: ANY/, "array-functions")),
+      expect("sig.intersects.array", defect_error(~r/near "&": syntax error/, "array-functions")),
+      expect(
+        "sig.length.array",
+        defect_error(~r/no such function: cardinality/, "array-functions")
+      ),
+      expect("sig.count_nils.list", defect_error(~r/no such table: unnest/, "array-functions")),
+      expect(
+        ~w(sig.string_split.default sig.string_split.separator sig.string_split.ci
+           sig.string_split.ci_separator sig.string_split.ci_ci),
+        defect_error(~r/no such function: string_to_array/, "array-functions")
+      ),
+      expect(
+        ~w(sig.string_split.trim sig.string_split.ci_separator_trim sig.string_split.ci_trim
+           sig.string_split.ci_ci_trim),
+        unsupported(
+          ~r/Cannot use `string_split\(\.\.\., trim\?: true\)` without adding the extension `ash-functions`/,
+          "array-functions"
+        )
+      ),
+      expect(
+        "sig.string_join.*",
+        unsupported(~r/does not support the function string_join/, "string-join")
+      ),
+      expect(
+        ~w(sig.contains.string_ci sig.contains.ci_string sig.contains.ci_ci
+           sig.string_starts_with.string_ci sig.string_starts_with.ci_string
+           sig.string_starts_with.ci_ci sig.string_ends_with.string_ci
+           sig.string_ends_with.ci_string sig.string_ends_with.ci_ci),
+        defect_value(%{1 => false, 2 => false, 3 => nil}, "ci-string-functions")
+      ),
+      expect(
+        ~w(sig.string_position.ci_string sig.string_position.ci_ci),
+        defect_value(%{1 => nil, 2 => nil, 3 => nil}, "ci-string-functions")
+      ),
+      expect(
+        "sig.string_position.string_ci",
+        defect_value(%{1 => nil, 2 => nil, 3 => nil}, "string-position-ci")
+      ),
+      expect(
+        ~w(sig.minus.date_date sig.minus.datetime_datetime sig.minus.utc_datetime_utc_datetime
+           sig.minus.usec_usec sig.minus.naive_naive),
+        defect_value(%{1 => 0, 2 => 0, 3 => nil}, "temporal-difference")
+      ),
+      expect(
+        ~w(sig.minus.time_time sig.minus.time_usec_time_usec),
+        defect_value(%{1 => 0, 2 => 13, 3 => nil}, "temporal-difference")
+      ),
       expect("nil.not_contradictory_in", defect_value([1, 2, 3, 4], "in-simplification")),
       expect("identity.nils_not_distinct", defect_value({:ok, 2}, "nils-not-distinct")),
       expect("upsert.nil_key_not_distinct", defect_value([{1, 1}, {2, 5}], "nils-not-distinct")),

@@ -277,6 +277,62 @@ defmodule Ash.Conformance.Sqlite.Gaps do
         """
       },
       %{
+        id: "duration-params",
+        title: "Duration params",
+        kind: :implementation,
+        owners: [:ash_sqlite],
+        body: ~S"""
+        Bind a `Duration` in date and time arithmetic. Every `+`, `-` and `*` with a
+        `^Duration.new!(...)` operand fails with "unsupported type: %Duration{...}",
+        because Exqlite cannot bind one (as in duration-storage). AshSqlite could
+        translate it into SQLite's date modifiers, or reject the operator
+        (`sig.plus.*duration*`, `sig.minus.*_duration`, `sig.times.*duration*`).
+        """
+      },
+      %{
+        id: "duration-forms",
+        title: "Duration forms",
+        kind: :implementation,
+        owners: [:ash_sql, :ash_sqlite],
+        body: ~S"""
+        Translate the `Duration` forms of `ago/1`, `from_now/1`, `date_add/2` and
+        `datetime_add/2` for SQLite. AshSQL emits a Postgres `::` cast for them, so
+        each fails with "unrecognized token". The integer-and-unit forms work
+        (`sig.*.duration`, `sig.datetime_add.naive_duration`). ash_sql#245 added these
+        forms for Postgres.
+        """
+      },
+      %{
+        id: "array-functions",
+        title: "Array functions",
+        kind: :implementation,
+        owners: [:ash_sql, :ash_sqlite],
+        body: ~S"""
+        Translate or reject the array functions on SQLite, which stores arrays as JSON
+        text. AshSQL emits Postgres array SQL for `at/2` (`(?)[? + 1]`), `has/2`
+        (`ANY`), `intersects/2` (`&&`), `length/1` (`cardinality`), `count_nils/1`
+        (`unnest`) and `string_split/1-2` (`string_to_array`), so each fails with a
+        syntax error or "no such function". `string_split/3` with `trim?: true` raises
+        a clear error asking for the `ash-functions` extension, which SQLite can't
+        install. SQLite's `json_each` and `json_array_length` could express most of
+        them.
+        """
+      },
+      %{
+        id: "ci-string-functions",
+        title: "CI-string functions",
+        kind: :implementation,
+        owners: [:ash_sqlite],
+        body: ~S"""
+        Ignore case in `contains/2`, `string_starts_with/2`, `string_ends_with/2` and
+        `string_position/2` when either side is a `ci_string`. SQLite has no `citext`
+        (see ci-string-sort), so these compare case-sensitively and silently return
+        false or nil: `contains("HeLLo", "hel")` is false. Postgres and Ash's
+        evaluation match either case. Comparing `lower(...)` on both sides would
+        match Ash.
+        """
+      },
+      %{
         id: "ci-string-sort",
         title: "CI-string sort",
         kind: :implementation,
@@ -392,7 +448,8 @@ defmodule Ash.Conformance.Sqlite.Gaps do
         Translate `start_of_day/1` for SQLite. AshSQL emits Postgres's
         `date_trunc('day', ?)`, which SQLite does not have ("no such function"). SQLite
         can express it with `datetime(?, 'start of day')`, or AshSQLite could reject
-        the function.
+        the function. With a time zone, `start_of_day/2` also uses Postgres's
+        `timezone()` ("no such function: timezone").
         """
       },
       %{

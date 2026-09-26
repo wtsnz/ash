@@ -195,6 +195,41 @@ defmodule Ash.Conformance.Contracts.Features do
              ~w(expr.date_add_day expr.date_add_month expr.datetime_add expr.start_of_day expr.filter.date_add_month)
          ),
          feature(
+           "expressions.signatures.dates",
+           "Every signature of the date and time functions, including Duration forms",
+           "#{@docs}/reference/expressions.md",
+           claims: [],
+           scenarios: Ash.Conformance.Scenarios.Signatures.ids(:dates)
+         ),
+         feature(
+           "expressions.signatures.collections",
+           "Every signature of the list, map, nil, conditional and type functions",
+           "#{@docs}/reference/expressions.md",
+           claims: [],
+           scenarios: Ash.Conformance.Scenarios.Signatures.ids(:collections)
+         ),
+         feature(
+           "expressions.signatures.strings",
+           "Every signature of the string functions, with case-insensitive strings",
+           "#{@docs}/reference/expressions.md",
+           claims: [],
+           scenarios: Ash.Conformance.Scenarios.Signatures.ids(:strings)
+         ),
+         feature(
+           "expressions.signatures.numbers",
+           "Every signature of negation, rem and round",
+           "#{@docs}/reference/expressions.md",
+           claims: [],
+           scenarios: Ash.Conformance.Scenarios.Signatures.ids(:numbers)
+         ),
+         feature(
+           "expressions.signatures.operators",
+           "Every typed signature of <>, /, *, - and +, including date and time arithmetic",
+           "../lib/ash/query/operator/basic.ex",
+           claims: [],
+           scenarios: Ash.Conformance.Scenarios.Signatures.ids(:operators)
+         ),
+         feature(
            "filter.nil_logic",
            "Negation, column comparisons and and/or with nil",
            "#{@docs}/reference/expressions.md",

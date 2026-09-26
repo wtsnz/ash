@@ -48,6 +48,7 @@ defmodule Ash.Conformance.Resources do
       use Ash.Conformance.Resources.Expressions, unquote(opts)
       use Ash.Conformance.Resources.Large, unquote(opts)
       use Ash.Conformance.Resources.Identities, unquote(opts)
+      use Ash.Conformance.Resources.Signatures, unquote(opts)
     end
   end
 

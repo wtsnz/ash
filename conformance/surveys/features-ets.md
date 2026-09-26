@@ -4,7 +4,7 @@
 
 Generated from an unreviewed run: each result was classified automatically against the intended answer. Nothing here has been reviewed.
 
-Feature catalog version 1: 155 features and 869 scenarios.
+Feature catalog version 1: 160 features and 991 scenarios.
 
 | Status | Meaning |
 | --- | --- |
@@ -118,6 +118,11 @@ fix.
 | String functions, including non-ASCII text | ✅ Works 11/11 |  |
 | if, cond, || and && | ✅ Works 5/5 |  |
 | Date and datetime arithmetic | ✅ Works 5/5 |  |
+| Every signature of the date and time functions, including Duration forms | ➖ Not applicable |  |
+| Every signature of the list, map, nil, conditional and type functions | ➖ Not applicable |  |
+| Every signature of the string functions, with case-insensitive strings | ➖ Not applicable |  |
+| Every signature of negation, rem and round | ➖ Not applicable |  |
+| Every typed signature of <>, /, *, - and +, including date and time arithmetic | ➖ Not applicable |  |
 | Negation, column comparisons and and/or with nil | 🟡 Partial 8/13 | `nil.not_and_false` wrong, `nil.not_contradictory_in` wrong, `nil.not_in_with_nil` open question, `nil.not_or_false` wrong, `nil.or` open question |
 | Filters through to-many relationships return each record once | ✅ Works 9/9 |  |
 | Sort by a related record's attribute | ✅ Works 1/1 |  |

@@ -33,6 +33,62 @@ defmodule Ash.Conformance.SQL.Gaps do
         """
       },
       %{
+        id: "temporal-difference",
+        title: "Temporal difference",
+        kind: :implementation,
+        owners: [:ash_sql, :ash_sqlite],
+        body: ~S"""
+        Subtract datetimes and times as whole seconds, and dates as days, as Ash's
+        evaluation does (`DateTime.diff/2`, `Date.diff/2`). AshSQL casts the difference
+        to `bigint`: on Postgres a datetime or time difference is an `interval`, which
+        cannot be cast ("ERROR 42846 cannot cast type interval to bigint"), so every
+        `sig.minus.*_*` of two datetimes, naive datetimes or times crashes. Date minus
+        date is an integer there and works. On SQLite the values are text, and `-`
+        subtracts their leading digits, so every difference is 0 (the year minus the
+        year), or 13 for `23:59:59 - 10:00:00`, silently. Found by the signature tier.
+        """
+      },
+      %{
+        id: "string-position-ci",
+        title: "String position CI",
+        kind: :implementation,
+        owners: [:ash_sql],
+        body: ~S"""
+        Compare case-insensitively in `string_position/2` when the substring is a
+        `ci_string` and the string isn't. `string_position("Hello World", ^ci("WORLD"))`
+        is 6 in Ash's evaluation, but nil on Postgres and SQLite. `contains/2` gets the
+        same combination right on Postgres (`sig.string_position.string_ci`).
+        """
+      },
+      %{
+        id: "start-of-day-zone",
+        title: "Start of day zone",
+        kind: :implementation,
+        owners: [:ash_sql],
+        body: ~S"""
+        Convert from UTC before truncating in `start_of_day/2`. AshSQL emits
+        `timezone('UTC', timezone(zone, date_trunc('day', timezone(zone, value))))`,
+        which assumes a `timestamptz`. AshPostgres stores `utc_datetime` as `timestamp`
+        without a time zone, so the innermost `timezone(zone, value)` reads the stored
+        UTC value as local time and the offset applies in the wrong direction: for
+        "Etc/GMT+5" (UTC-5), 2024-01-31 10:30 UTC starts its day at 2024-01-30 19:00 UTC
+        instead of 2024-01-31 05:00 UTC. A date lands a day early. Ash's evaluation
+        shifts the value into the zone first (`sig.start_of_day.*_zone`).
+        """
+      },
+      %{
+        id: "string-split-empty",
+        title: "String split empty",
+        kind: :implementation,
+        owners: [:ash_sql],
+        body: ~S"""
+        Split an empty string as `String.split/3` does. Ash's evaluation of
+        `string_split("", "o")` is `[""]`, and `[]` with `trim?: true`. Postgres's
+        `string_to_array('', ...)` returns `{}`, and the `trim?: true` path returns nil,
+        which reads as if the input were nil (`sig.string_split.*`, row 2).
+        """
+      },
+      %{
         id: "root-relationship",
         title: "Root relationship",
         kind: :implementation,
