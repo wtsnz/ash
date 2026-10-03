@@ -1,0 +1,151 @@
+# SPDX-FileCopyrightText: 2026 ash contributors <https://github.com/ash-project/ash/graphs/contributors>
+# SPDX-License-Identifier: MIT
+
+defmodule Ash.Conformance.Report.Inventory do
+  @moduledoc "Versioned coverage boundaries, including work that has never run."
+  alias Ash.Conformance.{Adapter, Catalog, Contracts.Capabilities, Report}
+
+  @doc "The coverage inventory is the feature catalog: implemented if verified, else planned."
+  def features do
+    Enum.map(Ash.Conformance.Contracts.Features.all(), fn feature ->
+      %{
+        id: feature.id,
+        level: feature.level,
+        section: feature.section,
+        title: feature.title,
+        status: if(feature.scenarios == [], do: :planned, else: :implemented),
+        scenarios: feature.scenarios,
+        claims: Enum.map(feature.claims, fn {role, claim} -> "#{role}: #{inspect(claim)}" end),
+        semantic_basis: feature.semantic_basis
+      }
+    end)
+  end
+
+  def document do
+    %{
+      schema_version: 1,
+      inventory_version: 3,
+      feature_catalog_version: Ash.Conformance.Contracts.Features.version(),
+      contract: "../lib/ash/data_layer/data_layer.ex",
+      feature_typespec: feature_typespec(),
+      additional_callsite_capabilities: Capabilities.callsite_only(),
+      capability_sources: [
+        "../lib/ash/query/query.ex",
+        "../lib/ash/filter/filter.ex",
+        "../lib/ash/actions/read/relationships.ex",
+        "../lib/ash/actions/create/bulk.ex",
+        "../lib/ash/actions/update/update_many.ex",
+        "../lib/ash/actions/aggregate.ex"
+      ],
+      callback_groups: %{
+        queries:
+          ~w(resource_to_query transform_query set_context set_tenant run_query return_query),
+        filtering_ordering: ~w(filter sort distinct distinct_sort limit offset select),
+        aggregates_calculations:
+          ~w(add_aggregate add_aggregates run_aggregate_query add_calculation add_calculations calculate),
+        relationships:
+          ~w(run_query_with_lateral_join run_aggregate_query_with_lateral_join prefer_lateral_join_for_many_to_many?),
+        writes:
+          ~w(create update destroy upsert bulk_create update_query destroy_query update_many),
+        transactions:
+          ~w(transaction in_transaction? rollback lock prefer_transaction? prefer_transaction_for_atomic_updates?),
+        combinations: ~w(combination_of combination_acc),
+        integration:
+          ~w(can? functions source attribute_ecto_type default_bulk_batch_size data_layer_keyset_by_default?)
+      },
+      features: features(),
+      profiles:
+        Enum.map(
+          Adapter.all(),
+          &%{
+            adapter: &1.id(),
+            supported: &1.profiles(),
+            context_tenancy:
+              if(:context_tenancy in &1.profiles(), do: :available, else: :not_applicable)
+          }
+        ),
+      scenarios: Report.declaration_rows(),
+      adapter_contracts:
+        Enum.map(
+          Adapter.all(),
+          &%{
+            adapter: &1.id(),
+            capabilities: Capabilities.matrix(&1),
+            callbacks: Capabilities.callbacks(&1)
+          }
+        ),
+      fallback_evidence: [
+        %{
+          id: "framework.single_aggregate",
+          location: "../test/ash/data_layer/dispatch_contract_test.exs",
+          scope:
+            "Dedicated dispatch tests record actual single/batch callback execution; not adapter run evidence"
+        },
+        %{
+          id: "scenario.fallback",
+          location: "lib/scenario.ex",
+          scope:
+            "Scenarios that name a fallback record the data-layer query count of the operation in adapter runs"
+        }
+      ],
+      meaning:
+        "Implemented means a scenario exists, not that every adapter conforms. Planned is never a pass."
+    }
+  end
+
+  def feature_typespec do
+    path = Path.expand("../../../lib/ash/data_layer/data_layer.ex", __DIR__)
+    source = File.read!(path)
+
+    [_, feature] =
+      Regex.run(~r/@type feature\(\) ::([\s\S]*?)\n  @type lateral_join_link/, source)
+
+    String.trim(feature)
+  end
+
+  def markdown do
+    sections =
+      Enum.map_join(Ash.Conformance.Contracts.Features.sections(), "\n", fn {level, name, _} ->
+        rows =
+          features()
+          |> Enum.filter(&(&1.level == level))
+          |> Enum.map_join("\n", fn feature ->
+            "| `#{feature.id}` | #{feature.title} | #{feature.status} | #{length(feature.scenarios)} |"
+          end)
+
+        """
+        ## #{level}. #{name}
+
+        | Feature | Description | Coverage | Scenarios |
+        | --- | --- | --- | ---: |
+        #{rows}
+        """
+      end)
+
+    planned = Enum.count(features(), &(&1.status == :planned))
+
+    """
+    <!-- SPDX-FileCopyrightText: 2026 ash contributors <https://github.com/ash-project/ash/graphs/contributors> -->
+    <!-- SPDX-License-Identifier: MIT -->
+    # Coverage inventory v3
+
+    Generated by `mix conformance.inventory`. Version 3 replaces the area list with
+    the feature catalog in `lib/contracts/features.ex`: #{length(features())} features, of which
+    #{planned} are planned and have no scenario yet. Implemented means scenarios
+    exist, not that any adapter passes them; see [FEATURES.md](FEATURES.md) for
+    results per data layer.
+
+    JSON also includes the feature typespec, callback groups, optional callback
+    exports, resource-specific capability claims, profiles and scenario contracts.
+    Claims never decide what runs.
+
+    #{sections}
+    The context-tenancy profile is Postgres-only. SQLite has no schema-provisioning
+    obligation. Fallback evidence comes from instrumented core dispatch tests and
+    from scenarios that name a fallback. Other adapter scenarios report
+    `unobserved`.
+
+    #{length(Catalog.all())} executable scenarios are registered. See [MATRIX.md](MATRIX.md) for individual contracts.
+    """
+  end
+end
