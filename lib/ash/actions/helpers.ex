@@ -1169,10 +1169,15 @@ defmodule Ash.Actions.Helpers do
     if Enumerable.impl_for(results) do
       select_mask = select_mask(query)
 
-      Enum.map(results, fn result ->
-        result
-        |> Map.merge(select_mask)
-        |> Ash.Resource.put_metadata(:selected, select)
+      Enum.map(results, fn
+        # Bulk actions return a failed load as an error alongside the records
+        {:error, _} = error ->
+          error
+
+        result ->
+          result
+          |> Map.merge(select_mask)
+          |> Ash.Resource.put_metadata(:selected, select)
       end)
     else
       results
