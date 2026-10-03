@@ -170,6 +170,68 @@ defmodule Ash.Test.Actions.BulkDestroyTest do
     end
   end
 
+  defmodule CaptureSharedContext do
+    @moduledoc false
+    use Ash.Resource.Preparation
+
+    @impl true
+    def prepare(query, _opts, _context) do
+      send(self(), {:shared_context, query.context[:shared]})
+      query
+    end
+  end
+
+  defmodule SharedContextComment do
+    @moduledoc false
+    use Ash.Resource, domain: Domain, data_layer: Ash.DataLayer.Ets
+
+    ets do
+      private?(true)
+    end
+
+    actions do
+      default_accept :*
+      defaults [:read, create: :*]
+    end
+
+    preparations do
+      prepare CaptureSharedContext
+    end
+
+    attributes do
+      uuid_primary_key :id
+    end
+
+    relationships do
+      belongs_to :post, Ash.Test.Actions.BulkDestroyTest.SharedContextPost,
+        public?: true,
+        attribute_writable?: true
+    end
+  end
+
+  defmodule SharedContextPost do
+    @moduledoc false
+    use Ash.Resource, domain: Domain, data_layer: Ash.DataLayer.Ets
+
+    ets do
+      private?(true)
+    end
+
+    actions do
+      default_accept :*
+      defaults [:read, :destroy, create: :*, update: :*]
+    end
+
+    attributes do
+      uuid_primary_key :id
+      attribute :title, :string, public?: true
+    end
+
+    relationships do
+      has_many :comments, SharedContextComment, public?: true, destination_attribute: :post_id
+    end
+  end
+
   defmodule Post do
     @moduledoc false
     use Ash.Resource,
@@ -620,6 +682,28 @@ defmodule Ash.Test.Actions.BulkDestroyTest do
     refute context[:from_query]
 
     assert [] = Ash.read!(Post)
+  end
+
+  test "passes shared context to related reads when loading destroyed records" do
+    shared_context = %{some_id: Ash.UUID.generate()}
+
+    for strategy <- [:atomic, :stream] do
+      post = Ash.create!(SharedContextPost, %{title: "title"})
+      Ash.create!(SharedContextComment, %{post_id: post.id})
+
+      assert %Ash.BulkResult{records: [%{comments: [_]}]} =
+               SharedContextPost
+               |> Ash.Query.filter(id == ^post.id)
+               |> Ash.bulk_destroy!(:destroy, %{},
+                 strategy: strategy,
+                 return_records?: true,
+                 load: [:comments],
+                 context: %{shared: shared_context}
+               )
+
+      assert_receive {:shared_context, ^shared_context}
+      refute_received {:shared_context, _}
+    end
   end
 
   test "accepts arguments" do
