@@ -113,7 +113,8 @@ defmodule Ash do
                         ],
                         lock: [
                           type: :any,
-                          doc: "A lock statement to add onto the query"
+                          doc:
+                            "A lock statement to add onto the query. See `Ash.Query.lock/2` for transaction and snapshot behavior."
                         ],
                         return_query?: [
                           type: :boolean,
@@ -259,7 +260,8 @@ defmodule Ash do
                      ],
                      lock: [
                        type: :any,
-                       doc: "A lock statement to add onto the query"
+                       doc:
+                         "A lock statement to add onto the query. See `Ash.Query.lock/2` for transaction and snapshot behavior."
                      ],
                      tenant: [
                        type: {:protocol, Ash.ToTenant},
