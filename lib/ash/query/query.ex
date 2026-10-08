@@ -4137,6 +4137,16 @@ defmodule Ash.Query do
   Lock the query results.
 
   This must be run while in a transaction, and is not supported by all data layers.
+
+  A lock does not imply that aggregates, calculations, or filters are evaluated
+  after the lock is acquired. Their behavior depends on the data layer and the
+  transaction's isolation level.
+
+  On PostgreSQL at READ COMMITTED, aggregates and expression calculations in the
+  locking statement use that statement's snapshot. If the query waits for a lock,
+  they can miss related rows committed during the wait. Lock the record first,
+  then load these values in a separate statement within the same transaction.
+  Related-row filters need a separate recheck after acquiring the lock as well.
   """
   @spec lock(t() | Ash.Resource.t(), Ash.DataLayer.lock_type()) :: t()
   def lock(query, nil), do: %{query | lock: nil}
