@@ -2602,7 +2602,10 @@ defmodule Ash.Actions.Destroy.Bulk do
         resource |> Ash.Resource.Info.public_attributes() |> Enum.map(& &1.name)
       end
 
+    load_context = Map.take(opts[:context] || %{}, [:shared])
+
     case Ash.load(records, select,
+           context: load_context,
            reuse_values?: true,
            domain: domain,
            tenant: opts[:tenant],
@@ -2627,6 +2630,7 @@ defmodule Ash.Actions.Destroy.Bulk do
         Ash.load(
           records,
           load_query,
+          context: load_context,
           reuse_values?: true,
           tenant: opts[:tenant],
           action: Ash.Resource.Info.primary_action(changeset.resource, :read) || changeset.action,

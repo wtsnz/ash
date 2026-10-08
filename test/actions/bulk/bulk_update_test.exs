@@ -297,6 +297,68 @@ defmodule Ash.Test.Actions.BulkUpdateTest do
     end
   end
 
+  defmodule CaptureSharedContext do
+    @moduledoc false
+    use Ash.Resource.Preparation
+
+    @impl true
+    def prepare(query, _opts, _context) do
+      send(self(), {:shared_context, query.context[:shared]})
+      query
+    end
+  end
+
+  defmodule SharedContextComment do
+    @moduledoc false
+    use Ash.Resource, domain: Domain, data_layer: Ash.DataLayer.Ets
+
+    ets do
+      private?(true)
+    end
+
+    actions do
+      default_accept :*
+      defaults [:read, create: :*]
+    end
+
+    preparations do
+      prepare CaptureSharedContext
+    end
+
+    attributes do
+      uuid_primary_key :id
+    end
+
+    relationships do
+      belongs_to :post, Ash.Test.Actions.BulkUpdateTest.SharedContextPost,
+        public?: true,
+        attribute_writable?: true
+    end
+  end
+
+  defmodule SharedContextPost do
+    @moduledoc false
+    use Ash.Resource, domain: Domain, data_layer: Ash.DataLayer.Ets
+
+    ets do
+      private?(true)
+    end
+
+    actions do
+      default_accept :*
+      defaults [:read, :destroy, create: :*, update: :*]
+    end
+
+    attributes do
+      uuid_primary_key :id
+      attribute :title, :string, public?: true
+    end
+
+    relationships do
+      has_many :comments, SharedContextComment, public?: true, destination_attribute: :post_id
+    end
+  end
+
   defmodule Post do
     @moduledoc false
     use Ash.Resource,
@@ -991,6 +1053,27 @@ defmodule Ash.Test.Actions.BulkUpdateTest do
     assert_received {:changeset_context, context}
     assert context[:from_opts]
     refute context[:from_query]
+  end
+
+  test "passes shared context to related reads when loading updated records" do
+    post = Ash.create!(SharedContextPost, %{title: "title"})
+    Ash.create!(SharedContextComment, %{post_id: post.id})
+    shared_context = %{some_id: Ash.UUID.generate()}
+
+    for strategy <- [:atomic, :stream] do
+      assert %Ash.BulkResult{records: [%{comments: [_]}]} =
+               SharedContextPost
+               |> Ash.Query.filter(id == ^post.id)
+               |> Ash.bulk_update!(:update, %{title: "new title"},
+                 strategy: strategy,
+                 return_records?: true,
+                 load: [:comments],
+                 context: %{shared: shared_context}
+               )
+
+      assert_receive {:shared_context, ^shared_context}
+      refute_received {:shared_context, _}
+    end
   end
 
   test "runs changes" do
