@@ -238,17 +238,16 @@ defmodule Ash.Actions.Destroy.Bulk do
                 _ ->
                   read_opts = Keyword.take(read_opts, Ash.stream_opt_keys())
 
-                  # We need to figure out a way to capture errors raised by the stream when picking items off somehow
-                  # for now, we only go this route if there are potentially more records in the result set than
-                  # in the batch size, to solve this problem for atomic upgrades.
-                  # we can likely make the stream throw something instead of raising something
-                  # like `{:stream_error, ...}` if a specific option is passed in.
-                  # once we figure this out, we may be able to remove the branch above
                   run(
                     domain,
-                    Ash.stream!(
+                    Ash.Actions.Read.Stream.run(
+                      domain,
                       query,
-                      read_opts
+                      read_opts,
+                      fn error ->
+                        Ash.Actions.Helpers.Bulk.maybe_rollback(error, query.resource, opts)
+                        {:ash_read_error, error}
+                      end
                     ),
                     action,
                     input,
@@ -597,7 +596,11 @@ defmodule Ash.Actions.Destroy.Bulk do
                 Ash.Actions.Helpers.restore_queued_notifications(queued_notifications)
 
                 handle_bulk_result(
-                  %Ash.BulkResult{errors: [error], status: :error},
+                  %Ash.BulkResult{
+                    errors: if(opts[:return_errors?], do: [error], else: nil),
+                    error_count: 1,
+                    status: :error
+                  },
                   resource,
                   action,
                   opts
@@ -1157,6 +1160,7 @@ defmodule Ash.Actions.Destroy.Bulk do
               end
           end
         end)
+        |> Ash.Actions.Helpers.Bulk.atomic_batch_results(ref, opts)
       end
     )
     |> run_batches(ref, atomic_changeset.resource, atomic_changeset.action.name, opts)
@@ -1303,7 +1307,8 @@ defmodule Ash.Actions.Destroy.Bulk do
             %{bulk_result | status: :success}
 
           %{records: records, error_count: _} when records in [nil, []] ->
-            %{bulk_result | status: :error}
+            status = if Process.get({:any_success?, ref}), do: :partial_success, else: :error
+            %{bulk_result | status: status}
 
           _ ->
             %{bulk_result | status: :partial_success}
@@ -1897,6 +1902,8 @@ defmodule Ash.Actions.Destroy.Bulk do
   end
 
   defp map_batches(stream, resource, opts, ref, callback) do
+    callback = Ash.Actions.Helpers.Bulk.with_read_errors(callback, opts)
+
     max_concurrency = opts[:max_concurrency]
 
     max_concurrency =
@@ -1948,17 +1955,17 @@ defmodule Ash.Actions.Destroy.Bulk do
           throw(value)
 
         {:ok, {result, notifications, any_success?}} ->
-          Process.put({:any_success?, ref}, any_success?)
+          Process.put({:any_success?, ref}, any_success? || Process.get({:any_success?, ref}))
           Ash.Actions.Helpers.Bulk.store_notification(ref, notifications, opts)
           # result already contains records and {:error, _} tuples inline
-          List.wrap(result)
+          [result]
 
         {:exit, error} ->
           error
           |> Ash.Actions.Helpers.Bulk.maybe_rollback(resource, opts)
           |> Ash.Actions.Helpers.Bulk.maybe_stop_on_error(opts)
           |> Ash.Helpers.error()
-          |> List.wrap()
+          |> then(&[[&1]])
       end)
     else
       Stream.map(stream, callback)
