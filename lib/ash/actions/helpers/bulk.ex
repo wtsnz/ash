@@ -7,6 +7,69 @@ defmodule Ash.Actions.Helpers.Bulk do
 
   require Logger
 
+  @doc false
+  def with_read_errors(callback, opts) do
+    fn batch ->
+      {records, errors} =
+        Enum.split_with(batch, fn
+          {:ash_read_error, _} -> false
+          {{:ash_read_error, _}, _index} -> false
+          _ -> true
+        end)
+
+      if errors == [] do
+        callback.(batch)
+      else
+        results = if records == [], do: [], else: callback.(records)
+
+        errors =
+          if opts[:return_stream?] && !opts[:return_errors?] do
+            []
+          else
+            Enum.map(errors, fn
+              {:ash_read_error, error} -> {:error, error}
+              {{:ash_read_error, error}, _index} -> {:error, error}
+            end)
+          end
+
+        Stream.concat(results, errors)
+      end
+    end
+  end
+
+  @doc false
+  def atomic_batch_results(results, ref, opts) do
+    if opts[:return_stream?] do
+      records =
+        Stream.map(results, fn
+          {:error, _} = error -> error
+          record -> {:ok, record}
+        end)
+
+      notifications =
+        Stream.resource(
+          fn -> Process.delete({:bulk_notifications, ref}) || [] end,
+          fn
+            [] ->
+              {:halt, []}
+
+            notifications ->
+              if opts[:return_notifications?] do
+                {Enum.map(notifications, &{:notification, &1}), []}
+              else
+                if opts[:notify?], do: Ash.Notifier.notify(notifications)
+                {[], []}
+              end
+          end,
+          fn _ -> :ok end
+        )
+
+      Stream.concat(records, notifications)
+    else
+      results
+    end
+  end
+
   @typedoc """
   Tagged result tuple carrying a record/error with its associated changeset.
 
