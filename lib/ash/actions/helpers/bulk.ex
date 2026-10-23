@@ -440,7 +440,7 @@ defmodule Ash.Actions.Helpers.Bulk do
   Buffers notifications in the process dictionary via `store_notification/3`.
   """
   @spec store_notifications_for_loaded_records(
-          loaded_records :: [Ash.Resource.Record.t()],
+          loaded_records :: [Ash.Resource.Record.t() | {:error, term()}],
           changeset_by_id(),
           bulk_ref :: reference(),
           notification_fn(),
@@ -454,20 +454,25 @@ defmodule Ash.Actions.Helpers.Bulk do
         opts
       ) do
     if need_notifications?(opts) do
-      Enum.each(loaded_records, fn loaded ->
-        changeset_id = loaded.__metadata__[:bulk_changeset_id]
+      Enum.each(loaded_records, fn
+        # A failed load is returned as an error alongside the records
+        {:error, _} ->
+          :ok
 
-        case Map.fetch(changeset_by_id, changeset_id) do
-          {:ok, changeset} ->
-            store_notification(ref, notification_fn.(changeset, loaded, opts), opts)
+        loaded ->
+          changeset_id = loaded.__metadata__[:bulk_changeset_id]
 
-          :error ->
-            Logger.warning("""
-            Bulk operation: Could not find changeset for loaded record.
-            bulk_changeset_id: #{inspect(changeset_id)}
-            This may indicate a bug in bulk operation result processing.
-            """)
-        end
+          case Map.fetch(changeset_by_id, changeset_id) do
+            {:ok, changeset} ->
+              store_notification(ref, notification_fn.(changeset, loaded, opts), opts)
+
+            :error ->
+              Logger.warning("""
+              Bulk operation: Could not find changeset for loaded record.
+              bulk_changeset_id: #{inspect(changeset_id)}
+              This may indicate a bug in bulk operation result processing.
+              """)
+          end
       end)
     end
 
