@@ -6,6 +6,11 @@ defmodule Ash.Actions.Read.Stream do
   @moduledoc false
 
   def run!(domain, query, opts) do
+    run(domain, query, opts, fn error -> raise error end)
+  end
+
+  def run(domain, query, opts, on_error) do
+    opts = Keyword.put(opts, :on_error, on_error)
     query = Ash.Query.new(query)
 
     {query, opts} = Ash.Actions.Helpers.set_context_and_get_opts(domain, query, opts)
@@ -52,7 +57,10 @@ defmodule Ash.Actions.Read.Stream do
           opts =
             Keyword.merge(opts, page: page_opts, domain: domain)
 
-          case Ash.read!(query, opts) do
+          case read(query, opts) do
+            {:ash_read_error, _} = error ->
+              {[error], false}
+
             %{more?: true, results: results} ->
               {results, List.last(results).__metadata__.keyset}
 
@@ -83,7 +91,7 @@ defmodule Ash.Actions.Read.Stream do
           {:halt, false}
 
         true ->
-          {Ash.read!(query, Keyword.put(opts, :domain, domain)), false}
+          {List.wrap(read(query, Keyword.put(opts, :domain, domain))), false}
       end,
       & &1
     )
@@ -113,7 +121,10 @@ defmodule Ash.Actions.Read.Stream do
           opts =
             Keyword.put(opts, :page, page_opts)
 
-          case Ash.read!(query, Keyword.put(opts, :domain, domain)) do
+          case read(query, Keyword.put(opts, :domain, domain)) do
+            {:ash_read_error, _} = error ->
+              {[error], false}
+
             %{more?: true, results: results} ->
               {results, offset + limit}
 
@@ -152,17 +163,32 @@ defmodule Ash.Actions.Read.Stream do
             |> Ash.Query.limit(limit)
             |> Ash.Query.offset(offset)
 
-          results = Ash.read!(query, Keyword.put(opts, :domain, domain))
+          results = read(query, Keyword.put(opts, :domain, domain))
 
-          if Enum.count(results) < limit do
-            {results, false}
-          else
-            {results, offset + limit}
+          case results do
+            {:ash_read_error, _} = error ->
+              {[error], false}
+
+            results ->
+              if Enum.count(results) < limit do
+                {results, false}
+              else
+                {results, offset + limit}
+              end
           end
       end,
       & &1
     )
     |> take_query_limit(query)
+  end
+
+  defp read(query, opts) do
+    {on_error, opts} = Keyword.pop!(opts, :on_error)
+
+    case Ash.read(query, opts) do
+      {:ok, result} -> result
+      {:error, error} -> on_error.(Ash.Error.to_error_class(error))
+    end
   end
 
   @doc false

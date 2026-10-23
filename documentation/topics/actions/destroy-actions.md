@@ -108,6 +108,20 @@ WHERE id IN (...ids)
 Stream is used when the data layer does not support destroying a query. If a query is given, it is run and the records are used as an enumerable of inputs. If an enumerable of inputs is given, each one is destroyed individually. There is nothing inherently wrong with doing this kind of destroy, but it will naturally be slower than the other two strategies.
 The benefit of having a single interface (`Ash.bulk_destroy/4`) is that the caller doesn't need to change based on the performance implications of the action.
 
+### Read errors during streaming
+
+When a bulk action reads a query in batches, a failed read ends the input stream.
+The non-bang function returns the read error through its normal bulk result, or as
+an `{:error, error}` element when `return_stream?: true` and `return_errors?: true`.
+Completed records and their notifications are retained. `return_errors?: false`
+keeps the error count without collecting error details.
+
+A failed read cannot be skipped safely, so it ends input fetching even when
+`stop_on_error?: false`. With `transaction: :batch` or `false`, earlier committed
+batches remain committed. With `transaction: :all` and `rollback_on_error?: true`,
+the operation rolls back. The bang function raises when it receives an error result.
+Exceptions raised by caller-supplied enumerables or application code still raise.
+
 > ### Check the docs! {: .warning}
 >
 > Make sure to thoroughly read and understand the documentation in `Ash.bulk_destroy/4` before using. Read each option and note the default values. By default, bulk destroys don't return records or errors, and don't emit notifications.
