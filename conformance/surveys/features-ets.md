@@ -389,21 +389,34 @@ getting a hidden record when the actor may read every note.
 
 ## Decoy variant
 
-744 same, 0 leaked, 13 changed, 266 opted out, 0 not run.
+Every scenario also runs with a hidden copy of each fixture row stored
+next to the real ones: in a mirror tenant, with colliding local ids, where
+the table is multitenant by attribute, and otherwise with a reserved id a
+read policy hides (`Ash.Conformance.Decoy`). An issue is a decoy in the
+answer (leaked), or an answer that was right and changes with decoys
+(influenced); a decoy error needs triage. Each needs a recorded gap. Hints
+are guesses from the direction of the change.
 
-- `adv.field_write.bulk_destroy.atomic` (changed): `%{cards: ["card-1a", "card-1b"], order_count: 8, payment: "pay-card-1", secret: :forbidden, ssn: "ssn-1"}`; without decoys `%{cards: ["card-1a", "card-1b"], order_count: 4, payment: "pay-card-1", secret: :forbidden, ssn: "ssn-1"}`
-- `adv.field_write.bulk_update.atomic` (changed): `%{cards: ["card-1a", "card-1b"], order_count: 8, payment: "pay-card-1", secret: :forbidden, ssn: "ssn-1"}`; without decoys `%{cards: ["card-1a", "card-1b"], order_count: 4, payment: "pay-card-1", secret: :forbidden, ssn: "ssn-1"}`
-- `adv.join_policy.m2m_aggregates` (changed): `%{1 => {8, [1, 1, 2, 2, 3, 3, 4, 4], 4}, 2 => {4, [4, 4, 5, 5], 5}, 3 => {2, [2, 2], 2}}`; without decoys `%{1 => {4, [1, 2, 3, 4], 4}, 2 => {2, [4, 5], 5}, 3 => {1, [2], 2}}`
-- `adv.join_policy.through_aggregates` (changed): `%{1 => {8, [1, 1, 2, 2, 3, 3, 4, 4], 4}, 2 => {4, [4, 4, 5, 5], 5}, 3 => {2, [2, 2], 2}}`; without decoys `%{1 => {4, [1, 2, 3, 4], 4}, 2 => {2, [4, 5], 5}, 3 => {1, [2], 2}}`
-- `context.prepared_query_arguments` (changed): `Ash.Error.Invalid: Bread Crumbs: > Error returned from: Ash.Conformance.Ets.Parent.read Invalid Error * argument label is required`; without decoys `%{1 => 1, 2 => 0, 3 => 0}`
-- `field.root_aggregate` (changed): `10`; without decoys `5`
-- `filter.aggregate_dependency` (changed): `%{1 => 3, 2 => 0, 3 => 0}`; without decoys `%{1 => 1, 2 => 0, 3 => 0}`
-- `filter.aggregate_dependency_calculation` (changed): `%{1 => 3, 2 => 0, 3 => 0}`; without decoys `%{1 => 1, 2 => 0, 3 => 0}`
-- `filter.aggregate_dependency_filtered` (changed): `%{1 => 4, 2 => nil, 3 => nil}`; without decoys `%{1 => 2, 2 => nil, 3 => nil}`
-- `filter.nested_parent_control` (changed): `Ash.Error.Unknown: Bread Crumbs: > Exception raised in: Ash.Conformance.Ets.Parent.read Unknown Error * ** (MatchError) no match of right hand side value: []`; without decoys `[]`
-- `write.atomic_update` (changed): `[{1, 8}, {2, 2}, {3, 0}]`; without decoys `[{1, 4}, {2, 1}, {3, 0}]`
-- `write.bulk_update_filter` (changed): `[{1, "big"}, {2, "big"}, {3, "empty"}]`; without decoys `[{1, "big"}, {2, "beta"}, {3, "empty"}]`
-- `write.single_atomic_update` (changed): `2`; without decoys `1`
+**7 issues** (0 leaked, 7 influenced; unreviewed) · 1 need triage (unreviewed) · the rest clean: 744 same, 5 base failing, 266 opted out, 0 not run.
+
+| Scenario | Status | Hint | Diff | Gap |
+| --- | --- | --- | --- | --- |
+| `field.root_aggregate` | influenced | counts hidden rows? | `5 → 10` | unreviewed |
+| `filter.aggregate_dependency` | influenced | counts hidden rows? | `1: 1 → 3` | unreviewed |
+| `filter.aggregate_dependency_calculation` | influenced | counts hidden rows? | `1: 1 → 3` | unreviewed |
+| `filter.aggregate_dependency_filtered` | influenced | counts hidden rows? | `1: 2 → 4` | unreviewed |
+| `write.atomic_update` | influenced | counts hidden rows? | `[0] #1: 4 → 8, [1] #1: 1 → 2` | unreviewed |
+| `write.bulk_update_filter` | influenced |  | `[1] #1: "beta" → "big"` | unreviewed |
+| `write.single_atomic_update` | influenced | counts hidden rows? | `1 → 2` | unreviewed |
+
+Need triage: the scenario's own run is right, and with decoys it raises. Scenarios with the same error and gap share a row.
+
+| Scenario | Error | Gap |
+| --- | --- | --- |
+| `context.prepared_query_arguments` | `Ash.Error.Invalid: argument label is required` | unreviewed |
+
+5 scenarios already fail without decoys, so a difference isn't a decoy signal.
+
 
 ## Blockers
 

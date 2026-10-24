@@ -9,30 +9,30 @@ Elixir scenarios and expectations define the contract. CI runs each adapter inde
 
 | Scenario | sqlite | postgres |
 | --- | --- | --- |
-| [`adv.field_write.bulk_create`](lib/scenarios/adversarial.ex#L725) | [known_defect](GAPS.md#write-result-field-policies) · Ash | [known_defect](GAPS.md#write-result-field-policies) · Ash |
-| [`adv.field_write.bulk_destroy.atomic`](lib/scenarios/adversarial.ex#L750) | supported | [known_defect](GAPS.md#write-result-field-policies) · Ash |
-| [`adv.field_write.bulk_destroy.stream`](lib/scenarios/adversarial.ex#L750) | supported | supported |
-| [`adv.field_write.bulk_update.atomic`](lib/scenarios/adversarial.ex#L750) | [known_defect](GAPS.md#write-result-field-policies) · Ash | [known_defect](GAPS.md#write-result-field-policies) · Ash |
-| [`adv.field_write.bulk_update.atomic_batches`](lib/scenarios/adversarial.ex#L750) | [known_defect](GAPS.md#write-result-field-policies) · Ash | [known_defect](GAPS.md#write-result-field-policies) · Ash |
-| [`adv.field_write.bulk_update.stream`](lib/scenarios/adversarial.ex#L750) | supported | supported |
-| [`adv.field_write.create`](lib/scenarios/adversarial.ex#L725) | [known_defect](GAPS.md#write-result-field-policies) · Ash | [known_defect](GAPS.md#write-result-field-policies) · Ash |
-| [`adv.field_write.destroy`](lib/scenarios/adversarial.ex#L725) | [known_defect](GAPS.md#write-result-field-policies) · Ash | [known_defect](GAPS.md#write-result-field-policies) · Ash |
-| [`adv.field_write.read_control`](lib/scenarios/adversarial.ex#L725) | supported | supported |
-| [`adv.field_write.update`](lib/scenarios/adversarial.ex#L725) | [known_defect](GAPS.md#write-result-field-policies) · Ash | [known_defect](GAPS.md#write-result-field-policies) · Ash |
-| [`adv.field_write.update_load`](lib/scenarios/adversarial.ex#L725) | [known_defect](GAPS.md#write-result-field-policies) · Ash | [known_defect](GAPS.md#write-result-field-policies) · Ash |
-| [`adv.foreign.bulk_destroy.atomic`](lib/scenarios/adversarial.ex#L528) | [known_defect](GAPS.md#bulk-stream-tenant) · Ash | supported |
-| [`adv.foreign.bulk_destroy.atomic_batches`](lib/scenarios/adversarial.ex#L528) | [known_defect](GAPS.md#bulk-stream-tenant) · Ash | supported |
-| [`adv.foreign.bulk_destroy.fallback`](lib/scenarios/adversarial.ex#L528) | [known_defect](GAPS.md#bulk-stream-tenant) · Ash | [known_defect](GAPS.md#bulk-stream-tenant) · Ash |
-| [`adv.foreign.bulk_destroy.stream`](lib/scenarios/adversarial.ex#L528) | [known_defect](GAPS.md#bulk-stream-tenant) · Ash | [known_defect](GAPS.md#bulk-stream-tenant) · Ash |
-| [`adv.foreign.bulk_update.atomic`](lib/scenarios/adversarial.ex#L527) | supported | supported |
-| [`adv.foreign.bulk_update.atomic_batches`](lib/scenarios/adversarial.ex#L527) | supported | supported |
-| [`adv.foreign.bulk_update.fallback`](lib/scenarios/adversarial.ex#L527) | [known_defect](GAPS.md#bulk-stream-tenant) · Ash | [known_defect](GAPS.md#bulk-stream-tenant) · Ash |
-| [`adv.foreign.bulk_update.stream`](lib/scenarios/adversarial.ex#L527) | [known_defect](GAPS.md#bulk-stream-tenant) · Ash | [known_defect](GAPS.md#bulk-stream-tenant) · Ash |
-| [`adv.foreign.bulk_update.stream_global_records`](lib/scenarios/adversarial.ex#L540) | [known_defect](GAPS.md#bulk-stream-tenant) · Ash | [known_defect](GAPS.md#bulk-stream-tenant) · Ash |
-| [`adv.foreign.destroy_changeset`](lib/scenarios/adversarial.ex#L494) | [known_defect](GAPS.md#destroy-record-tenant) · Ash | [known_defect](GAPS.md#destroy-record-tenant) · Ash |
-| [`adv.foreign.destroy_option`](lib/scenarios/adversarial.ex#L494) | supported | supported |
-| [`adv.foreign.update_changeset`](lib/scenarios/adversarial.ex#L494) | supported | supported |
-| [`adv.foreign.update_option`](lib/scenarios/adversarial.ex#L494) | supported | supported |
+| [`adv.field_write.bulk_create`](lib/scenarios/adversarial.ex#L717) | [known_defect](GAPS.md#write-result-field-policies) · Ash | [known_defect](GAPS.md#write-result-field-policies) · Ash |
+| [`adv.field_write.bulk_destroy.atomic`](lib/scenarios/adversarial.ex#L743) | supported | [known_defect](GAPS.md#write-result-field-policies) · Ash |
+| [`adv.field_write.bulk_destroy.stream`](lib/scenarios/adversarial.ex#L743) | supported | supported |
+| [`adv.field_write.bulk_update.atomic`](lib/scenarios/adversarial.ex#L743) | [known_defect](GAPS.md#write-result-field-policies) · Ash | [known_defect](GAPS.md#write-result-field-policies) · Ash |
+| [`adv.field_write.bulk_update.atomic_batches`](lib/scenarios/adversarial.ex#L743) | [known_defect](GAPS.md#write-result-field-policies) · Ash | [known_defect](GAPS.md#write-result-field-policies) · Ash |
+| [`adv.field_write.bulk_update.stream`](lib/scenarios/adversarial.ex#L743) | supported | supported |
+| [`adv.field_write.create`](lib/scenarios/adversarial.ex#L717) | [known_defect](GAPS.md#write-result-field-policies) · Ash | [known_defect](GAPS.md#write-result-field-policies) · Ash |
+| [`adv.field_write.destroy`](lib/scenarios/adversarial.ex#L717) | [known_defect](GAPS.md#write-result-field-policies) · Ash | [known_defect](GAPS.md#write-result-field-policies) · Ash |
+| [`adv.field_write.read_control`](lib/scenarios/adversarial.ex#L717) | supported | supported |
+| [`adv.field_write.update`](lib/scenarios/adversarial.ex#L717) | [known_defect](GAPS.md#write-result-field-policies) · Ash | [known_defect](GAPS.md#write-result-field-policies) · Ash |
+| [`adv.field_write.update_load`](lib/scenarios/adversarial.ex#L717) | [known_defect](GAPS.md#write-result-field-policies) · Ash | [known_defect](GAPS.md#write-result-field-policies) · Ash |
+| [`adv.foreign.bulk_destroy.atomic`](lib/scenarios/adversarial.ex#L526) | [known_defect](GAPS.md#bulk-stream-tenant) · Ash | supported |
+| [`adv.foreign.bulk_destroy.atomic_batches`](lib/scenarios/adversarial.ex#L526) | [known_defect](GAPS.md#bulk-stream-tenant) · Ash | supported |
+| [`adv.foreign.bulk_destroy.fallback`](lib/scenarios/adversarial.ex#L526) | [known_defect](GAPS.md#bulk-stream-tenant) · Ash | [known_defect](GAPS.md#bulk-stream-tenant) · Ash |
+| [`adv.foreign.bulk_destroy.stream`](lib/scenarios/adversarial.ex#L526) | [known_defect](GAPS.md#bulk-stream-tenant) · Ash | [known_defect](GAPS.md#bulk-stream-tenant) · Ash |
+| [`adv.foreign.bulk_update.atomic`](lib/scenarios/adversarial.ex#L525) | supported | supported |
+| [`adv.foreign.bulk_update.atomic_batches`](lib/scenarios/adversarial.ex#L525) | supported | supported |
+| [`adv.foreign.bulk_update.fallback`](lib/scenarios/adversarial.ex#L525) | [known_defect](GAPS.md#bulk-stream-tenant) · Ash | [known_defect](GAPS.md#bulk-stream-tenant) · Ash |
+| [`adv.foreign.bulk_update.stream`](lib/scenarios/adversarial.ex#L525) | [known_defect](GAPS.md#bulk-stream-tenant) · Ash | [known_defect](GAPS.md#bulk-stream-tenant) · Ash |
+| [`adv.foreign.bulk_update.stream_global_records`](lib/scenarios/adversarial.ex#L532) | [known_defect](GAPS.md#bulk-stream-tenant) · Ash | [known_defect](GAPS.md#bulk-stream-tenant) · Ash |
+| [`adv.foreign.destroy_changeset`](lib/scenarios/adversarial.ex#L496) | [known_defect](GAPS.md#destroy-record-tenant) · Ash | [known_defect](GAPS.md#destroy-record-tenant) · Ash |
+| [`adv.foreign.destroy_option`](lib/scenarios/adversarial.ex#L496) | supported | supported |
+| [`adv.foreign.update_changeset`](lib/scenarios/adversarial.ex#L496) | supported | supported |
+| [`adv.foreign.update_option`](lib/scenarios/adversarial.ex#L496) | supported | supported |
 | [`adv.join_policy.m2m_aggregate_filter`](lib/scenarios/adversarial.ex#L433) | [known_defect](GAPS.md#join-resource-policies) · Ash | [known_defect](GAPS.md#join-resource-policies) · Ash |
 | [`adv.join_policy.m2m_aggregates`](lib/scenarios/adversarial.ex#L387) | [known_defect](GAPS.md#join-resource-policies) · Ash | [known_defect](GAPS.md#join-resource-policies) · Ash |
 | [`adv.join_policy.m2m_exists_aggregate`](lib/scenarios/adversarial.ex#L419) | [known_defect](GAPS.md#join-resource-policies) · Ash | [known_defect](GAPS.md#join-resource-policies) · Ash |
@@ -44,10 +44,10 @@ Elixir scenarios and expectations define the contract. CI runs each adapter inde
 | [`adv.join_policy.through_exists_aggregate`](lib/scenarios/adversarial.ex#L426) | [known_defect](GAPS.md#join-resource-policies) · Ash | [known_defect](GAPS.md#through-exists-aggregate) · AshSQL |
 | [`adv.join_policy.through_filter_input`](lib/scenarios/adversarial.ex#L449) | supported | supported |
 | [`adv.join_policy.through_load`](lib/scenarios/adversarial.ex#L380) | [known_defect](GAPS.md#through-fallback) · Ash | supported |
-| [`adv.manage.foreign_tenant`](lib/scenarios/adversarial.ex#L807) | supported | supported |
-| [`adv.manage.hidden`](lib/scenarios/adversarial.ex#L814) | supported | supported |
-| [`adv.manage.m2m_replace`](lib/scenarios/adversarial.ex#L826) | supported | supported |
-| [`adv.manage.own_tenant`](lib/scenarios/adversarial.ex#L800) | supported | supported |
+| [`adv.manage.foreign_tenant`](lib/scenarios/adversarial.ex#L794) | supported | supported |
+| [`adv.manage.hidden`](lib/scenarios/adversarial.ex#L801) | supported | supported |
+| [`adv.manage.m2m_replace`](lib/scenarios/adversarial.ex#L813) | supported | supported |
+| [`adv.manage.own_tenant`](lib/scenarios/adversarial.ex#L787) | supported | supported |
 | [`adv.plain.has_one_limit`](lib/scenarios/adversarial.ex#L350) | [known_defect](GAPS.md#through-limit-one) · Ash | [known_defect](GAPS.md#through-limit-one) · Ash |
 | [`adv.plain.has_one_sorted`](lib/scenarios/adversarial.ex#L336) | [known_defect](GAPS.md#through-fallback) · Ash | supported |
 | [`adv.plain.has_one_unsorted`](lib/scenarios/adversarial.ex#L343) | [known_defect](GAPS.md#through-fallback) · Ash | supported |
@@ -79,12 +79,12 @@ Elixir scenarios and expectations define the contract. CI runs each adapter inde
 | [`adv.tenant.through_long_load`](lib/scenarios/adversarial.ex#L80) | [known_defect](GAPS.md#through-fallback) · Ash | [known_defect](GAPS.md#through-tenant) · AshPostgres |
 | [`adv.tenant.through_many_to_many_load`](lib/scenarios/adversarial.ex#L87) | [known_defect](GAPS.md#through-fallback) · Ash | [known_defect](GAPS.md#through-many-to-many-step) · AshPostgres |
 | [`adv.tenant.through_offset`](lib/scenarios/adversarial.ex#L124) | [known_defect](GAPS.md#through-limit-one) · Ash | [known_defect](GAPS.md#through-limit-one) · Ash |
-| [`adv.upsert.all_tenants`](lib/scenarios/adversarial.ex#L629) | [unresolved](GAPS.md#all-tenants-upsert) · Ash | [unresolved](GAPS.md#all-tenants-upsert) · Ash |
-| [`adv.upsert.all_tenants_skipped_bulk`](lib/scenarios/adversarial.ex#L636) | [unresolved](GAPS.md#all-tenants-upsert) · Ash | [unresolved](GAPS.md#all-tenants-upsert) · Ash |
-| [`adv.upsert.cross_tenant`](lib/scenarios/adversarial.ex#L599) | supported | supported |
-| [`adv.upsert.cross_tenant_bulk`](lib/scenarios/adversarial.ex#L606) | supported | supported |
-| [`adv.upsert.skipped`](lib/scenarios/adversarial.ex#L613) | supported | supported |
-| [`adv.upsert.skipped_bulk`](lib/scenarios/adversarial.ex#L620) | supported | [known_defect](GAPS.md#skipped-upsert-tenant) · AshPostgres |
+| [`adv.upsert.all_tenants`](lib/scenarios/adversarial.ex#L621) | [unresolved](GAPS.md#all-tenants-upsert) · Ash | [unresolved](GAPS.md#all-tenants-upsert) · Ash |
+| [`adv.upsert.all_tenants_skipped_bulk`](lib/scenarios/adversarial.ex#L628) | [unresolved](GAPS.md#all-tenants-upsert) · Ash | [unresolved](GAPS.md#all-tenants-upsert) · Ash |
+| [`adv.upsert.cross_tenant`](lib/scenarios/adversarial.ex#L591) | supported | supported |
+| [`adv.upsert.cross_tenant_bulk`](lib/scenarios/adversarial.ex#L598) | supported | supported |
+| [`adv.upsert.skipped`](lib/scenarios/adversarial.ex#L605) | supported | supported |
+| [`adv.upsert.skipped_bulk`](lib/scenarios/adversarial.ex#L612) | supported | [known_defect](GAPS.md#skipped-upsert-tenant) · AshPostgres |
 | [`auth.aggregate_filter`](lib/scenarios/authorization.ex#L62) | supported | supported |
 | [`auth.aggregate_sort`](lib/scenarios/authorization.ex#L71) | supported | supported |
 | [`auth.bounds`](lib/scenarios/authorization.ex#L107) | supported | supported |

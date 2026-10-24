@@ -491,13 +491,9 @@ defmodule Ash.Conformance.Scenarios.Adversarial do
           {status(write.(note)), stored_notes(ctx)}
         end
 
-        new(
-          "adv.foreign.#{name}",
-          :adversarial,
-          {:refused, Model.notes()},
-          run,
-          opts(@multitenancy)
-        )
+        refused = {:refused, Model.notes()}
+        basis = opts(@multitenancy)
+        new("adv.foreign.#{name}", :adversarial, refused, run, basis)
       end
 
     # {strategy name, update action, destroy action, strategy}
@@ -523,15 +519,11 @@ defmodule Ash.Conformance.Scenarios.Adversarial do
         updated = {[101], Model.notes_after(&update_101/1)}
         destroyed = {[101], Model.notes_after(&destroy_101/1)}
 
+        bulk = opts(@bulk)
+
         [
-          new("adv.foreign.bulk_update.#{name}", :adversarial, updated, run_update, opts(@bulk)),
-          new(
-            "adv.foreign.bulk_destroy.#{name}",
-            :adversarial,
-            destroyed,
-            run_destroy,
-            opts(@bulk)
-          )
+          new("adv.foreign.bulk_update.#{name}", :adversarial, updated, run_update, bulk),
+          new("adv.foreign.bulk_destroy.#{name}", :adversarial, destroyed, run_destroy, bulk)
         ]
       end
 
@@ -747,13 +739,8 @@ defmodule Ash.Conformance.Scenarios.Adversarial do
           result.records |> hd() |> fields()
         end
 
-        new(
-          "adv.field_write.bulk_#{kind}.#{strategy}",
-          :adversarial,
-          loaded,
-          run,
-          opts(@policies)
-        )
+        basis = opts(@policies)
+        new("adv.field_write.bulk_#{kind}.#{strategy}", :adversarial, loaded, run, basis)
       end
 
     single_scenarios ++ bulk_scenarios

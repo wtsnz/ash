@@ -273,61 +273,69 @@ fix.
 
 ## Decoy variant
 
-Each scenario also runs with hidden decoy rows next to its fixture
-(`Ash.Conformance.Decoy`), and must give the same answer with no decoy in
-it. A reviewed data layer records where it doesn't, linked to a gap like
-any other record.
+Every scenario also runs with a hidden copy of each fixture row stored
+next to the real ones: in a mirror tenant, with colliding local ids, where
+the table is multitenant by attribute, and otherwise with a reserved id a
+read policy hides (`Ash.Conformance.Decoy`). An issue is a decoy in the
+answer (leaked), or an answer that was right and changes with decoys
+(influenced); a decoy error needs triage. Each needs a recorded gap. Hints
+are guesses from the direction of the change.
+
+From the recorded contracts: a diff compares a decoy record with the scenario's intended answer.
 
 ### AshSqlite
 
-1075 of 1384 scenarios run with decoys. These behave
-differently with decoys than without:
+**9 issues** (0 leaked, 9 influenced; 0 unrecorded) · 25 need triage (0 unrecorded) · the rest clean: 1036 same, 5 base failing, 309 opted out, 0 not run.
 
-| Scenario | Status | Gap |
+| Scenario | Status | Hint | Diff | Gap |
+| --- | --- | --- | --- | --- |
+| `bounds.filter_after_limit` | influenced | hidden rows took limit/offset slots? | `1: 2 → nil` | [Authorization bounds](GAPS.md#authorization-bounds) |
+| `bounds.list_filter_after_limit` | influenced | hidden rows took limit/offset slots? | `1: [2] → []` | [Authorization bounds](GAPS.md#authorization-bounds) |
+| `bounds.relationship_limit` | influenced | hidden rows took limit/offset slots? | `1: 9 → nil` | [Authorization bounds](GAPS.md#authorization-bounds) |
+| `bounds.relationship_offset` | influenced |  | `1: 2 → nil, 2: nil → 4` | [Authorization bounds](GAPS.md#authorization-bounds) |
+| `bounds.relationship_offset_only` | influenced | counts hidden rows? | `1: 4 → 11, 2: nil → 4` | [Authorization bounds](GAPS.md#authorization-bounds) |
+| `field.root_aggregate` | influenced | counts hidden rows? | `5 → 10` | [Aggregate reference authorization](GAPS.md#aggregate-reference-authorization) |
+| `write.atomic_update` | influenced | counts hidden rows? | `[0] #1: 4 → 8, [1] #1: 1 → 2` | [Aggregate reference authorization](GAPS.md#aggregate-reference-authorization) |
+| `write.bulk_update_filter` | influenced |  | `[1] #1: "beta" → "big"` | [Aggregate reference authorization](GAPS.md#aggregate-reference-authorization) |
+| `write.single_atomic_update` | influenced | counts hidden rows? | `1 → 2` | [Aggregate reference authorization](GAPS.md#aggregate-reference-authorization) |
+
+Need triage: the scenario's own run is right, and with decoys it raises. Scenarios with the same error and gap share a row.
+
+| Scenario | Error | Gap |
 | --- | --- | --- |
-| `adv.join_policy.m2m_aggregates` | known defect | [Join resource policies](GAPS.md#join-resource-policies) |
-| `adv.join_policy.m2m_filter_input` | known defect | [Join resource policies](GAPS.md#join-resource-policies) |
-| `adv.join_policy.through_aggregates` | known defect | [Join resource policies](GAPS.md#join-resource-policies) |
-| `bounds.filter_after_limit` | known defect | [Authorization bounds](GAPS.md#authorization-bounds) |
-| `bounds.list_filter_after_limit` | known defect | [Authorization bounds](GAPS.md#authorization-bounds) |
-| `bounds.relationship_limit` | known defect | [Authorization bounds](GAPS.md#authorization-bounds) |
-| `bounds.relationship_offset` | known defect | [Authorization bounds](GAPS.md#authorization-bounds) |
-| `bounds.relationship_offset_only` | known defect | [Authorization bounds](GAPS.md#authorization-bounds) |
-| `context.authorization_before_bounds` | known defect | [Authorization bounds](GAPS.md#authorization-bounds) |
-| `field.root_aggregate` | known defect | [Aggregate reference authorization](GAPS.md#aggregate-reference-authorization) |
-| `write.atomic_update` | known defect | [Aggregate reference authorization](GAPS.md#aggregate-reference-authorization) |
-| `write.bulk_update_filter` | known defect | [Aggregate reference authorization](GAPS.md#aggregate-reference-authorization) |
-| `write.single_atomic_update` | known defect | [Aggregate reference authorization](GAPS.md#aggregate-reference-authorization) |
+| `context.prepared_query_arguments` | `Ash.Error.Invalid: ~r/argument label is required/` | [Authorized action arguments](GAPS.md#authorized-action-arguments) |
+| `shape.exists.integer.depth_2.constant.filter` and 23 more | `Ash.Error.Unknown: ~r/no such relationship Ash\.Conformance\.\w+\.Shape(Integer\|Uuid)(Leaf\|Tip)\.(integer\|uuid)_mids/` | [Exists path authorization](GAPS.md#exists-path-authorization) |
 
-26 more scenarios behave differently under every authorization variant, decoys included: [Authorized action arguments](GAPS.md#authorized-action-arguments), [Nested parent](GAPS.md#nested-parent), [Exists path authorization](GAPS.md#exists-path-authorization).
+5 scenarios already fail without decoys, so a difference isn't a decoy signal; their own gaps: [Authorization bounds](GAPS.md#authorization-bounds), [Join resource policies](GAPS.md#join-resource-policies), [Nested parent](GAPS.md#nested-parent).
 
 
 ### AshPostgres
 
-1086 of 1395 scenarios run with decoys. These behave
-differently with decoys than without:
+**13 issues** (0 leaked, 13 influenced; 0 unrecorded) · 24 need triage (0 unrecorded) · the rest clean: 1043 same, 6 base failing, 309 opted out, 0 not run.
 
-| Scenario | Status | Gap |
+| Scenario | Status | Hint | Diff | Gap |
+| --- | --- | --- | --- | --- |
+| `bounds.filter_after_limit` | influenced | hidden rows took limit/offset slots? | `1: 2 → nil` | [Authorization bounds](GAPS.md#authorization-bounds) |
+| `bounds.list_filter_after_limit` | influenced | hidden rows took limit/offset slots? | `1: [2] → []` | [Authorization bounds](GAPS.md#authorization-bounds) |
+| `bounds.relationship_limit` | influenced | hidden rows took limit/offset slots? | `1: 9 → nil` | [Authorization bounds](GAPS.md#authorization-bounds) |
+| `bounds.relationship_offset` | influenced |  | `1: 2 → nil, 2: nil → 4` | [Authorization bounds](GAPS.md#authorization-bounds) |
+| `bounds.relationship_offset_only` | influenced | counts hidden rows? | `1: 4 → 11, 2: nil → 4` | [Authorization bounds](GAPS.md#authorization-bounds) |
+| `bounds.unsorted_limit` | influenced | hidden rows took limit/offset slots? | `1: 1 → 0, 2: 1 → 0` | [Authorization bounds](GAPS.md#authorization-bounds) |
+| `field.root_aggregate` | influenced | counts hidden rows? | `5 → 10` | [Aggregate reference authorization](GAPS.md#aggregate-reference-authorization) |
+| `filter.aggregate_dependency` | influenced | counts hidden rows? | `1: 1 → 3` | [Aggregate reference authorization](GAPS.md#aggregate-reference-authorization) |
+| `filter.aggregate_dependency_calculation` | influenced | counts hidden rows? | `1: 1 → 3` | [Aggregate reference authorization](GAPS.md#aggregate-reference-authorization) |
+| `filter.aggregate_dependency_filtered` | influenced | counts hidden rows? | `1: 2 → 4` | [Aggregate reference authorization](GAPS.md#aggregate-reference-authorization) |
+| `write.atomic_update` | influenced | counts hidden rows? | `[0] #1: 4 → 8, [1] #1: 1 → 2` | [Aggregate reference authorization](GAPS.md#aggregate-reference-authorization) |
+| `write.bulk_update_filter` | influenced |  | `[1] #1: "beta" → "big"` | [Aggregate reference authorization](GAPS.md#aggregate-reference-authorization) |
+| `write.single_atomic_update` | influenced | counts hidden rows? | `1 → 2` | [Aggregate reference authorization](GAPS.md#aggregate-reference-authorization) |
+
+Need triage: the scenario's own run is right, and with decoys it raises. Scenarios with the same error and gap share a row.
+
+| Scenario | Error | Gap |
 | --- | --- | --- |
-| `adv.join_policy.m2m_aggregates` | known defect | [Join resource policies](GAPS.md#join-resource-policies) |
-| `adv.join_policy.through_aggregates` | known defect | [Join resource policies](GAPS.md#join-resource-policies) |
-| `bounds.filter_after_limit` | known defect | [Authorization bounds](GAPS.md#authorization-bounds) |
-| `bounds.list_filter_after_limit` | known defect | [Authorization bounds](GAPS.md#authorization-bounds) |
-| `bounds.relationship_limit` | known defect | [Authorization bounds](GAPS.md#authorization-bounds) |
-| `bounds.relationship_offset` | known defect | [Authorization bounds](GAPS.md#authorization-bounds) |
-| `bounds.relationship_offset_only` | known defect | [Authorization bounds](GAPS.md#authorization-bounds) |
-| `bounds.unsorted_limit` | known defect | [Authorization bounds](GAPS.md#authorization-bounds) |
-| `context.authorization_before_bounds` | known defect | [Authorization bounds](GAPS.md#authorization-bounds) |
-| `field.root_aggregate` | known defect | [Aggregate reference authorization](GAPS.md#aggregate-reference-authorization) |
-| `filter.aggregate_dependency` | known defect | [Aggregate reference authorization](GAPS.md#aggregate-reference-authorization) |
-| `filter.aggregate_dependency_calculation` | known defect | [Aggregate reference authorization](GAPS.md#aggregate-reference-authorization) |
-| `filter.aggregate_dependency_filtered` | known defect | [Aggregate reference authorization](GAPS.md#aggregate-reference-authorization) |
-| `write.atomic_update` | known defect | [Aggregate reference authorization](GAPS.md#aggregate-reference-authorization) |
-| `write.bulk_update_filter` | known defect | [Aggregate reference authorization](GAPS.md#aggregate-reference-authorization) |
-| `write.single_atomic_update` | known defect | [Aggregate reference authorization](GAPS.md#aggregate-reference-authorization) |
+| `shape.exists.integer.depth_2.constant.filter` and 23 more | `Ash.Error.Unknown: ~r/no such relationship Ash\.Conformance\.\w+\.Shape(Integer\|Uuid)(Leaf\|Tip)\.(integer\|uuid)_mids/` | [Exists path authorization](GAPS.md#exists-path-authorization) |
 
-26 more scenarios behave differently under every authorization variant, decoys included: [Authorized action arguments](GAPS.md#authorized-action-arguments), [Nested parent](GAPS.md#nested-parent), [Exists path authorization](GAPS.md#exists-path-authorization).
-
+6 scenarios already fail without decoys, so a difference isn't a decoy signal; their own gaps: [Authorization bounds](GAPS.md#authorization-bounds), [Join resource policies](GAPS.md#join-resource-policies), [Nested parent](GAPS.md#nested-parent), [No attributes](GAPS.md#no-attributes), [Prepared query](GAPS.md#prepared-query).
 
 
 ## Claims versus results

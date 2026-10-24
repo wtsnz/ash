@@ -166,15 +166,49 @@ identity is tenant-scoped, as an all-tenants identity can't be pre-checked.
 
 ### Reporting
 
-- `FEATURES.md`: section 15, "Adversarial invariants" (8 features), and a
-  "Decoy variant" section with each reviewed data layer's decoy records,
-  separated from records every authorization variant shares.
-- `ECOSYSTEM.md`: the "Adversarial invariants" tier, and a "Decoy variant"
-  section: per data layer, how many scenarios gave the same answer, leaked,
-  changed, opted out or didn't run, and each changed one with its gap.
-- `surveys/features-<adapter>.md`: each decoy that changed an answer, with
-  both outcomes.
-- `GAPS.md`: 12 new gaps (below), `fixed_in` on 4.
+Each decoy run is classified against the scenario's intended answer as well
+as its own run (`Ash.Conformance.Report.DecoyReport`):
+
+| Status | Meaning | Kind |
+| --- | --- | --- |
+| leaked | a decoy id, value or marker is in the outcome | issue |
+| influenced | the scenario's own run is right; with decoys the answer differs, with no decoy in it | issue |
+| decoy error | the scenario's own run is right; with decoys it raises | triage |
+| base failing | the scenario's own run is already wrong or raises; not a decoy signal | count only |
+| same | unchanged, including the same exception with the same first line once numbers are stripped | count only |
+| opted out | the scenario declares why its answer rightly changes | count only |
+| not run | no decoy resource set, or its fixture (decoys included) couldn't be stored, with the reason | count only |
+
+Influenced rows get a hint, labelled as one, when every difference points
+the same way: higher numbers or more rows suggest the answer counts hidden
+rows; nil, 0 or fewer rows suggest hidden rows took limit or offset slots.
+
+Each data layer's section opens with a verdict, for example "**13 issues**
+(0 leaked, 13 influenced; 0 unrecorded) · 24 need triage (0 unrecorded) ·
+the rest clean: …", then an issues table (unrecorded rows first; Scenario,
+Status, Hint, Diff with only the differing keys, Gap), then a triage table
+(rows with the same error and gap share a row), then one line each for base
+failing (with their own gaps) and not run (with reasons). The same layout
+is used in:
+
+- `FEATURES.md`, from the reviewed adapters' records: a decoy record whose
+  scenario's own record is supported is an issue (a value) or triage (an
+  error); its diff compares the record with the intended answer;
+- `ECOSYSTEM.md` and `surveys/features-<adapter>.md`, from the surveyed
+  outcomes, with each row's gap taken from the reviewed adapter's decoy
+  record, or "unreviewed".
+
+Also in the reports: `FEATURES.md` section 15, "Adversarial invariants" (8
+features); the "Adversarial invariants" tier in `ECOSYSTEM.md`; and 12 new
+gaps in `GAPS.md` (below), with `fixed_in` on 4.
+
+**Enforcement.** An issue or triage row on a reviewed data layer needs a
+recorded gap. `Runner.execute_variant!/3` already fails a decoy run that
+differs from the scenario's own record without a decoy record (and any
+reserved id unless one pins it), and `test/decoy_report_test.exs` checks
+that the reviewed adapters' records leave nothing unrecorded and link known
+gaps. So "0 unrecorded" in the verdict is the green signal, as for the base
+expectations.
 
 ## Acceptance
 
@@ -192,13 +226,59 @@ answer" means the scenario's base run fails against the reference model;
 | `ash_postgres-skipped-upsert-tenant` | own answer: `adv.upsert.skipped_bulk` (order-dependent: the forward seed order returns organisation 2's note 201), and the existing `upsert.skipped_record` | Postgres (SQLite `main` and ETS correct) | caught | caught | `skipped-upsert-tenant` |
 | `ash-field-policies-write-results` | own answer: `adv.field_write.{create,update,update_load,destroy,bulk_create,bulk_update.atomic,bulk_update.atomic_batches,bulk_destroy.atomic}`: embedded SSN, card numbers in an array and the card in a union are returned; ETS also `bulk_update.stream`, and its atomic results include the admin-only `order_count` (decoy: it counts hidden orders too) | Postgres, SQLite, ETS | caught | caught | `write-result-field-policies` |
 
+### Decoy verdicts
+
+From `ECOSYSTEM.md` (surveyed on the default `release` set):
+
+| Data layer | Verdict |
+| --- | --- |
+| AshSqlite 0.2.19 | **No issues** · nothing to triage · the rest clean: 1064 same, 1 base failing, 309 opted out, 10 not run. (Most aggregates error identically with and without decoys on 0.2.19; see Dependencies.) |
+| AshPostgres 2.15.1 | **13 issues** (0 leaked, 13 influenced; 0 unrecorded) · 24 need triage (0 unrecorded) · the rest clean: 1043 same, 6 base failing, 309 opted out, 0 not run. |
+| Ash.DataLayer.Ets (Ash 3.37.0) | **7 issues** (0 leaked, 7 influenced; unreviewed) · 1 need triage (unreviewed) · the rest clean: 744 same, 5 base failing, 266 opted out, 0 not run. |
+| AshCsv, AshMysql, AshClickhouse | No decoy resource set: 953 not run each. |
+
+From `FEATURES.md` (the recorded contracts; SQLite's follow `main`):
+AshSqlite **9 issues** (0 leaked, 9 influenced; 0 unrecorded) · 25 need
+triage (0 unrecorded); AshPostgres **13 issues** (0 leaked, 13 influenced;
+0 unrecorded) · 24 need triage (0 unrecorded).
+
+The issues are all recorded: the relationship limit/offset rows
+(`bounds.*`) against `authorization-bounds`, and the aggregate-reference rows
+(`field.root_aggregate`, `filter.aggregate_dependency*`, `write.atomic_update`,
+`write.single_atomic_update`, `write.bulk_update_filter`) against
+`aggregate-reference-authorization`. How the rows that used to read as noise
+on Postgres classify now:
+
+- `shape.exists.*` (24): **triage, recorded** (`exists-path-authorization`).
+  Not harness: the same `no such relationship …_mids` error happens under
+  the benign `filter_policy` variant too, whenever any filter policy sits on
+  an intermediate resource of a two- or three-step `exists` path. It is an
+  existing AshSQL gap (`ISSUES/ash_sql/exists-path-authorization.md`); the
+  survey only made it look decoy-specific because surveys don't run the
+  other variants.
+- `path.no_attributes`: **base failing**. It raises without authorization
+  (`no-attributes`) and works once any policy filter is added, which the
+  `filter_policy` variant already records.
+- `sig.minus.*`, `adv.schema.through_load`: **same**. Both runs raise the
+  same exception with the same first line; only the SQL differed.
+- `filter.nested_parent_control`, `filter.parent_through_control`,
+  `context.prepared_query_arguments`: **base failing**. The base run raises
+  in AshSQL (`KeyError`, `prepared-query`); with authorization on, Ash raises
+  first with a different exception (`MatchError`, "argument label is
+  required"), as under every authorization variant.
+- `adv.join_policy.m2m_aggregates`, `.through_aggregates`,
+  `context.authorization_before_bounds`: **base failing** (their own
+  answers are already wrong); their decoy records stay, linked to
+  `join-resource-policies` and `authorization-bounds`.
+
 Why the decoy variant alone doesn't catch more of these: the leaks need
 shapes the old fixtures don't have (`many_to_many` or `through` with a
 tenant-scoped join, bulk writes given records, embedded field policies), and
 in the new scenarios the base answer already fails. Decoys keep foreign keys
 pointing at real rows, so a leaked decoy join row surfaces as a real
-customer id, caught by the answer changing rather than by the leak scan. No
-data layer put a reserved id in any outcome ("0 leaked" everywhere).
+customer id: "influenced", or "base failing" where the base answer is
+already wrong, rather than "leaked". No data layer put a reserved id in any
+outcome (0 leaked everywhere).
 
 **Fix-revert.** A patched copy of each dependency, swapped in and out of
 `deps/` on the release set, turns the scenarios green:
@@ -231,12 +311,17 @@ Beyond the seven known cases. Each has a minimal standalone script in
 
 Also found, but not new:
 
-- **Authorization bounds on more paths** (decoy): `bounds.filter_after_limit`,
-  `.list_filter_after_limit`, `.relationship_limit`, `.relationship_offset`,
-  `.relationship_offset_only` and (Postgres) `.unsorted_limit` let hidden
-  rows take a limited relationship's slots before the policy applies, on
-  SQLite and Postgres, release and `main`; ETS is right. Existing gap
-  `authorization-bounds`, which named one path.
+- **Relationship limit/offset applied before authorization** (decoy):
+  `bounds.filter_after_limit`, `.list_filter_after_limit`,
+  `.relationship_limit`, `.relationship_offset`, `.relationship_offset_only`,
+  (Postgres) `.unsorted_limit` and `context.authorization_before_bounds`: a
+  hidden row takes a limited relationship's slot and is then removed, on
+  SQLite and Postgres, release and `main` (both suite runs pass with these
+  records); ETS is right. Not new: it is the suite's `authorization-bounds`
+  gap and the unfiled `ISSUES/ash_sql/authorization-bounds.md` (and
+  `unsorted-bounds.md`); a read-only search of ash, ash_sql and ash_postgres
+  issues found nothing filed. The decoy rows are recorded against
+  `authorization-bounds` rather than a duplicate gap.
 - **ETS atomic bulk results** count hidden orders in an aggregate loaded on
   the bulk query (`order_count` 8 under decoys), so the ETS-only case of the
   field-policy draft also skips the related read policy.
@@ -261,10 +346,10 @@ Postgres together, `mix test`, wall clock including setup:
 | Run | Tests | Time |
 | --- | ---: | ---: |
 | Before this work (old pins, 3.33.11) | | 237 s |
-| Now, `main` set, everything | 11,963 | 515 s |
+| Now, `main` set, everything | 11,974 | 515 s |
 | The decoy variant alone (`--only variant:decoy`) | 2,161 | 132 s |
 | The adversarial scenarios alone, with their variants (`--only area:adversarial`) | 730 | 63 s |
-| Now, `release` set (SQLite failing) | 11,963 | 472 s of tests |
+| Now, `release` set (SQLite failing) | 11,974 | 472 s of tests |
 
 The decoy variant reruns about 1,080 scenarios per data layer in three seed
 orders, with a fixture twice the size: about a quarter of the suite's time.

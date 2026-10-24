@@ -384,9 +384,18 @@ getting a hidden record when the actor may read every note.
 
 ## Decoy variant
 
-0 same, 0 leaked, 0 changed, 0 opted out, 953 not run.
+Every scenario also runs with a hidden copy of each fixture row stored
+next to the real ones: in a mirror tenant, with colliding local ids, where
+the table is multitenant by attribute, and otherwise with a reserved id a
+read policy hides (`Ash.Conformance.Decoy`). An issue is a decoy in the
+answer (leaked), or an answer that was right and changes with decoys
+(influenced); a decoy error needs triage. Each needs a recorded gap. Hints
+are guesses from the direction of the change.
 
-No decoy changed an answer.
+**No issues** · nothing to triage · the rest clean: 0 same, 0 base failing, 0 opted out, 953 not run.
+
+Not run: 953, no decoy resource set.
+
 
 ## Blockers
 

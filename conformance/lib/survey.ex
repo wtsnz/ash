@@ -138,7 +138,7 @@ defmodule Ash.Conformance.Survey do
       "\n" <>
       Ash.Conformance.Report.CombinationGrid.detail(rows) <>
       "\n" <>
-      Ash.Conformance.Report.DecoyReport.detail(rows) <>
+      Ash.Conformance.Report.DecoyReport.detail(adapter, rows) <>
       "\n## Blockers\n\n" <> Blockers.markdown(rows)
   end
 end

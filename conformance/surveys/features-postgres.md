@@ -411,59 +411,43 @@ answer changes with the order rows were stored in; ❔ did not run.
 
 ## Decoy variant
 
-1035 same, 0 leaked, 51 changed, 309 opted out, 0 not run.
+Every scenario also runs with a hidden copy of each fixture row stored
+next to the real ones: in a mirror tenant, with colliding local ids, where
+the table is multitenant by attribute, and otherwise with a reserved id a
+read policy hides (`Ash.Conformance.Decoy`). An issue is a decoy in the
+answer (leaked), or an answer that was right and changes with decoys
+(influenced); a decoy error needs triage. Each needs a recorded gap. Hints
+are guesses from the direction of the change.
 
-- `adv.join_policy.m2m_aggregates` (changed): `%{1 => {8, [1, 1, 2, 2, 3, 3, 4, 4], 4}, 2 => {4, [4, 4, 5, 5], 5}, 3 => {2, [2, 2], 2}}`; without decoys `%{1 => {4, [1, 2, 3, 4], 4}, 2 => {2, [4, 5], 5}, 3 => {1, [2], 2}}`
-- `adv.join_policy.through_aggregates` (changed): `%{1 => {8, [1, 1, 2, 2, 3, 3, 4, 4], 4}, 2 => {4, [4, 4, 5, 5], 5}, 3 => {2, [2, 2], 2}}`; without decoys `%{1 => {4, [1, 2, 3, 4], 4}, 2 => {2, [4, 5], 5}, 3 => {1, [2], 2}}`
-- `adv.schema.through_load` (changed): `Ash.Error.Unknown: Bread Crumbs: > Error returned from: Ash.Conformance.Postgres.AdvCustomer.read > Error returned from: Ash.Conformance.Postgres.AdvSchemaEvent.Through.read Unknown Error * ** (Postgrex.Error) ERROR 42P01 (undefined_table) …`; without decoys `Ash.Error.Unknown: Bread Crumbs: > Error returned from: Ash.Conformance.Postgres.AdvCustomer.read > Error returned from: Ash.Conformance.Postgres.AdvSchemaEvent.Through.read Unknown Error * ** (Postgrex.Error) ERROR 42P01 (undefined_table) …`
-- `bounds.filter_after_limit` (changed): `%{1 => nil, 2 => 4, 3 => nil}`; without decoys `%{1 => 2, 2 => 4, 3 => nil}`
-- `bounds.list_filter_after_limit` (changed): `%{1 => [], 2 => [4], 3 => []}`; without decoys `%{1 => [2], 2 => [4], 3 => []}`
-- `bounds.relationship_limit` (changed): `%{1 => nil, 2 => 4, 3 => nil}`; without decoys `%{1 => 9, 2 => 4, 3 => nil}`
-- `bounds.relationship_offset` (changed): `%{1 => nil, 2 => 4, 3 => nil}`; without decoys `%{1 => 2, 2 => nil, 3 => nil}`
-- `bounds.relationship_offset_only` (changed): `%{1 => 11, 2 => 4, 3 => nil}`; without decoys `%{1 => 4, 2 => nil, 3 => nil}`
-- `bounds.unsorted_limit` (changed): `%{1 => 0, 2 => 0, 3 => 0}`; without decoys `%{1 => 1, 2 => 1, 3 => 0}`
-- `context.authorization_before_bounds` (changed): `%{1 => nil, 2 => nil, 3 => nil}`; without decoys `%{1 => nil, 2 => 4, 3 => nil}`
-- `context.prepared_query_arguments` (changed): `Ash.Error.Invalid: Bread Crumbs: > Error returned from: Ash.Conformance.Postgres.Parent.read Invalid Error * argument label is required`; without decoys `Ash.Error.Unknown: Bread Crumbs: > Exception raised in: Ash.Conformance.Postgres.Parent.read Unknown Error * ** (FunctionClauseError) no function clause matching in Enumerable.List.reduce/3 (elixir 1.20.0) Enumerable.List.reduce([], {:error…`
-- `field.root_aggregate` (changed): `10`; without decoys `5`
-- `filter.aggregate_dependency` (changed): `%{1 => 3, 2 => 0, 3 => 0}`; without decoys `%{1 => 1, 2 => 0, 3 => 0}`
-- `filter.aggregate_dependency_calculation` (changed): `%{1 => 3, 2 => 0, 3 => 0}`; without decoys `%{1 => 1, 2 => 0, 3 => 0}`
-- `filter.aggregate_dependency_filtered` (changed): `%{1 => 4, 2 => nil, 3 => nil}`; without decoys `%{1 => 2, 2 => nil, 3 => nil}`
-- `filter.nested_parent_control` (changed): `Ash.Error.Unknown: Bread Crumbs: > Exception raised in: Ash.Conformance.Postgres.Parent.read Unknown Error * ** (MatchError) no match of right hand side value: []`; without decoys `Ash.Error.Unknown: Bread Crumbs: > Exception raised in: Ash.Conformance.Postgres.Parent.read Unknown Error * ** (KeyError) key :parent_bindings not found in: %{ select: [:id, :label, :threshold, :tenant_id], sort: [id: :asc], domain: Ash.Co…`
-- `filter.parent_through_control` (changed): `Ash.Error.Unknown: Bread Crumbs: > Error returned from: Ash.Conformance.Postgres.Tag.read > Error returned from: Ash.Conformance.Postgres.Parent.read Unknown Error * ** (KeyError) key :parent_bindings not found in: %{ select: [:tenant_id, :…`; without decoys `Ash.Error.Unknown: Bread Crumbs: > Error returned from: Ash.Conformance.Postgres.Tag.read > Error returned from: Ash.Conformance.Postgres.Parent.read Unknown Error * ** (KeyError) key :parent_bindings not found in: %{ select: [:tenant_id, :…`
-- `path.no_attributes` (changed): `%{1 => 5, 2 => 5, 3 => 5}`; without decoys `Ash.Error.Unknown: Bread Crumbs: > Error returned from: Ash.Conformance.Postgres.Parent.read Unknown Error * ** (Ecto.QueryError) deps/ash_postgres/lib/data_layer.ex:4923: field 'result' in 'select' does not exist in schema Ash.Conformance.…`
-- `shape.exists.integer.depth_2.constant.filter` (changed): `Ash.Error.Unknown: Bread Crumbs: > Exception raised in: Ash.Conformance.Postgres.ShapeRoot.read Unknown Error * ** (RuntimeError) no such relationship Ash.Conformance.Postgres.ShapeIntegerLeaf.integer_mids`; without decoys `[1, 2]`
-- `shape.exists.integer.depth_2.constant.sort` (changed): `Ash.Error.Unknown: Bread Crumbs: > Exception raised in: Ash.Conformance.Postgres.ShapeRoot.read Unknown Error * ** (RuntimeError) no such relationship Ash.Conformance.Postgres.ShapeIntegerLeaf.integer_mids`; without decoys `[1, 2, 3, 4]`
-- `shape.exists.integer.depth_2.field.filter` (changed): `Ash.Error.Unknown: Bread Crumbs: > Exception raised in: Ash.Conformance.Postgres.ShapeRoot.read Unknown Error * ** (RuntimeError) no such relationship Ash.Conformance.Postgres.ShapeIntegerLeaf.integer_mids`; without decoys `[1]`
-- `shape.exists.integer.depth_2.field.sort` (changed): `Ash.Error.Unknown: Bread Crumbs: > Exception raised in: Ash.Conformance.Postgres.ShapeRoot.read Unknown Error * ** (RuntimeError) no such relationship Ash.Conformance.Postgres.ShapeIntegerLeaf.integer_mids`; without decoys `[1, 2, 3, 4]`
-- `shape.exists.integer.depth_2.none.filter` (changed): `Ash.Error.Unknown: Bread Crumbs: > Exception raised in: Ash.Conformance.Postgres.ShapeRoot.read Unknown Error * ** (RuntimeError) no such relationship Ash.Conformance.Postgres.ShapeIntegerLeaf.integer_mids`; without decoys `[1, 2]`
-- `shape.exists.integer.depth_2.none.sort` (changed): `Ash.Error.Unknown: Bread Crumbs: > Exception raised in: Ash.Conformance.Postgres.ShapeRoot.read Unknown Error * ** (RuntimeError) no such relationship Ash.Conformance.Postgres.ShapeIntegerLeaf.integer_mids`; without decoys `[1, 2, 3, 4]`
-- `shape.exists.integer.depth_3.constant.filter` (changed): `Ash.Error.Unknown: Bread Crumbs: > Exception raised in: Ash.Conformance.Postgres.ShapeRoot.read Unknown Error * ** (RuntimeError) no such relationship Ash.Conformance.Postgres.ShapeIntegerTip.integer_mids`; without decoys `[1]`
-- `shape.exists.integer.depth_3.constant.sort` (changed): `Ash.Error.Unknown: Bread Crumbs: > Exception raised in: Ash.Conformance.Postgres.ShapeRoot.read Unknown Error * ** (RuntimeError) no such relationship Ash.Conformance.Postgres.ShapeIntegerTip.integer_mids`; without decoys `[1, 2, 3, 4]`
-- `shape.exists.integer.depth_3.field.filter` (changed): `Ash.Error.Unknown: Bread Crumbs: > Exception raised in: Ash.Conformance.Postgres.ShapeRoot.read Unknown Error * ** (RuntimeError) no such relationship Ash.Conformance.Postgres.ShapeIntegerTip.integer_mids`; without decoys `[1]`
-- `shape.exists.integer.depth_3.field.sort` (changed): `Ash.Error.Unknown: Bread Crumbs: > Exception raised in: Ash.Conformance.Postgres.ShapeRoot.read Unknown Error * ** (RuntimeError) no such relationship Ash.Conformance.Postgres.ShapeIntegerTip.integer_mids`; without decoys `[1, 2, 3, 4]`
-- `shape.exists.integer.depth_3.none.filter` (changed): `Ash.Error.Unknown: Bread Crumbs: > Exception raised in: Ash.Conformance.Postgres.ShapeRoot.read Unknown Error * ** (RuntimeError) no such relationship Ash.Conformance.Postgres.ShapeIntegerTip.integer_mids`; without decoys `[1]`
-- `shape.exists.integer.depth_3.none.sort` (changed): `Ash.Error.Unknown: Bread Crumbs: > Exception raised in: Ash.Conformance.Postgres.ShapeRoot.read Unknown Error * ** (RuntimeError) no such relationship Ash.Conformance.Postgres.ShapeIntegerTip.integer_mids`; without decoys `[1, 2, 3, 4]`
-- `shape.exists.uuid.depth_2.constant.filter` (changed): `Ash.Error.Unknown: Bread Crumbs: > Exception raised in: Ash.Conformance.Postgres.ShapeRoot.read Unknown Error * ** (RuntimeError) no such relationship Ash.Conformance.Postgres.ShapeUuidLeaf.uuid_mids`; without decoys `[1, 2]`
-- `shape.exists.uuid.depth_2.constant.sort` (changed): `Ash.Error.Unknown: Bread Crumbs: > Exception raised in: Ash.Conformance.Postgres.ShapeRoot.read Unknown Error * ** (RuntimeError) no such relationship Ash.Conformance.Postgres.ShapeUuidLeaf.uuid_mids`; without decoys `[1, 2, 3, 4]`
-- `shape.exists.uuid.depth_2.field.filter` (changed): `Ash.Error.Unknown: Bread Crumbs: > Exception raised in: Ash.Conformance.Postgres.ShapeRoot.read Unknown Error * ** (RuntimeError) no such relationship Ash.Conformance.Postgres.ShapeUuidLeaf.uuid_mids`; without decoys `[1]`
-- `shape.exists.uuid.depth_2.field.sort` (changed): `Ash.Error.Unknown: Bread Crumbs: > Exception raised in: Ash.Conformance.Postgres.ShapeRoot.read Unknown Error * ** (RuntimeError) no such relationship Ash.Conformance.Postgres.ShapeUuidLeaf.uuid_mids`; without decoys `[1, 2, 3, 4]`
-- `shape.exists.uuid.depth_2.none.filter` (changed): `Ash.Error.Unknown: Bread Crumbs: > Exception raised in: Ash.Conformance.Postgres.ShapeRoot.read Unknown Error * ** (RuntimeError) no such relationship Ash.Conformance.Postgres.ShapeUuidLeaf.uuid_mids`; without decoys `[1, 2]`
-- `shape.exists.uuid.depth_2.none.sort` (changed): `Ash.Error.Unknown: Bread Crumbs: > Exception raised in: Ash.Conformance.Postgres.ShapeRoot.read Unknown Error * ** (RuntimeError) no such relationship Ash.Conformance.Postgres.ShapeUuidLeaf.uuid_mids`; without decoys `[1, 2, 3, 4]`
-- `shape.exists.uuid.depth_3.constant.filter` (changed): `Ash.Error.Unknown: Bread Crumbs: > Exception raised in: Ash.Conformance.Postgres.ShapeRoot.read Unknown Error * ** (RuntimeError) no such relationship Ash.Conformance.Postgres.ShapeUuidTip.uuid_mids`; without decoys `[1]`
-- `shape.exists.uuid.depth_3.constant.sort` (changed): `Ash.Error.Unknown: Bread Crumbs: > Exception raised in: Ash.Conformance.Postgres.ShapeRoot.read Unknown Error * ** (RuntimeError) no such relationship Ash.Conformance.Postgres.ShapeUuidTip.uuid_mids`; without decoys `[1, 2, 3, 4]`
-- `shape.exists.uuid.depth_3.field.filter` (changed): `Ash.Error.Unknown: Bread Crumbs: > Exception raised in: Ash.Conformance.Postgres.ShapeRoot.read Unknown Error * ** (RuntimeError) no such relationship Ash.Conformance.Postgres.ShapeUuidTip.uuid_mids`; without decoys `[1]`
-- `shape.exists.uuid.depth_3.field.sort` (changed): `Ash.Error.Unknown: Bread Crumbs: > Exception raised in: Ash.Conformance.Postgres.ShapeRoot.read Unknown Error * ** (RuntimeError) no such relationship Ash.Conformance.Postgres.ShapeUuidTip.uuid_mids`; without decoys `[1, 2, 3, 4]`
-- `shape.exists.uuid.depth_3.none.filter` (changed): `Ash.Error.Unknown: Bread Crumbs: > Exception raised in: Ash.Conformance.Postgres.ShapeRoot.read Unknown Error * ** (RuntimeError) no such relationship Ash.Conformance.Postgres.ShapeUuidTip.uuid_mids`; without decoys `[1]`
-- `shape.exists.uuid.depth_3.none.sort` (changed): `Ash.Error.Unknown: Bread Crumbs: > Exception raised in: Ash.Conformance.Postgres.ShapeRoot.read Unknown Error * ** (RuntimeError) no such relationship Ash.Conformance.Postgres.ShapeUuidTip.uuid_mids`; without decoys `[1, 2, 3, 4]`
-- `sig.minus.datetime_datetime` (changed): `Ash.Error.Unknown: Bread Crumbs: > Error returned from: Ash.Conformance.Postgres.SigRow.read Unknown Error * ** (Postgrex.Error) ERROR 42846 (cannot_coerce) cannot cast type interval to bigint query: SELECT s0."id", s0."at", s0."flag", s0."…`; without decoys `Ash.Error.Unknown: Bread Crumbs: > Error returned from: Ash.Conformance.Postgres.SigRow.read Unknown Error * ** (Postgrex.Error) ERROR 42846 (cannot_coerce) cannot cast type interval to bigint query: SELECT s0."id", s0."at", s0."flag", s0."…`
-- `sig.minus.naive_naive` (changed): `Ash.Error.Unknown: Bread Crumbs: > Error returned from: Ash.Conformance.Postgres.SigRow.read Unknown Error * ** (Postgrex.Error) ERROR 42846 (cannot_coerce) cannot cast type interval to bigint query: SELECT s0."id", s0."at", s0."flag", s0."…`; without decoys `Ash.Error.Unknown: Bread Crumbs: > Error returned from: Ash.Conformance.Postgres.SigRow.read Unknown Error * ** (Postgrex.Error) ERROR 42846 (cannot_coerce) cannot cast type interval to bigint query: SELECT s0."id", s0."at", s0."flag", s0."…`
-- `sig.minus.time_time` (changed): `Ash.Error.Unknown: Bread Crumbs: > Error returned from: Ash.Conformance.Postgres.SigRow.read Unknown Error * ** (Postgrex.Error) ERROR 42846 (cannot_coerce) cannot cast type interval to bigint query: SELECT s0."id", s0."at", s0."flag", s0."…`; without decoys `Ash.Error.Unknown: Bread Crumbs: > Error returned from: Ash.Conformance.Postgres.SigRow.read Unknown Error * ** (Postgrex.Error) ERROR 42846 (cannot_coerce) cannot cast type interval to bigint query: SELECT s0."id", s0."at", s0."flag", s0."…`
-- `sig.minus.time_usec_time_usec` (changed): `Ash.Error.Unknown: Bread Crumbs: > Error returned from: Ash.Conformance.Postgres.SigRow.read Unknown Error * ** (Postgrex.Error) ERROR 42846 (cannot_coerce) cannot cast type interval to bigint query: SELECT s0."id", s0."at", s0."flag", s0."…`; without decoys `Ash.Error.Unknown: Bread Crumbs: > Error returned from: Ash.Conformance.Postgres.SigRow.read Unknown Error * ** (Postgrex.Error) ERROR 42846 (cannot_coerce) cannot cast type interval to bigint query: SELECT s0."id", s0."at", s0."flag", s0."…`
-- `sig.minus.usec_usec` (changed): `Ash.Error.Unknown: Bread Crumbs: > Error returned from: Ash.Conformance.Postgres.SigRow.read Unknown Error * ** (Postgrex.Error) ERROR 42846 (cannot_coerce) cannot cast type interval to bigint query: SELECT s0."id", s0."at", s0."flag", s0."…`; without decoys `Ash.Error.Unknown: Bread Crumbs: > Error returned from: Ash.Conformance.Postgres.SigRow.read Unknown Error * ** (Postgrex.Error) ERROR 42846 (cannot_coerce) cannot cast type interval to bigint query: SELECT s0."id", s0."at", s0."flag", s0."…`
-- `sig.minus.utc_datetime_utc_datetime` (changed): `Ash.Error.Unknown: Bread Crumbs: > Error returned from: Ash.Conformance.Postgres.SigRow.read Unknown Error * ** (Postgrex.Error) ERROR 42846 (cannot_coerce) cannot cast type interval to bigint query: SELECT s0."id", s0."at", s0."flag", s0."…`; without decoys `Ash.Error.Unknown: Bread Crumbs: > Error returned from: Ash.Conformance.Postgres.SigRow.read Unknown Error * ** (Postgrex.Error) ERROR 42846 (cannot_coerce) cannot cast type interval to bigint query: SELECT s0."id", s0."at", s0."flag", s0."…`
-- `write.atomic_update` (changed): `[{1, 8}, {2, 2}, {3, 0}]`; without decoys `[{1, 4}, {2, 1}, {3, 0}]`
-- `write.bulk_update_filter` (changed): `[{1, "big"}, {2, "big"}, {3, "empty"}]`; without decoys `[{1, "big"}, {2, "beta"}, {3, "empty"}]`
-- `write.single_atomic_update` (changed): `2`; without decoys `1`
+**13 issues** (0 leaked, 13 influenced; 0 unrecorded) · 24 need triage (0 unrecorded) · the rest clean: 1043 same, 6 base failing, 309 opted out, 0 not run.
+
+| Scenario | Status | Hint | Diff | Gap |
+| --- | --- | --- | --- | --- |
+| `bounds.filter_after_limit` | influenced | hidden rows took limit/offset slots? | `1: 2 → nil` | [Authorization bounds](GAPS.md#authorization-bounds) |
+| `bounds.list_filter_after_limit` | influenced | hidden rows took limit/offset slots? | `1: [2] → []` | [Authorization bounds](GAPS.md#authorization-bounds) |
+| `bounds.relationship_limit` | influenced | hidden rows took limit/offset slots? | `1: 9 → nil` | [Authorization bounds](GAPS.md#authorization-bounds) |
+| `bounds.relationship_offset` | influenced |  | `1: 2 → nil, 2: nil → 4` | [Authorization bounds](GAPS.md#authorization-bounds) |
+| `bounds.relationship_offset_only` | influenced | counts hidden rows? | `1: 4 → 11, 2: nil → 4` | [Authorization bounds](GAPS.md#authorization-bounds) |
+| `bounds.unsorted_limit` | influenced | hidden rows took limit/offset slots? | `1: 1 → 0, 2: 1 → 0` | [Authorization bounds](GAPS.md#authorization-bounds) |
+| `field.root_aggregate` | influenced | counts hidden rows? | `5 → 10` | [Aggregate reference authorization](GAPS.md#aggregate-reference-authorization) |
+| `filter.aggregate_dependency` | influenced | counts hidden rows? | `1: 1 → 3` | [Aggregate reference authorization](GAPS.md#aggregate-reference-authorization) |
+| `filter.aggregate_dependency_calculation` | influenced | counts hidden rows? | `1: 1 → 3` | [Aggregate reference authorization](GAPS.md#aggregate-reference-authorization) |
+| `filter.aggregate_dependency_filtered` | influenced | counts hidden rows? | `1: 2 → 4` | [Aggregate reference authorization](GAPS.md#aggregate-reference-authorization) |
+| `write.atomic_update` | influenced | counts hidden rows? | `[0] #1: 4 → 8, [1] #1: 1 → 2` | [Aggregate reference authorization](GAPS.md#aggregate-reference-authorization) |
+| `write.bulk_update_filter` | influenced |  | `[1] #1: "beta" → "big"` | [Aggregate reference authorization](GAPS.md#aggregate-reference-authorization) |
+| `write.single_atomic_update` | influenced | counts hidden rows? | `1 → 2` | [Aggregate reference authorization](GAPS.md#aggregate-reference-authorization) |
+
+Need triage: the scenario's own run is right, and with decoys it raises. Scenarios with the same error and gap share a row.
+
+| Scenario | Error | Gap |
+| --- | --- | --- |
+| `shape.exists.integer.depth_2.constant.filter` and 5 more | `Ash.Error.Unknown: ** (RuntimeError) no such relationship Ash.Conformance.Postgres.ShapeIntegerLeaf.integer_mids` | [Exists path authorization](GAPS.md#exists-path-authorization) |
+| `shape.exists.integer.depth_3.constant.filter` and 5 more | `Ash.Error.Unknown: ** (RuntimeError) no such relationship Ash.Conformance.Postgres.ShapeIntegerTip.integer_mids` | [Exists path authorization](GAPS.md#exists-path-authorization) |
+| `shape.exists.uuid.depth_2.constant.filter` and 5 more | `Ash.Error.Unknown: ** (RuntimeError) no such relationship Ash.Conformance.Postgres.ShapeUuidLeaf.uuid_mids` | [Exists path authorization](GAPS.md#exists-path-authorization) |
+| `shape.exists.uuid.depth_3.constant.filter` and 5 more | `Ash.Error.Unknown: ** (RuntimeError) no such relationship Ash.Conformance.Postgres.ShapeUuidTip.uuid_mids` | [Exists path authorization](GAPS.md#exists-path-authorization) |
+
+6 scenarios already fail without decoys, so a difference isn't a decoy signal; their own gaps: [Authorization bounds](GAPS.md#authorization-bounds), [Join resource policies](GAPS.md#join-resource-policies), [Nested parent](GAPS.md#nested-parent), [No attributes](GAPS.md#no-attributes), [Prepared query](GAPS.md#prepared-query).
+
 
 ## Blockers
 

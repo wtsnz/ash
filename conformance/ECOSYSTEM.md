@@ -201,215 +201,94 @@ answer changes with the order rows were stored in; ❔ did not run.
 Every scenario also runs with a hidden copy of each fixture row stored
 next to the real ones: in a mirror tenant, with colliding local ids, where
 the table is multitenant by attribute, and otherwise with a reserved id a
-read policy hides. The answer must not change, and no decoy may appear in
-it (`Ash.Conformance.Decoy`). Data layers without the decoy resource set
-are not run. Scenarios whose answer rightly changes, such as reads across
-tenants or plain relationship filters, which policies don't authorize,
-opt out.
-
-| Data layer | Same | Leaked | Changed | Opted out | Not run |
-| --- | ---: | ---: | ---: | ---: | ---: |
-| sqlite | 961 | 0 | 104 | 309 | 10 |
-| postgres | 1035 | 0 | 51 | 309 | 0 |
-| ets | 744 | 0 | 13 | 266 | 0 |
-| csv | 0 | 0 | 0 | 0 | 953 |
-| mysql | 0 | 0 | 0 | 0 | 953 |
-| clickhouse | 0 | 0 | 0 | 0 | 953 |
+read policy hides (`Ash.Conformance.Decoy`). An issue is a decoy in the
+answer (leaked), or an answer that was right and changes with decoys
+(influenced); a decoy error needs triage. Each needs a recorded gap. Hints
+are guesses from the direction of the change.
 
 ### AshSqlite
 
-| Scenario | Decoy | Recorded |
-| --- | --- | --- |
-| `bounds.root_first_distinct_sort` | changed | – |
-| `bounds.root_offset_only` | changed | – |
-| `bounds.root_zero` | changed | – |
-| `edge.at.negative_index` | changed | – |
-| `edge.round.decimal_half` | changed | – |
-| `edge.round.half` | changed | – |
-| `edge.string_split.empty_items` | changed | – |
-| `expr.filter.round` | changed | – |
-| `expr.round` | changed | – |
-| `expr.round_decimal` | changed | – |
-| `expr.start_of_day` | changed | – |
-| `field.root_aggregate` | changed | [Aggregate reference authorization](GAPS.md#aggregate-reference-authorization) |
-| `filter.nested_parent_control` | changed | [Nested parent](GAPS.md#nested-parent) |
-| `filter.parent_through_control` | changed | – |
-| `ops.atom.first` | changed | – |
-| `ops.binary.first` | changed | – |
-| `ops.binary.first.edge` | changed | – |
-| `ops.binary.in` | changed | – |
-| `ops.binary.in.edge` | changed | – |
-| `ops.boolean.first` | changed | – |
-| `ops.ci_string.first` | changed | – |
-| `ops.ci_string.first.edge` | changed | – |
-| `ops.date.first` | changed | – |
-| `ops.date.first.edge` | changed | – |
-| `ops.decimal.first` | changed | – |
-| `ops.decimal.first.edge` | changed | – |
-| `ops.embedded.first` | changed | – |
-| `ops.embeddeds.first` | changed | – |
-| `ops.float.first` | changed | – |
-| `ops.float.first.edge` | changed | – |
-| `ops.integer.first` | changed | – |
-| `ops.integer.first.edge` | changed | – |
-| `ops.integers.first` | changed | – |
-| `ops.integers.first.edge` | changed | – |
-| `ops.map.first` | changed | – |
-| `ops.map.first.edge` | changed | – |
-| `ops.naive_datetime.first` | changed | – |
-| `ops.naive_datetime.first.edge` | changed | – |
-| `ops.string.first` | changed | – |
-| `ops.string.first.edge` | changed | – |
-| `ops.strings.first` | changed | – |
-| `ops.strings.first.edge` | changed | – |
-| `ops.time.first` | changed | – |
-| `ops.time.first.edge` | changed | – |
-| `ops.time_usec.first` | changed | – |
-| `ops.time_usec.first.edge` | changed | – |
-| `ops.union.first` | changed | – |
-| `ops.utc_datetime.first` | changed | – |
-| `ops.utc_datetime.first.edge` | changed | – |
-| `ops.utc_datetime_usec.first` | changed | – |
-| `ops.utc_datetime_usec.first.edge` | changed | – |
-| `ops.uuid.first` | changed | – |
-| `ops.uuid.first.edge` | changed | – |
-| `ops.uuid_v7.first` | changed | – |
-| `root.first` | changed | – |
-| `sig.ago.duration` | changed | – |
-| `sig.at.index` | changed | – |
-| `sig.count_nils.list` | changed | – |
-| `sig.date_add.duration` | changed | – |
-| `sig.datetime_add.duration` | changed | – |
-| `sig.datetime_add.naive_duration` | changed | – |
-| `sig.from_now.duration` | changed | – |
-| `sig.has.array` | changed | – |
-| `sig.intersects.array` | changed | – |
-| `sig.length.array` | changed | – |
-| `sig.minus.date_duration` | changed | – |
-| `sig.minus.datetime_duration` | changed | – |
-| `sig.minus.naive_duration` | changed | – |
-| `sig.minus.time_duration` | changed | – |
-| `sig.minus.time_usec_duration` | changed | – |
-| `sig.minus.usec_duration` | changed | – |
-| `sig.minus.utc_datetime_duration` | changed | – |
-| `sig.plus.date_duration` | changed | – |
-| `sig.plus.datetime_duration` | changed | – |
-| `sig.plus.duration_date` | changed | – |
-| `sig.plus.duration_datetime` | changed | – |
-| `sig.plus.duration_naive` | changed | – |
-| `sig.plus.duration_time` | changed | – |
-| `sig.plus.duration_time_usec` | changed | – |
-| `sig.plus.duration_usec` | changed | – |
-| `sig.plus.duration_utc_datetime` | changed | – |
-| `sig.plus.naive_duration` | changed | – |
-| `sig.plus.time_duration` | changed | – |
-| `sig.plus.time_usec_duration` | changed | – |
-| `sig.plus.usec_duration` | changed | – |
-| `sig.plus.utc_datetime_duration` | changed | – |
-| `sig.round.decimal` | changed | – |
-| `sig.round.decimal_places` | changed | – |
-| `sig.round.float` | changed | – |
-| `sig.round.float_places` | changed | – |
-| `sig.round.integer` | changed | – |
-| `sig.round.integer_places` | changed | – |
-| `sig.start_of_day.date` | changed | – |
-| `sig.start_of_day.date_zone` | changed | – |
-| `sig.start_of_day.datetime` | changed | – |
-| `sig.start_of_day.datetime_zone` | changed | – |
-| `sig.string_split.ci` | changed | – |
-| `sig.string_split.ci_ci` | changed | – |
-| `sig.string_split.ci_separator` | changed | – |
-| `sig.string_split.default` | changed | – |
-| `sig.string_split.separator` | changed | – |
-| `sig.times.duration_integer` | changed | – |
-| `sig.times.integer_duration` | changed | – |
-| `values.root_empty` | changed | – |
+**No issues** · nothing to triage · the rest clean: 1064 same, 1 base failing, 309 opted out, 10 not run.
+
+1 scenario already fails without decoys, so a difference isn't a decoy signal; their own gaps: [Nested parent](GAPS.md#nested-parent).
+
+Not run: 10, the scenario's own fixture could not be stored.
+
 
 ### AshPostgres
 
-| Scenario | Decoy | Recorded |
+**13 issues** (0 leaked, 13 influenced; 0 unrecorded) · 24 need triage (0 unrecorded) · the rest clean: 1043 same, 6 base failing, 309 opted out, 0 not run.
+
+| Scenario | Status | Hint | Diff | Gap |
+| --- | --- | --- | --- | --- |
+| `bounds.filter_after_limit` | influenced | hidden rows took limit/offset slots? | `1: 2 → nil` | [Authorization bounds](GAPS.md#authorization-bounds) |
+| `bounds.list_filter_after_limit` | influenced | hidden rows took limit/offset slots? | `1: [2] → []` | [Authorization bounds](GAPS.md#authorization-bounds) |
+| `bounds.relationship_limit` | influenced | hidden rows took limit/offset slots? | `1: 9 → nil` | [Authorization bounds](GAPS.md#authorization-bounds) |
+| `bounds.relationship_offset` | influenced |  | `1: 2 → nil, 2: nil → 4` | [Authorization bounds](GAPS.md#authorization-bounds) |
+| `bounds.relationship_offset_only` | influenced | counts hidden rows? | `1: 4 → 11, 2: nil → 4` | [Authorization bounds](GAPS.md#authorization-bounds) |
+| `bounds.unsorted_limit` | influenced | hidden rows took limit/offset slots? | `1: 1 → 0, 2: 1 → 0` | [Authorization bounds](GAPS.md#authorization-bounds) |
+| `field.root_aggregate` | influenced | counts hidden rows? | `5 → 10` | [Aggregate reference authorization](GAPS.md#aggregate-reference-authorization) |
+| `filter.aggregate_dependency` | influenced | counts hidden rows? | `1: 1 → 3` | [Aggregate reference authorization](GAPS.md#aggregate-reference-authorization) |
+| `filter.aggregate_dependency_calculation` | influenced | counts hidden rows? | `1: 1 → 3` | [Aggregate reference authorization](GAPS.md#aggregate-reference-authorization) |
+| `filter.aggregate_dependency_filtered` | influenced | counts hidden rows? | `1: 2 → 4` | [Aggregate reference authorization](GAPS.md#aggregate-reference-authorization) |
+| `write.atomic_update` | influenced | counts hidden rows? | `[0] #1: 4 → 8, [1] #1: 1 → 2` | [Aggregate reference authorization](GAPS.md#aggregate-reference-authorization) |
+| `write.bulk_update_filter` | influenced |  | `[1] #1: "beta" → "big"` | [Aggregate reference authorization](GAPS.md#aggregate-reference-authorization) |
+| `write.single_atomic_update` | influenced | counts hidden rows? | `1 → 2` | [Aggregate reference authorization](GAPS.md#aggregate-reference-authorization) |
+
+Need triage: the scenario's own run is right, and with decoys it raises. Scenarios with the same error and gap share a row.
+
+| Scenario | Error | Gap |
 | --- | --- | --- |
-| `adv.join_policy.m2m_aggregates` | changed | [Join resource policies](GAPS.md#join-resource-policies) |
-| `adv.join_policy.through_aggregates` | changed | [Join resource policies](GAPS.md#join-resource-policies) |
-| `adv.schema.through_load` | changed | – |
-| `bounds.filter_after_limit` | changed | [Authorization bounds](GAPS.md#authorization-bounds) |
-| `bounds.list_filter_after_limit` | changed | [Authorization bounds](GAPS.md#authorization-bounds) |
-| `bounds.relationship_limit` | changed | [Authorization bounds](GAPS.md#authorization-bounds) |
-| `bounds.relationship_offset` | changed | [Authorization bounds](GAPS.md#authorization-bounds) |
-| `bounds.relationship_offset_only` | changed | [Authorization bounds](GAPS.md#authorization-bounds) |
-| `bounds.unsorted_limit` | changed | [Authorization bounds](GAPS.md#authorization-bounds) |
-| `context.authorization_before_bounds` | changed | [Authorization bounds](GAPS.md#authorization-bounds) |
-| `context.prepared_query_arguments` | changed | [Authorized action arguments](GAPS.md#authorized-action-arguments) |
-| `field.root_aggregate` | changed | [Aggregate reference authorization](GAPS.md#aggregate-reference-authorization) |
-| `filter.aggregate_dependency` | changed | [Aggregate reference authorization](GAPS.md#aggregate-reference-authorization) |
-| `filter.aggregate_dependency_calculation` | changed | [Aggregate reference authorization](GAPS.md#aggregate-reference-authorization) |
-| `filter.aggregate_dependency_filtered` | changed | [Aggregate reference authorization](GAPS.md#aggregate-reference-authorization) |
-| `filter.nested_parent_control` | changed | [Nested parent](GAPS.md#nested-parent) |
-| `filter.parent_through_control` | changed | – |
-| `path.no_attributes` | changed | supported |
-| `shape.exists.integer.depth_2.constant.filter` | changed | [Exists path authorization](GAPS.md#exists-path-authorization) |
-| `shape.exists.integer.depth_2.constant.sort` | changed | [Exists path authorization](GAPS.md#exists-path-authorization) |
-| `shape.exists.integer.depth_2.field.filter` | changed | [Exists path authorization](GAPS.md#exists-path-authorization) |
-| `shape.exists.integer.depth_2.field.sort` | changed | [Exists path authorization](GAPS.md#exists-path-authorization) |
-| `shape.exists.integer.depth_2.none.filter` | changed | [Exists path authorization](GAPS.md#exists-path-authorization) |
-| `shape.exists.integer.depth_2.none.sort` | changed | [Exists path authorization](GAPS.md#exists-path-authorization) |
-| `shape.exists.integer.depth_3.constant.filter` | changed | [Exists path authorization](GAPS.md#exists-path-authorization) |
-| `shape.exists.integer.depth_3.constant.sort` | changed | [Exists path authorization](GAPS.md#exists-path-authorization) |
-| `shape.exists.integer.depth_3.field.filter` | changed | [Exists path authorization](GAPS.md#exists-path-authorization) |
-| `shape.exists.integer.depth_3.field.sort` | changed | [Exists path authorization](GAPS.md#exists-path-authorization) |
-| `shape.exists.integer.depth_3.none.filter` | changed | [Exists path authorization](GAPS.md#exists-path-authorization) |
-| `shape.exists.integer.depth_3.none.sort` | changed | [Exists path authorization](GAPS.md#exists-path-authorization) |
-| `shape.exists.uuid.depth_2.constant.filter` | changed | [Exists path authorization](GAPS.md#exists-path-authorization) |
-| `shape.exists.uuid.depth_2.constant.sort` | changed | [Exists path authorization](GAPS.md#exists-path-authorization) |
-| `shape.exists.uuid.depth_2.field.filter` | changed | [Exists path authorization](GAPS.md#exists-path-authorization) |
-| `shape.exists.uuid.depth_2.field.sort` | changed | [Exists path authorization](GAPS.md#exists-path-authorization) |
-| `shape.exists.uuid.depth_2.none.filter` | changed | [Exists path authorization](GAPS.md#exists-path-authorization) |
-| `shape.exists.uuid.depth_2.none.sort` | changed | [Exists path authorization](GAPS.md#exists-path-authorization) |
-| `shape.exists.uuid.depth_3.constant.filter` | changed | [Exists path authorization](GAPS.md#exists-path-authorization) |
-| `shape.exists.uuid.depth_3.constant.sort` | changed | [Exists path authorization](GAPS.md#exists-path-authorization) |
-| `shape.exists.uuid.depth_3.field.filter` | changed | [Exists path authorization](GAPS.md#exists-path-authorization) |
-| `shape.exists.uuid.depth_3.field.sort` | changed | [Exists path authorization](GAPS.md#exists-path-authorization) |
-| `shape.exists.uuid.depth_3.none.filter` | changed | [Exists path authorization](GAPS.md#exists-path-authorization) |
-| `shape.exists.uuid.depth_3.none.sort` | changed | [Exists path authorization](GAPS.md#exists-path-authorization) |
-| `sig.minus.datetime_datetime` | changed | – |
-| `sig.minus.naive_naive` | changed | – |
-| `sig.minus.time_time` | changed | – |
-| `sig.minus.time_usec_time_usec` | changed | – |
-| `sig.minus.usec_usec` | changed | – |
-| `sig.minus.utc_datetime_utc_datetime` | changed | – |
-| `write.atomic_update` | changed | [Aggregate reference authorization](GAPS.md#aggregate-reference-authorization) |
-| `write.bulk_update_filter` | changed | [Aggregate reference authorization](GAPS.md#aggregate-reference-authorization) |
-| `write.single_atomic_update` | changed | [Aggregate reference authorization](GAPS.md#aggregate-reference-authorization) |
+| `shape.exists.integer.depth_2.constant.filter` and 5 more | `Ash.Error.Unknown: ** (RuntimeError) no such relationship Ash.Conformance.Postgres.ShapeIntegerLeaf.integer_mids` | [Exists path authorization](GAPS.md#exists-path-authorization) |
+| `shape.exists.integer.depth_3.constant.filter` and 5 more | `Ash.Error.Unknown: ** (RuntimeError) no such relationship Ash.Conformance.Postgres.ShapeIntegerTip.integer_mids` | [Exists path authorization](GAPS.md#exists-path-authorization) |
+| `shape.exists.uuid.depth_2.constant.filter` and 5 more | `Ash.Error.Unknown: ** (RuntimeError) no such relationship Ash.Conformance.Postgres.ShapeUuidLeaf.uuid_mids` | [Exists path authorization](GAPS.md#exists-path-authorization) |
+| `shape.exists.uuid.depth_3.constant.filter` and 5 more | `Ash.Error.Unknown: ** (RuntimeError) no such relationship Ash.Conformance.Postgres.ShapeUuidTip.uuid_mids` | [Exists path authorization](GAPS.md#exists-path-authorization) |
+
+6 scenarios already fail without decoys, so a difference isn't a decoy signal; their own gaps: [Authorization bounds](GAPS.md#authorization-bounds), [Join resource policies](GAPS.md#join-resource-policies), [Nested parent](GAPS.md#nested-parent), [No attributes](GAPS.md#no-attributes), [Prepared query](GAPS.md#prepared-query).
+
 
 ### Ash.DataLayer.Ets
 
-| Scenario | Decoy | Recorded |
+**7 issues** (0 leaked, 7 influenced; unreviewed) · 1 need triage (unreviewed) · the rest clean: 744 same, 5 base failing, 266 opted out, 0 not run.
+
+| Scenario | Status | Hint | Diff | Gap |
+| --- | --- | --- | --- | --- |
+| `field.root_aggregate` | influenced | counts hidden rows? | `5 → 10` | unreviewed |
+| `filter.aggregate_dependency` | influenced | counts hidden rows? | `1: 1 → 3` | unreviewed |
+| `filter.aggregate_dependency_calculation` | influenced | counts hidden rows? | `1: 1 → 3` | unreviewed |
+| `filter.aggregate_dependency_filtered` | influenced | counts hidden rows? | `1: 2 → 4` | unreviewed |
+| `write.atomic_update` | influenced | counts hidden rows? | `[0] #1: 4 → 8, [1] #1: 1 → 2` | unreviewed |
+| `write.bulk_update_filter` | influenced |  | `[1] #1: "beta" → "big"` | unreviewed |
+| `write.single_atomic_update` | influenced | counts hidden rows? | `1 → 2` | unreviewed |
+
+Need triage: the scenario's own run is right, and with decoys it raises. Scenarios with the same error and gap share a row.
+
+| Scenario | Error | Gap |
 | --- | --- | --- |
-| `adv.field_write.bulk_destroy.atomic` | changed | unreviewed |
-| `adv.field_write.bulk_update.atomic` | changed | unreviewed |
-| `adv.join_policy.m2m_aggregates` | changed | unreviewed |
-| `adv.join_policy.through_aggregates` | changed | unreviewed |
-| `context.prepared_query_arguments` | changed | unreviewed |
-| `field.root_aggregate` | changed | unreviewed |
-| `filter.aggregate_dependency` | changed | unreviewed |
-| `filter.aggregate_dependency_calculation` | changed | unreviewed |
-| `filter.aggregate_dependency_filtered` | changed | unreviewed |
-| `filter.nested_parent_control` | changed | unreviewed |
-| `write.atomic_update` | changed | unreviewed |
-| `write.bulk_update_filter` | changed | unreviewed |
-| `write.single_atomic_update` | changed | unreviewed |
+| `context.prepared_query_arguments` | `Ash.Error.Invalid: argument label is required` | unreviewed |
+
+5 scenarios already fail without decoys, so a difference isn't a decoy signal.
+
 
 ### AshCsv
 
-No decoy changed an answer.
+**No issues** · nothing to triage · the rest clean: 0 same, 0 base failing, 0 opted out, 953 not run.
+
+Not run: 953, no decoy resource set.
+
 
 ### AshMysql
 
-No decoy changed an answer.
+**No issues** · nothing to triage · the rest clean: 0 same, 0 base failing, 0 opted out, 953 not run.
+
+Not run: 953, no decoy resource set.
+
 
 ### AshClickhouse
 
-No decoy changed an answer.
+**No issues** · nothing to triage · the rest clean: 0 same, 0 base failing, 0 opted out, 953 not run.
+
+Not run: 953, no decoy resource set.
 
 
 | Status | Meaning |
