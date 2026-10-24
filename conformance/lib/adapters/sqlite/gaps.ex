@@ -234,20 +234,6 @@ defmodule Ash.Conformance.Sqlite.Gaps do
         """
       },
       %{
-        id: "upsert-conditions",
-        title: "Upsert conditions",
-        kind: :implementation,
-        owners: [:ash_sqlite],
-        body: ~S"""
-
-        Support `upsert_condition` expressions that use `upsert_conflict/1`. AshSQLite
-        advertises upserts, including atomic upserts, but raises "Unsupported
-        expression" for `upsert_conflict(:value)`, or passes it as an unsupported
-        parameter in the generated SQL. SQLite's `ON CONFLICT ... DO UPDATE ... WHERE`
-        can express the condition using `excluded`.
-        """
-      },
-      %{
         id: "unsorted-bounds",
         title: "Unsorted bounds",
         kind: :implementation,
@@ -489,6 +475,21 @@ defmodule Ash.Conformance.Sqlite.Gaps do
         Support `string_join/1-2`. AshSqlite rejects it with a documented error
         ("does not support the function"). SQLite can express it by concatenating
         the non-nil values with `||` and `COALESCE`, as Ash's evaluation skips nils.
+        """
+      },
+      %{
+        id: "upsert-conditions",
+        title: "Upsert conditions",
+        kind: :implementation,
+        owners: [:ash_sqlite],
+        fixed_in: ["main"],
+        body: ~S"""
+
+        Support `upsert_condition` expressions that use `upsert_conflict/1`. AshSQLite
+        advertises upserts, including atomic upserts, but raises "Unsupported
+        expression" for `upsert_conflict(:value)`, or passes it as an unsupported
+        parameter in the generated SQL. SQLite's `ON CONFLICT ... DO UPDATE ... WHERE`
+        can express the condition using `excluded`.
         """
       }
     ]

@@ -289,10 +289,7 @@ defmodule Ash.Conformance.Sqlite.Expectations do
       ),
       expect(
         "ordering.unique_other_field",
-        unresolved_error(
-          ~r/AshSql only supports uniq list aggregates when sorting by the list aggregate field/,
-          "unique-list-order"
-        )
+        unresolved_value(%{1 => ["high", "same"], 2 => ["other"], 3 => []}, "unique-list-order")
       ),
       expect(
         ~w(path.final_many_to_many_custom path.final_many_to_many_first path.final_many_to_many_list path.intermediate_many_to_many),
@@ -322,11 +319,13 @@ defmodule Ash.Conformance.Sqlite.Expectations do
           "path-multiplicity"
         )
       ),
+      # Ash rejects a root aggregate with a path before AshSQL runs it.
       expect(
         "path.root_relationship",
         unsupported(
-          ~r/AshSql grouped query aggregates do not yet support relationship aggregate :result/,
-          "root-relationship"
+          ~r/has a `path`, which is only supported for aggregates loaded on records/,
+          "root-relationship",
+          Ash.Error.Invalid
         )
       ),
       expect(
@@ -345,10 +344,6 @@ defmodule Ash.Conformance.Sqlite.Expectations do
         defect_value([1, 1, 2], "sorted-distinct-reads")
       ),
       expect("policy.member.exists_filter_input", defect_value([1, 1], "sorted-distinct-reads")),
-      expect(
-        ~w(policy.owner_nil_actor.bulk_destroy policy.strict.bulk_destroy),
-        defect_value(:forbidden, "bulk-stream-forbidden")
-      ),
       expect(
         "query.distinct",
         unsupported(~r/Data layer does not support distincting/, "query-distinct")
@@ -416,20 +411,6 @@ defmodule Ash.Conformance.Sqlite.Expectations do
             clear: {:lost, %Ash.Union{value: nil, type: :text}}
           ],
           "union-nil"
-        )
-      ),
-      expect(
-        "upsert.condition",
-        defect_error(
-          ~r/Unsupported expression in Elixir\.AshSqlite\.SqlImplementation query: %\{attribute: :value, __struct__: Ash\.Query\.UpsertConflict\}/,
-          "upsert-conditions"
-        )
-      ),
-      expect(
-        "upsert.skipped_record",
-        defect_error(
-          ~r/\*\* \(Exqlite\.Error\) unsupported type: upsert_conflict\(:value\)/,
-          "upsert-conditions"
         )
       ),
       expect("ops.binary.in", defect_error(~r/invalid keyword list in query/, "binary-in-lists")),
@@ -636,14 +617,9 @@ defmodule Ash.Conformance.Sqlite.Expectations do
           "all-tenants-upsert"
         )
       ),
-      # AshSQLite rejects `upsert_conflict/1` in an upsert condition.
       expect(
         "adv.upsert.all_tenants_skipped_bulk",
-        unresolved_value({:refused, notes}, "all-tenants-upsert")
-      ),
-      expect(
-        ~w(adv.upsert.skipped adv.upsert.skipped_bulk),
-        defect_value({:refused, notes}, "upsert-conditions")
+        unresolved_value({[{201, 2, 1, "b1"}], notes}, "all-tenants-upsert")
       )
     ]
   end

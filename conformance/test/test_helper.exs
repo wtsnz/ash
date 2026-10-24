@@ -7,7 +7,14 @@ Ash.Conformance.Catalog.validate!(
   Ash.Conformance.Adapter.all()
 )
 
-ExUnit.start(formatters: [ExUnit.CLIFormatter, Ash.Conformance.Report.Formatter])
+# The committed reports describe the default dependency set; another set's
+# contracts and claims rightly differ from them.
+committed? = Ash.Conformance.Report.dependency_set() == "release"
+
+ExUnit.start(
+  formatters: [ExUnit.CLIFormatter, Ash.Conformance.Report.Formatter],
+  exclude: if(committed?, do: [], else: [:committed_report])
+)
 
 for adapter <- Ash.Conformance.Adapter.selected() do
   adapter.setup!()

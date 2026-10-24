@@ -5,7 +5,8 @@ defmodule Ash.Conformance.SQL.Migrations.Adversarial do
   @moduledoc """
   The adversarial scenarios' tables, with the unique indexes AshPostgres's
   migration generator writes for their identities: tenant-scoped ones
-  include `org_id`, the all-tenants `code` doesn't.
+  include `org_id`, the all-tenants `code` doesn't. Only adapters that run
+  the adversarial fixture add it to their migrations.
   """
   use Ecto.Migration
 

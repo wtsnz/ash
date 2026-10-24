@@ -486,14 +486,16 @@ defmodule Ash.Conformance.Scenarios.Adversarial do
 
     singles =
       for {name, write} <- single do
+        run = fn ctx ->
+          note = Ash.get!(note(ctx), 201, tenant: 2, authorize?: false)
+          {status(write.(note)), stored_notes(ctx)}
+        end
+
         new(
           "adv.foreign.#{name}",
           :adversarial,
           {:refused, Model.notes()},
-          fn ctx ->
-            note = Ash.get!(note(ctx), 201, tenant: 2, authorize?: false)
-            {status(write.(note)), stored_notes(ctx)}
-          end,
+          run,
           opts(@multitenancy)
         )
       end
@@ -508,27 +510,26 @@ defmodule Ash.Conformance.Scenarios.Adversarial do
 
     bulk =
       for {name, update, destroy, strategy} <- strategies do
-        [
-          new(
-            "adv.foreign.bulk_update.#{name}",
-            :adversarial,
-            {[101], Model.notes_after(&update_101/1)},
-            fn ctx ->
-              result =
-                Ash.bulk_update(both_tenants(ctx), update, %{body: "x"}, bulk_opts(strategy))
+        run_update = fn ctx ->
+          result = Ash.bulk_update(both_tenants(ctx), update, %{body: "x"}, bulk_opts(strategy))
+          {returned(result), stored_notes(ctx)}
+        end
 
-              {returned(result), stored_notes(ctx)}
-            end,
-            opts(@bulk)
-          ),
+        run_destroy = fn ctx ->
+          result = Ash.bulk_destroy(both_tenants(ctx), destroy, %{}, bulk_opts(strategy))
+          {returned(result), stored_notes(ctx)}
+        end
+
+        updated = {[101], Model.notes_after(&update_101/1)}
+        destroyed = {[101], Model.notes_after(&destroy_101/1)}
+
+        [
+          new("adv.foreign.bulk_update.#{name}", :adversarial, updated, run_update, opts(@bulk)),
           new(
             "adv.foreign.bulk_destroy.#{name}",
             :adversarial,
-            {[101], Model.notes_after(&destroy_101/1)},
-            fn ctx ->
-              result = Ash.bulk_destroy(both_tenants(ctx), destroy, %{}, bulk_opts(strategy))
-              {returned(result), stored_notes(ctx)}
-            end,
+            destroyed,
+            run_destroy,
             opts(@bulk)
           )
         ]
@@ -719,14 +720,9 @@ defmodule Ash.Conformance.Scenarios.Adversarial do
     ]
 
     single_scenarios =
-      for {name, expected, run} <- singles do
-        new(
-          "adv.field_write.#{name}",
-          :adversarial,
-          expected,
-          fn ctx -> ctx |> run.() |> fields() end,
-          opts(@policies)
-        )
+      for {name, expected, write} <- singles do
+        run = fn ctx -> ctx |> write.() |> fields() end
+        new("adv.field_write.#{name}", :adversarial, expected, run, opts(@policies))
       end
 
     bulk_scenarios =
@@ -737,23 +733,25 @@ defmodule Ash.Conformance.Scenarios.Adversarial do
             destroy: :atomic,
             destroy: :stream
           ] do
+        run = fn ctx ->
+          query = person(ctx) |> Ash.Query.filter(id == 1) |> Ash.Query.load(:order_count)
+
+          opts =
+            [strategy: strategy, return_records?: true, allow_stream_with: :full_read] ++ actor
+
+          result =
+            if kind == :update,
+              do: Ash.bulk_update!(query, :update, %{name: "changed"}, opts),
+              else: Ash.bulk_destroy!(query, :destroy, %{}, opts)
+
+          result.records |> hd() |> fields()
+        end
+
         new(
           "adv.field_write.bulk_#{kind}.#{strategy}",
           :adversarial,
           loaded,
-          fn ctx ->
-            query = person(ctx) |> Ash.Query.filter(id == 1) |> Ash.Query.load(:order_count)
-
-            opts =
-              [strategy: strategy, return_records?: true, allow_stream_with: :full_read] ++ actor
-
-            result =
-              if kind == :update,
-                do: Ash.bulk_update!(query, :update, %{name: "changed"}, opts),
-                else: Ash.bulk_destroy!(query, :destroy, %{}, opts)
-
-            result.records |> hd() |> fields()
-          end,
+          run,
           opts(@policies)
         )
       end

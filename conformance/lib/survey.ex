@@ -60,7 +60,8 @@ defmodule Ash.Conformance.Survey do
       expected: Report.value(scenario.expected),
       actual: Report.outcome(outcome),
       setup: setup,
-      detail: if(scenario.detail && !setup, do: scenario.detail.(adapter, outcome))
+      detail: if(scenario.detail && !setup, do: scenario.detail.(adapter, outcome)),
+      decoy: Ash.Conformance.Report.DecoyReport.observe(scenario, adapter, outcome, setup != nil)
     }
   end
 
@@ -136,6 +137,8 @@ defmodule Ash.Conformance.Survey do
       Ash.Conformance.Report.PolicyGrid.detail(rows) <>
       "\n" <>
       Ash.Conformance.Report.CombinationGrid.detail(rows) <>
+      "\n" <>
+      Ash.Conformance.Report.DecoyReport.detail(rows) <>
       "\n## Blockers\n\n" <> Blockers.markdown(rows)
   end
 end

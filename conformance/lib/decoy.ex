@@ -40,8 +40,8 @@ defmodule Ash.Conformance.Decoy do
   @span 1_000_000
   @marker "~decoy"
 
+  @doc "The reserved range of decoy ids and values."
   def range, do: @base..(@base + @span - 1)
-  def marker, do: @marker
 
   @doc "A real id's decoy id."
   def id(id) when is_integer(id), do: @base + rem(abs(id), @span)
@@ -54,7 +54,7 @@ defmodule Ash.Conformance.Decoy do
   def reserved?(_value), do: false
 
   @doc """
-  Every decoy id, value or marked string in a term, with where it was found.
+  Every decoy id, value or marked string in a term, in the order found.
   Strings are searched for reserved numbers too, so a leak in an error message
   counts.
   """
@@ -75,11 +75,10 @@ defmodule Ash.Conformance.Decoy do
 
   defp scan(%Ash.ForbiddenField{}, acc), do: acc
 
-  defp scan(%_{} = struct, acc) do
-    if Enumerable.impl_for(struct) && is_struct(struct, MapSet),
-      do: Enum.reduce(struct, acc, &scan/2),
-      else: struct |> Map.from_struct() |> Map.drop([:__meta__, :__metadata__]) |> scan(acc)
-  end
+  defp scan(%MapSet{} = set, acc), do: Enum.reduce(set, acc, &scan/2)
+
+  defp scan(%_{} = struct, acc),
+    do: struct |> Map.from_struct() |> Map.drop([:__meta__, :__metadata__]) |> scan(acc)
 
   defp scan(value, acc) when is_map(value),
     do: Enum.reduce(value, acc, fn {key, value}, acc -> scan(value, scan(key, acc)) end)
@@ -89,19 +88,18 @@ defmodule Ash.Conformance.Decoy do
   defp scan(_value, acc), do: acc
 
   @doc """
-  The decoys for `rows` of `resource`, a role in the decoy resource set.
-  `opts` are the seeding options; see the module documentation for what is
-  copied.
+  The decoys for `rows` of `resource`, a role in the decoy resource set; see
+  the module documentation for what is copied.
   """
-  def rows(adapter, resource, rows, opts) do
-    case hidable_key(resource, opts) do
+  def rows(adapter, resource, rows) do
+    case hidable_key(resource) do
       nil -> []
       key -> for row <- rows, is_integer(Map.get(row, key)), do: copy(adapter, resource, key, row)
     end
   end
 
   # The first primary key, when it is an integer the policy can hide by.
-  defp hidable_key(resource, _opts) do
+  defp hidable_key(resource) do
     with [key | _] <- Ash.Resource.Info.primary_key(resource),
          %{type: Ash.Type.Integer} <- Ash.Resource.Info.attribute(resource, key) do
       key

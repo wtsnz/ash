@@ -4,7 +4,7 @@
 
 Generated from an unreviewed run: each result was classified automatically against the intended answer. Nothing here has been reviewed.
 
-Feature catalog version 1: 164 features and 1319 scenarios.
+Feature catalog version 1: 172 features and 1395 scenarios.
 
 | Status | Meaning |
 | --- | --- |
@@ -168,12 +168,12 @@ fix.
 | Defaults, nils, uniqueness and field counts | 🟡 Partial 11/12 | `values.list_default` wrong |
 | Aggregate decimals, dates, times and constrained types | 🟡 Partial 13/15 | `values.constrained_scalar` wrong, `values.decimal_avg` open question |
 | Order first and list aggregates, including nils and ties | ❓ Open question 8/9 | `ordering.unique_other_field` open question |
-| Aggregate calculations and other aggregates | 🟡 Partial 2/3 | `field.root_aggregate` wrong |
+| Aggregate calculations and other aggregates | ✅ Works 3/3 |  |
 | Filter the records an aggregate uses | 🟡 Partial 5/6 | `filter.join` wrong |
 | Aggregate filters through to-many relationships count each record once | 🟡 Partial 10/11 | `filter.fanout_custom` rejected |
 | Aggregate filters that use other aggregates | ✅ Works 5/5 |  |
 | Aggregate filters that reference the parent record | 🟡 Partial 4/8 · 2 blocked | `filter.nested_parent` wrong (blocked by `filter.nested_parent_control`), `filter.parent` wrong, `filter.parent_join` wrong, `filter.parent_through` wrong (blocked by `filter.parent_through_control`) |
-| Aggregate over to-one, multi-hop and many-to-many paths | 🟡 Partial 14/17 | `path.final_many_to_many_custom` rejected, `path.repeated_many_to_many` open question, `path.root_relationship` wrong |
+| Aggregate over to-one, multi-hop and many-to-many paths | 🟡 Partial 14/17 | `path.final_many_to_many_custom` rejected, `path.repeated_many_to_many` open question, `path.root_relationship` crashed |
 | Aggregate over manual and attribute-free relationships | ✅ Works 3/3 |  |
 | Aggregate over limited, offset and from-many relationships | 🟡 Partial 6/9 | `bounds.filter_after_limit` wrong, `bounds.list_filter_after_limit` wrong, `bounds.many_to_many_query_limit` open question |
 | Root aggregates over sorted, limited and offset queries | 🟡 Partial 6/7 | `bounds.root_custom_limit` rejected |
@@ -257,6 +257,20 @@ fix.
 | Feature | ets | Not working |
 | --- | --- | --- |
 | Counts match loads, and root sums match an in-memory reference | ✅ Works 2/2 |  |
+
+## 15. Adversarial invariants
+
+| Feature | ets | Not working |
+| --- | --- | --- |
+| Tenancy scopes many_to_many and through loads, aggregates and filters | 🟡 Partial 12/17 | `adv.tenant.has_one_limit` wrong, `adv.tenant.through_limit_one` wrong, `adv.tenant.through_long_load` crashed, `adv.tenant.through_many_to_many_load` crashed, `adv.tenant.through_offset` wrong |
+| Schema-based tenancy scopes the same paths | ➖ Not applicable |  |
+| Bounded through loads keep their path | 🟡 Partial 5/8 | `adv.plain.has_one_limit` wrong, `adv.plain.through_limit_one` wrong, `adv.plain.through_offset` wrong |
+| The join resource's read policy applies to loads, aggregates and input filters | 🟡 Partial 5/11 | `adv.join_policy.m2m_aggregate_filter` wrong, `adv.join_policy.m2m_aggregates` wrong, `adv.join_policy.m2m_exists_aggregate` wrong, `adv.join_policy.m2m_filter_input` wrong, `adv.join_policy.through_aggregates` wrong, `adv.join_policy.through_exists_aggregate` wrong |
+| Updates and destroys given another tenant's records change nothing of it | 🟡 Partial 7/13 | `adv.foreign.bulk_destroy.fallback` wrong, `adv.foreign.bulk_destroy.stream` wrong, `adv.foreign.bulk_update.fallback` wrong, `adv.foreign.bulk_update.stream` wrong, `adv.foreign.bulk_update.stream_global_records` wrong, `adv.foreign.destroy_changeset` wrong |
+| Upserts stay in their tenant | ❓ Open question 4/6 | `adv.upsert.all_tenants` open question, `adv.upsert.all_tenants_skipped_bulk` open question |
+| Field policies apply to write results, embedded values included | 🟡 Partial 2/11 | `adv.field_write.bulk_create` wrong, `adv.field_write.bulk_destroy.atomic` wrong, `adv.field_write.bulk_update.atomic` wrong, `adv.field_write.bulk_update.atomic_batches` wrong, `adv.field_write.bulk_update.stream` wrong, `adv.field_write.create` wrong, `adv.field_write.destroy` wrong, `adv.field_write.update` wrong, `adv.field_write.update_load` wrong |
+| manage_relationship can't relate another tenant's or a hidden record | ✅ Works 4/4 |  |
+
 
 ## Claims versus results
 
@@ -372,6 +386,24 @@ getting a hidden record when the actor may read every note.
 | field | – | – | – | – | – | – | – | – | – | – | – | – | – | – | – | – | ✅ | ✅ | ✅ | ✅ | – | – |
 | control (no authorization) | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 
+
+## Decoy variant
+
+744 same, 0 leaked, 13 changed, 266 opted out, 0 not run.
+
+- `adv.field_write.bulk_destroy.atomic` (changed): `%{cards: ["card-1a", "card-1b"], order_count: 8, payment: "pay-card-1", secret: :forbidden, ssn: "ssn-1"}`; without decoys `%{cards: ["card-1a", "card-1b"], order_count: 4, payment: "pay-card-1", secret: :forbidden, ssn: "ssn-1"}`
+- `adv.field_write.bulk_update.atomic` (changed): `%{cards: ["card-1a", "card-1b"], order_count: 8, payment: "pay-card-1", secret: :forbidden, ssn: "ssn-1"}`; without decoys `%{cards: ["card-1a", "card-1b"], order_count: 4, payment: "pay-card-1", secret: :forbidden, ssn: "ssn-1"}`
+- `adv.join_policy.m2m_aggregates` (changed): `%{1 => {8, [1, 1, 2, 2, 3, 3, 4, 4], 4}, 2 => {4, [4, 4, 5, 5], 5}, 3 => {2, [2, 2], 2}}`; without decoys `%{1 => {4, [1, 2, 3, 4], 4}, 2 => {2, [4, 5], 5}, 3 => {1, [2], 2}}`
+- `adv.join_policy.through_aggregates` (changed): `%{1 => {8, [1, 1, 2, 2, 3, 3, 4, 4], 4}, 2 => {4, [4, 4, 5, 5], 5}, 3 => {2, [2, 2], 2}}`; without decoys `%{1 => {4, [1, 2, 3, 4], 4}, 2 => {2, [4, 5], 5}, 3 => {1, [2], 2}}`
+- `context.prepared_query_arguments` (changed): `Ash.Error.Invalid: Bread Crumbs: > Error returned from: Ash.Conformance.Ets.Parent.read Invalid Error * argument label is required`; without decoys `%{1 => 1, 2 => 0, 3 => 0}`
+- `field.root_aggregate` (changed): `10`; without decoys `5`
+- `filter.aggregate_dependency` (changed): `%{1 => 3, 2 => 0, 3 => 0}`; without decoys `%{1 => 1, 2 => 0, 3 => 0}`
+- `filter.aggregate_dependency_calculation` (changed): `%{1 => 3, 2 => 0, 3 => 0}`; without decoys `%{1 => 1, 2 => 0, 3 => 0}`
+- `filter.aggregate_dependency_filtered` (changed): `%{1 => 4, 2 => nil, 3 => nil}`; without decoys `%{1 => 2, 2 => nil, 3 => nil}`
+- `filter.nested_parent_control` (changed): `Ash.Error.Unknown: Bread Crumbs: > Exception raised in: Ash.Conformance.Ets.Parent.read Unknown Error * ** (MatchError) no match of right hand side value: []`; without decoys `[]`
+- `write.atomic_update` (changed): `[{1, 8}, {2, 2}, {3, 0}]`; without decoys `[{1, 4}, {2, 1}, {3, 0}]`
+- `write.bulk_update_filter` (changed): `[{1, "big"}, {2, "big"}, {3, "empty"}]`; without decoys `[{1, "big"}, {2, "beta"}, {3, "empty"}]`
+- `write.single_atomic_update` (changed): `2`; without decoys `1`
 
 ## Blockers
 

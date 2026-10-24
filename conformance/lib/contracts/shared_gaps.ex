@@ -427,7 +427,7 @@ defmodule Ash.Conformance.Contracts.SharedGaps do
         authorize access to the related data they reference". Found by the decoy
         variant, whose hidden children and ratings belong to real parents and
         children. With authorization on, these count the hidden rows on SQLite,
-        Postgres and ETS:
+        Postgres and ETS, on the latest releases and on `main`:
 
         - an aggregate in an atomic update, `atomic_update(:threshold,
           expr(child_count))`, in bulk and single updates (`write.atomic_update`,
@@ -436,8 +436,7 @@ defmodule Ash.Conformance.Contracts.SharedGaps do
           `filter(child_sum > 5)` updates parent 2, whose only visible child has
           value 4 (`write.bulk_update_filter`);
         - an aggregate as the field of a root aggregate, `Ash.aggregate(parent,
-          {:result, :sum, field: :child_count})` (`field.root_aggregate`; ETS
-          returns nil for this one with or without decoys).
+          {:result, :sum, field: :child_count})` (`field.root_aggregate`).
 
         On Postgres and ETS, but not SQLite, an aggregate in another aggregate's
         query filter (`count(children, query: filter(rating_count > 1))`) counts

@@ -150,7 +150,7 @@ defmodule Ash.Conformance.Postgres.Expectations do
         "context.authorization_before_bounds",
         defect_value(%{1 => nil, 2 => 4, 3 => nil}, "authorization-bounds")
       ),
-      expect("context.bypass_sibling", defect_value({3, 3}, "tenant-bypass")),
+      on_deps("release", expect("context.bypass_sibling", defect_value({3, 3}, "tenant-bypass"))),
       expect(
         "context.prepared_query_arguments",
         defect_error(
@@ -166,11 +166,13 @@ defmodule Ash.Conformance.Postgres.Expectations do
         "context.relationship_context_control",
         defect_value(%{1 => [], 2 => [], 3 => []}, "relationship-context")
       ),
-      expect("context.tenant_bypass", defect_value(%{1 => 3, 2 => 0, 3 => 0}, "tenant-bypass")),
-      expect(
-        "context.through_bypass",
-        defect_value(%{1 => 3, 2 => 3, 3 => nil}, "tenant-bypass")
-      ),
+      on_deps("release", [
+        expect("context.tenant_bypass", defect_value(%{1 => 3, 2 => 0, 3 => 0}, "tenant-bypass")),
+        expect(
+          "context.through_bypass",
+          defect_value(%{1 => 3, 2 => 3, 3 => nil}, "tenant-bypass")
+        )
+      ]),
       expect("filter.fanout_and", defect_value(%{1 => 6, 2 => nil, 3 => nil}, "filter-fanout")),
       expect("filter.fanout_avg", defect_value(3.25, "filter-fanout")),
       expect("filter.fanout_count", defect_value(3, "filter-fanout")),
@@ -192,10 +194,15 @@ defmodule Ash.Conformance.Postgres.Expectations do
         "filter.nested_parent_control",
         defect_error(~r/\*\* \(KeyError\) key :parent_bindings not found/, "nested-parent")
       ),
-      expect(
-        "filter.parent_through_control",
-        defect_error(~r/\*\* \(KeyError\) key :parent_bindings not found/, "parent-through-load")
-      ),
+      on_deps("release", [
+        expect(
+          "filter.parent_through_control",
+          defect_error(
+            ~r/\*\* \(KeyError\) key :parent_bindings not found/,
+            "parent-through-load"
+          )
+        )
+      ]),
       expect(
         "identity.composite_fanout_count",
         defect_value(%{1 => 6, 2 => 1, 3 => 0}, "filter-fanout")
@@ -206,10 +213,7 @@ defmodule Ash.Conformance.Postgres.Expectations do
       ),
       expect(
         "ordering.unique_other_field",
-        unresolved_error(
-          ~r/ERROR 42P10 .*in an aggregate with DISTINCT, ORDER BY expressions must appear in argument list/,
-          "unique-list-order"
-        )
+        unresolved_value(%{1 => ["high", "same"], 2 => ["other"], 3 => []}, "unique-list-order")
       ),
       expect(
         "path.no_attributes",
@@ -222,22 +226,28 @@ defmodule Ash.Conformance.Postgres.Expectations do
         "path.repeated_many_to_many",
         unresolved_value(%{1 => 3, 2 => 2, 3 => 0}, "path-multiplicity")
       ),
-      expect(
-        "path.root_relationship",
-        defect_error(
-          ~r/no such aggregate field: Ash\.Conformance\.Postgres\.Parent\.value/,
-          "root-relationship"
+      # Ash `main` rejects a root aggregate with a path before AshSQL runs it.
+      on_deps("main", [
+        expect(
+          "path.root_relationship",
+          unsupported(
+            ~r/has a `path`, which is only supported for aggregates loaded on records/,
+            "root-relationship",
+            Ash.Error.Invalid
+          )
         )
-      ),
+      ]),
+      on_deps("release", [
+        expect(
+          "path.root_relationship",
+          defect_error(
+            ~r/no such aggregate field: Ash\.Conformance\.Postgres\.Parent\.value/,
+            "root-relationship"
+          )
+        )
+      ]),
       expect("record.filter_true_or_nil", unresolved_value([1, 4, 5, 7], "true-or-nil")),
       expect("root.list_unsorted", defect_value([2, 2, 4, 7, nil], "unsorted-list-nil")),
-      expect(
-        "root.unsorted_first_empty",
-        defect_error(
-          ~r/\*\* \(BadMapError\) expected a map, got:\n\n    nil\n\n  \(ash_sql [^)]+\) lib\/aggregate\/lateral\.ex:\d+: AshSql\.Aggregate\.Lateral\.add_subquery_aggregate_select\/6\n/,
-          "root-first"
-        )
-      ),
       expect(
         "storage.duration.edge",
         defect_value(
@@ -367,13 +377,22 @@ defmodule Ash.Conformance.Postgres.Expectations do
         )
       ),
       expect("adv.tenant.m2m_limit_one", defect_value({[4], [4]}, "through-tenant")),
-      expect(
-        "adv.tenant.through_many_to_many_load",
-        defect_value(
-          {%{1 => [1], 2 => [2], 3 => [3]}, %{1 => [1], 2 => [2], 3 => [3]}},
-          "through-many-to-many-step"
+      # Fixed on AshPostgres `main`, which leaves only the tenancy leak.
+      on_deps("main", [
+        expect(
+          "adv.tenant.through_many_to_many_load",
+          defect_value({leaked_loads, leaked_loads}, "through-tenant")
         )
-      ),
+      ]),
+      on_deps("release", [
+        expect(
+          "adv.tenant.through_many_to_many_load",
+          defect_value(
+            {%{1 => [1], 2 => [2], 3 => [3]}, %{1 => [1], 2 => [2], 3 => [3]}},
+            "through-many-to-many-step"
+          )
+        )
+      ]),
       expect(
         ~w(adv.tenant.through_limit_one adv.schema.through_limit_one),
         defect_value({[5], [5]}, "through-limit-one")
@@ -517,7 +536,10 @@ defmodule Ash.Conformance.Postgres.Expectations do
       expect_variant(
         "write.bulk_update_filter",
         :decoy,
-        defect_value([{1, "big"}, {2, "big"}, {3, "empty"}], "aggregate-reference-authorization")
+        defect_value(
+          [{1, "big"}, {2, "big"}, {3, "empty"}],
+          "aggregate-reference-authorization"
+        )
       ),
       expect_variant(
         "field.root_aggregate",

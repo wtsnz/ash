@@ -13,12 +13,12 @@ their results as observations. Each data layer's failing scenarios are listed in
 
 | Column | Data layer | Version | Reviewed | Works | Rejected | Wrong | Order dependent | Crashed | Setup failed | Open question | Blocked | Definition warnings |
 | --- | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| sqlite | AshSqlite | 0.2.19 (`f489778`) | yes | 1082 | 47 | 82 | 0 | 83 | 10 | 10 | 36 | 0 |
-| postgres | AshPostgres | 2.13.1 (`945073e`) | yes | 1248 | 0 | 37 | 6 | 18 | 0 | 10 | 2 | 0 |
-| ets | Ash.DataLayer.Ets | 3.33.11 | no | 896 | 7 | 35 | 0 | 7 | 0 | 8 | 3 | 0 |
+| sqlite | AshSqlite | 0.2.19 | yes | 709 | 430 | 95 | 0 | 128 | 10 | 12 | 282 | 0 |
+| postgres | AshPostgres | 2.15.1 | yes | 1285 | 0 | 73 | 7 | 18 | 0 | 12 | 2 | 0 |
+| ets | Ash.DataLayer.Ets | 3.37.0 | no | 936 | 7 | 60 | 0 | 10 | 0 | 10 | 3 | 0 |
 | csv | AshCsv | 0.9.9 | no | 281 | 191 | 55 | 0 | 43 | 383 | 0 | 562 | 23 |
 | mysql | AshMysql | 0.1.0-dev (`99684ca`) | no | 499 | 208 | 73 | 1 | 129 | 35 | 8 | 135 | 20 |
-| clickhouse | AshClickhouse | 0.7.3 | no | 352 | 89 | 187 | 2 | 182 | 134 | 7 | 195 | 20 |
+| clickhouse | AshClickhouse | 0.7.3 | no | 356 | 89 | 187 | 2 | 178 | 134 | 7 | 195 | 20 |
 
 Blocked counts results in the columns before it that have a failing
 prerequisite, such as a type the data layer cannot store; see
@@ -49,11 +49,12 @@ could not run.
 | Tier | sqlite | postgres | ets | csv | mysql | clickhouse |
 | --- | --- | --- | --- | --- | --- | --- |
 | Storage (tier 1) | 61/65 | 61/65 | 64/65 | 45/65 | 49/65 | 28/65 |
-| Operations (tier 2) | 243/266 · 7 blocked · 10 not run | 276/276 | 276/276 | 107/214 · 91 blocked · 62 not run | 160/241 · 64 blocked · 35 not run | 134/205 · 54 blocked · 71 not run |
+| Operations (tier 2) | 205/266 · 44 blocked · 10 not run | 276/276 | 276/276 | 107/214 · 91 blocked · 62 not run | 160/241 · 64 blocked · 35 not run | 134/205 · 54 blocked · 71 not run |
 | Expressions | 82/182 | 155/182 | 39/44 | 0/0 · 44 not run | 26/44 · 2 blocked | 7/44 · 3 blocked |
-| Policy grid | 198/214 · 5 blocked | 214/214 | 212/214 | 97/214 · 91 blocked | 158/214 · 37 blocked | 117/214 · 59 blocked |
-| Combinations | 216/217 | 216/217 | – not included | – not included | – not included | – not included |
-| Integration (tier 4) | 282/360 · 14 blocked | 326/365 · 2 blocked | 305/354 · 3 blocked | 32/77 · 277 not run | 106/354 · 7 blocked | 66/291 · 22 blocked · 63 not run |
+| Policy grid | 162/214 · 37 blocked | 214/214 | 212/214 | 97/214 · 91 blocked | 158/214 · 37 blocked | 121/214 · 59 blocked |
+| Combinations | 20/217 · 183 blocked | 216/217 | – not included | – not included | – not included | – not included |
+| Adversarial invariants | 20/70 | 36/76 | 39/70 | – not included | – not included | – not included |
+| Integration (tier 4) | 159/360 · 8 blocked | 327/365 · 2 blocked | 306/354 · 3 blocked | 32/77 · 277 not run | 106/354 · 7 blocked | 66/291 · 22 blocked · 63 not run |
 
 ## Storage
 
@@ -109,29 +110,29 @@ order rows were stored in; ❔ did not run; – does not apply to the type.
 
 | Type | sqlite | postgres | ets | csv | mysql | clickhouse |
 | --- | --- | --- | --- | --- | --- | --- |
-| Integers | ✅ 10/10 | ✅ 10/10 | ✅ 10/10 | ❌ 5/10 | ❌ 8/10 | ❌ 9/10 |
-| Floats | ✅ 10/10 | ✅ 10/10 | ✅ 10/10 | ❔ 0/0 · 10 ❔ | ◌ 8/8 · 2 ◌ | ◌ 9/9 · 1 ◌ |
-| Decimals | ✅ 10/10 | ✅ 10/10 | ✅ 10/10 | ◌ 5/5 · 5 ◌ | ◌ 2/2 · 8 ◌ | ❔ 0/0 · 10 ❔ |
-| Strings | ✅ 9/9 | ✅ 9/9 | ✅ 9/9 | ◌ 5/5 · 4 ◌ | ◌ 7/7 · 2 ◌ | ◌ 8/8 · 1 ◌ |
-| Case-insensitive strings | ❌ 8/9 | ✅ 9/9 | ✅ 9/9 | ◌ 5/5 · 4 ◌ | ❌ 6/7 · 2 ◌ | ❌ 2/8 · 1 ◌ |
-| Binaries | ❌ 4/5 | ✅ 5/5 | ✅ 5/5 | ◌ 3/3 · 2 ◌ | ❌ 0/4 · 1 ◌ | ◌ 4/4 · 1 ◌ |
-| Booleans | ✅ 5/5 | ✅ 5/5 | ✅ 5/5 | ❔ 0/0 · 5 ❔ | ❌ 1/4 · 1 ◌ | ◌ 4/4 · 1 ◌ |
-| Atoms with one_of | ✅ 5/5 | ✅ 5/5 | ✅ 5/5 | ◌ 3/3 · 2 ◌ | ❌ 3/4 · 1 ◌ | ◌ 4/4 · 1 ◌ |
-| Dates | ✅ 9/9 | ✅ 9/9 | ✅ 9/9 | ◌ 5/5 · 4 ◌ | ◌ 7/7 · 2 ◌ | ◌ 6/6 · 3 ◌ |
-| Times | ✅ 9/9 | ✅ 9/9 | ✅ 9/9 | ◌ 5/5 · 4 ◌ | ◌ 7/7 · 2 ◌ | ❌ 5/8 · 1 ◌ |
-| Microsecond times | ✅ 9/9 | ✅ 9/9 | ✅ 9/9 | ◌ 5/5 · 4 ◌ | ❌ 3/7 · 2 ◌ | ◌ 3/3 · 6 ◌ |
-| UTC datetimes | ✅ 9/9 | ✅ 9/9 | ✅ 9/9 | ◌ 5/5 · 4 ◌ | ◌ 7/7 · 2 ◌ | ◌ 8/8 · 1 ◌ |
-| Microsecond UTC datetimes | ✅ 9/9 | ✅ 9/9 | ✅ 9/9 | ◌ 5/5 · 4 ◌ | ◌ 7/7 · 2 ◌ | ❌ 5/8 · 1 ◌ |
-| Naive datetimes | ✅ 9/9 | ✅ 9/9 | ✅ 9/9 | ◌ 5/5 · 4 ◌ | ◌ 7/7 · 2 ◌ | ◌ 3/3 · 6 ◌ |
+| Integers | ❌ 9/10 | ✅ 10/10 | ✅ 10/10 | ❌ 5/10 | ❌ 8/10 | ❌ 9/10 |
+| Floats | ◌ 9/9 · 1 ◌ | ✅ 10/10 | ✅ 10/10 | ❔ 0/0 · 10 ❔ | ◌ 8/8 · 2 ◌ | ◌ 9/9 · 1 ◌ |
+| Decimals | ◌ 9/9 · 1 ◌ | ✅ 10/10 | ✅ 10/10 | ◌ 5/5 · 5 ◌ | ◌ 2/2 · 8 ◌ | ❔ 0/0 · 10 ❔ |
+| Strings | ◌ 8/8 · 1 ◌ | ✅ 9/9 | ✅ 9/9 | ◌ 5/5 · 4 ◌ | ◌ 7/7 · 2 ◌ | ◌ 8/8 · 1 ◌ |
+| Case-insensitive strings | ❌ 7/8 · 1 ◌ | ✅ 9/9 | ✅ 9/9 | ◌ 5/5 · 4 ◌ | ❌ 6/7 · 2 ◌ | ❌ 2/8 · 1 ◌ |
+| Binaries | ❌ 3/4 · 1 ◌ | ✅ 5/5 | ✅ 5/5 | ◌ 3/3 · 2 ◌ | ❌ 0/4 · 1 ◌ | ◌ 4/4 · 1 ◌ |
+| Booleans | ◌ 4/4 · 1 ◌ | ✅ 5/5 | ✅ 5/5 | ❔ 0/0 · 5 ❔ | ❌ 1/4 · 1 ◌ | ◌ 4/4 · 1 ◌ |
+| Atoms with one_of | ◌ 4/4 · 1 ◌ | ✅ 5/5 | ✅ 5/5 | ◌ 3/3 · 2 ◌ | ❌ 3/4 · 1 ◌ | ◌ 4/4 · 1 ◌ |
+| Dates | ◌ 8/8 · 1 ◌ | ✅ 9/9 | ✅ 9/9 | ◌ 5/5 · 4 ◌ | ◌ 7/7 · 2 ◌ | ◌ 6/6 · 3 ◌ |
+| Times | ◌ 8/8 · 1 ◌ | ✅ 9/9 | ✅ 9/9 | ◌ 5/5 · 4 ◌ | ◌ 7/7 · 2 ◌ | ❌ 5/8 · 1 ◌ |
+| Microsecond times | ◌ 8/8 · 1 ◌ | ✅ 9/9 | ✅ 9/9 | ◌ 5/5 · 4 ◌ | ❌ 3/7 · 2 ◌ | ◌ 3/3 · 6 ◌ |
+| UTC datetimes | ◌ 8/8 · 1 ◌ | ✅ 9/9 | ✅ 9/9 | ◌ 5/5 · 4 ◌ | ◌ 7/7 · 2 ◌ | ◌ 8/8 · 1 ◌ |
+| Microsecond UTC datetimes | ◌ 8/8 · 1 ◌ | ✅ 9/9 | ✅ 9/9 | ◌ 5/5 · 4 ◌ | ◌ 7/7 · 2 ◌ | ❌ 5/8 · 1 ◌ |
+| Naive datetimes | ◌ 8/8 · 1 ◌ | ✅ 9/9 | ✅ 9/9 | ◌ 5/5 · 4 ◌ | ◌ 7/7 · 2 ◌ | ◌ 3/3 · 6 ◌ |
 | Durations | ❔ 0/0 · 5 ❔ | ✅ 5/5 | ✅ 5/5 | ❔ 0/0 · 5 ❔ | ❔ 0/0 · 5 ❔ | ❔ 0/0 · 5 ❔ |
-| UUIDs | ✅ 5/5 | ✅ 5/5 | ✅ 5/5 | ◌ 3/3 · 2 ◌ | ◌ 4/4 · 1 ◌ | ◌ 4/4 · 1 ◌ |
-| UUIDv7s | ✅ 5/5 | ✅ 5/5 | ✅ 5/5 | ◌ 3/3 · 2 ◌ | ❌ 3/4 · 1 ◌ | ◌ 4/4 · 1 ◌ |
-| Maps | ❌ 1/3 | ✅ 3/3 | ✅ 3/3 | ❔ 0/0 · 3 ❔ | ◌ 2/2 · 1 ◌ | ❔ 0/0 · 3 ❔ |
-| Arrays of strings | ❌ 1/3 | ✅ 3/3 | ✅ 3/3 | ❔ 0/0 · 3 ❔ | ❔ 0/0 · 3 ❔ | ❔ 0/0 · 3 ❔ |
-| Arrays of integers | ❌ 1/3 | ✅ 3/3 | ✅ 3/3 | ❔ 0/0 · 3 ❔ | ❔ 0/0 · 3 ❔ | ❔ 0/0 · 3 ❔ |
-| Embedded resources | ❌ 1/3 | ✅ 3/3 | ✅ 3/3 | ❔ 0/0 · 3 ❔ | ◌ 2/2 · 1 ◌ | ❔ 0/0 · 3 ❔ |
-| Arrays of embedded resources | ❌ 1/3 | ✅ 3/3 | ✅ 3/3 | ❔ 0/0 · 3 ❔ | ❔ 0/0 · 3 ❔ | ❔ 0/0 · 3 ❔ |
-| Unions | ❌ 1/3 | ✅ 3/3 | ✅ 3/3 | ❔ 0/0 · 3 ❔ | ◌ 2/2 · 1 ◌ | ❔ 0/0 · 3 ❔ |
+| UUIDs | ◌ 4/4 · 1 ◌ | ✅ 5/5 | ✅ 5/5 | ◌ 3/3 · 2 ◌ | ◌ 4/4 · 1 ◌ | ◌ 4/4 · 1 ◌ |
+| UUIDv7s | ◌ 4/4 · 1 ◌ | ✅ 5/5 | ✅ 5/5 | ◌ 3/3 · 2 ◌ | ❌ 3/4 · 1 ◌ | ◌ 4/4 · 1 ◌ |
+| Maps | ❌ 0/2 · 1 ◌ | ✅ 3/3 | ✅ 3/3 | ❔ 0/0 · 3 ❔ | ◌ 2/2 · 1 ◌ | ❔ 0/0 · 3 ❔ |
+| Arrays of strings | ❌ 0/2 · 1 ◌ | ✅ 3/3 | ✅ 3/3 | ❔ 0/0 · 3 ❔ | ❔ 0/0 · 3 ❔ | ❔ 0/0 · 3 ❔ |
+| Arrays of integers | ❌ 0/2 · 1 ◌ | ✅ 3/3 | ✅ 3/3 | ❔ 0/0 · 3 ❔ | ❔ 0/0 · 3 ❔ | ❔ 0/0 · 3 ❔ |
+| Embedded resources | ❌ 0/2 · 1 ◌ | ✅ 3/3 | ✅ 3/3 | ❔ 0/0 · 3 ❔ | ◌ 2/2 · 1 ◌ | ❔ 0/0 · 3 ❔ |
+| Arrays of embedded resources | ❌ 0/2 · 1 ◌ | ✅ 3/3 | ✅ 3/3 | ❔ 0/0 · 3 ❔ | ❔ 0/0 · 3 ❔ | ❔ 0/0 · 3 ❔ |
+| Unions | ❌ 0/2 · 1 ◌ | ✅ 3/3 | ✅ 3/3 | ❔ 0/0 · 3 ❔ | ◌ 2/2 · 1 ◌ | ❔ 0/0 · 3 ❔ |
 
 ## Policies
 
@@ -149,20 +150,20 @@ getting a hidden record when the actor may read every note.
 
 | Case | sqlite | postgres | ets | csv | mysql | clickhouse |
 | --- | --- | --- | --- | --- | --- | --- |
-| owner | ❌ 17/18 | ✅ 18/18 | ❌ 16/18 | ❌ 8/10 · 8 ◌ | ❌ 12/15 · 3 ◌ | ❌ 10/13 · 5 ◌ |
-| owner_nil_actor | ❌ 15/16 | ✅ 16/16 | ✅ 16/16 | ❌ 10/11 · 5 ◌ | ❌ 11/13 · 3 ◌ | ❌ 11/12 · 4 ◌ |
-| forbid | ❌ 15/16 | ✅ 16/16 | ✅ 16/16 | ❌ 7/8 · 8 ◌ | ❌ 12/13 · 3 ◌ | ❌ 10/11 · 5 ◌ |
-| bypass | ❌ 15/16 | ✅ 16/16 | ✅ 16/16 | ❌ 7/8 · 8 ◌ | ❌ 12/13 · 3 ◌ | ❌ 10/11 · 5 ◌ |
-| bypass_admin | ◌ 12/12 · 1 ◌ | ✅ 13/13 | ✅ 13/13 | ◌ 5/5 · 8 ◌ | ◌ 10/10 · 3 ◌ | ◌ 8/8 · 5 ◌ |
-| all_of | ❌ 15/16 | ✅ 16/16 | ✅ 16/16 | ❌ 7/8 · 8 ◌ | ❌ 12/13 · 3 ◌ | ❌ 10/11 · 5 ◌ |
-| any_of | ❌ 15/16 | ✅ 16/16 | ✅ 16/16 | ❌ 7/8 · 8 ◌ | ❌ 12/13 · 3 ◌ | ❌ 10/11 · 5 ◌ |
-| related | ❌ 14/15 · 1 ◌ | ✅ 16/16 | ✅ 16/16 | ❌ 1/8 · 8 ◌ | ❌ 12/13 · 3 ◌ | ❌ 1/11 · 5 ◌ |
-| member | ❌ 14/15 · 1 ◌ | ✅ 16/16 | ✅ 16/16 | ❌ 7/8 · 8 ◌ | ❌ 12/13 · 3 ◌ | ❌ 6/11 · 5 ◌ |
-| can_read | ❌ 14/15 · 1 ◌ | ✅ 16/16 | ✅ 16/16 | ❌ 7/8 · 8 ◌ | ❌ 12/13 · 3 ◌ | ❌ 6/11 · 5 ◌ |
-| strict | ❌ 15/16 | ✅ 16/16 | ✅ 16/16 | ❌ 10/11 · 5 ◌ | ❌ 11/13 · 3 ◌ | ❌ 11/12 · 4 ◌ |
-| strict_admin | ◌ 12/12 · 1 ◌ | ✅ 13/13 | ✅ 13/13 | ◌ 5/5 · 8 ◌ | ◌ 10/10 · 3 ◌ | ◌ 8/8 · 5 ◌ |
-| field | ✅ 4/4 | ✅ 4/4 | ✅ 4/4 | ◌ 3/3 · 1 ◌ | ❌ 2/3 · 1 ◌ | ❌ 0/3 · 1 ◌ |
-| control (no authorization) | ❌ 21/22 | ✅ 22/22 | ✅ 22/22 | ❌ 13/22 | ❌ 18/22 | ❌ 16/22 |
+| owner | ❌ 14/15 · 3 ◌ | ✅ 18/18 | ❌ 16/18 | ❌ 8/10 · 8 ◌ | ❌ 12/15 · 3 ◌ | ❌ 10/13 · 5 ◌ |
+| owner_nil_actor | ❌ 12/13 · 3 ◌ | ✅ 16/16 | ✅ 16/16 | ❌ 10/11 · 5 ◌ | ❌ 11/13 · 3 ◌ | ❌ 11/12 · 4 ◌ |
+| forbid | ❌ 12/13 · 3 ◌ | ✅ 16/16 | ✅ 16/16 | ❌ 7/8 · 8 ◌ | ❌ 12/13 · 3 ◌ | ❌ 10/11 · 5 ◌ |
+| bypass | ❌ 12/13 · 3 ◌ | ✅ 16/16 | ✅ 16/16 | ❌ 7/8 · 8 ◌ | ❌ 12/13 · 3 ◌ | ❌ 10/11 · 5 ◌ |
+| bypass_admin | ◌ 10/10 · 3 ◌ | ✅ 13/13 | ✅ 13/13 | ◌ 5/5 · 8 ◌ | ◌ 10/10 · 3 ◌ | ◌ 8/8 · 5 ◌ |
+| all_of | ❌ 12/13 · 3 ◌ | ✅ 16/16 | ✅ 16/16 | ❌ 7/8 · 8 ◌ | ❌ 12/13 · 3 ◌ | ❌ 10/11 · 5 ◌ |
+| any_of | ❌ 12/13 · 3 ◌ | ✅ 16/16 | ✅ 16/16 | ❌ 7/8 · 8 ◌ | ❌ 12/13 · 3 ◌ | ❌ 10/11 · 5 ◌ |
+| related | ❌ 12/13 · 3 ◌ | ✅ 16/16 | ✅ 16/16 | ❌ 1/8 · 8 ◌ | ❌ 12/13 · 3 ◌ | ❌ 1/11 · 5 ◌ |
+| member | ❌ 12/13 · 3 ◌ | ✅ 16/16 | ✅ 16/16 | ❌ 7/8 · 8 ◌ | ❌ 12/13 · 3 ◌ | ❌ 8/11 · 5 ◌ |
+| can_read | ❌ 12/13 · 3 ◌ | ✅ 16/16 | ✅ 16/16 | ❌ 7/8 · 8 ◌ | ❌ 12/13 · 3 ◌ | ❌ 8/11 · 5 ◌ |
+| strict | ❌ 12/13 · 3 ◌ | ✅ 16/16 | ✅ 16/16 | ❌ 10/11 · 5 ◌ | ❌ 11/13 · 3 ◌ | ❌ 11/12 · 4 ◌ |
+| strict_admin | ◌ 10/10 · 3 ◌ | ✅ 13/13 | ✅ 13/13 | ◌ 5/5 · 8 ◌ | ◌ 10/10 · 3 ◌ | ◌ 8/8 · 5 ◌ |
+| field | ❌ 2/3 · 1 ◌ | ✅ 4/4 | ✅ 4/4 | ◌ 3/3 · 1 ◌ | ❌ 2/3 · 1 ◌ | ❌ 0/3 · 1 ◌ |
+| control (no authorization) | ❌ 18/22 | ✅ 22/22 | ✅ 22/22 | ❌ 13/22 | ❌ 18/22 | ❌ 16/22 |
 
 ## Combinations
 
@@ -179,21 +180,237 @@ answer changes with the order rows were stored in; ❔ did not run.
 
 | Case | sqlite | postgres |
 | --- | --- | --- |
-| base: kind count, relationship items, filter none, tenant global, policy off, use loaded | ✅ | ✅ |
-| kind: sum | ✅ | ✅ |
-| kind: max | ✅ | ✅ |
-| kind: list | ✅ | ✅ |
-| kind: exists | ✅ | ✅ |
-| relationship: top_items | ✅ | ✅ |
-| relationship: linked_items | ✅ | ✅ |
-| filter: value_gt | ✅ | ✅ |
-| filter: open | ✅ | ✅ |
-| tenant: tenant | ✅ | ✅ |
-| policy: actor | ✅ | ✅ |
-| use: page | ✅ | ✅ |
-| use: sort | ✅ | ✅ |
-| use: filter | ✅ | ✅ |
-| **Pairs** | ❌ 16/17 | ❌ 16/17 |
+| base: kind count, relationship items, filter none, tenant global, policy off, use loaded | ❌ | ✅ |
+| kind: sum | ◌ | ✅ |
+| kind: max | ◌ | ✅ |
+| kind: list | ◌ | ✅ |
+| kind: exists | ◌ | ✅ |
+| relationship: top_items | ◌ | ✅ |
+| relationship: linked_items | ◌ | ✅ |
+| filter: value_gt | ◌ | ✅ |
+| filter: open | ◌ | ✅ |
+| tenant: tenant | ◌ | ✅ |
+| policy: actor | ◌ | ✅ |
+| use: page | ◌ | ✅ |
+| use: sort | ◌ | ✅ |
+| use: filter | ◌ | ✅ |
+| **Pairs** | ◌ 0/0 · 17 ◌ | ❌ 16/17 |
+
+## Decoy variant
+
+Every scenario also runs with a hidden copy of each fixture row stored
+next to the real ones: in a mirror tenant, with colliding local ids, where
+the table is multitenant by attribute, and otherwise with a reserved id a
+read policy hides. The answer must not change, and no decoy may appear in
+it (`Ash.Conformance.Decoy`). Data layers without the decoy resource set
+are not run. Scenarios whose answer rightly changes, such as reads across
+tenants or plain relationship filters, which policies don't authorize,
+opt out.
+
+| Data layer | Same | Leaked | Changed | Opted out | Not run |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| sqlite | 961 | 0 | 104 | 309 | 10 |
+| postgres | 1035 | 0 | 51 | 309 | 0 |
+| ets | 744 | 0 | 13 | 266 | 0 |
+| csv | 0 | 0 | 0 | 0 | 953 |
+| mysql | 0 | 0 | 0 | 0 | 953 |
+| clickhouse | 0 | 0 | 0 | 0 | 953 |
+
+### AshSqlite
+
+| Scenario | Decoy | Recorded |
+| --- | --- | --- |
+| `bounds.root_first_distinct_sort` | changed | – |
+| `bounds.root_offset_only` | changed | – |
+| `bounds.root_zero` | changed | – |
+| `edge.at.negative_index` | changed | – |
+| `edge.round.decimal_half` | changed | – |
+| `edge.round.half` | changed | – |
+| `edge.string_split.empty_items` | changed | – |
+| `expr.filter.round` | changed | – |
+| `expr.round` | changed | – |
+| `expr.round_decimal` | changed | – |
+| `expr.start_of_day` | changed | – |
+| `field.root_aggregate` | changed | [Aggregate reference authorization](GAPS.md#aggregate-reference-authorization) |
+| `filter.nested_parent_control` | changed | [Nested parent](GAPS.md#nested-parent) |
+| `filter.parent_through_control` | changed | – |
+| `ops.atom.first` | changed | – |
+| `ops.binary.first` | changed | – |
+| `ops.binary.first.edge` | changed | – |
+| `ops.binary.in` | changed | – |
+| `ops.binary.in.edge` | changed | – |
+| `ops.boolean.first` | changed | – |
+| `ops.ci_string.first` | changed | – |
+| `ops.ci_string.first.edge` | changed | – |
+| `ops.date.first` | changed | – |
+| `ops.date.first.edge` | changed | – |
+| `ops.decimal.first` | changed | – |
+| `ops.decimal.first.edge` | changed | – |
+| `ops.embedded.first` | changed | – |
+| `ops.embeddeds.first` | changed | – |
+| `ops.float.first` | changed | – |
+| `ops.float.first.edge` | changed | – |
+| `ops.integer.first` | changed | – |
+| `ops.integer.first.edge` | changed | – |
+| `ops.integers.first` | changed | – |
+| `ops.integers.first.edge` | changed | – |
+| `ops.map.first` | changed | – |
+| `ops.map.first.edge` | changed | – |
+| `ops.naive_datetime.first` | changed | – |
+| `ops.naive_datetime.first.edge` | changed | – |
+| `ops.string.first` | changed | – |
+| `ops.string.first.edge` | changed | – |
+| `ops.strings.first` | changed | – |
+| `ops.strings.first.edge` | changed | – |
+| `ops.time.first` | changed | – |
+| `ops.time.first.edge` | changed | – |
+| `ops.time_usec.first` | changed | – |
+| `ops.time_usec.first.edge` | changed | – |
+| `ops.union.first` | changed | – |
+| `ops.utc_datetime.first` | changed | – |
+| `ops.utc_datetime.first.edge` | changed | – |
+| `ops.utc_datetime_usec.first` | changed | – |
+| `ops.utc_datetime_usec.first.edge` | changed | – |
+| `ops.uuid.first` | changed | – |
+| `ops.uuid.first.edge` | changed | – |
+| `ops.uuid_v7.first` | changed | – |
+| `root.first` | changed | – |
+| `sig.ago.duration` | changed | – |
+| `sig.at.index` | changed | – |
+| `sig.count_nils.list` | changed | – |
+| `sig.date_add.duration` | changed | – |
+| `sig.datetime_add.duration` | changed | – |
+| `sig.datetime_add.naive_duration` | changed | – |
+| `sig.from_now.duration` | changed | – |
+| `sig.has.array` | changed | – |
+| `sig.intersects.array` | changed | – |
+| `sig.length.array` | changed | – |
+| `sig.minus.date_duration` | changed | – |
+| `sig.minus.datetime_duration` | changed | – |
+| `sig.minus.naive_duration` | changed | – |
+| `sig.minus.time_duration` | changed | – |
+| `sig.minus.time_usec_duration` | changed | – |
+| `sig.minus.usec_duration` | changed | – |
+| `sig.minus.utc_datetime_duration` | changed | – |
+| `sig.plus.date_duration` | changed | – |
+| `sig.plus.datetime_duration` | changed | – |
+| `sig.plus.duration_date` | changed | – |
+| `sig.plus.duration_datetime` | changed | – |
+| `sig.plus.duration_naive` | changed | – |
+| `sig.plus.duration_time` | changed | – |
+| `sig.plus.duration_time_usec` | changed | – |
+| `sig.plus.duration_usec` | changed | – |
+| `sig.plus.duration_utc_datetime` | changed | – |
+| `sig.plus.naive_duration` | changed | – |
+| `sig.plus.time_duration` | changed | – |
+| `sig.plus.time_usec_duration` | changed | – |
+| `sig.plus.usec_duration` | changed | – |
+| `sig.plus.utc_datetime_duration` | changed | – |
+| `sig.round.decimal` | changed | – |
+| `sig.round.decimal_places` | changed | – |
+| `sig.round.float` | changed | – |
+| `sig.round.float_places` | changed | – |
+| `sig.round.integer` | changed | – |
+| `sig.round.integer_places` | changed | – |
+| `sig.start_of_day.date` | changed | – |
+| `sig.start_of_day.date_zone` | changed | – |
+| `sig.start_of_day.datetime` | changed | – |
+| `sig.start_of_day.datetime_zone` | changed | – |
+| `sig.string_split.ci` | changed | – |
+| `sig.string_split.ci_ci` | changed | – |
+| `sig.string_split.ci_separator` | changed | – |
+| `sig.string_split.default` | changed | – |
+| `sig.string_split.separator` | changed | – |
+| `sig.times.duration_integer` | changed | – |
+| `sig.times.integer_duration` | changed | – |
+| `values.root_empty` | changed | – |
+
+### AshPostgres
+
+| Scenario | Decoy | Recorded |
+| --- | --- | --- |
+| `adv.join_policy.m2m_aggregates` | changed | [Join resource policies](GAPS.md#join-resource-policies) |
+| `adv.join_policy.through_aggregates` | changed | [Join resource policies](GAPS.md#join-resource-policies) |
+| `adv.schema.through_load` | changed | – |
+| `bounds.filter_after_limit` | changed | [Authorization bounds](GAPS.md#authorization-bounds) |
+| `bounds.list_filter_after_limit` | changed | [Authorization bounds](GAPS.md#authorization-bounds) |
+| `bounds.relationship_limit` | changed | [Authorization bounds](GAPS.md#authorization-bounds) |
+| `bounds.relationship_offset` | changed | [Authorization bounds](GAPS.md#authorization-bounds) |
+| `bounds.relationship_offset_only` | changed | [Authorization bounds](GAPS.md#authorization-bounds) |
+| `bounds.unsorted_limit` | changed | [Authorization bounds](GAPS.md#authorization-bounds) |
+| `context.authorization_before_bounds` | changed | [Authorization bounds](GAPS.md#authorization-bounds) |
+| `context.prepared_query_arguments` | changed | [Authorized action arguments](GAPS.md#authorized-action-arguments) |
+| `field.root_aggregate` | changed | [Aggregate reference authorization](GAPS.md#aggregate-reference-authorization) |
+| `filter.aggregate_dependency` | changed | [Aggregate reference authorization](GAPS.md#aggregate-reference-authorization) |
+| `filter.aggregate_dependency_calculation` | changed | [Aggregate reference authorization](GAPS.md#aggregate-reference-authorization) |
+| `filter.aggregate_dependency_filtered` | changed | [Aggregate reference authorization](GAPS.md#aggregate-reference-authorization) |
+| `filter.nested_parent_control` | changed | [Nested parent](GAPS.md#nested-parent) |
+| `filter.parent_through_control` | changed | – |
+| `path.no_attributes` | changed | supported |
+| `shape.exists.integer.depth_2.constant.filter` | changed | [Exists path authorization](GAPS.md#exists-path-authorization) |
+| `shape.exists.integer.depth_2.constant.sort` | changed | [Exists path authorization](GAPS.md#exists-path-authorization) |
+| `shape.exists.integer.depth_2.field.filter` | changed | [Exists path authorization](GAPS.md#exists-path-authorization) |
+| `shape.exists.integer.depth_2.field.sort` | changed | [Exists path authorization](GAPS.md#exists-path-authorization) |
+| `shape.exists.integer.depth_2.none.filter` | changed | [Exists path authorization](GAPS.md#exists-path-authorization) |
+| `shape.exists.integer.depth_2.none.sort` | changed | [Exists path authorization](GAPS.md#exists-path-authorization) |
+| `shape.exists.integer.depth_3.constant.filter` | changed | [Exists path authorization](GAPS.md#exists-path-authorization) |
+| `shape.exists.integer.depth_3.constant.sort` | changed | [Exists path authorization](GAPS.md#exists-path-authorization) |
+| `shape.exists.integer.depth_3.field.filter` | changed | [Exists path authorization](GAPS.md#exists-path-authorization) |
+| `shape.exists.integer.depth_3.field.sort` | changed | [Exists path authorization](GAPS.md#exists-path-authorization) |
+| `shape.exists.integer.depth_3.none.filter` | changed | [Exists path authorization](GAPS.md#exists-path-authorization) |
+| `shape.exists.integer.depth_3.none.sort` | changed | [Exists path authorization](GAPS.md#exists-path-authorization) |
+| `shape.exists.uuid.depth_2.constant.filter` | changed | [Exists path authorization](GAPS.md#exists-path-authorization) |
+| `shape.exists.uuid.depth_2.constant.sort` | changed | [Exists path authorization](GAPS.md#exists-path-authorization) |
+| `shape.exists.uuid.depth_2.field.filter` | changed | [Exists path authorization](GAPS.md#exists-path-authorization) |
+| `shape.exists.uuid.depth_2.field.sort` | changed | [Exists path authorization](GAPS.md#exists-path-authorization) |
+| `shape.exists.uuid.depth_2.none.filter` | changed | [Exists path authorization](GAPS.md#exists-path-authorization) |
+| `shape.exists.uuid.depth_2.none.sort` | changed | [Exists path authorization](GAPS.md#exists-path-authorization) |
+| `shape.exists.uuid.depth_3.constant.filter` | changed | [Exists path authorization](GAPS.md#exists-path-authorization) |
+| `shape.exists.uuid.depth_3.constant.sort` | changed | [Exists path authorization](GAPS.md#exists-path-authorization) |
+| `shape.exists.uuid.depth_3.field.filter` | changed | [Exists path authorization](GAPS.md#exists-path-authorization) |
+| `shape.exists.uuid.depth_3.field.sort` | changed | [Exists path authorization](GAPS.md#exists-path-authorization) |
+| `shape.exists.uuid.depth_3.none.filter` | changed | [Exists path authorization](GAPS.md#exists-path-authorization) |
+| `shape.exists.uuid.depth_3.none.sort` | changed | [Exists path authorization](GAPS.md#exists-path-authorization) |
+| `sig.minus.datetime_datetime` | changed | – |
+| `sig.minus.naive_naive` | changed | – |
+| `sig.minus.time_time` | changed | – |
+| `sig.minus.time_usec_time_usec` | changed | – |
+| `sig.minus.usec_usec` | changed | – |
+| `sig.minus.utc_datetime_utc_datetime` | changed | – |
+| `write.atomic_update` | changed | [Aggregate reference authorization](GAPS.md#aggregate-reference-authorization) |
+| `write.bulk_update_filter` | changed | [Aggregate reference authorization](GAPS.md#aggregate-reference-authorization) |
+| `write.single_atomic_update` | changed | [Aggregate reference authorization](GAPS.md#aggregate-reference-authorization) |
+
+### Ash.DataLayer.Ets
+
+| Scenario | Decoy | Recorded |
+| --- | --- | --- |
+| `adv.field_write.bulk_destroy.atomic` | changed | unreviewed |
+| `adv.field_write.bulk_update.atomic` | changed | unreviewed |
+| `adv.join_policy.m2m_aggregates` | changed | unreviewed |
+| `adv.join_policy.through_aggregates` | changed | unreviewed |
+| `context.prepared_query_arguments` | changed | unreviewed |
+| `field.root_aggregate` | changed | unreviewed |
+| `filter.aggregate_dependency` | changed | unreviewed |
+| `filter.aggregate_dependency_calculation` | changed | unreviewed |
+| `filter.aggregate_dependency_filtered` | changed | unreviewed |
+| `filter.nested_parent_control` | changed | unreviewed |
+| `write.atomic_update` | changed | unreviewed |
+| `write.bulk_update_filter` | changed | unreviewed |
+| `write.single_atomic_update` | changed | unreviewed |
+
+### AshCsv
+
+No decoy changed an answer.
+
+### AshMysql
+
+No decoy changed an answer.
+
+### AshClickhouse
+
+No decoy changed an answer.
+
 
 | Status | Meaning |
 | --- | --- |
@@ -241,29 +458,29 @@ answer changes with the order rows were stored in; ❔ did not run.
 
 | Feature | sqlite | postgres | ets | csv | mysql | clickhouse |
 | --- | --- | --- | --- | --- | --- | --- |
-| Integers | ✅ Works 20/20 | ✅ Works 20/20 | ✅ Works 20/20 | 🟡 Partial 10/20 · 5 blocked | 🟡 Partial 16/20 · 2 blocked | 🟡 Partial 18/20 · 1 blocked |
-| Floats | ✅ Works 20/20 | ✅ Works 20/20 | ✅ Works 20/20 | ❔ Unknown 20 not run | 🟡 Partial 16/20 · 4 blocked | 🟡 Partial 16/20 · 2 blocked |
-| Decimals | 🟡 Partial 18/20 | ✅ Works 20/20 | ✅ Works 20/20 | 🟡 Partial 10/20 · 10 blocked | 🟡 Partial 2/10 · 10 not run · 8 blocked | ❔ Unknown 20 not run |
-| Strings | ✅ Works 18/18 | ✅ Works 18/18 | ✅ Works 18/18 | 🟡 Partial 6/18 · 8 blocked | 🟡 Partial 14/18 · 4 blocked | 🟡 Partial 16/18 · 2 blocked |
-| Case-insensitive strings | 🟡 Partial 17/18 | ✅ Works 18/18 | ✅ Works 18/18 | 🟡 Partial 6/18 · 8 blocked | 🟡 Partial 12/18 · 5 blocked | 🟡 Partial 8/18 · 4 blocked |
-| Binaries | 🟡 Partial 8/10 · 1 blocked | ✅ Works 10/10 | ✅ Works 10/10 | 🟡 Partial 3/10 · 4 blocked | ❌ Broken 0/10 · 6 blocked | 🟡 Partial 4/5 · 5 not run · 1 blocked |
-| Booleans | ✅ Works 5/5 | ✅ Works 5/5 | ✅ Works 5/5 | ❔ Unknown 5 not run | 🟡 Partial 1/5 · 1 blocked | 🟡 Partial 4/5 · 1 blocked |
-| Atoms with one_of | ✅ Works 5/5 | ✅ Works 5/5 | ✅ Works 5/5 | 🟡 Partial 3/5 · 2 blocked | 🟡 Partial 3/5 · 1 blocked | 🟡 Partial 4/5 · 1 blocked |
-| Dates | ✅ Works 18/18 | ✅ Works 18/18 | ✅ Works 18/18 | 🟡 Partial 10/18 · 8 blocked | 🟡 Partial 14/18 · 4 blocked | 🟡 Partial 6/9 · 9 not run · 3 blocked |
-| Times | ✅ Works 18/18 | ✅ Works 18/18 | ✅ Works 18/18 | 🟡 Partial 10/18 · 8 blocked | 🟡 Partial 14/18 · 4 blocked | 🟡 Partial 10/18 · 5 blocked |
-| Microsecond times | ✅ Works 18/18 | ✅ Works 18/18 | ✅ Works 18/18 | 🟡 Partial 10/18 · 8 blocked | 🟡 Partial 7/18 · 6 blocked | 🟡 Partial 6/18 · 12 blocked |
-| UTC datetimes | ✅ Works 18/18 | ✅ Works 18/18 | ✅ Works 18/18 | 🟡 Partial 10/18 · 8 blocked | 🟡 Partial 14/18 · 4 blocked | 🟡 Partial 15/18 · 2 blocked |
-| Microsecond UTC datetimes | ✅ Works 18/18 | ✅ Works 18/18 | ✅ Works 18/18 | 🟡 Partial 10/18 · 8 blocked | 🟡 Partial 14/18 · 4 blocked | 🟡 Partial 9/18 · 5 blocked |
-| Naive datetimes | ✅ Works 18/18 | ✅ Works 18/18 | ✅ Works 18/18 | 🟡 Partial 10/18 · 8 blocked | 🟡 Partial 14/18 · 4 blocked | 🟡 Partial 6/18 · 12 blocked |
+| Integers | 🟡 Partial 18/20 · 1 blocked | ✅ Works 20/20 | ✅ Works 20/20 | 🟡 Partial 10/20 · 5 blocked | 🟡 Partial 16/20 · 2 blocked | 🟡 Partial 18/20 · 1 blocked |
+| Floats | 🟡 Partial 18/20 · 2 blocked | ✅ Works 20/20 | ✅ Works 20/20 | ❔ Unknown 20 not run | 🟡 Partial 16/20 · 4 blocked | 🟡 Partial 16/20 · 2 blocked |
+| Decimals | 🟡 Partial 16/20 · 2 blocked | ✅ Works 20/20 | ✅ Works 20/20 | 🟡 Partial 10/20 · 10 blocked | 🟡 Partial 2/10 · 10 not run · 8 blocked | ❔ Unknown 20 not run |
+| Strings | 🟡 Partial 16/18 · 2 blocked | ✅ Works 18/18 | ✅ Works 18/18 | 🟡 Partial 6/18 · 8 blocked | 🟡 Partial 14/18 · 4 blocked | 🟡 Partial 16/18 · 2 blocked |
+| Case-insensitive strings | 🟡 Partial 15/18 · 2 blocked | ✅ Works 18/18 | ✅ Works 18/18 | 🟡 Partial 6/18 · 8 blocked | 🟡 Partial 12/18 · 5 blocked | 🟡 Partial 8/18 · 4 blocked |
+| Binaries | 🟡 Partial 6/10 · 3 blocked | ✅ Works 10/10 | ✅ Works 10/10 | 🟡 Partial 3/10 · 4 blocked | ❌ Broken 0/10 · 6 blocked | 🟡 Partial 4/5 · 5 not run · 1 blocked |
+| Booleans | 🟡 Partial 4/5 · 1 blocked | ✅ Works 5/5 | ✅ Works 5/5 | ❔ Unknown 5 not run | 🟡 Partial 1/5 · 1 blocked | 🟡 Partial 4/5 · 1 blocked |
+| Atoms with one_of | 🟡 Partial 4/5 · 1 blocked | ✅ Works 5/5 | ✅ Works 5/5 | 🟡 Partial 3/5 · 2 blocked | 🟡 Partial 3/5 · 1 blocked | 🟡 Partial 4/5 · 1 blocked |
+| Dates | 🟡 Partial 16/18 · 2 blocked | ✅ Works 18/18 | ✅ Works 18/18 | 🟡 Partial 10/18 · 8 blocked | 🟡 Partial 14/18 · 4 blocked | 🟡 Partial 6/9 · 9 not run · 3 blocked |
+| Times | 🟡 Partial 16/18 · 2 blocked | ✅ Works 18/18 | ✅ Works 18/18 | 🟡 Partial 10/18 · 8 blocked | 🟡 Partial 14/18 · 4 blocked | 🟡 Partial 10/18 · 5 blocked |
+| Microsecond times | 🟡 Partial 16/18 · 2 blocked | ✅ Works 18/18 | ✅ Works 18/18 | 🟡 Partial 10/18 · 8 blocked | 🟡 Partial 7/18 · 6 blocked | 🟡 Partial 6/18 · 12 blocked |
+| UTC datetimes | 🟡 Partial 16/18 · 2 blocked | ✅ Works 18/18 | ✅ Works 18/18 | 🟡 Partial 10/18 · 8 blocked | 🟡 Partial 14/18 · 4 blocked | 🟡 Partial 15/18 · 2 blocked |
+| Microsecond UTC datetimes | 🟡 Partial 16/18 · 2 blocked | ✅ Works 18/18 | ✅ Works 18/18 | 🟡 Partial 10/18 · 8 blocked | 🟡 Partial 14/18 · 4 blocked | 🟡 Partial 9/18 · 5 blocked |
+| Naive datetimes | 🟡 Partial 16/18 · 2 blocked | ✅ Works 18/18 | ✅ Works 18/18 | 🟡 Partial 10/18 · 8 blocked | 🟡 Partial 14/18 · 4 blocked | 🟡 Partial 6/18 · 12 blocked |
 | Durations | ❔ Unknown 10 not run | ✅ Works 10/10 | ✅ Works 10/10 | ❔ Unknown 10 not run | ❔ Unknown 10 not run | ❔ Unknown 10 not run |
-| UUIDs | ✅ Works 10/10 | ✅ Works 10/10 | ✅ Works 10/10 | 🟡 Partial 6/10 · 4 blocked | 🟡 Partial 8/10 · 2 blocked | 🟡 Partial 8/10 · 2 blocked |
-| UUIDv7s | ✅ Works 5/5 | ✅ Works 5/5 | ✅ Works 5/5 | 🟡 Partial 3/5 · 2 blocked | 🟡 Partial 3/5 · 1 blocked | 🟡 Partial 4/5 · 1 blocked |
-| Maps | 🟡 Partial 2/6 · 2 blocked | ✅ Works 6/6 | ✅ Works 6/6 | ❔ Unknown 6 not run | 🟡 Partial 4/6 · 2 blocked | ❔ Unknown 6 not run |
-| Arrays of strings | 🟡 Partial 2/6 · 2 blocked | ✅ Works 6/6 | ✅ Works 6/6 | ❔ Unknown 6 not run | ❔ Unknown 6 not run | ❔ Unknown 6 not run |
-| Arrays of integers | 🟡 Partial 2/6 · 2 blocked | ✅ Works 6/6 | ✅ Works 6/6 | ❔ Unknown 6 not run | ❔ Unknown 6 not run | ❔ Unknown 6 not run |
-| Embedded resources | 🟡 Partial 1/3 | ✅ Works 3/3 | ✅ Works 3/3 | ❔ Unknown 3 not run | 🟡 Partial 2/3 · 1 blocked | ❔ Unknown 3 not run |
-| Arrays of embedded resources | 🟡 Partial 1/3 | ✅ Works 3/3 | ✅ Works 3/3 | ❔ Unknown 3 not run | ❔ Unknown 3 not run | ❔ Unknown 3 not run |
-| Unions | 🟡 Partial 1/3 | ✅ Works 3/3 | ✅ Works 3/3 | ❔ Unknown 3 not run | 🟡 Partial 2/3 · 1 blocked | ❔ Unknown 3 not run |
+| UUIDs | 🟡 Partial 8/10 · 2 blocked | ✅ Works 10/10 | ✅ Works 10/10 | 🟡 Partial 6/10 · 4 blocked | 🟡 Partial 8/10 · 2 blocked | 🟡 Partial 8/10 · 2 blocked |
+| UUIDv7s | 🟡 Partial 4/5 · 1 blocked | ✅ Works 5/5 | ✅ Works 5/5 | 🟡 Partial 3/5 · 2 blocked | 🟡 Partial 3/5 · 1 blocked | 🟡 Partial 4/5 · 1 blocked |
+| Maps | ❌ Broken 0/6 · 4 blocked | ✅ Works 6/6 | ✅ Works 6/6 | ❔ Unknown 6 not run | 🟡 Partial 4/6 · 2 blocked | ❔ Unknown 6 not run |
+| Arrays of strings | ❌ Broken 0/6 · 4 blocked | ✅ Works 6/6 | ✅ Works 6/6 | ❔ Unknown 6 not run | ❔ Unknown 6 not run | ❔ Unknown 6 not run |
+| Arrays of integers | ❌ Broken 0/6 · 4 blocked | ✅ Works 6/6 | ✅ Works 6/6 | ❔ Unknown 6 not run | ❔ Unknown 6 not run | ❔ Unknown 6 not run |
+| Embedded resources | ❌ Broken 0/3 · 1 blocked | ✅ Works 3/3 | ✅ Works 3/3 | ❔ Unknown 3 not run | 🟡 Partial 2/3 · 1 blocked | ❔ Unknown 3 not run |
+| Arrays of embedded resources | ❌ Broken 0/3 · 1 blocked | ✅ Works 3/3 | ✅ Works 3/3 | ❔ Unknown 3 not run | ❔ Unknown 3 not run | ❔ Unknown 3 not run |
+| Unions | ❌ Broken 0/3 · 1 blocked | ✅ Works 3/3 | ✅ Works 3/3 | ❔ Unknown 3 not run | 🟡 Partial 2/3 · 1 blocked | ❔ Unknown 3 not run |
 
 ## 3. Records
 
@@ -310,9 +527,9 @@ answer changes with the order rows were stored in; ❔ did not run.
 | Every typed signature of <>, /, *, - and +, including date and time arithmetic | 🟡 Partial 13/46 | 🟡 Partial 37/46 | ➖ Not applicable | ➖ Not applicable | ➖ Not applicable | ➖ Not applicable |
 | Functions on unusual values: decomposed Unicode, whitespace, empty lists, overflow and halves | 🟡 Partial 8/16 | 🟡 Partial 13/16 | ➖ Not applicable | ➖ Not applicable | ➖ Not applicable | ➖ Not applicable |
 | Negation, column comparisons and and/or with nil | 🟡 Partial 10/13 | 🟡 Partial 10/13 | 🟡 Partial 8/13 | ❔ Unknown 13 not run | 🟡 Partial 10/13 | 🟡 Partial 7/13 |
-| Filters through to-many relationships return each record once | 🟡 Partial 4/9 | ✅ Works 9/9 | ✅ Works 9/9 | 🟡 Partial 1/9 | 🟡 Partial 6/9 | ❌ Broken 0/9 |
+| Filters through to-many relationships return each record once | ✅ Works 9/9 | ✅ Works 9/9 | ✅ Works 9/9 | 🟡 Partial 1/9 | 🟡 Partial 6/9 | ❌ Broken 0/9 |
 | Sort by a related record's attribute | ✅ Works 1/1 | ✅ Works 1/1 | ✅ Works 1/1 | ⛔ Not supported 0/1 | ✅ Works 1/1 | ❌ Broken 0/1 |
-| Calculations feed aggregates, filters and sorts | ✅ Works 5/5 | ✅ Works 5/5 | ✅ Works 5/5 | 🟡 Partial 1/5 | 🟡 Partial 1/5 | ❌ Broken 0/5 |
+| Calculations feed aggregates, filters and sorts | 🟡 Partial 2/5 | ✅ Works 5/5 | ✅ Works 5/5 | 🟡 Partial 1/5 | 🟡 Partial 1/5 | ❌ Broken 0/5 |
 | Filter by a calculation | ✅ Works 1/1 | ✅ Works 1/1 | ✅ Works 1/1 | ❔ Unknown 1 not run | ✅ Works 1/1 | ❔ Unknown 1 not run |
 | Sort by one or more fields, with explicit nil order | ✅ Works 6/6 | ✅ Works 6/6 | ✅ Works 6/6 | ❔ Unknown 6 not run | 🟡 Partial 2/6 · 1 blocked | ❔ Unknown 6 not run |
 | Sort by a calculation | ✅ Works 1/1 | ✅ Works 1/1 | ✅ Works 1/1 | ❔ Unknown 1 not run | ✅ Works 1/1 | ❔ Unknown 1 not run |
@@ -333,7 +550,7 @@ answer changes with the order rows were stored in; ❔ did not run.
 
 | Feature | sqlite | postgres | ets | csv | mysql | clickhouse |
 | --- | --- | --- | --- | --- | --- | --- |
-| Filter across to-many relationships without duplicates | 🟡 Partial 1/3 | ✅ Works 3/3 | ✅ Works 3/3 | ❔ Unknown 3 not run | 🟡 Partial 1/3 | ❌ Broken 0/3 |
+| Filter across to-many relationships without duplicates | ✅ Works 3/3 | ✅ Works 3/3 | ✅ Works 3/3 | ❔ Unknown 3 not run | 🟡 Partial 1/3 | ❌ Broken 0/3 |
 | Limit and offset a has-many load for each parent | ✅ Works 2/2 | ✅ Works 2/2 | ✅ Works 2/2 | ❔ Unknown 2 not run | ❌ Broken 0/2 | ✅ Works 2/2 |
 | Limit a many-to-many load for each parent | ❌ Broken 0/1 | ✅ Works 1/1 | ✅ Works 1/1 | ❔ Unknown 1 not run | ❌ Broken 0/1 | ❌ Broken 0/1 |
 | Relationships through other relationships | ❌ Broken 0/1 | ✅ Works 1/1 | ✅ Works 1/1 | ❔ Unknown 1 not run | ❌ Broken 0/1 | ❌ Broken 0/1 |
@@ -348,24 +565,24 @@ answer changes with the order rows were stored in; ❔ did not run.
 
 | Feature | sqlite | postgres | ets | csv | mysql | clickhouse |
 | --- | --- | --- | --- | --- | --- | --- |
-| Load each aggregate kind on records | ✅ Works 9/9 | ✅ Works 9/9 | 🟡 Partial 8/9 | ❔ Unknown 9 not run | ⛔ Not supported 0/9 | 🟡 Partial 4/9 |
-| Run each aggregate kind over a whole query | 🟡 Partial 9/15 | 🟡 Partial 13/15 | 🟡 Partial 10/15 | ❔ Unknown 15 not run | 🟡 Partial 6/15 | 🟡 Partial 5/15 |
-| Defaults, nils, uniqueness and field counts | ✅ Works 12/12 | 🟡 Partial 11/12 | 🟡 Partial 11/12 | ❔ Unknown 12 not run | ⛔ Not supported 0/12 | 🟡 Partial 4/12 |
-| Aggregate decimals, dates, times and constrained types | 🟡 Partial 11/15 · 3 blocked | ❓ Open question 14/15 | 🟡 Partial 13/15 | ❔ Unknown 15 not run | 🟡 Partial 2/15 | 🟡 Partial 4/15 · 8 blocked |
-| Order first and list aggregates, including nils and ties | ❓ Open question 8/9 | ❓ Open question 8/9 | ❓ Open question 8/9 | ❔ Unknown 9 not run | ⛔ Not supported 0/9 | ⛔ Not supported 0/9 |
-| Aggregate calculations and other aggregates | ✅ Works 3/3 | ✅ Works 3/3 | 🟡 Partial 2/3 | ❔ Unknown 3 not run | ❌ Broken 0/3 | ❌ Broken 0/3 |
-| Filter the records an aggregate uses | ✅ Works 6/6 | ✅ Works 6/6 | 🟡 Partial 5/6 | ❔ Unknown 6 not run | ⛔ Not supported 0/6 | ❌ Broken 0/6 |
-| Aggregate filters through to-many relationships count each record once | 🟡 Partial 3/11 · 7 blocked | 🟡 Partial 2/11 | 🟡 Partial 10/11 | ❔ Unknown 11 not run | ⛔ Not supported 0/11 | ❌ Broken 0/11 · 9 blocked |
-| Aggregate filters that use other aggregates | 🟡 Partial 1/5 | ✅ Works 5/5 | ✅ Works 5/5 | ❔ Unknown 5 not run | ⛔ Not supported 0/5 | ❌ Broken 0/5 |
+| Load each aggregate kind on records | ⛔ Not supported 0/9 | ✅ Works 9/9 | 🟡 Partial 8/9 | ❔ Unknown 9 not run | ⛔ Not supported 0/9 | 🟡 Partial 4/9 |
+| Run each aggregate kind over a whole query | 🟡 Partial 6/15 | 🟡 Partial 14/15 | 🟡 Partial 10/15 | ❔ Unknown 15 not run | 🟡 Partial 6/15 | 🟡 Partial 5/15 |
+| Defaults, nils, uniqueness and field counts | ⛔ Not supported 0/12 | 🟡 Partial 11/12 | 🟡 Partial 11/12 | ❔ Unknown 12 not run | ⛔ Not supported 0/12 | 🟡 Partial 4/12 |
+| Aggregate decimals, dates, times and constrained types | 🟡 Partial 1/15 · 3 blocked | ❓ Open question 14/15 | 🟡 Partial 13/15 | ❔ Unknown 15 not run | 🟡 Partial 2/15 | 🟡 Partial 4/15 · 8 blocked |
+| Order first and list aggregates, including nils and ties | ⛔ Not supported 0/9 | ❓ Open question 8/9 | ❓ Open question 8/9 | ❔ Unknown 9 not run | ⛔ Not supported 0/9 | ⛔ Not supported 0/9 |
+| Aggregate calculations and other aggregates | ❌ Broken 0/3 | ✅ Works 3/3 | ✅ Works 3/3 | ❔ Unknown 3 not run | ❌ Broken 0/3 | ❌ Broken 0/3 |
+| Filter the records an aggregate uses | ⛔ Not supported 0/6 | ✅ Works 6/6 | 🟡 Partial 5/6 | ❔ Unknown 6 not run | ⛔ Not supported 0/6 | ❌ Broken 0/6 |
+| Aggregate filters through to-many relationships count each record once | ⛔ Not supported 0/11 | 🟡 Partial 2/11 | 🟡 Partial 10/11 | ❔ Unknown 11 not run | ⛔ Not supported 0/11 | ❌ Broken 0/11 · 9 blocked |
+| Aggregate filters that use other aggregates | ⛔ Not supported 0/5 | ✅ Works 5/5 | ✅ Works 5/5 | ❔ Unknown 5 not run | ⛔ Not supported 0/5 | ❌ Broken 0/5 |
 | Aggregate filters that reference the parent record | ⛔ Not supported 0/8 · 2 blocked | 🟡 Partial 7/8 · 1 blocked | 🟡 Partial 4/8 · 2 blocked | ❔ Unknown 8 not run | ⛔ Not supported 0/8 · 2 blocked | ❌ Broken 0/8 · 2 blocked |
-| Aggregate over to-one, multi-hop and many-to-many paths | 🟡 Partial 10/17 | 🟡 Partial 15/17 | 🟡 Partial 14/17 | ❔ Unknown 17 not run | ❌ Broken 0/17 | ❌ Broken 0/17 |
+| Aggregate over to-one, multi-hop and many-to-many paths | ❌ Broken 0/17 | 🟡 Partial 15/17 | 🟡 Partial 14/17 | ❔ Unknown 17 not run | ❌ Broken 0/17 | ❌ Broken 0/17 |
 | Aggregate over manual and attribute-free relationships | ⛔ Not supported 0/3 | 🟡 Partial 2/3 | ✅ Works 3/3 | ❔ Unknown 3 not run | ⛔ Not supported 0/3 | 🟡 Partial 1/3 |
-| Aggregate over limited, offset and from-many relationships | 🟡 Partial 5/9 | 🟡 Partial 6/9 | 🟡 Partial 6/9 | ❔ Unknown 9 not run | ⛔ Not supported 0/9 · 1 blocked | ❌ Broken 0/9 |
-| Root aggregates over sorted, limited and offset queries | 🟡 Partial 5/7 | 🟡 Partial 2/7 | 🟡 Partial 6/7 | ❔ Unknown 7 not run | ❌ Broken 0/7 | ❌ Broken 0/7 |
+| Aggregate over limited, offset and from-many relationships | ⛔ Not supported 0/9 | 🟡 Partial 6/9 | 🟡 Partial 6/9 | ❔ Unknown 9 not run | ⛔ Not supported 0/9 · 1 blocked | ❌ Broken 0/9 |
+| Root aggregates over sorted, limited and offset queries | 🟡 Partial 1/7 | 🟡 Partial 2/7 | 🟡 Partial 6/7 | ❔ Unknown 7 not run | ❌ Broken 0/7 | ❌ Broken 0/7 |
 | Distinct counts over composite and missing keys | 🟡 Partial 1/5 | ❓ Open question 4/5 | 🟡 Partial 1/5 | ❔ Unknown 5 not run | 🟡 Partial 1/5 | 🟡 Partial 3/5 |
-| Filter, sort, paginate and calculate with aggregates | ✅ Works 10/10 | ✅ Works 10/10 | ✅ Works 10/10 | ❔ Unknown 10 not run | ⛔ Not supported 0/10 | ❌ Broken 0/10 |
-| Aggregates respect read actions, arguments, actor and context | 🟡 Partial 8/9 · 1 blocked | 🟡 Partial 7/9 · 1 blocked | 🟡 Partial 8/9 · 1 blocked | ❔ Unknown 9 not run | ⛔ Not supported 0/9 · 2 blocked | ❌ Broken 0/9 · 2 blocked |
-| Seeded filtered aggregates match an in-memory reference | ✅ Works 23/23 | ✅ Works 23/23 | ✅ Works 23/23 | ❔ Unknown 23 not run | 🟡 Partial 3/23 | 🟡 Partial 3/23 |
+| Filter, sort, paginate and calculate with aggregates | ⛔ Not supported 0/10 | ✅ Works 10/10 | ✅ Works 10/10 | ❔ Unknown 10 not run | ⛔ Not supported 0/10 | ❌ Broken 0/10 |
+| Aggregates respect read actions, arguments, actor and context | ⛔ Not supported 0/9 · 2 blocked | 🟡 Partial 7/9 · 1 blocked | 🟡 Partial 8/9 · 1 blocked | ❔ Unknown 9 not run | ⛔ Not supported 0/9 · 2 blocked | ❌ Broken 0/9 · 2 blocked |
+| Seeded filtered aggregates match an in-memory reference | 🟡 Partial 11/23 | ✅ Works 23/23 | ✅ Works 23/23 | ❔ Unknown 23 not run | 🟡 Partial 3/23 | 🟡 Partial 3/23 |
 
 ## 8. Writes
 
@@ -375,8 +592,8 @@ answer changes with the order rows were stored in; ❔ did not run.
 | Identities and upserts on keys that can be nil, and upsert fields | 🟡 Partial 3/5 | ✅ Works 5/5 | 🟡 Partial 2/5 | 🟡 Partial 2/5 | 🟡 Partial 1/5 | 🟡 Partial 1/5 |
 | Bulk create with partial success | ✅ Works 1/1 | ✅ Works 1/1 | ✅ Works 1/1 | ❌ Broken 0/1 | ❌ Broken 0/1 | ❌ Broken 0/1 |
 | Bulk update atomically | ✅ Works 1/1 | ✅ Works 1/1 | ✅ Works 1/1 | ❌ Broken 0/1 | ❌ Broken 0/1 | ❌ Broken 0/1 |
-| Writes that filter by or read aggregates | ✅ Works 4/4 | ✅ Works 4/4 | ✅ Works 4/4 | ❔ Unknown 4 not run | ❌ Broken 0/4 | ❌ Broken 0/4 |
-| Atomic updates with expressions, and bulk writes over sorted, limited queries | ✅ Works 4/4 | ✅ Works 4/4 | ✅ Works 4/4 | 🟡 Partial 2/4 | 🟡 Partial 2/4 | 🟡 Partial 1/4 |
+| Writes that filter by or read aggregates | ❌ Broken 0/4 | ✅ Works 4/4 | ✅ Works 4/4 | ❔ Unknown 4 not run | ❌ Broken 0/4 | ❌ Broken 0/4 |
+| Atomic updates with expressions, and bulk writes over sorted, limited queries | 🟡 Partial 3/4 | ✅ Works 4/4 | ✅ Works 4/4 | 🟡 Partial 2/4 | 🟡 Partial 2/4 | 🟡 Partial 1/4 |
 
 ## 9. Transactions and locks
 
@@ -392,8 +609,8 @@ answer changes with the order rows were stored in; ❔ did not run.
 | --- | --- | --- | --- | --- | --- | --- |
 | Attribute tenancy scopes reads and requires a tenant | ✅ Works 6/6 | ✅ Works 6/6 | 🟡 Partial 5/6 | 🟡 Partial 5/6 | ✅ Works 6/6 | 🟡 Partial 5/6 |
 | Tenancy scopes related records and their bounds | ✅ Works 4/4 | ✅ Works 4/4 | ✅ Works 4/4 | 🟡 Partial 3/4 | 🟡 Partial 2/4 | 🟡 Partial 3/4 |
-| Tenancy scopes aggregates, including explicit bypass | ✅ Works 8/8 | 🟡 Partial 5/8 | 🟡 Partial 6/8 | ⛔ Not supported 0/3 · 5 not run | 🟡 Partial 1/8 | 🟡 Partial 2/8 |
-| Tenancy scopes pages and counts | ✅ Works 2/2 | ✅ Works 2/2 | ❌ Broken 0/2 | ⛔ Not supported 0/2 | ⛔ Not supported 0/2 | ❌ Broken 0/2 |
+| Tenancy scopes aggregates, including explicit bypass | 🟡 Partial 1/8 | 🟡 Partial 5/8 | 🟡 Partial 6/8 | ⛔ Not supported 0/3 · 5 not run | 🟡 Partial 1/8 | 🟡 Partial 2/8 |
+| Tenancy scopes pages and counts | ⛔ Not supported 0/2 | ✅ Works 2/2 | ❌ Broken 0/2 | ⛔ Not supported 0/2 | ⛔ Not supported 0/2 | ❌ Broken 0/2 |
 | Tenancy scopes creates, updates and destroys | ✅ Works 3/3 | ✅ Works 3/3 | ✅ Works 3/3 | ✅ Works 3/3 | 🟡 Partial 1/3 | ✅ Works 3/3 |
 | Schema-based (context) tenancy | ➖ Not applicable | ✅ Works 5/5 | ➖ Not applicable | ➖ Not applicable | ➖ Not applicable | ➖ Not applicable |
 
@@ -403,45 +620,58 @@ answer changes with the order rows were stored in; ❔ did not run.
 | --- | --- | --- | --- | --- | --- | --- |
 | Policies filter reads | ✅ Works 3/3 | ✅ Works 3/3 | ✅ Works 3/3 | ✅ Works 3/3 | ✅ Works 3/3 | ✅ Works 3/3 |
 | Policies filter related records before bounds | ✅ Works 5/5 | ✅ Works 5/5 | ✅ Works 5/5 | 🔸 Incomplete 4/4 · 1 not run | 🟡 Partial 2/5 | ✅ Works 5/5 |
-| Policies filter what aggregates count | 🟡 Partial 7/8 | 🟡 Partial 7/8 | 🟡 Partial 7/8 | ⛔ Not supported 0/6 · 2 not run | 🟡 Partial 2/8 · 1 blocked | 🟡 Partial 2/8 |
-| Policies filter pages and counts | ✅ Works 3/3 | ✅ Works 3/3 | 🟡 Partial 1/3 | ⛔ Not supported 0/3 | ⛔ Not supported 0/3 | ❌ Broken 0/3 |
+| Policies filter what aggregates count | 🟡 Partial 2/8 | 🟡 Partial 7/8 | 🟡 Partial 7/8 | ⛔ Not supported 0/6 · 2 not run | 🟡 Partial 2/8 · 1 blocked | 🟡 Partial 2/8 |
+| Policies filter pages and counts | ⛔ Not supported 0/3 | ✅ Works 3/3 | 🟡 Partial 1/3 | ⛔ Not supported 0/3 | ⛔ Not supported 0/3 | ❌ Broken 0/3 |
 | Policies filter and forbid writes | ✅ Works 4/4 | ✅ Works 4/4 | ✅ Works 4/4 | 🟡 Partial 3/4 | 🟡 Partial 2/4 | 🟡 Partial 3/4 |
 
 ## 12. Policies
 
 | Feature | sqlite | postgres | ets | csv | mysql | clickhouse |
 | --- | --- | --- | --- | --- | --- | --- |
-| A filter policy on the actor | 🟡 Partial 15/16 | ✅ Works 16/16 | ✅ Works 16/16 | 🟡 Partial 7/16 · 8 blocked | 🟡 Partial 12/16 · 3 blocked | 🟡 Partial 10/16 · 5 blocked |
-| The same policy with no actor | 🟡 Partial 15/16 | ✅ Works 16/16 | ✅ Works 16/16 | 🟡 Partial 10/16 · 5 blocked | 🟡 Partial 11/16 · 3 blocked | 🟡 Partial 11/16 · 4 blocked |
-| forbid_if before authorize_if | 🟡 Partial 15/16 | ✅ Works 16/16 | ✅ Works 16/16 | 🟡 Partial 7/16 · 8 blocked | 🟡 Partial 12/16 · 3 blocked | 🟡 Partial 10/16 · 5 blocked |
-| A bypass policy, for an actor it does not let through | 🟡 Partial 15/16 | ✅ Works 16/16 | ✅ Works 16/16 | 🟡 Partial 7/16 · 8 blocked | 🟡 Partial 12/16 · 3 blocked | 🟡 Partial 10/16 · 5 blocked |
-| A bypass policy, for an actor it lets through | 🟡 Partial 12/13 · 1 blocked | ✅ Works 13/13 | ✅ Works 13/13 | 🟡 Partial 5/13 · 8 blocked | 🟡 Partial 10/13 · 3 blocked | 🟡 Partial 8/13 · 5 blocked |
-| Two policies that must both pass | 🟡 Partial 15/16 | ✅ Works 16/16 | ✅ Works 16/16 | 🟡 Partial 7/16 · 8 blocked | 🟡 Partial 12/16 · 3 blocked | 🟡 Partial 10/16 · 5 blocked |
-| One policy whose checks either pass | 🟡 Partial 15/16 | ✅ Works 16/16 | ✅ Works 16/16 | 🟡 Partial 7/16 · 8 blocked | 🟡 Partial 12/16 · 3 blocked | 🟡 Partial 10/16 · 5 blocked |
-| A policy on a to-one relationship | 🟡 Partial 14/16 · 1 blocked | ✅ Works 16/16 | ✅ Works 16/16 | 🟡 Partial 1/16 · 8 blocked | 🟡 Partial 12/16 · 3 blocked | 🟡 Partial 1/16 · 5 blocked |
-| A policy on a multi-hop exists | 🟡 Partial 14/16 · 1 blocked | ✅ Works 16/16 | ✅ Works 16/16 | 🟡 Partial 7/16 · 8 blocked | 🟡 Partial 12/16 · 3 blocked | 🟡 Partial 6/16 · 5 blocked |
-| A policy composed with can_read | 🟡 Partial 14/16 · 1 blocked | ✅ Works 16/16 | ✅ Works 16/16 | 🟡 Partial 7/16 · 8 blocked | 🟡 Partial 12/16 · 3 blocked | 🟡 Partial 6/16 · 5 blocked |
-| A strict policy, for an actor it forbids | 🟡 Partial 15/16 | ✅ Works 16/16 | ✅ Works 16/16 | 🟡 Partial 10/16 · 5 blocked | 🟡 Partial 11/16 · 3 blocked | 🟡 Partial 11/16 · 4 blocked |
-| A strict policy, for an actor it allows | 🟡 Partial 12/13 · 1 blocked | ✅ Works 13/13 | ✅ Works 13/13 | 🟡 Partial 5/13 · 8 blocked | 🟡 Partial 10/13 · 3 blocked | 🟡 Partial 8/13 · 5 blocked |
-| Field policies hide values, in reads, filters and aggregates | ✅ Works 4/4 | ✅ Works 4/4 | ✅ Works 4/4 | 🟡 Partial 3/4 · 1 blocked | 🟡 Partial 2/4 · 1 blocked | ❌ Broken 0/4 · 1 blocked |
+| A filter policy on the actor | 🟡 Partial 12/16 · 3 blocked | ✅ Works 16/16 | ✅ Works 16/16 | 🟡 Partial 7/16 · 8 blocked | 🟡 Partial 12/16 · 3 blocked | 🟡 Partial 10/16 · 5 blocked |
+| The same policy with no actor | 🟡 Partial 12/16 · 3 blocked | ✅ Works 16/16 | ✅ Works 16/16 | 🟡 Partial 10/16 · 5 blocked | 🟡 Partial 11/16 · 3 blocked | 🟡 Partial 11/16 · 4 blocked |
+| forbid_if before authorize_if | 🟡 Partial 12/16 · 3 blocked | ✅ Works 16/16 | ✅ Works 16/16 | 🟡 Partial 7/16 · 8 blocked | 🟡 Partial 12/16 · 3 blocked | 🟡 Partial 10/16 · 5 blocked |
+| A bypass policy, for an actor it does not let through | 🟡 Partial 12/16 · 3 blocked | ✅ Works 16/16 | ✅ Works 16/16 | 🟡 Partial 7/16 · 8 blocked | 🟡 Partial 12/16 · 3 blocked | 🟡 Partial 10/16 · 5 blocked |
+| A bypass policy, for an actor it lets through | 🟡 Partial 10/13 · 3 blocked | ✅ Works 13/13 | ✅ Works 13/13 | 🟡 Partial 5/13 · 8 blocked | 🟡 Partial 10/13 · 3 blocked | 🟡 Partial 8/13 · 5 blocked |
+| Two policies that must both pass | 🟡 Partial 12/16 · 3 blocked | ✅ Works 16/16 | ✅ Works 16/16 | 🟡 Partial 7/16 · 8 blocked | 🟡 Partial 12/16 · 3 blocked | 🟡 Partial 10/16 · 5 blocked |
+| One policy whose checks either pass | 🟡 Partial 12/16 · 3 blocked | ✅ Works 16/16 | ✅ Works 16/16 | 🟡 Partial 7/16 · 8 blocked | 🟡 Partial 12/16 · 3 blocked | 🟡 Partial 10/16 · 5 blocked |
+| A policy on a to-one relationship | 🟡 Partial 12/16 · 3 blocked | ✅ Works 16/16 | ✅ Works 16/16 | 🟡 Partial 1/16 · 8 blocked | 🟡 Partial 12/16 · 3 blocked | 🟡 Partial 1/16 · 5 blocked |
+| A policy on a multi-hop exists | 🟡 Partial 12/16 · 3 blocked | ✅ Works 16/16 | ✅ Works 16/16 | 🟡 Partial 7/16 · 8 blocked | 🟡 Partial 12/16 · 3 blocked | 🟡 Partial 8/16 · 5 blocked |
+| A policy composed with can_read | 🟡 Partial 12/16 · 3 blocked | ✅ Works 16/16 | ✅ Works 16/16 | 🟡 Partial 7/16 · 8 blocked | 🟡 Partial 12/16 · 3 blocked | 🟡 Partial 8/16 · 5 blocked |
+| A strict policy, for an actor it forbids | 🟡 Partial 12/16 · 3 blocked | ✅ Works 16/16 | ✅ Works 16/16 | 🟡 Partial 10/16 · 5 blocked | 🟡 Partial 11/16 · 3 blocked | 🟡 Partial 11/16 · 4 blocked |
+| A strict policy, for an actor it allows | 🟡 Partial 10/13 · 3 blocked | ✅ Works 13/13 | ✅ Works 13/13 | 🟡 Partial 5/13 · 8 blocked | 🟡 Partial 10/13 · 3 blocked | 🟡 Partial 8/13 · 5 blocked |
+| Field policies hide values, in reads, filters and aggregates | 🟡 Partial 2/4 · 1 blocked | ✅ Works 4/4 | ✅ Works 4/4 | 🟡 Partial 3/4 · 1 blocked | 🟡 Partial 2/4 · 1 blocked | ❌ Broken 0/4 · 1 blocked |
 | A filter check on create runs after the insert | ✅ Works 2/2 | ✅ Works 2/2 | ❌ Broken 0/2 | 🟡 Partial 1/2 | ❌ Broken 0/2 | ❌ Broken 0/2 |
-| Every policy path, without authorization | 🟡 Partial 21/22 | ✅ Works 22/22 | ✅ Works 22/22 | 🟡 Partial 13/22 | 🟡 Partial 18/22 | 🟡 Partial 16/22 |
+| Every policy path, without authorization | 🟡 Partial 18/22 | ✅ Works 22/22 | ✅ Works 22/22 | 🟡 Partial 13/22 | 🟡 Partial 18/22 | 🟡 Partial 16/22 |
 
 ## 13. Combinations
 
 | Feature | sqlite | postgres | ets | csv | mysql | clickhouse |
 | --- | --- | --- | --- | --- | --- | --- |
-| Each combined feature works on its own | ✅ Works 14/14 | ✅ Works 14/14 | ➖ Not applicable | ➖ Not applicable | ➖ Not applicable | ➖ Not applicable |
-| Features work together, pair by pair | 🟡 Partial 16/17 | 🟡 Partial 16/17 | ➖ Not applicable | ➖ Not applicable | ➖ Not applicable | ➖ Not applicable |
-| Aggregates and exists over paths of one to three hops, on integer and UUID keys | ✅ Works 174/174 | ✅ Works 174/174 | ➖ Not applicable | ➖ Not applicable | ➖ Not applicable | ➖ Not applicable |
-| Sorting by the destination's aggregate inside a path | ✅ Works 4/4 | ✅ Works 4/4 | ➖ Not applicable | ➖ Not applicable | ➖ Not applicable | ➖ Not applicable |
+| Each combined feature works on its own | ⛔ Not supported 0/14 · 13 blocked | ✅ Works 14/14 | ➖ Not applicable | ➖ Not applicable | ➖ Not applicable | ➖ Not applicable |
+| Features work together, pair by pair | ⛔ Not supported 0/17 · 17 blocked | 🟡 Partial 16/17 | ➖ Not applicable | ➖ Not applicable | ➖ Not applicable | ➖ Not applicable |
+| Aggregates and exists over paths of one to three hops, on integer and UUID keys | 🟡 Partial 12/174 · 153 blocked | ✅ Works 174/174 | ➖ Not applicable | ➖ Not applicable | ➖ Not applicable | ➖ Not applicable |
+| Sorting by the destination's aggregate inside a path | ⛔ Not supported 0/4 | ✅ Works 4/4 | ➖ Not applicable | ➖ Not applicable | ➖ Not applicable | ➖ Not applicable |
 | Calculations over a related field keep records whose related record is missing | ✅ Works 8/8 | ✅ Works 8/8 | ➖ Not applicable | ➖ Not applicable | ➖ Not applicable | ➖ Not applicable |
 
 ## 14. Consistency checks
 
 | Feature | sqlite | postgres | ets | csv | mysql | clickhouse |
 | --- | --- | --- | --- | --- | --- | --- |
-| Counts match loads, and root sums match an in-memory reference | ✅ Works 2/2 | ✅ Works 2/2 | ✅ Works 2/2 | ⛔ Not supported 0/2 | 🟡 Partial 1/2 | 🟡 Partial 1/2 |
+| Counts match loads, and root sums match an in-memory reference | 🟡 Partial 1/2 | ✅ Works 2/2 | ✅ Works 2/2 | ⛔ Not supported 0/2 | 🟡 Partial 1/2 | 🟡 Partial 1/2 |
+
+## 15. Adversarial invariants
+
+| Feature | sqlite | postgres | ets | csv | mysql | clickhouse |
+| --- | --- | --- | --- | --- | --- | --- |
+| Tenancy scopes many_to_many and through loads, aggregates and filters | 🟡 Partial 5/17 | 🟡 Partial 7/17 | 🟡 Partial 12/17 | ➖ Not applicable | ➖ Not applicable | ➖ Not applicable |
+| Schema-based tenancy scopes the same paths | ➖ Not applicable | 🟡 Partial 2/6 | ➖ Not applicable | ➖ Not applicable | ➖ Not applicable | ➖ Not applicable |
+| Bounded through loads keep their path | 🟡 Partial 1/8 | 🟡 Partial 5/8 | 🟡 Partial 5/8 | ➖ Not applicable | ➖ Not applicable | ➖ Not applicable |
+| The join resource's read policy applies to loads, aggregates and input filters | 🟡 Partial 3/11 | 🟡 Partial 5/11 | 🟡 Partial 5/11 | ➖ Not applicable | ➖ Not applicable | ➖ Not applicable |
+| Updates and destroys given another tenant's records change nothing of it | 🟡 Partial 5/13 | 🟡 Partial 7/13 | 🟡 Partial 7/13 | ➖ Not applicable | ➖ Not applicable | ➖ Not applicable |
+| Upserts stay in their tenant | 🟡 Partial 2/6 | 🟡 Partial 3/6 | ❓ Open question 4/6 | ➖ Not applicable | ➖ Not applicable | ➖ Not applicable |
+| Field policies apply to write results, embedded values included | ❌ Broken 0/11 | 🟡 Partial 3/11 | 🟡 Partial 2/11 | ➖ Not applicable | ➖ Not applicable | ➖ Not applicable |
+| manage_relationship can't relate another tenant's or a hidden record | ✅ Works 4/4 | ✅ Works 4/4 | ✅ Works 4/4 | ➖ Not applicable | ➖ Not applicable | ➖ Not applicable |
 
 ## Blockers
 
@@ -457,11 +687,23 @@ blockers counts under each.
 
 | Blocker | Its result | Not run | Failing | Only blocker of |
 | --- | --- | ---: | ---: | ---: |
+| `ops.integer.first` | crashed | 0 | 37 | 37 |
+| `combo.base` | rejected | 0 | 30 | 30 |
+| `shape.count.integer.depth_1.none.filter` | rejected | 0 | 17 | 17 |
+| `shape.count.integer.depth_1.none.loaded` | rejected | 0 | 17 | 17 |
+| `shape.count.integer.depth_1.none.sort` | rejected | 0 | 17 | 17 |
+| `shape.exists.integer.depth_1.none.filter` | rejected | 0 | 17 | 17 |
+| `shape.exists.integer.depth_1.none.loaded` | rejected | 0 | 17 | 17 |
+| `shape.exists.integer.depth_1.none.sort` | rejected | 0 | 17 | 17 |
+| `shape.sum.integer.depth_1.none.filter` | rejected | 0 | 17 | 17 |
+| `shape.sum.integer.depth_1.none.loaded` | rejected | 0 | 17 | 17 |
+| `shape.sum.integer.depth_1.none.sort` | rejected | 0 | 17 | 17 |
+| `policy.control.aggregate_filter` | rejected | 0 | 12 | 12 |
+| `policy.control.loaded_count` | rejected | 0 | 12 | 12 |
+| `policy.control.loaded_sum` | rejected | 0 | 12 | 12 |
 | `storage.duration.ordinary` | error at create: ** (Exqlite.Error) unsupported type: %Duration{hour: 1, minute: 30} | 10 | 0 | 10 |
-| `filter.fanout_read_control` | wrong | 0 | 7 | 7 |
-| `policy.control.exists_filter_input` | wrong | 0 | 5 | 5 |
 | `storage.decimal.edge` | lost at read: Decimal.new("12345678901234568") | 0 | 4 | 4 |
-| `context.relationship_context_control` | wrong | 0 | 1 | 1 |
+| `context.relationship_context_control` | wrong | 0 | 2 | 2 |
 | `filter.nested_parent_control` | crashed | 0 | 1 | 1 |
 | `filter.parent_through_control` | crashed | 0 | 1 | 1 |
 | `ops.binary.in` | crashed | 0 | 1 | 1 |
@@ -471,6 +713,7 @@ blockers counts under each.
 | `ops.map.is_nil` | wrong | 0 | 1 | 1 |
 | `ops.strings.count` | wrong | 0 | 1 | 1 |
 | `ops.strings.is_nil` | wrong | 0 | 1 | 1 |
+| `policy.control.field_aggregate` | rejected | 0 | 1 | 1 |
 
 ### AshPostgres
 
@@ -650,13 +893,16 @@ whose claims disagree with the result:
 | Parent references in nested and through relationship filters | mysql | Advertised, but ❌ Broken |
 | Parent references in nested and through relationship filters | clickhouse | Not advertising `parent: {:filter_relationship, :same_tenant_tags}`, but not rejected either: wrong answers |
 | Load belongs-to, has-one, has-many and many-to-many relationships | clickhouse | Works without advertising `child: {:filter_relationship, :parent}`, `parent: {:filter_relationship, :tags}` |
+| Aggregate calculations and other aggregates | sqlite | Not advertising `parent: {:aggregate, :sum}`, but not rejected either: wrong answers |
 | Aggregate calculations and other aggregates | mysql | Not advertising `parent: {:aggregate, :sum}`, but not rejected either: wrong answers |
 | Aggregate calculations and other aggregates | clickhouse | Advertised, but ❌ Broken |
 | Filter the records an aggregate uses | clickhouse | Not advertising `parent: :aggregate_filter`, but not rejected either: wrong answers |
+| Aggregate filters through to-many relationships count each record once | sqlite | Advertised, but ⛔ Not supported |
 | Aggregate filters through to-many relationships count each record once | mysql | Advertised, but ⛔ Not supported |
 | Aggregate filters through to-many relationships count each record once | clickhouse | Not advertising `child: {:filter_relationship, :ratings}`, but not rejected either: wrong answers |
 | Aggregate filters that use other aggregates | clickhouse | Not advertising `child: :aggregate_filter`, but not rejected either: wrong answers |
 | Aggregate filters that reference the parent record | clickhouse | Not advertising `parent: {:aggregate_relationship, :above_threshold}`, but not rejected either: wrong answers |
+| Aggregate over to-one, multi-hop and many-to-many paths | sqlite | Not advertising `parent: {:aggregate_relationship, :tags}`, `parent: {:aggregate, :unrelated}`, but not rejected either: wrong answers |
 | Aggregate over to-one, multi-hop and many-to-many paths | mysql | Not advertising `parent: {:aggregate_relationship, :tags}`, `parent: {:aggregate, :unrelated}`, but not rejected either: wrong answers |
 | Aggregate over to-one, multi-hop and many-to-many paths | clickhouse | Not advertising `parent: {:aggregate_relationship, :tags}`, `parent: {:aggregate, :unrelated}`, but not rejected either: wrong answers |
 | Aggregate over limited, offset and from-many relationships | clickhouse | Not advertising `parent: {:aggregate_relationship, :top_children}`, but not rejected either: wrong answers |
@@ -676,13 +922,14 @@ whose claims disagree with the result:
 | Bulk update atomically | csv | Not advertising `tenant_item: :update_query`, `tenant_item: {:atomic, :update}`, but not rejected either: wrong answers |
 | Bulk update atomically | mysql | Not advertising `tenant_item: :update_query`, but not rejected either: wrong answers |
 | Bulk update atomically | clickhouse | Not advertising `tenant_item: {:atomic, :update}`, but not rejected either: wrong answers |
+| Writes that filter by or read aggregates | sqlite | Advertised, but ❌ Broken |
 | Writes that filter by or read aggregates | mysql | Not advertising `parent: :update_query`, `parent: :destroy_query`, but not rejected either: wrong answers |
 | Writes that filter by or read aggregates | clickhouse | Advertised, but ❌ Broken |
-| Tenancy scopes pages and counts | sqlite | Works without advertising `tenant_parent: :keyset` |
 | Tenancy scopes pages and counts | postgres | Works without advertising `tenant_parent: :keyset` |
 | Tenancy scopes pages and counts | ets | Not advertising `tenant_parent: :keyset`, but not rejected either: wrong answers |
 | Tenancy scopes pages and counts | clickhouse | Not advertising `tenant_parent: :keyset`, but not rejected either: wrong answers |
 | Tenancy scopes creates, updates and destroys | csv | Works without advertising `tenant_item: :destroy_query` |
+| Policies filter pages and counts | sqlite | Advertised, but ⛔ Not supported |
 | Policies filter pages and counts | csv | Advertised, but ⛔ Not supported |
 | Policies filter pages and counts | mysql | Advertised, but ⛔ Not supported |
 | Policies filter pages and counts | clickhouse | Advertised, but ❌ Broken |

@@ -144,14 +144,22 @@ defmodule Ash.Conformance.Runner do
       else: {:order_dependent, Map.new(outcomes)}
   end
 
-  defp same_outcome?({:ok, left}, {:ok, right}), do: Ash.Conformance.Compare.equal?(left, right)
+  @doc "Whether two outcomes are the same: equal values, or the same error and message."
+  def same_outcome?({:ok, left}, {:ok, right}), do: Ash.Conformance.Compare.equal?(left, right)
 
-  defp same_outcome?({:error, exception, left}, {:error, exception, right}),
+  def same_outcome?({:error, exception, left}, {:error, exception, right}),
     do:
       Ash.Conformance.Report.outcome({:error, exception, left}) ==
         Ash.Conformance.Report.outcome({:error, exception, right})
 
-  defp same_outcome?(_, _), do: false
+  def same_outcome?({:order_dependent, left}, {:order_dependent, right}),
+    do:
+      Map.keys(left) == Map.keys(right) and
+        Enum.all?(left, fn {order, outcome} ->
+          same_outcome?(outcome, Map.fetch!(right, order))
+        end)
+
+  def same_outcome?(_, _), do: false
 
   def run_with_setup!(
         scenario,

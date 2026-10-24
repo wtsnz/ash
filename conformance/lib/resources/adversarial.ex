@@ -89,7 +89,7 @@ defmodule Ash.Conformance.Resources.Adversarial do
   One shape's event and order resources, `<prefix>Event` and `<prefix>Order`
   under `namespace`. `kind` is `:tenant`, `:secure`, `:plain` or `:schema`,
   schema-based tenancy, which only Postgres provisions
-  (`Ash.Conformance.Postgres.SchemaResources`).
+  (the Postgres adapter's `SchemaResources`).
   """
   def shape(namespace, adapter, prefix, kind) do
     identity_opts = Ash.Conformance.Resources.Base.identity_options(adapter)

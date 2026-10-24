@@ -70,9 +70,12 @@ declaration: the storage cells of the row's types.
 Every scenario also runs under each `Ash.Conformance.Variant`, on data
 layers whose resources use `variants: true` (SQLite and Postgres):
 `authorize` (`authorize?: true`, no authorizer), `permit_policy` (a policy
-that allows everything) and `filter_policy` (a filter policy every row
-passes). A variant must not change the answer, so a variant cell passes only
+that allows everything), `filter_policy` (a filter policy every row
+passes) and `decoy` (hidden copies of every fixture row; ETS runs it too).
+A variant must not change the answer, so a variant cell passes only
 when it matches the scenario's own record. It needs no new expected value.
+Under `decoy`, no decoy id, value or marker may appear in the outcome either
+(`Ash.Conformance.Decoy`); a variant record pins a leak exactly.
 
 - Where you would pass `authorize?: false`, pass
   `authorize?: Ash.Conformance.Variant.authorize?()`. Keep a literal `false`
@@ -82,7 +85,13 @@ when it matches the scenario's own record. It needs no new expected value.
   resource set.
 - A scenario whose answer rightly changes, such as one that reads a resource
   with its own policies and no actor, opts out with
-  `variants: {:none, reason}` or `{:except, variants, reason}`. The policy
+  `variants: {:none, reason}` or `{:except, variants, reason}`. Two shared
+  decoy opt-outs say why: `Variant.across_tenants/0` for a read across
+  tenants on purpose, and `Variant.plain_relationship_filter/0` for a plain
+  filter through a relationship, which policies don't authorize.
+- A read that checks what is stored, with authorization off, must leave out
+  decoys itself (`Ash.Conformance.Decoy.reserved?/1`) unless tenancy hides
+  them. The policy
   grid, the combination grid and the authorization scenarios have their own
   authorization axis and don't run variants.
 - When a variant shows a defect the scenario's own record doesn't, record it

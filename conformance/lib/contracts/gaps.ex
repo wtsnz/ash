@@ -13,7 +13,8 @@ defmodule Ash.Conformance.Contracts.Gaps do
   - Each adapter's `gaps/0`: what only that data layer shows, next to its
     expectation records.
 
-  A gap has an ID (its `GAPS.md` anchor), a title, a kind and its owners.
+  A gap has an ID (its `GAPS.md` anchor), a title, a kind and its owners,
+  and optionally `fixed_in`, the dependency sets where it is fixed upstream.
   The first owner is where the fix starts; later owners also need changes,
   such as an adapter capability gate or context passed in by Ash.
   Implementations are defects to fix. Decisions are semantic questions for
@@ -23,7 +24,13 @@ defmodule Ash.Conformance.Contracts.Gaps do
 
   alias Ash.Conformance.Adapter
 
-  @names %{ash: "Ash", ash_sql: "AshSQL", ash_postgres: "AshPostgres", ash_sqlite: "AshSQLite"}
+  @names %{
+    ash: "Ash",
+    ash_sql: "AshSQL",
+    ash_postgres: "AshPostgres",
+    ash_sqlite: "AshSQLite",
+    ecto: "Ecto"
+  }
 
   @doc "Every gap: shared ones first, then AshSQL's, then each adapter's."
   def all do
@@ -64,7 +71,22 @@ defmodule Ash.Conformance.Contracts.Gaps do
         :implementation -> "Owner"
       end
 
-    "#{label}: #{Enum.join(names(id), ", then ")}."
+    "#{label}: #{Enum.join(names(id), ", then ")}." <> fixed_line(id)
+  end
+
+  @sets %{"release" => "the latest releases", "main" => "`main`"}
+
+  @doc """
+  The dependency sets (`CONFORMANCE_DEPS`) where a gap is fixed upstream,
+  from its optional `fixed_in`. Kept as history; no record need link to it.
+  """
+  def fixed_in(id), do: Map.get(fetch!(id), :fixed_in, [])
+
+  defp fixed_line(id) do
+    case fixed_in(id) do
+      [] -> ""
+      sets -> "\nFixed upstream in #{Enum.map_join(sets, " and ", &Map.fetch!(@sets, &1))}."
+    end
   end
 
   defp validate!(gaps) do

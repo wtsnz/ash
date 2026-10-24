@@ -270,23 +270,28 @@ defmodule Ash.Conformance.SQL.Gaps do
         id: "joined-prefix-cache",
         title: "Joined prefix cache",
         kind: :implementation,
-        owners: [:ash_sql],
+        owners: [:ecto, :ash_sql],
         body: ~S"""
 
-        Put a schema-based tenant's prefix where Ecto's query cache sees it. An
-        aggregate or `exists` over a `many_to_many` from a shared resource joins the
-        tenant's join table as an interpolated `%Ecto.Query{prefix: tenant}`
-        (`apply_relationship_subquery/7` in `lib/aggregate/lateral.ex`). Ecto puts
-        that prefix in the SQL, but its cache key only includes the join's own
-        `prefix`, so the statement planned for the first tenant is reused for every
-        other one. With orders in `dc_tenant_a` and `dc_tenant_b`, tenant b's
-        `buyer_count`, `buyer_ids` and `top_buyer` are tenant a's, and
-        `exists(buyers, id == 2)` matches nothing for tenant b
-        (`adv.schema.m2m_aggregates`, `adv.schema.m2m_exists`). Run in the other
-        order, tenant a gets tenant b's. The recorded results come from each
-        scenario reading tenant a first; each variant reads its own resource
-        modules and so gets its own cache entry. Loads of the same relationship are
-        right.
+        Keep a schema-based tenant's prefix in the cache key of the query that uses
+        it. An aggregate or `exists` over a `many_to_many` from a shared resource
+        joins the tenant's join table as an interpolated `%Ecto.Query{prefix:
+        tenant}` (`join: through in ^through`, in `lib/aggregate/lateral.ex` and
+        `lib/expr.ex`; `set_join_prefix/3` in `lib/join.ex` sets the query's
+        prefix). Ecto's planner inlines that query into a join and uses its prefix
+        in the SQL, but the join it builds (`query_to_joins/4`, from `plan_joins/9`)
+        has no `prefix` of its own, and the cache key only reads the join's. So the
+        statement planned for the first tenant is reused for every other one. With
+        orders in `dc_tenant_a` and `dc_tenant_b`, tenant b's `buyer_count`,
+        `buyer_ids` and `top_buyer` are tenant a's, and `exists(buyers, id == 2)`
+        matches nothing for tenant b (`adv.schema.m2m_aggregates`,
+        `adv.schema.m2m_exists`). Run in the other order, tenant a gets tenant b's.
+        The recorded results come from each scenario reading tenant a first; each
+        variant reads its own resource modules and so gets its own cache entry.
+        Loads of the same relationship are right. Copying the inlined query's
+        prefix onto the join in Ecto's planner turns both scenarios green and
+        changes no other schema scenario; setting the join's own `prefix` in
+        AshSQL would avoid it too.
         """
       },
       %{

@@ -39,8 +39,7 @@ defmodule Ash.Conformance.SQL.Database do
       {12, Ash.Conformance.SQL.Migrations.Large},
       {13, Ash.Conformance.SQL.Migrations.Identities},
       {14, Ash.Conformance.SQL.Migrations.Signatures},
-      {15, Ash.Conformance.SQL.Migrations.Shapes},
-      {16, Ash.Conformance.SQL.Migrations.Adversarial}
+      {15, Ash.Conformance.SQL.Migrations.Shapes}
     ]
 
     # In version order, so an adapter's own migration, such as Postgres's

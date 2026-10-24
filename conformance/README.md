@@ -87,6 +87,13 @@ cause.
   policy that allows everything, and with a filter policy every row passes.
   Each must match the scenario's own record, so authorization-only code paths
   are tested without new expected answers (`Ash.Conformance.Variant`).
+- **Decoys must not leak.** A fourth variant stores a hidden copy of every
+  fixture row: in a mirror tenant with colliding local ids where the table
+  is multitenant, and otherwise with a reserved id a read policy hides. The
+  answer must not change, and no decoy may appear in it
+  (`Ash.Conformance.Decoy`). It runs on SQLite, Postgres and ETS. The
+  adversarial scenarios (`adv.*`) add the shapes a leak needs that the rest
+  of the suite lacks; see [ADVERSARIAL.md](ADVERSARIAL.md).
 - **Reviewed and surveyed data layers.** Reviewed data layers (SQLite and
   Postgres) have an expectation record for every scenario, and `mix test`
   fails when a result changes, including when a known defect is fixed.
@@ -141,21 +148,27 @@ the reason; the others still run.
 
 ### Compare two versions of the stack
 
-`CONFORMANCE_DEPS=upstream` switches AshSQL, AshSqlite and AshPostgres to
-ash-project `main` (locked in `mix.upstream.lock`), with their own deps and
-build directories. Comparing surveys shows what a branch changes:
+By default the suite runs the latest Hex releases of Ash, AshSQL, AshSqlite
+and AshPostgres (`mix.lock`). `CONFORMANCE_DEPS=main` switches all four to
+ash-project `main` (locked in `mix.main.lock`), with their own deps and build
+directories. Adding `CONFORMANCE_MAIN_DIR`, a directory holding `ash/`,
+`ash_sql/`, `ash_sqlite/` and `ash_postgres/` checkouts, uses those as path
+dependencies instead, with a lock and build of their own that git ignores.
+Where the two sets give different results, an adapter's expectations say so
+with `on_deps/2`. Comparing surveys shows what `main` changes:
 
 ```sh
-CONFORMANCE_DEPS=upstream MIX_ENV=test mise exec -- mix conformance.survey sqlite
+CONFORMANCE_DEPS=main MIX_ENV=test mise exec -- mix conformance.survey sqlite
 MIX_ENV=test mise exec -- mix conformance.survey sqlite
 MIX_ENV=test mise exec -- mix conformance.compare_surveys \
-  results/upstream/survey-sqlite.json results/survey-sqlite.json
+  results/main/survey-sqlite.json results/survey-sqlite.json
 ```
 
-To test a local checkout of a data layer, point at it, for example
-`CONFORMANCE_ASH_SQLITE_PATH=../../ash_sqlite`. `CONFORMANCE_ASH_SQL_PATH`,
-`CONFORMANCE_ASH_POSTGRES_PATH` and `CONFORMANCE_ASH_MYSQL_PATH` work the
-same way. Reports list any such overrides.
+To test one local checkout, point at it, for example
+`CONFORMANCE_ASH_SQLITE_PATH=../../ash_sqlite`. `CONFORMANCE_ASH_PATH`,
+`CONFORMANCE_ASH_SQL_PATH`, `CONFORMANCE_ASH_POSTGRES_PATH` and
+`CONFORMANCE_ASH_MYSQL_PATH` work the same way. Reports list any such
+overrides.
 
 ### Search for disagreements with generated filters
 

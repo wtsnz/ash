@@ -51,7 +51,7 @@ defmodule Ash.Conformance.Fixtures do
     # query that loses a filter tends to meet a decoy before a real row.
     decoys =
       if Ash.Conformance.Variant.current() == :decoy,
-        do: Ash.Conformance.Decoy.rows(adapter, adapter.resource(role), rows, opts),
+        do: Ash.Conformance.Decoy.rows(adapter, adapter.resource(role), rows),
         else: []
 
     for row <- decoys ++ rows do

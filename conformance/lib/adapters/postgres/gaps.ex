@@ -13,6 +13,7 @@ defmodule Ash.Conformance.Postgres.Gaps do
         title: "Root first",
         kind: :implementation,
         owners: [:ash_sql],
+        fixed_in: ["release", "main"],
         body: ~S"""
         The crash is in AshSQL's lateral `add_subquery_aggregate_select/6`.
 
@@ -42,7 +43,10 @@ defmodule Ash.Conformance.Postgres.Gaps do
         `adv.tenant.has_one_sorted`, `adv.tenant.has_one_unsorted`,
         `adv.tenant.m2m_limit_one`). Aggregates and `exists` over the same
         relationships are built by AshSQL's joins, which apply tenancy, and are
-        right. ETS and AshSQLite's `many_to_many` are right.
+        right. ETS and AshSQLite's `many_to_many` are right. On AshPostgres `main`,
+        where [Through many-to-many step](#through-many-to-many-step) is fixed,
+        the four-hop path ending in `buyers` leaks the same way
+        (`adv.tenant.through_many_to_many_load`).
         """
       },
       %{
@@ -50,6 +54,7 @@ defmodule Ash.Conformance.Postgres.Gaps do
         title: "Through many-to-many step",
         kind: :implementation,
         owners: [:ash_postgres],
+        fixed_in: ["main"],
         body: ~S"""
 
         Join through the join resource when a `through` path's last step is a
@@ -161,6 +166,7 @@ defmodule Ash.Conformance.Postgres.Gaps do
         title: "Tenant bypass",
         kind: :implementation,
         owners: [:ash_sql],
+        fixed_in: ["main"],
         body: ~S"""
         AshSQL's lateral strategy applies attribute tenancy without the aggregate's read
         action. The grouped strategy passes it and returns the intended results.

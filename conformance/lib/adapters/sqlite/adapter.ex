@@ -47,6 +47,7 @@ defmodule Ash.Conformance.Sqlite do
   def setup! do
     Ash.Conformance.SQL.Database.setup!(repo(),
       replace: %{13 => Ash.Conformance.SQL.Migrations.IdentitiesPlain},
+      migrations: [{16, Ash.Conformance.SQL.Migrations.Adversarial}],
       storage: {__MODULE__, &Ash.Conformance.SQL.Columns.ash_sql/1}
     )
   end
@@ -79,6 +80,9 @@ defmodule Ash.Conformance.SqliteRepo do
 
   # AshSQLite recommends write transactions and its installer enables them.
   def write_transactions?, do: true
+
+  # The SQLite exqlite bundles. AshSQLite `main` asks for it; releases ignore it.
+  def min_sqlite_version, do: %Version{major: 3, minor: 54, patch: 0}
 end
 
 # AshSQLite gained custom aggregates in the unreleased aggregate work. Against

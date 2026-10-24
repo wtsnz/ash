@@ -238,6 +238,131 @@ cause is `Ash.Type.Union.handle_change/3` (`lib/ash/type/union.ex`), whose
 clause for a change from a union to nil keeps the old member type. Creating a
 record with nil stores nil.
 
+## Through limit one
+
+Owner: Ash.
+
+Keep a `through` relationship's path when its load has a limit of 1. Ash
+marks every `through` relationship `no_attributes?: true`, so its path only
+applies in the lateral join. `lateral_join?/4` (`lib/ash/actions/read/relationships.ex`)
+returns false before reaching its `through` clause when the load's limit is
+1 and either one record is loaded or the relationship is a `has_one` with no
+sort, filter or context of its own. The load then reads the destination with
+no link to the record. Loading event 1's customers sorted by name descending
+with a limit of 1 returns customer 5, which has no order for event 1; an
+offset of 1 returns customer 6, which has no orders at all; and an unsorted
+`has_one through` loaded with a limit of 1 gives every event customer 5
+(`adv.plain.through_limit_one`, `adv.plain.through_offset`,
+`adv.plain.has_one_limit`, and their tenant and schema forms). Two records
+loaded together take the lateral join and are right
+(`adv.plain.through_limit_one_each`). The same happens on every data layer
+that supports `through`.
+
+## Join resource policies
+
+Owner: Ash.
+
+Apply the join resource's read policy to aggregates over `many_to_many` and
+`through` relationships, and to `filter_input` on a `many_to_many`. The
+policies guide says aggregates always authorize the related data they
+reference, and that an input filter's relationship path applies each related
+resource's read policy. Loads do: event 1's `buyers` and `customers` leave
+out customer 3, whose only order is hidden. `count`, `list`, `first` and
+`exists` aggregates over the same relationships count and return customer 3,
+and `filter_input(%{buyers: %{id: %{eq: 3}}})` matches event 1
+(`adv.join_policy.*`). The plain `orders` path is right
+(`adv.join_policy.path_aggregates`, `adv.join_policy.path_filter_input`),
+and so is `filter_input` through a `through` relationship. Aggregates add
+policy filters for the intermediate relationships of their own path
+(`add_join_filters/5` in `lib/ash/actions/read/read.ex`), and a
+`many_to_many` or `through` relationship is one step of that path. The decoy
+variant finds the same on its hidden decoy orders, which double the counts.
+
+## Bulk stream tenant
+
+Owner: Ash.
+
+Apply attribute multitenancy to each record in the `:stream` strategy of
+`Ash.bulk_update/4` and `Ash.bulk_destroy/4`. Given organisation 1's note 101
+and organisation 2's note 201 with `tenant: 1`, the `:atomic` and
+`:atomic_batches` strategies change only 101. `:stream`, and
+`[:atomic, :stream]` with an action that can't run atomically, change or
+delete both and return both (`adv.foreign.bulk_*`), as do records read across
+tenants with no tenant of their own
+(`adv.foreign.bulk_update.stream_global_records`). The single-record actions
+add the tenant filter in `handle_attribute_multitenancy/1`; the stream path
+calls the data layer's `update`/`destroy` without it. On data layers without
+the `:expr_error` capability, such as AshSQLite, Ash runs every bulk destroy
+of records as `:stream`, so `:atomic` and `:atomic_batches` destroys delete
+201 there too.
+
+## Destroy record tenant
+
+Owner: Ash.
+
+Keep a destroy changeset's tenant. `Ash.Changeset.for_destroy(note_201,
+:destroy, %{}, tenant: 1) |> Ash.destroy()` deletes organisation 2's note
+201: `Ash.destroy/2` fills `tenant` from the record's metadata and
+`Ash.Actions.Destroy` sets it on the changeset, replacing tenant 1. The same
+changeset for an update, and `Ash.destroy(note_201, tenant: 1)`, are refused
+(`adv.foreign.destroy_changeset`, against `adv.foreign.update_changeset` and
+`adv.foreign.destroy_option`).
+
+## Write result field policies
+
+Owner: Ash.
+
+Apply field policies inside embedded values to create, update and destroy
+results. A read by a non-admin hides the top-level `secret`, the embedded
+`profile.ssn`, each embedded card's `number` in an array, and the card
+`number` inside a union (`adv.field_write.read_control`). The records
+returned by `Ash.create`, `Ash.update`, `Ash.destroy` with
+`return_destroyed?`, `Ash.bulk_create` and atomic bulk updates and destroys
+hide `secret` but show the embedded values (`adv.field_write.*`). Reads clean
+field-policy results recursively; action results only clean top-level
+fields (`restrict_field_access/2` in `lib/ash/actions/helpers.ex`). The
+`:stream` strategies hide them. On AshPostgres the atomic strategies also
+leave out `order_count`, an aggregate loaded on the bulk query.
+
+## Aggregate reference authorization
+
+Owner: Ash.
+
+Authorize the related data of an aggregate wherever it is referenced. The
+policies guide says aggregates "referenced *anywhere* will *always*
+authorize access to the related data they reference". Found by the decoy
+variant, whose hidden children and ratings belong to real parents and
+children. With authorization on, these count the hidden rows on SQLite,
+Postgres and ETS, on the latest releases and on `main`:
+
+- an aggregate in an atomic update, `atomic_update(:threshold,
+  expr(child_count))`, in bulk and single updates (`write.atomic_update`,
+  `write.single_atomic_update`);
+- an aggregate in the query given to an atomic `Ash.bulk_update/4`:
+  `filter(child_sum > 5)` updates parent 2, whose only visible child has
+  value 4 (`write.bulk_update_filter`);
+- an aggregate as the field of a root aggregate, `Ash.aggregate(parent,
+  {:result, :sum, field: :child_count})` (`field.root_aggregate`).
+
+On Postgres and ETS, but not SQLite, an aggregate in another aggregate's
+query filter (`count(children, query: filter(rating_count > 1))`) counts
+hidden ratings too (`filter.aggregate_dependency*`).
+
+## All-tenants upsert
+
+Decision owner: Ash.
+
+Decision: may an upsert in one tenant update or return another tenant's row
+through an identity with `all_tenants?: true`? The multitenancy guide says
+such an identity is unique across tenants and that a create in a second
+tenant fails, but not what an upsert does. Ash uses only the identity's keys
+as the conflict target for these identities, so an upsert of code `"n2-1"`
+in organisation 1 updates organisation 2's note 201 on every data layer
+(`adv.upsert.all_tenants`). With a condition that skips it and
+`return_skipped_upsert?`, AshPostgres returns note 201
+(`adv.upsert.all_tenants_skipped_bulk`). Until Ash decides, both are
+unresolved and each reviewed data layer pins what it does.
+
 # AshSQL
 
 ## Bind parameter limit
@@ -437,6 +562,44 @@ again for a named `list` aggregate over a limited relationship
 (`combo.list.top_items.value_gt.global.actor.loaded`): owner 1 returns `[5]`
 instead of `[5, 3]`.
 
+## Joined prefix cache
+
+Owner: Ecto, then AshSQL.
+
+Keep a schema-based tenant's prefix in the cache key of the query that uses
+it. An aggregate or `exists` over a `many_to_many` from a shared resource
+joins the tenant's join table as an interpolated `%Ecto.Query{prefix:
+tenant}` (`join: through in ^through`, in `lib/aggregate/lateral.ex` and
+`lib/expr.ex`; `set_join_prefix/3` in `lib/join.ex` sets the query's
+prefix). Ecto's planner inlines that query into a join and uses its prefix
+in the SQL, but the join it builds (`query_to_joins/4`, from `plan_joins/9`)
+has no `prefix` of its own, and the cache key only reads the join's. So the
+statement planned for the first tenant is reused for every other one. With
+orders in `dc_tenant_a` and `dc_tenant_b`, tenant b's `buyer_count`,
+`buyer_ids` and `top_buyer` are tenant a's, and `exists(buyers, id == 2)`
+matches nothing for tenant b (`adv.schema.m2m_aggregates`,
+`adv.schema.m2m_exists`). Run in the other order, tenant a gets tenant b's.
+The recorded results come from each scenario reading tenant a first; each
+variant reads its own resource modules and so gets its own cache entry.
+Loads of the same relationship are right. Copying the inlined query's
+prefix onto the join in Ecto's planner turns both scenarios green and
+changes no other schema scenario; setting the join's own `prefix` in
+AshSQL would avoid it too.
+
+## Through exists aggregate
+
+Owner: AshSQL.
+
+Correlate an `exists` aggregate over a `through` relationship with its
+source. `Ash.Query.aggregate(:x, :exists, :customers, query: filter(id ==
+3))` compiles to `exists((SELECT 1 FROM adv_customers WHERE id = 3))`, with
+no link to the event, so it is true for every event when any customer
+matches (`adv.join_policy.through_exists_aggregate`: events 2 and 3, which
+have no order from customer 3, are true). A `count` aggregate with the same
+query, and an `exists` filter over the same relationship, are right. Ash
+marks `through` relationships `no_attributes?: true`, and this aggregate
+kind treats it as one.
+
 # AshSqlite
 
 ## Error expressions
@@ -607,16 +770,6 @@ support them. On SQLite, loading `ratings` through `[:children, :ratings]`
 gives every parent parent 1's four ratings; parents 2 and 3 have none. The
 aggregate over the same relationship is correct. Postgres returns the intended
 ratings and counts without a warning.
-
-## Upsert conditions
-
-Owner: AshSQLite.
-
-Support `upsert_condition` expressions that use `upsert_conflict/1`. AshSQLite
-advertises upserts, including atomic upserts, but raises "Unsupported
-expression" for `upsert_conflict(:value)`, or passes it as an unsupported
-parameter in the generated SQL. SQLite's `ON CONFLICT ... DO UPDATE ... WHERE`
-can express the condition using `excluded`.
 
 ## Unsorted bounds
 
@@ -794,16 +947,76 @@ Support `string_join/1-2`. AshSqlite rejects it with a documented error
 ("does not support the function"). SQLite can express it by concatenating
 the non-nil values with `||` and `COALESCE`, as Ash's evaluation skips nils.
 
+## Upsert conditions
+
+Owner: AshSQLite.
+Fixed upstream in `main`.
+
+Support `upsert_condition` expressions that use `upsert_conflict/1`. AshSQLite
+advertises upserts, including atomic upserts, but raises "Unsupported
+expression" for `upsert_conflict(:value)`, or passes it as an unsupported
+parameter in the generated SQL. SQLite's `ON CONFLICT ... DO UPDATE ... WHERE`
+can express the condition using `excluded`.
+
 # AshPostgres
 
 ## Root first
 
 Owner: AshSQL.
+Fixed upstream in the latest releases and `main`.
 The crash is in AshSQL's lateral `add_subquery_aggregate_select/6`.
 
 Postgres root `first` without an explicit sort dereferences a missing first
 relationship. The empty-input scenario should return nil. Explicitly sorted
 first and empty-input controls already pass.
+
+## Through tenant
+
+Owner: AshPostgres.
+
+Apply attribute multitenancy to the join resource and each `through` step of
+a lateral-join load. Orders are multitenant by `org_id` and unique on
+`[:event_id, :customer_id]`, so Ash loads `many_to_many :buyers` and every
+`has_many`/`has_one` `through` relationship with AshPostgres's lateral join.
+That join builds the orders' query with `Ash.Query.set_tenant/2` and
+`Ash.Query.data_layer_query/1`, and attribute tenancy is only added by the
+read action, so organisation 1 gets the customers of both organisations'
+orders: event 1's buyers are `[1, 2, 3, 4]` instead of `[1, 3]`, event 3,
+with no organisation 1 order, gets customer 2, and the sorted `has_one`
+returns organisation 2's customer (`adv.tenant.m2m_load`,
+`adv.tenant.through_load`, `adv.tenant.through_long_load`,
+`adv.tenant.has_one_sorted`, `adv.tenant.has_one_unsorted`,
+`adv.tenant.m2m_limit_one`). Aggregates and `exists` over the same
+relationships are built by AshSQL's joins, which apply tenancy, and are
+right. ETS and AshSQLite's `many_to_many` are right. On AshPostgres `main`,
+where [Through many-to-many step](#through-many-to-many-step) is fixed,
+the four-hop path ending in `buyers` leaks the same way
+(`adv.tenant.through_many_to_many_load`).
+
+## Through many-to-many step
+
+Owner: AshPostgres.
+Fixed upstream in `main`.
+
+Join through the join resource when a `through` path's last step is a
+`many_to_many`. Loading `through: [:orders, :event, :buyers]` joins
+customers to events on `customers.id = events.id`, without the orders table
+of the `buyers` step, so each event gets the customer whose id equals its
+own (`adv.tenant.through_many_to_many_load`: event 1 gets customer 1, event
+3 customer 3). The same path ending in `[:orders, :customer]` is right apart
+from [Through tenant](#through-tenant).
+
+## Schema through destination
+
+Owner: AshPostgres.
+
+Keep a shared destination in its own schema when loading a `through`
+relationship under schema-based tenancy. Events and customers are shared;
+orders live in each tenant's schema. Loading `customers` through
+`[:orders, :customer]` with tenant `dc_tenant_a` queries
+`"dc_tenant_a"."adv_customers"`, which doesn't exist
+(`adv.schema.through_load`). The `many_to_many` over the same orders loads
+correctly (`adv.schema.m2m_load`). This is an error, not a wrong answer.
 
 ## Skipped upsert tenant
 
@@ -871,6 +1084,7 @@ Configured-action and intermediate-action controls pass on both adapters.
 ## Tenant bypass
 
 Owner: AshSQL.
+Fixed upstream in `main`.
 AshSQL's lateral strategy applies attribute tenancy without the aggregate's read
 action. The grouped strategy passes it and returns the intended results.
 

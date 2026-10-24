@@ -48,6 +48,7 @@ defmodule Ash.Conformance.Postgres do
         {3, Ash.Conformance.SQL.Migrations.ContextTenancy},
         {7, Ash.Conformance.Postgres.Citext},
         {9, Ash.Conformance.Postgres.AshFunctions},
+        {16, Ash.Conformance.SQL.Migrations.Adversarial},
         {17, Ash.Conformance.SQL.Migrations.AdversarialContext}
       ],
       storage: {__MODULE__, &Ash.Conformance.SQL.Columns.ash_sql/1}

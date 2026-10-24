@@ -14,9 +14,9 @@ defmodule Ash.Conformance.MixProject do
       deps: deps(),
       # Each dependency set has its own lock, deps and build, so switching
       # between them never rebuilds or rewrites the other.
-      lockfile: dependency_set_path("mix.lock", "mix.upstream.lock"),
-      deps_path: dependency_set_path("deps", "deps_upstream"),
-      build_path: dependency_set_path("_build", "_build_upstream"),
+      lockfile: lockfile(),
+      deps_path: dependency_set_path("deps", "deps"),
+      build_path: dependency_set_path("_build", "_build"),
       dialyzer: [plt_add_apps: [:ex_unit, :mix]],
       aliases: [
         check: [
@@ -29,19 +29,26 @@ defmodule Ash.Conformance.MixProject do
     ]
   end
 
+  defp lockfile do
+    case dependency_set() do
+      "release" -> "mix.lock"
+      set -> "mix.#{set}.lock"
+    end
+  end
+
   def application, do: [extra_applications: [:logger]]
 
   def cli, do: [preferred_envs: [check: :test]]
 
   defp deps do
     [
-      {:ash, path: "..", override: true},
-      adapter(:ash_sql, "CONFORMANCE_ASH_SQL_PATH", ash_sql_source()),
+      core(:ash, "CONFORMANCE_ASH_PATH", "3.37.0"),
+      core(:ash_sql, "CONFORMANCE_ASH_SQL_PATH", "0.8.3"),
       {:simple_sat, "~> 0.1"},
       {:credo, "~> 1.7", only: [:dev, :test], runtime: false},
       {:dialyxir, "~> 1.4", only: [:dev, :test], runtime: false},
-      adapter(:ash_sqlite, "CONFORMANCE_ASH_SQLITE_PATH", ash_sqlite_source()),
-      adapter(:ash_postgres, "CONFORMANCE_ASH_POSTGRES_PATH", ash_postgres_source()),
+      core(:ash_sqlite, "CONFORMANCE_ASH_SQLITE_PATH", "0.2.19"),
+      core(:ash_postgres, "CONFORMANCE_ASH_POSTGRES_PATH", "2.15.1"),
       # Ecosystem data layers, surveyed without reviewed expectations.
       {:ash_csv, "~> 0.9.9"},
       {:ash_clickhouse, "~> 0.7.3"},
@@ -52,57 +59,49 @@ defmodule Ash.Conformance.MixProject do
     ]
   end
 
-  # `pinned` (the default) is an exact ash-project commit for each adapter:
-  # the SQL aggregate work, merged in ash_sql#264 and ash_sqlite#232.
-  # `upstream` is ash-project main for every adapter, locked in
-  # mix.upstream.lock; `mix deps.update` moves it forward deliberately.
+  # `release` (the default) is the latest Hex release of Ash, AshSQL,
+  # AshSqlite and AshPostgres. `main` is each one's `main` branch from GitHub,
+  # locked in mix.main.lock. With `CONFORMANCE_MAIN_DIR`, a directory holding
+  # `ash/`, `ash_sql/`, `ash_sqlite/` and `ash_postgres/` checkouts, `main`
+  # uses those as path dependencies instead, with a lock, deps and build of
+  # its own that git ignores. Each set has its own lock, deps and build.
   defp dependency_set do
-    case System.get_env("CONFORMANCE_DEPS", "pinned") do
-      set when set in ["pinned", "upstream"] -> set
-      other -> Mix.raise("CONFORMANCE_DEPS must be pinned or upstream, got: #{other}")
+    case System.get_env("CONFORMANCE_DEPS", "release") do
+      "release" ->
+        "release"
+
+      "main" ->
+        if System.get_env("CONFORMANCE_MAIN_DIR") in [nil, ""], do: "main", else: "main_local"
+
+      other ->
+        Mix.raise("CONFORMANCE_DEPS must be release or main, got: #{other}")
     end
   end
 
-  defp dependency_set_path(pinned, upstream),
-    do: if(dependency_set() == "upstream", do: upstream, else: pinned)
-
-  defp ash_sql_source do
+  defp dependency_set_path(release, suffix) do
     case dependency_set() do
-      "pinned" ->
-        [
-          git: "https://github.com/ash-project/ash_sql.git",
-          ref: "0ef973c11a96774f088137f3b2288ef9732d44f7",
-          override: true
-        ]
-
-      "upstream" ->
-        [git: "https://github.com/ash-project/ash_sql.git", branch: "main", override: true]
+      "release" -> release
+      set -> "#{suffix}_#{set}"
     end
   end
 
-  defp ash_sqlite_source do
-    case dependency_set() do
-      "pinned" ->
-        [
-          git: "https://github.com/ash-project/ash_sqlite.git",
-          ref: "f489778aae1abad8de436ed07dfb3237148a44fd"
-        ]
+  # The release from Hex, or `main`, unless a local checkout is named
+  # explicitly. Every core package overrides, so the ecosystem data layers'
+  # own requirements can't pull in another version.
+  defp core(name, variable, version) do
+    case {System.get_env(variable), dependency_set()} do
+      {path, _} when path not in [nil, ""] ->
+        {name, path: Path.expand(path), override: true}
 
-      "upstream" ->
-        [git: "https://github.com/ash-project/ash_sqlite.git", branch: "main"]
-    end
-  end
+      {_, "main_local"} ->
+        {name,
+         path: Path.join(System.get_env("CONFORMANCE_MAIN_DIR"), to_string(name)), override: true}
 
-  defp ash_postgres_source do
-    case dependency_set() do
-      "pinned" ->
-        [
-          git: "https://github.com/ash-project/ash_postgres.git",
-          ref: "945073e431ec6eb3fbbb831a8ce5b561d8f8cd35"
-        ]
+      {_, "main"} ->
+        {name, git: "https://github.com/ash-project/#{name}.git", branch: "main", override: true}
 
-      "upstream" ->
-        [git: "https://github.com/ash-project/ash_postgres.git", branch: "main"]
+      {_, "release"} ->
+        {name, version, override: true}
     end
   end
 
