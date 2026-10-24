@@ -47,7 +47,14 @@ defmodule Ash.Conformance.Fixtures do
   failing the whole batch anonymously.
   """
   def seed!(adapter, role, rows, opts \\ []) do
-    for row <- rows do
+    # Under the decoy variant, each row's hidden copy goes in first, so a
+    # query that loses a filter tends to meet a decoy before a real row.
+    decoys =
+      if Ash.Conformance.Variant.current() == :decoy,
+        do: Ash.Conformance.Decoy.rows(adapter, adapter.resource(role), rows, opts),
+        else: []
+
+    for row <- decoys ++ rows do
       try do
         adapter.persist!(role, [row], opts)
       rescue
@@ -144,6 +151,12 @@ defmodule Ash.Conformance.Fixtures do
 
   defp build_fixture!(adapter, :edges), do: Ash.Conformance.Fixtures.Edges.seed!(adapter)
   defp build_fixture!(adapter, :shapes), do: Ash.Conformance.Fixtures.Shapes.seed!(adapter)
+
+  defp build_fixture!(adapter, :adversarial),
+    do: Ash.Conformance.Fixtures.Adversarial.seed!(adapter)
+
+  defp build_fixture!(adapter, :adversarial_context),
+    do: Ash.Conformance.Fixtures.Adversarial.seed_context!(adapter)
 
   # The combination grid's tables, for scenarios every data layer runs.
   defp build_fixture!(adapter, :joins), do: Ash.Conformance.Fixtures.Combination.seed!(adapter)

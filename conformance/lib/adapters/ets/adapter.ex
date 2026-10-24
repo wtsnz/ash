@@ -26,6 +26,10 @@ defmodule Ash.Conformance.Ets do
   # ETS cannot enforce uniqueness itself, so Ash checks identities first.
   def identity_options, do: [pre_check?: true]
 
+  # ETS also runs the adversarial scenarios: most of them check Ash itself.
+  def fixture?(:adversarial), do: true
+  def fixture?(fixture), do: super(fixture)
+
   def setup!, do: :ok
   def checkout!, do: checkin!()
 
@@ -42,5 +46,9 @@ end
 
 defmodule Ash.Conformance.Ets.Resources do
   @moduledoc "Every shared resource role, instantiated for Ash's ETS data layer."
-  use Ash.Conformance.Resources, namespace: Ash.Conformance.Ets, adapter: Ash.Conformance.Ets
+  # Only the decoy set: ETS runs no other variant.
+  use Ash.Conformance.Resources,
+    namespace: Ash.Conformance.Ets,
+    adapter: Ash.Conformance.Ets,
+    variants: [:decoy]
 end

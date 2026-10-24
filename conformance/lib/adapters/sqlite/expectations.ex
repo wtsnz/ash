@@ -495,7 +495,7 @@ defmodule Ash.Conformance.Sqlite.Expectations do
           "decimal-precision"
         )
       )
-    ]
+    ] ++ adversarial_rules()
   end
 
   @doc """
@@ -507,7 +507,7 @@ defmodule Ash.Conformance.Sqlite.Expectations do
       expect_variant(
         ~w(shape.exists.*.depth_2.*.sort shape.exists.*.depth_2.*.filter
            shape.exists.*.depth_3.*.sort shape.exists.*.depth_3.*.filter),
-        :filter_policy,
+        [:filter_policy, :decoy],
         defect_error(
           ~r/no such relationship Ash\.Conformance\.\w+\.Shape(Integer|Uuid)(Leaf|Tip)\.(integer|uuid)_mids/,
           "exists-path-authorization"
@@ -530,6 +530,177 @@ defmodule Ash.Conformance.Sqlite.Expectations do
           "authorized-action-arguments",
           Ash.Error.Invalid
         )
+      )
+    ] ++ decoy_rules()
+  end
+
+  # The adversarial scenarios (`Ash.Conformance.Scenarios.Adversarial`).
+  # AshSQLite doesn't support `through` relationships; a resource that
+  # declares one anyway loads every customer for every event.
+  defp adversarial_rules do
+    every = %{1 => [1, 2, 3, 4, 5, 6], 2 => [1, 2, 3, 4, 5, 6], 3 => [1, 2, 3, 4, 5, 6]}
+    first_of_all = %{1 => 5, 2 => 5, 3 => 5}
+    joined = %{1 => {4, [1, 2, 3, 4], 4}, 2 => {2, [4, 5], 5}, 3 => {1, [2], 2}}
+    notes = Ash.Conformance.Adversarial.notes()
+
+    [
+      expect(
+        ~w(adv.tenant.through_load adv.tenant.through_long_load
+           adv.tenant.through_many_to_many_load),
+        defect_value({every, every}, "through-fallback")
+      ),
+      expect(
+        ~w(adv.plain.through_load adv.join_policy.through_load),
+        defect_value(every, "through-fallback")
+      ),
+      expect(
+        "adv.tenant.has_one_sorted",
+        defect_value({first_of_all, first_of_all}, "through-fallback")
+      ),
+      expect("adv.plain.has_one_sorted", defect_value(first_of_all, "through-fallback")),
+      expect(
+        "adv.tenant.has_one_unsorted",
+        defect_value(
+          {%{1 => true, 2 => false, 3 => false}, %{1 => false, 2 => false, 3 => false}},
+          "through-fallback"
+        )
+      ),
+      expect(
+        "adv.plain.has_one_unsorted",
+        defect_value(%{1 => true, 2 => false, 3 => false}, "through-fallback")
+      ),
+      expect(
+        "adv.plain.through_limit_one_each",
+        defect_value(%{1 => [5], 2 => [5]}, "through-fallback")
+      ),
+      expect("adv.tenant.through_limit_one", defect_value({[5], [5]}, "through-limit-one")),
+      expect("adv.tenant.through_offset", defect_value({[6], [6]}, "through-limit-one")),
+      expect(
+        "adv.tenant.has_one_limit",
+        defect_value({first_of_all, first_of_all}, "through-limit-one")
+      ),
+      expect("adv.plain.has_one_limit", defect_value(first_of_all, "through-limit-one")),
+      expect("adv.plain.through_limit_one", defect_value([5], "through-limit-one")),
+      expect("adv.plain.through_offset", defect_value([6], "through-limit-one")),
+      expect(
+        ~w(adv.join_policy.m2m_aggregates adv.join_policy.through_aggregates),
+        defect_value(joined, "join-resource-policies")
+      ),
+      expect(
+        ~w(adv.join_policy.m2m_exists_aggregate adv.join_policy.through_exists_aggregate),
+        defect_value(%{1 => true, 2 => false, 3 => false}, "join-resource-policies")
+      ),
+      expect("adv.join_policy.m2m_aggregate_filter", defect_value([], "join-resource-policies")),
+      expect("adv.join_policy.m2m_filter_input", defect_value([1], "join-resource-policies")),
+      expect(
+        ~w(adv.field_write.create adv.field_write.update adv.field_write.destroy
+           adv.field_write.bulk_create adv.field_write.bulk_update.atomic
+           adv.field_write.bulk_update.atomic_batches),
+        defect_value(Ash.Conformance.Adversarial.leaked_fields(), "write-result-field-policies")
+      ),
+      expect(
+        "adv.field_write.update_load",
+        defect_value(
+          Map.put(Ash.Conformance.Adversarial.leaked_fields(), :order_count, :forbidden),
+          "write-result-field-policies"
+        )
+      ),
+      expect(
+        ~w(adv.foreign.bulk_update.stream adv.foreign.bulk_update.fallback
+           adv.foreign.bulk_update.stream_global_records),
+        defect_value(
+          {[101, 201], Ash.Conformance.Adversarial.notes_after([101, 201], :update)},
+          "bulk-stream-tenant"
+        )
+      ),
+      # Ash runs every bulk destroy of records as `:stream` on AshSQLite.
+      expect(
+        ~w(adv.foreign.bulk_destroy.atomic adv.foreign.bulk_destroy.atomic_batches
+           adv.foreign.bulk_destroy.stream adv.foreign.bulk_destroy.fallback),
+        defect_value(
+          {[101, 201], Ash.Conformance.Adversarial.notes_after([101, 201], :destroy)},
+          "bulk-stream-tenant"
+        )
+      ),
+      expect(
+        "adv.foreign.destroy_changeset",
+        defect_value(
+          {:ok, Ash.Conformance.Adversarial.notes_after([201], :destroy)},
+          "destroy-record-tenant"
+        )
+      ),
+      expect(
+        "adv.upsert.all_tenants",
+        unresolved_value(
+          {{201, 2, 1, "mine"}, Ash.Conformance.Adversarial.notes_after([201], {:body, "mine"})},
+          "all-tenants-upsert"
+        )
+      ),
+      # AshSQLite rejects `upsert_conflict/1` in an upsert condition.
+      expect(
+        "adv.upsert.all_tenants_skipped_bulk",
+        unresolved_value({:refused, notes}, "all-tenants-upsert")
+      ),
+      expect(
+        ~w(adv.upsert.skipped adv.upsert.skipped_bulk),
+        defect_value({:refused, notes}, "upsert-conditions")
+      )
+    ]
+  end
+
+  # What the decoy variant's hidden rows change (`Ash.Conformance.Decoy`).
+  defp decoy_rules do
+    [
+      expect_variant(
+        ~w(bounds.filter_after_limit bounds.relationship_limit bounds.relationship_offset),
+        :decoy,
+        defect_value(%{1 => nil, 2 => 4, 3 => nil}, "authorization-bounds")
+      ),
+      expect_variant(
+        "bounds.list_filter_after_limit",
+        :decoy,
+        defect_value(%{1 => [], 2 => [4], 3 => []}, "authorization-bounds")
+      ),
+      expect_variant(
+        "bounds.relationship_offset_only",
+        :decoy,
+        defect_value(%{1 => 11, 2 => 4, 3 => nil}, "authorization-bounds")
+      ),
+      expect_variant(
+        "context.authorization_before_bounds",
+        :decoy,
+        defect_value(%{1 => nil, 2 => nil, 3 => nil}, "authorization-bounds")
+      ),
+      expect_variant(
+        "write.atomic_update",
+        :decoy,
+        defect_value([{1, 8}, {2, 2}, {3, 0}], "aggregate-reference-authorization")
+      ),
+      expect_variant(
+        "write.single_atomic_update",
+        :decoy,
+        defect_value(2, "aggregate-reference-authorization")
+      ),
+      expect_variant(
+        "write.bulk_update_filter",
+        :decoy,
+        defect_value([{1, "big"}, {2, "big"}, {3, "empty"}], "aggregate-reference-authorization")
+      ),
+      expect_variant(
+        "field.root_aggregate",
+        :decoy,
+        defect_value(10, "aggregate-reference-authorization")
+      ),
+      expect_variant(
+        ~w(adv.join_policy.m2m_aggregates adv.join_policy.through_aggregates),
+        :decoy,
+        defect_value(Ash.Conformance.Adversarial.doubled_join(), "join-resource-policies")
+      ),
+      # The hidden decoy orders also repeat event 1 in the read.
+      expect_variant(
+        "adv.join_policy.m2m_filter_input",
+        :decoy,
+        defect_value([1, 1], "join-resource-policies")
       )
     ]
   end

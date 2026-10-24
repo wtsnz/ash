@@ -22,9 +22,15 @@ defmodule Ash.Conformance.Scenarios.Shapes do
       run = fn ctx -> Shapes.run(ctx.adapter, test_case) end
       expected = Shapes.reference(test_case)
       opts = [fixture: :shapes, requires: Shapes.requires(test_case), semantic_basis: @aggregates]
-      new("#{Shapes.scenario_id(test_case)}", :shapes, expected, run, opts)
+      new("#{Shapes.scenario_id(test_case)}", :shapes, expected, run, opts ++ variants(test_case))
     end
   end
+
+  # `exists(path, predicate)` in a read's filter is a plain relationship filter.
+  defp variants(%{use: :exists_expr}),
+    do: [variants: Ash.Conformance.Variant.plain_relationship_filter()]
+
+  defp variants(_test_case), do: []
 
   # A sort by the destination's aggregate, inside the path's subquery.
   defp sorted do

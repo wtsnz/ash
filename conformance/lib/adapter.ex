@@ -32,9 +32,10 @@ defmodule Ash.Conformance.Adapter do
   fixture but `:context_tenancy` (schema-based tenancy), `:combination` (the
   combination grid), `:large` (thousands of rows), `:signatures` and
   `:edges` (a column of every argument type, including arrays and `citext`),
-  and `:shapes` (the shapes grid), which run on the
-  reviewed data layers to keep the ecosystem run short. An adapter opts in
-  by returning true.
+  `:shapes` (the shapes grid), and `:adversarial` and `:adversarial_context`
+  (`Ash.Conformance.Adversarial`, whose resources are only defined for an
+  integration that runs them), which run on the reviewed data layers to keep
+  the ecosystem run short. An adapter opts in by returning true.
   """
   @callback fixture?(atom() | {:operations, atom()}) :: boolean()
   @doc "Expectation records by scenario ID, for every scenario in the adapter's profiles."
@@ -95,7 +96,9 @@ defmodule Ash.Conformance.Adapter do
         Ash.Conformance.Policy.roles() ++
         ~w(combo_owner combo_item combo_link expr_row large_row identity_row strict_identity_row
           sig_row shape_root shape_integer_mid shape_integer_leaf shape_integer_tip shape_uuid_mid
-          shape_uuid_leaf shape_uuid_tip)a
+          shape_uuid_leaf shape_uuid_tip)a ++
+        ~w(adv_event adv_order adv_customer adv_secure_event adv_secure_order adv_plain_event
+          adv_plain_order adv_note adv_list adv_secure_note adv_secure_list adv_person)a
 
   def table_roles,
     do: ~w(parent child rating tag link child_tag event reading ledger record tenant_parent
@@ -159,7 +162,17 @@ defmodule Ash.Conformance.Adapter do
       def variant_expectations, do: %{}
 
       def fixture?(fixture),
-        do: fixture not in [:context_tenancy, :combination, :large, :signatures, :edges, :shapes]
+        do:
+          fixture not in [
+            :context_tenancy,
+            :combination,
+            :large,
+            :signatures,
+            :edges,
+            :shapes,
+            :adversarial,
+            :adversarial_context
+          ]
 
       def custom_aggregate, do: Ash.Conformance.Resources.NoCustomAggregate
       def manual_relationship, do: Ash.Conformance.Resources.PlainManual

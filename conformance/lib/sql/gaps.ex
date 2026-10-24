@@ -265,6 +265,47 @@ defmodule Ash.Conformance.SQL.Gaps do
         (`combo.list.top_items.value_gt.global.actor.loaded`): owner 1 returns `[5]`
         instead of `[5, 3]`.
         """
+      },
+      %{
+        id: "joined-prefix-cache",
+        title: "Joined prefix cache",
+        kind: :implementation,
+        owners: [:ash_sql],
+        body: ~S"""
+
+        Put a schema-based tenant's prefix where Ecto's query cache sees it. An
+        aggregate or `exists` over a `many_to_many` from a shared resource joins the
+        tenant's join table as an interpolated `%Ecto.Query{prefix: tenant}`
+        (`apply_relationship_subquery/7` in `lib/aggregate/lateral.ex`). Ecto puts
+        that prefix in the SQL, but its cache key only includes the join's own
+        `prefix`, so the statement planned for the first tenant is reused for every
+        other one. With orders in `dc_tenant_a` and `dc_tenant_b`, tenant b's
+        `buyer_count`, `buyer_ids` and `top_buyer` are tenant a's, and
+        `exists(buyers, id == 2)` matches nothing for tenant b
+        (`adv.schema.m2m_aggregates`, `adv.schema.m2m_exists`). Run in the other
+        order, tenant a gets tenant b's. The recorded results come from each
+        scenario reading tenant a first; each variant reads its own resource
+        modules and so gets its own cache entry. Loads of the same relationship are
+        right.
+        """
+      },
+      %{
+        id: "through-exists-aggregate",
+        title: "Through exists aggregate",
+        kind: :implementation,
+        owners: [:ash_sql],
+        body: ~S"""
+
+        Correlate an `exists` aggregate over a `through` relationship with its
+        source. `Ash.Query.aggregate(:x, :exists, :customers, query: filter(id ==
+        3))` compiles to `exists((SELECT 1 FROM adv_customers WHERE id = 3))`, with
+        no link to the event, so it is true for every event when any customer
+        matches (`adv.join_policy.through_exists_aggregate`: events 2 and 3, which
+        have no order from customer 3, are true). A `count` aggregate with the same
+        query, and an `exists` filter over the same relationship, are right. Ash
+        marks `through` relationships `no_attributes?: true`, and this aggregate
+        kind treats it as one.
+        """
       }
     ]
   end

@@ -47,7 +47,8 @@ defmodule Ash.Conformance.Postgres do
       migrations: [
         {3, Ash.Conformance.SQL.Migrations.ContextTenancy},
         {7, Ash.Conformance.Postgres.Citext},
-        {9, Ash.Conformance.Postgres.AshFunctions}
+        {9, Ash.Conformance.Postgres.AshFunctions},
+        {17, Ash.Conformance.SQL.Migrations.AdversarialContext}
       ],
       storage: {__MODULE__, &Ash.Conformance.SQL.Columns.ash_sql/1}
     )
@@ -134,7 +135,17 @@ defmodule Ash.Conformance.Postgres.SchemaResources do
     parent = Module.concat(namespace, SchemaParent)
     item = Module.concat(namespace, SchemaItem)
 
+    adversarial =
+      Ash.Conformance.Resources.Adversarial.shape(
+        namespace,
+        Ash.Conformance.Postgres,
+        "AdvSchema",
+        :schema
+      )
+
     quote context: Elixir do
+      (unquote_splicing(adversarial))
+
       defmodule unquote(parent) do
         @moduledoc false
         use Ash.Conformance.Resources.Base,
@@ -200,4 +211,5 @@ defmodule Ash.Conformance.Postgres.Resources do
   use Ash.Conformance.Postgres.SchemaResources, namespace: Ash.Conformance.Postgres
   use Ash.Conformance.Postgres.SchemaResources, namespace: Ash.Conformance.Postgres.PermitPolicy
   use Ash.Conformance.Postgres.SchemaResources, namespace: Ash.Conformance.Postgres.FilterPolicy
+  use Ash.Conformance.Postgres.SchemaResources, namespace: Ash.Conformance.Postgres.Decoy
 end

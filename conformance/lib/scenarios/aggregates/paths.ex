@@ -144,10 +144,16 @@ defmodule Ash.Conformance.Scenarios.Aggregates.Paths do
       new("identity.root_composite_count", :identity, 3, fn ctx ->
         root(%{ctx | child: ctx.adapter.resource(:link)}, :count, uniq?: true)
       end),
-      new("identity.composite_fanout_count", :identity, %{1 => 2, 2 => 1, 3 => 0}, fn ctx ->
-        query = Ash.Query.filter(ctx.adapter.resource(:link), parent.children.value > 0)
-        loaded(ctx, :count, :links, query: query)
-      end),
+      new(
+        "identity.composite_fanout_count",
+        :identity,
+        %{1 => 2, 2 => 1, 3 => 0},
+        fn ctx ->
+          query = Ash.Query.filter(ctx.adapter.resource(:link), parent.children.value > 0)
+          loaded(ctx, :count, :links, query: query)
+        end,
+        variants: Ash.Conformance.Variant.plain_relationship_filter()
+      ),
       new("identity.keyless_source", :identity, [3, 3], fn ctx ->
         ctx.adapter.resource(:event)
         |> Ash.Query.aggregate(:result, :sum, :parent, field: :threshold)

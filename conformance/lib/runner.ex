@@ -60,6 +60,8 @@ defmodule Ash.Conformance.Runner do
         Ash.Conformance.Contracts.Expectations.for(scenario.id, adapter.id())
       end)
 
+    variant_record? = Map.has_key?(adapter.variant_expectations(), {scenario.id, variant})
+
     Ash.Conformance.Variant.run(variant, fn ->
       case expectation do
         {:unknown, {:setup_error, pattern}, task} ->
@@ -69,9 +71,26 @@ defmodule Ash.Conformance.Runner do
           outcome =
             scenario |> observe_both_orders(adapter) |> Ash.Conformance.Variant.normalize()
 
+          # A recorded variant gap pins the leak itself; otherwise any decoy
+          # in the outcome fails, whatever the scenario's own record says.
+          if variant == :decoy and not variant_record?, do: refute_leaks!(scenario, outcome)
           assert_outcome!(scenario, expectation, outcome)
       end
     end)
+  end
+
+  @doc "Fails when an outcome contains a decoy id, value or marker."
+  def refute_leaks!(scenario, outcome) do
+    case Ash.Conformance.Decoy.leaks(outcome) do
+      [] ->
+        :ok
+
+      leaks ->
+        flunk(
+          "#{scenario.id}: hidden decoy rows leaked into the outcome: #{format(leaks)}\n" <>
+            "Observed: #{format(outcome)}"
+        )
+    end
   end
 
   # A `not_run` record: the fixture must fail to store, with the recorded

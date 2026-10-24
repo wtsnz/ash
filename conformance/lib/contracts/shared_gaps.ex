@@ -308,6 +308,160 @@ defmodule Ash.Conformance.Contracts.SharedGaps do
         clause for a change from a union to nil keeps the old member type. Creating a
         record with nil stores nil.
         """
+      },
+      %{
+        id: "through-limit-one",
+        title: "Through limit one",
+        kind: :implementation,
+        owners: [:ash],
+        body: ~S"""
+
+        Keep a `through` relationship's path when its load has a limit of 1. Ash
+        marks every `through` relationship `no_attributes?: true`, so its path only
+        applies in the lateral join. `lateral_join?/4` (`lib/ash/actions/read/relationships.ex`)
+        returns false before reaching its `through` clause when the load's limit is
+        1 and either one record is loaded or the relationship is a `has_one` with no
+        sort, filter or context of its own. The load then reads the destination with
+        no link to the record. Loading event 1's customers sorted by name descending
+        with a limit of 1 returns customer 5, which has no order for event 1; an
+        offset of 1 returns customer 6, which has no orders at all; and an unsorted
+        `has_one through` loaded with a limit of 1 gives every event customer 5
+        (`adv.plain.through_limit_one`, `adv.plain.through_offset`,
+        `adv.plain.has_one_limit`, and their tenant and schema forms). Two records
+        loaded together take the lateral join and are right
+        (`adv.plain.through_limit_one_each`). The same happens on every data layer
+        that supports `through`.
+        """
+      },
+      %{
+        id: "join-resource-policies",
+        title: "Join resource policies",
+        kind: :implementation,
+        owners: [:ash],
+        body: ~S"""
+
+        Apply the join resource's read policy to aggregates over `many_to_many` and
+        `through` relationships, and to `filter_input` on a `many_to_many`. The
+        policies guide says aggregates always authorize the related data they
+        reference, and that an input filter's relationship path applies each related
+        resource's read policy. Loads do: event 1's `buyers` and `customers` leave
+        out customer 3, whose only order is hidden. `count`, `list`, `first` and
+        `exists` aggregates over the same relationships count and return customer 3,
+        and `filter_input(%{buyers: %{id: %{eq: 3}}})` matches event 1
+        (`adv.join_policy.*`). The plain `orders` path is right
+        (`adv.join_policy.path_aggregates`, `adv.join_policy.path_filter_input`),
+        and so is `filter_input` through a `through` relationship. Aggregates add
+        policy filters for the intermediate relationships of their own path
+        (`add_join_filters/5` in `lib/ash/actions/read/read.ex`), and a
+        `many_to_many` or `through` relationship is one step of that path. The decoy
+        variant finds the same on its hidden decoy orders, which double the counts.
+        """
+      },
+      %{
+        id: "bulk-stream-tenant",
+        title: "Bulk stream tenant",
+        kind: :implementation,
+        owners: [:ash],
+        body: ~S"""
+
+        Apply attribute multitenancy to each record in the `:stream` strategy of
+        `Ash.bulk_update/4` and `Ash.bulk_destroy/4`. Given organisation 1's note 101
+        and organisation 2's note 201 with `tenant: 1`, the `:atomic` and
+        `:atomic_batches` strategies change only 101. `:stream`, and
+        `[:atomic, :stream]` with an action that can't run atomically, change or
+        delete both and return both (`adv.foreign.bulk_*`), as do records read across
+        tenants with no tenant of their own
+        (`adv.foreign.bulk_update.stream_global_records`). The single-record actions
+        add the tenant filter in `handle_attribute_multitenancy/1`; the stream path
+        calls the data layer's `update`/`destroy` without it. On data layers without
+        the `:expr_error` capability, such as AshSQLite, Ash runs every bulk destroy
+        of records as `:stream`, so `:atomic` and `:atomic_batches` destroys delete
+        201 there too.
+        """
+      },
+      %{
+        id: "destroy-record-tenant",
+        title: "Destroy record tenant",
+        kind: :implementation,
+        owners: [:ash],
+        body: ~S"""
+
+        Keep a destroy changeset's tenant. `Ash.Changeset.for_destroy(note_201,
+        :destroy, %{}, tenant: 1) |> Ash.destroy()` deletes organisation 2's note
+        201: `Ash.destroy/2` fills `tenant` from the record's metadata and
+        `Ash.Actions.Destroy` sets it on the changeset, replacing tenant 1. The same
+        changeset for an update, and `Ash.destroy(note_201, tenant: 1)`, are refused
+        (`adv.foreign.destroy_changeset`, against `adv.foreign.update_changeset` and
+        `adv.foreign.destroy_option`).
+        """
+      },
+      %{
+        id: "write-result-field-policies",
+        title: "Write result field policies",
+        kind: :implementation,
+        owners: [:ash],
+        body: ~S"""
+
+        Apply field policies inside embedded values to create, update and destroy
+        results. A read by a non-admin hides the top-level `secret`, the embedded
+        `profile.ssn`, each embedded card's `number` in an array, and the card
+        `number` inside a union (`adv.field_write.read_control`). The records
+        returned by `Ash.create`, `Ash.update`, `Ash.destroy` with
+        `return_destroyed?`, `Ash.bulk_create` and atomic bulk updates and destroys
+        hide `secret` but show the embedded values (`adv.field_write.*`). Reads clean
+        field-policy results recursively; action results only clean top-level
+        fields (`restrict_field_access/2` in `lib/ash/actions/helpers.ex`). The
+        `:stream` strategies hide them. On AshPostgres the atomic strategies also
+        leave out `order_count`, an aggregate loaded on the bulk query.
+        """
+      },
+      %{
+        id: "aggregate-reference-authorization",
+        title: "Aggregate reference authorization",
+        kind: :implementation,
+        owners: [:ash],
+        body: ~S"""
+
+        Authorize the related data of an aggregate wherever it is referenced. The
+        policies guide says aggregates "referenced *anywhere* will *always*
+        authorize access to the related data they reference". Found by the decoy
+        variant, whose hidden children and ratings belong to real parents and
+        children. With authorization on, these count the hidden rows on SQLite,
+        Postgres and ETS:
+
+        - an aggregate in an atomic update, `atomic_update(:threshold,
+          expr(child_count))`, in bulk and single updates (`write.atomic_update`,
+          `write.single_atomic_update`);
+        - an aggregate in the query given to an atomic `Ash.bulk_update/4`:
+          `filter(child_sum > 5)` updates parent 2, whose only visible child has
+          value 4 (`write.bulk_update_filter`);
+        - an aggregate as the field of a root aggregate, `Ash.aggregate(parent,
+          {:result, :sum, field: :child_count})` (`field.root_aggregate`; ETS
+          returns nil for this one with or without decoys).
+
+        On Postgres and ETS, but not SQLite, an aggregate in another aggregate's
+        query filter (`count(children, query: filter(rating_count > 1))`) counts
+        hidden ratings too (`filter.aggregate_dependency*`).
+        """
+      },
+      %{
+        id: "all-tenants-upsert",
+        title: "All-tenants upsert",
+        kind: :decision,
+        owners: [:ash],
+        body: ~S"""
+
+        Decision: may an upsert in one tenant update or return another tenant's row
+        through an identity with `all_tenants?: true`? The multitenancy guide says
+        such an identity is unique across tenants and that a create in a second
+        tenant fails, but not what an upsert does. Ash uses only the identity's keys
+        as the conflict target for these identities, so an upsert of code `"n2-1"`
+        in organisation 1 updates organisation 2's note 201 on every data layer
+        (`adv.upsert.all_tenants`). With a condition that skips it and
+        `return_skipped_upsert?`, AshPostgres returns note 201
+        (`adv.upsert.all_tenants_skipped_bulk`). Until Ash decides, both are
+        unresolved and each reviewed data layer pins what it does.
+        """
       }
     ]
   end
