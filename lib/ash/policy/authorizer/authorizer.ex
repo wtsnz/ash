@@ -1227,10 +1227,12 @@ defmodule Ash.Policy.Authorizer do
       # Synthetic query just for the strict_check_result calls below.
       # It's never executed — we only need actor/tenant/domain context
       # to compute the policy expressions.
+      # It carries the caller's context, which checks like `context_equals` read.
       query =
         resource
         |> Ash.Query.new()
         |> Ash.Query.set_tenant(tenant)
+        |> Ash.Query.set_context(opts[:context] || %{})
         |> Ash.Query.set_context(%{private: %{actor: actor}})
 
       authorizer =
@@ -1240,7 +1242,7 @@ defmodule Ash.Policy.Authorizer do
           changeset: nil,
           action_input: nil,
           subject: query,
-          context: %{},
+          context: query.context,
           domain: domain
         })
 
@@ -1330,6 +1332,7 @@ defmodule Ash.Policy.Authorizer do
             actor: actor,
             tenant: tenant,
             domain: domain,
+            context: opts[:context] || %{},
             authorize?: false,
             reuse_values?: true
           ]
@@ -1460,17 +1463,35 @@ defmodule Ash.Policy.Authorizer do
     |> Enum.filter(fn name -> Enum.any?(records, &Ash.Resource.selected?(&1, name)) end)
   end
 
+  # Hidden attributes of an embedded resource keep their original value, so the record can be
+  # written back (see `Ash.Actions.Helpers.restrict_field_access/2`). Fields that are already
+  # hidden keep their placeholder.
   defp scrub_fields(record, fields) do
-    Enum.reduce(fields, record, fn field, record ->
-      type =
-        case Ash.Resource.Info.field(record.__struct__, field) do
-          %Ash.Resource.Aggregate{} -> :aggregate
-          %Ash.Resource.Attribute{} -> :attribute
-          %Ash.Resource.Calculation{} -> :calculation
-          _ -> :attribute
-        end
+    embedded? = Ash.Resource.Info.embedded?(record.__struct__)
 
-      Map.put(record, field, %Ash.ForbiddenField{field: field, type: type})
+    Enum.reduce(fields, record, fn field, record ->
+      case Map.get(record, field) do
+        %Ash.ForbiddenField{} ->
+          record
+
+        value ->
+          type =
+            case Ash.Resource.Info.field(record.__struct__, field) do
+              %Ash.Resource.Aggregate{} -> :aggregate
+              %Ash.Resource.Attribute{} -> :attribute
+              %Ash.Resource.Calculation{} -> :calculation
+              _ -> :attribute
+            end
+
+          forbidden_field =
+            if embedded? && type == :attribute do
+              %Ash.ForbiddenField{field: field, type: type, original_value: value}
+            else
+              %Ash.ForbiddenField{field: field, type: type}
+            end
+
+          Map.put(record, field, forbidden_field)
+      end
     end)
   end
 

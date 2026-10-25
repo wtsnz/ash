@@ -735,7 +735,7 @@ defmodule Ash.Actions.Update do
         )
         |> Helpers.notify(changeset, opts)
         |> Helpers.select(changeset)
-        |> Helpers.restrict_field_access(changeset)
+        |> Ash.Actions.Present.result(changeset, Keyword.put(opts, :domain, domain))
 
       {:error, changeset} ->
         {:error, changeset}
