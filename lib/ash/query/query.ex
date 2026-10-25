@@ -514,9 +514,20 @@ defmodule Ash.Query do
   @spec apply_client_input(t() | Ash.Resource.t(), map() | Keyword.t(), Keyword.t()) :: t()
   def apply_client_input(query, input, opts \\ [])
 
-  def apply_client_input(query, input, opts) when is_map(input) or is_list(input) do
+  def apply_client_input(query, input, opts) do
     query = new(query)
 
+    if client_container?(input) do
+      apply_client_container(query, input, opts)
+    else
+      add_error(
+        query,
+        InvalidQuery.exception(value: input, message: "client input must be a map")
+      )
+    end
+  end
+
+  defp apply_client_container(query, input, opts) do
     Enum.reduce(input, query, fn {key, value}, query ->
       case client_input_key(key, @client_input_keys) do
         {:ok, :filter} ->
@@ -544,13 +555,15 @@ defmodule Ash.Query do
     end)
   end
 
-  def apply_client_input(query, input, _opts) do
-    query
-    |> new()
-    |> add_error(InvalidQuery.exception(value: input, message: "client input must be a map"))
+  defp client_page(query, page) do
+    if client_container?(page) do
+      do_client_page(query, page)
+    else
+      add_error(query, :page, InvalidPage.exception(page: page))
+    end
   end
 
-  defp client_page(query, page) when is_map(page) or is_list(page) do
+  defp do_client_page(query, page) do
     page
     |> Enum.reduce_while({:ok, []}, fn {key, value}, {:ok, page} ->
       case client_input_key(key, @client_page_keys) do
@@ -564,9 +577,15 @@ defmodule Ash.Query do
     end
   end
 
-  defp client_page(query, page), do: add_error(query, :page, InvalidPage.exception(page: page))
+  defp client_load(query, loads, opts) do
+    if client_container?(loads) do
+      do_client_load(query, loads, opts)
+    else
+      add_error(query, :load, InvalidQuery.exception(value: loads, message: "invalid load"))
+    end
+  end
 
-  defp client_load(query, loads, opts) when is_map(loads) or is_list(loads) do
+  defp do_client_load(query, loads, opts) do
     Enum.reduce(loads, query, fn
       {name, related_input}, query when is_atom(name) or is_binary(name) ->
         case Ash.Resource.Info.public_relationship(query.resource, name) do
@@ -585,7 +604,11 @@ defmodule Ash.Query do
             related_query =
               apply_client_input(relationship.destination, related_input || %{}, opts)
 
-            load(query, [{relationship.name, related_query}])
+            if related_query.valid? do
+              load(query, [{relationship.name, related_query}])
+            else
+              add_error(query, [:load, relationship.name], related_query.errors)
+            end
         end
 
       load, query ->
@@ -593,9 +616,10 @@ defmodule Ash.Query do
     end)
   end
 
-  defp client_load(query, loads, _opts) do
-    add_error(query, :load, InvalidQuery.exception(value: loads, message: "invalid load"))
-  end
+  # A map, or a list of key-value pairs, as decoded from a request.
+  defp client_container?(input) when is_map(input), do: not is_struct(input)
+  defp client_container?(input) when is_list(input), do: Enum.all?(input, &match?({_, _}, &1))
+  defp client_container?(_input), do: false
 
   # Matches client keys against known atoms, without creating atoms from client input.
   defp client_input_key(key, allowed) when is_atom(key) do
