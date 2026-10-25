@@ -13,7 +13,9 @@ defmodule Ash.Invariants do
   - `untouched`: after a write, every row the actor may not see is unchanged.
   - `expected`: with only the rows the actor may see, the answer is the
     group's intended answer from the fixture.
-  - `secrets`: no write result contains a value marked `SECRET`.
+  - `noninterference`: changing only values the actor may not see (the
+    `:altered` fixture) doesn't change the answer.
+  - `secrets`: no answer contains a value marked `SECRET`.
   - `agrees`: the operations in a group give the same answer.
 
   Observations are cached, so each relation of a case reuses one run.
@@ -35,7 +37,8 @@ defmodule Ash.Invariants do
       if(op.isolation?, do: :isolation),
       if(op.kind == :write, do: :untouched),
       if(Ops.expected(op.group, {shape, 1}) != nil, do: :expected),
-      if(op.group == :person_fields, do: :secrets)
+      :noninterference,
+      :secrets
     ]
     |> Enum.reject(&is_nil/1)
   end
@@ -65,10 +68,13 @@ defmodule Ash.Invariants do
         observation = observe(layer, op, shape)
 
         case op.kind do
-          :read -> {id, Enum.map([1, 2], &Map.fetch!(hd(observation.full), &1))}
-          :write -> {id, [observation.full]}
+          :read -> {id, op, Enum.map([1, 2], &Map.fetch!(hd(observation.full), &1))}
+          :write -> {id, op, [observation.full]}
         end
       end
+      # Client input that is refused outright answers no question.
+      |> Enum.reject(fn {_id, op, answer} -> op.refusable? and Enum.all?(answer, &refused?/1) end)
+      |> Enum.map(fn {id, _op, answer} -> {id, answer} end)
 
     case Enum.uniq_by(answers, fn {_id, answer} -> Enum.map(answer, &comparable/1) end) do
       [_] -> :ok
@@ -112,7 +118,7 @@ defmodule Ash.Invariants do
     failures =
       for org <- [1, 2],
           expected = Ops.expected(op.group, {shape, org}),
-          not same?(observation.clean[org], {:ok, expected}) do
+          not intended?(op, observation.clean[org], expected) do
         "organisation #{org}: expected #{show(expected)}, got #{show(observation.clean[org])}"
       end
 
@@ -123,19 +129,44 @@ defmodule Ash.Invariants do
     expected = Ops.expected(op.group, {shape, 1})
     answer = observation.clean || observation.full
 
-    if same?(answer, {:ok, expected}),
+    if intended?(op, answer, expected),
       do: :ok,
       else: {:error, "expected #{show(expected)}, got #{show(answer)}"}
   end
 
+  defp verdict(:noninterference, %{kind: :read}, _shape, observation) do
+    failures =
+      for org <- [1, 2],
+          not same?(hd(observation.full)[org], observation.altered[org]) do
+        "organisation #{org}: #{show(hd(observation.full)[org])}, " <>
+          "and with other hidden values #{show(observation.altered[org])}"
+      end
+
+    result(failures)
+  end
+
+  defp verdict(:noninterference, _op, _shape, observation) do
+    if same?(observation.full, observation.altered),
+      do: :ok,
+      else:
+        {:error,
+         "#{show(observation.full)}, and with other hidden values #{show(observation.altered)}"}
+  end
+
   defp verdict(:secrets, _op, _shape, observation) do
-    answers = [observation.full, observation.clean]
+    answers = [observation.full, observation.clean, observation.altered]
     shown = inspect(answers, limit: :infinity, printable_limit: :infinity)
 
     if String.contains?(shown, "SECRET"),
-      do: {:error, "a write result shows an admin-only value: #{show(observation.full)}"},
+      do: {:error, "the answer shows an admin-only value: #{show(observation.full)}"},
       else: :ok
   end
+
+  # The intended answer, or for client input also a refusal.
+  defp intended?(op, answer, expected),
+    do: same?(answer, {:ok, expected}) or (op.refusable? and refused?(answer))
+
+  defp refused?(answer), do: match?({:raised, Ash.Error.Invalid, _}, answer)
 
   defp result([]), do: :ok
   defp result(failures), do: {:error, Enum.join(failures, "\n")}
@@ -146,7 +177,8 @@ defmodule Ash.Invariants do
   Runs a case, cached for the test run: reads as each organisation with only
   its own rows, then with every row in both orders; writes as organisation 1
   with only its rows (unless `isolation?` is false) and with every row,
-  snapshotting the rest around the write.
+  snapshotting the rest around the write. Both also run once more with every
+  row and the `:altered` hidden values.
   """
   def observe(layer, op, shape) do
     key = {layer, op.id, shape}
@@ -179,7 +211,12 @@ defmodule Ash.Invariants do
         end)
       end
 
-    %{clean: clean, full: full}
+    altered =
+      in_world(layer, World.rows(:altered), fn ->
+        Map.new([1, 2], &{&1, capture(layer, op, shape, &1)})
+      end)
+
+    %{clean: clean, full: full, altered: altered}
   end
 
   defp run(layer, op, shape) do
@@ -196,7 +233,9 @@ defmodule Ash.Invariants do
         {answer, before, World.hidden(view, World.snapshot(layer))}
       end)
 
-    %{clean: clean, full: full, hidden_before: before, hidden_after: now}
+    altered = in_world(layer, World.rows(:altered), fn -> capture(layer, op, shape, 1) end)
+
+    %{clean: clean, full: full, altered: altered, hidden_before: before, hidden_after: now}
   end
 
   defp in_world(layer, rows, fun) do

@@ -24,6 +24,10 @@ defmodule Ash.Invariants.World do
   across organisations, and note 103 is hidden. People carry `SECRET` in
   every admin-only value.
 
+  The `:altered` variant changes only values the actor may not see: person
+  1's admin-only values sort first and person 2's last, and in `:base` the
+  other way round. No answer may tell the two apart.
+
   A view is `{shape, org}`: what an actor in organisation `org` may read
   through that shape's resources. Tenancy hides the other organisation's
   orders under `:tenant` and `:schema`; the read policy hides invisible orders
@@ -63,7 +67,7 @@ defmodule Ash.Invariants.World do
   def tenant(_shape, org), do: org
 
   @doc "Every row, by table. Rows with an organisation carry it as `org_id`."
-  def rows do
+  def rows(variant \\ :base) do
     %{
       customers: for({id, name} <- @customers, do: %{id: id, name: name}),
       events: for(id <- 1..3, do: %{id: id, name: "e#{id}", recorded: nil}),
@@ -76,20 +80,34 @@ defmodule Ash.Invariants.World do
           %{id: id, org_id: org, local_id: local, body: body, value: value, visible: visible}
         end,
       lists: [%{id: 1, org_id: 1, name: "l1"}, %{id: 2, org_id: 2, name: "l2"}],
-      people: Enum.map(1..2, &person/1)
+      people: Enum.map(1..2, &person(&1, variant))
     }
   end
 
-  @doc "A person whose every admin-only value says `SECRET`."
-  def person(id) do
+  @doc """
+  A person whose every admin-only value says `SECRET`, with a letter that
+  orders it: person 1 has `a` and person 2 `z`, swapped in `:altered`.
+  """
+  def person(id, variant \\ :base) do
+    letter =
+      case {id, variant} do
+        {1, :base} -> "a"
+        {2, :base} -> "z"
+        {1, :altered} -> "z"
+        {2, :altered} -> "a"
+        _ -> "m"
+      end
+
+    hidden = &"SECRET-#{letter}-#{&1}-#{id}"
+
     %{
       id: id,
       name: "p#{id}",
-      secret: "SECRET-#{id}",
+      secret: hidden.("secret"),
       event_id: id,
-      profile: %{bio: "bio-#{id}", ssn: "SECRET-ssn-#{id}"},
-      cards: [%{label: "c#{id}", number: "SECRET-card-#{id}"}],
-      payment: %Ash.Union{type: :card, value: %{label: "pay", number: "SECRET-pay-#{id}"}}
+      profile: %{bio: "bio-#{id}", ssn: hidden.("ssn")},
+      cards: [%{label: "c#{id}", number: hidden.("card")}],
+      payment: %Ash.Union{type: :card, value: %{label: "pay", number: hidden.("pay")}}
     }
   end
 

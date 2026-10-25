@@ -14,11 +14,22 @@ defmodule Ash.Invariants.Op do
     organisation 1, once per database.
   - `isolation?`: false where the intended answer depends on rows the actor
     can't see, such as a write given another organisation's record.
+  - `refusable?`: client input, which may also be refused with an
+    `Ash.Error.Invalid` instead of answering.
   - `needs`: data-layer features it needs, such as `:through`.
   - `run`: `fn ctx -> answer end`; see `Ash.Invariants.Ops`.
   """
   @enforce_keys [:id, :group, :run]
-  defstruct [:id, :group, :run, shapes: [:tenant], kind: :read, isolation?: true, needs: []]
+  defstruct [
+    :id,
+    :group,
+    :run,
+    shapes: [:tenant],
+    kind: :read,
+    isolation?: true,
+    refusable?: false,
+    needs: []
+  ]
 end
 
 defmodule Ash.Invariants.Ops do
@@ -34,11 +45,18 @@ defmodule Ash.Invariants.Ops do
   alias Ash.Invariants.{Op, World}
   require Ash.Query
   require Ash.Expr
+  # An inline aggregate's `filter:` in an expression is an `expr/1` of its own.
+  import Ash.Expr, only: [expr: 1]
 
   @shapes [:tenant, :secure, :schema]
   @actor %{id: 1, admin: false}
 
-  def all, do: reads() ++ event_writes() ++ note_writes() ++ upserts() ++ manage() ++ fields()
+  def all do
+    reads() ++
+      calculations() ++
+      client_input() ++
+      pages() ++ event_writes() ++ note_writes() ++ upserts() ++ manage() ++ fields()
+  end
 
   # Reads over events, under every shape
 
@@ -121,6 +139,192 @@ defmodule Ash.Invariants.Ops do
     do: %Op{id: id, group: group, run: run, shapes: @shapes, needs: needs}
 
   defp tenancy(op), do: %{op | shapes: [:tenant, :schema]}
+
+  # Aggregates referenced in calculations and in client input. Calculations
+  # don't authorize their dependencies, but aggregates referenced anywhere do.
+
+  defp calculations do
+    at_least = fn filter -> fn ctx -> Map.new(0..4, &{&1, filter.(ctx, &1)}) end end
+
+    Enum.map(
+      [
+        read("agg.order_count", :order_counts, &aggregate(&1, :order_count)),
+        read("calc.order_total", :order_counts, &aggregate(&1, :order_total)),
+        read("calc.inline_count", :order_counts, &aggregate(&1, :inline_count)),
+        read(
+          "input.order_count",
+          :order_thresholds,
+          at_least.(&input(&1, %{order_count: %{greater_than_or_equal: &2}}))
+        ),
+        read(
+          "input.order_total",
+          :order_thresholds,
+          at_least.(&input(&1, %{order_total: %{greater_than_or_equal: &2}}))
+        ),
+        read(
+          "input.inline_count",
+          :order_thresholds,
+          at_least.(fn ctx, n -> input(ctx, Ash.Expr.expr(count(orders) >= ^n)) end)
+        ),
+        read(
+          "input.inline_count_unauthorized",
+          :order_thresholds,
+          at_least.(fn ctx, n ->
+            input(ctx, Ash.Expr.expr(count(orders, authorize?: false) >= ^n))
+          end)
+        ),
+        read(
+          "filter.order_total",
+          :order_thresholds,
+          at_least.(fn ctx, n -> events(ctx, Ash.Expr.expr(order_total >= ^n)) end)
+        ),
+        read(
+          "filter.inline_count",
+          :order_thresholds,
+          at_least.(fn ctx, n -> events(ctx, Ash.Expr.expr(inline_count >= ^n)) end)
+        )
+      ],
+      &if(String.starts_with?(&1.id, "input."), do: %{&1 | refusable?: true}, else: &1)
+    )
+  end
+
+  # Client filters and sorts over a person's admin-only `secret`. The policies
+  # guide: a field the actor can't see is `nil` in client input, so no filter
+  # on it matches and no sort on it orders. Person 1's secret is the value
+  # matched against.
+
+  defp client_input do
+    value = World.person(1).secret
+    filter = fn input -> &Ash.Query.filter_input(&1, input) end
+    sort = fn input -> &Ash.Query.sort_input(&1, input) end
+
+    [
+      person("input.filter_hidden", :match_hidden, filter.(%{secret: %{eq: value}})),
+      person("input.filter_hidden_expr", :match_hidden, filter.(Ash.Expr.expr(secret == ^value))),
+      person(
+        "input.calculation_argument",
+        :match_hidden,
+        filter.(Ash.Expr.expr(echo(value: secret) == ^value))
+      ),
+      person(
+        "input.exists_parent",
+        :match_hidden,
+        filter.(Ash.Expr.expr(exists(orders, parent(secret) == ^value)))
+      ),
+      person(
+        "input.inline_aggregate_parent",
+        :match_hidden,
+        filter.(Ash.Expr.expr(count(orders, filter: expr(parent(secret) == ^value)) > 0))
+      ),
+      person("input.sort_hidden", :hidden_order, sort.(secret: :desc, id: :asc)),
+      person(
+        "input.sort_calculation_argument",
+        :hidden_order,
+        sort.(echo: {%{value: Ash.Expr.expr(secret)}, :desc}, id: :asc)
+      ),
+      person("input.sort_hidden_aggregate", :hidden_order, sort.(order_count: :asc, id: :asc))
+    ]
+  end
+
+  defp person(id, group, build) do
+    run = fn ctx ->
+      ctx.role.(Person) |> build.() |> Ash.read!(opts(ctx)) |> Enum.map(& &1.id)
+    end
+
+    %Op{id: id, group: group, run: run, refusable?: true}
+  end
+
+  # Keyset and offset pagination: every page together is the unpaged read,
+  # and a cursor holds only what the actor may see.
+
+  defp pages do
+    hidden_sort = &(&1.role.(Person) |> Ash.Query.sort_input(secret: :desc, id: :asc))
+    notes = &(&1.role.(SecureNote) |> Ash.Query.sort(:id))
+    # A cursor a client wrote: the people whose secret sorts after "SECRET-m".
+    probe = Base.encode64(:erlang.term_to_binary(["SECRET-m", 0]))
+
+    [
+      %Op{
+        id: "page.keyset_hidden_sort",
+        refusable?: true,
+        group: :hidden_order,
+        run: &(&1 |> hidden_sort.() |> keyset_pages(opts(&1)) |> Enum.map(fn p -> p.id end))
+      },
+      %Op{
+        id: "page.keyset_hidden_cursor",
+        refusable?: true,
+        group: :hidden_cursor,
+        run: &(&1 |> hidden_sort.() |> keyset_pages(opts(&1)) |> Enum.map(fn p -> cursor(p) end))
+      },
+      %Op{
+        id: "page.keyset_probe",
+        refusable?: true,
+        group: :hidden_probe,
+        run: fn ctx ->
+          ctx.role.(Person)
+          |> Ash.Query.sort_input(secret: :asc, id: :asc)
+          |> Ash.read!([action: :paged, page: [limit: 5, after: probe]] ++ opts(ctx))
+          |> Map.fetch!(:results)
+          |> Enum.map(& &1.id)
+        end
+      },
+      %Op{
+        id: "page.notes",
+        group: :visible_notes,
+        shapes: [:secure],
+        run: &(&1 |> notes.() |> Ash.read!(opts(&1)) |> Enum.map(fn n -> n.id end))
+      },
+      %Op{
+        id: "page.notes_keyset",
+        group: :visible_notes,
+        shapes: [:secure],
+        run: &(&1 |> notes.() |> keyset_pages(opts(&1)) |> Enum.map(fn n -> n.id end))
+      },
+      %Op{
+        id: "page.notes_offset",
+        group: :visible_notes,
+        shapes: [:secure],
+        run: &(&1 |> notes.() |> offset_pages(opts(&1)) |> Enum.map(fn n -> n.id end))
+      }
+    ]
+  end
+
+  # Every record, one keyset page of one record at a time.
+  defp keyset_pages(query, opts, page \\ [], acc \\ []) do
+    %{results: results, more?: more?} =
+      Ash.read!(query, [action: :paged, page: [limit: 1] ++ page] ++ opts)
+
+    acc = acc ++ results
+
+    if more? and results != [],
+      do: keyset_pages(query, opts, [after: List.last(results).__metadata__.keyset], acc),
+      else: acc
+  end
+
+  defp offset_pages(query, opts, offset \\ 0, acc \\ []) do
+    %{results: results, more?: more?} =
+      Ash.read!(query, [action: :paged, page: [limit: 1, offset: offset]] ++ opts)
+
+    if more?, do: offset_pages(query, opts, offset + 1, acc ++ results), else: acc ++ results
+  end
+
+  # A keyset decoded to the sort values it carries.
+  defp cursor(record) do
+    keyset = record.__metadata__.keyset
+
+    with {:ok, binary} <- Base.decode64(keyset),
+         {:ok, values} <- safe_term(binary) do
+      values
+    else
+      _ -> keyset
+    end
+  end
+
+  defp safe_term(binary) do
+    {:ok, :erlang.binary_to_term(binary, [:safe])}
+  rescue
+    ArgumentError -> :error
+  end
 
   # Writes to events: an aggregate referenced in an atomic update, and a
   # `many_to_many` replaced in one organisation.
@@ -451,7 +655,22 @@ defmodule Ash.Invariants.Ops do
         length(orders)
 
       :recorded ->
-        Map.new(1..3, fn event -> {event, Enum.count(orders, &(&1.event_id == event))} end)
+        order_counts(orders)
+
+      :order_counts ->
+        order_counts(orders)
+
+      :order_thresholds ->
+        Map.new(0..4, &{&1, for({e, c} <- order_counts(orders), c >= &1, do: e)})
+
+      :match_hidden ->
+        []
+
+      :hidden_order ->
+        [1, 2]
+
+      :visible_notes ->
+        for(note <- World.visible(view).notes, do: note.id) |> Enum.sort()
 
       :set_buyers when shape != :secure ->
         {:ok, [{1, 1}, {2, 4}]}
@@ -490,6 +709,9 @@ defmodule Ash.Invariants.Ops do
         nil
     end
   end
+
+  defp order_counts(orders),
+    do: Map.new(1..3, fn event -> {event, Enum.count(orders, &(&1.event_id == event))} end)
 
   defp related(orders, event),
     do: for(%{event_id: ^event} = o <- orders, do: o.customer_id) |> Enum.uniq() |> Enum.sort()

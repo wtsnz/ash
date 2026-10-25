@@ -15,7 +15,11 @@ compare answers instead of pinning them, so most checks need no expected value:
 - **untouched**: after a write, every row the actor may not see is unchanged.
 - **expected**: with only the rows the actor may see, the answer is the
   intended one, computed from the fixture.
-- **secrets**: no write result contains a value marked `SECRET`.
+- **noninterference**: changing only values the actor may not see doesn't
+  change the answer. Person 1's admin-only values sort first and person 2's
+  last, and the other way round; a filter, sort or cursor that reads them
+  answers differently.
+- **secrets**: no answer contains a value marked `SECRET`.
 - **agrees**: operations that ask the same question in different ways (a
   `many_to_many`, a `has_many through:`, the plain path, an aggregate, a
   filter) give the same answer.
@@ -36,7 +40,7 @@ PostgreSQL comes from `PGHOST`, `PGPORT`, `PGUSER` and `PGPASSWORD` (default
 `localhost`, `postgres`/`postgres`). The tests drop and recreate the
 `ash_invariants` database (`INVARIANTS_PG_DATABASE`) and `tmp/`.
 
-A full run takes about 3 seconds after compiling: 961 checks.
+A full run takes about 6 seconds after compiling: 2,178 checks.
 
 ## How it works
 
@@ -49,12 +53,24 @@ A full run takes about 3 seconds after compiling: 961 checks.
   read through three shapes: multitenant by attribute (`tenant`), behind a
   read policy (`secure`) and multitenant by schema (`schema`, ETS and
   Postgres).
-- `Ash.Invariants.Ops`: about 70 operations: loads, aggregates, `exists`,
-  filters and `filter_input` over every path; bounded loads; bulk writes with
-  every strategy given records from both organisations; upserts whose
-  identity or primary key another organisation has; `manage_relationship`
-  with another organisation's or a hidden note; and writes under field
-  policies. Each returns a plain term.
+- `Ash.Invariants.Ops`: 97 operations, each returning a plain term:
+  - loads, aggregates, `exists`, filters and `filter_input` over every path,
+    and bounded loads;
+  - aggregates referenced in calculations, in client filters and as inline
+    aggregates in client input;
+  - client filters and sorts on an admin-only field: directly, through a
+    calculation argument given as an expression, through `parent/1` in
+    `exists` and in an inline aggregate, and sorts on an admin-only
+    aggregate;
+  - keyset and offset pagination: every page together against the unpaged
+    read, keyset pages sorted on an admin-only field, the cursors they
+    return, and a cursor a client wrote;
+  - bulk writes with every strategy given records from both organisations;
+    upserts whose identity or primary key another organisation has;
+    `manage_relationship` with another organisation's or a hidden note; and
+    writes under field policies.
+  Client input may also be refused with `Ash.Error.Invalid` instead of
+  answering.
 - `Ash.Invariants`: runs each operation in fresh databases (an ETS process of
   its own, or a rolled-back sandbox transaction) and checks the relations.
 - `Ash.Invariants.Known`: checks that fail today, with why. A listed check
@@ -81,6 +97,10 @@ the same holds with the data layers' `main` branches. Grouped:
 | Postgres | An `exists` aggregate over a `through` isn't correlated with its record. |
 | ETS, SQLite | An update of a record without tenancy that references an aggregate over a multitenant resource raises (ETS) or counts every tenant's rows (SQLite). |
 | SQLite | `many_to_many` loads with a limit or offset return the wrong records. |
+| all | A calculation argument given as an expression in `filter_input` or `sort_input` reads a field the actor can't see. |
+| all | `sort_input` on an aggregate the actor can't see raises. |
+| all | An inline aggregate in client input can turn off authorization; on Postgres its filter can read the parent's hidden fields through `parent/1`. |
+| SQLite | `parent/1` in client input raises, in `exists` and in an inline aggregate's filter. |
 
 Against the previous releases (Ash 3.37.0, AshSQL 0.8.3, AshPostgres 2.15.1)
 it also fails where those were fixed since: `through` loads of one record
@@ -89,10 +109,14 @@ attribute tenants (GHSA-gr2r-f49c-9gm2), skipped bulk upserts returning
 another tenant's record (GHSA-36hg-wwp2-fg8w), `through` paths ending in a
 `many_to_many`, and `Ash.create/3` dropping `upsert_condition`.
 
+With the fixes in wtsnz/ash#25, #27 and #28 merged onto this checkout, the
+client-input entries pass, and nothing else changes.
+
 ## Not covered
 
 - Other data layers, and extensions (AshGraphql, AshJsonApi, AshPhoenix).
-- Calculations, keyset pagination, read actions with arguments, and
-  resources with UUID primary keys.
+- Read actions with arguments, a relationship's own `read_action`,
+  calculations with `load/3` dependencies, and resources with UUID primary
+  keys.
 - Plain `Ash.Query.filter` on related data under a read policy, which Ash
   doesn't authorize by design; those filters only run under tenancy.

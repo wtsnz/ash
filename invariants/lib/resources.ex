@@ -33,7 +33,9 @@ defmodule Ash.Invariants.Resources do
   identity and actions that can't run atomically. `SecureNote` adds a read
   policy over the same rows. Lists attach notes with `manage_relationship`.
   People have admin-only field policies on an attribute, an aggregate, an
-  embedded resource, an array of them and a union.
+  embedded resource, an array of them and a union, and a public calculation
+  that returns its argument, which may be an expression. Notes and people
+  have a `:paged` read with keyset and offset pagination.
   """
 
   defmacro define(layer) do
@@ -177,6 +179,12 @@ defmodule Ash.Invariants.Resources do
           end
         end
 
+        # Aggregates referenced in a calculation still authorize.
+        calculations do
+          calculate :order_total, :integer, expr(order_count), public?: true
+          calculate :inline_count, :integer, expr(count(orders)), public?: true
+        end
+
         @doc false
         def shape, do: unquote(shape)
       end
@@ -310,6 +318,10 @@ defmodule Ash.Invariants.Resources do
             multitenancy :allow_global
           end
 
+          read :paged do
+            pagination keyset?: true, offset?: true, required?: false
+          end
+
           update :edit do
             accept [:body, :value]
             require_atomic? false
@@ -390,16 +402,29 @@ defmodule Ash.Invariants.Resources do
 
         actions do
           defaults [:read, :destroy, create: :*, update: :*]
+
+          read :paged do
+            pagination keyset?: true, offset?: true, required?: false
+          end
         end
 
         relationships do
           has_many :orders, unquote(order),
             source_attribute: :event_id,
-            destination_attribute: :event_id
+            destination_attribute: :event_id,
+            public?: true
         end
 
         aggregates do
           count :order_count, :orders, public?: true
+        end
+
+        # Returns its argument, which may be an expression.
+        calculations do
+          calculate :echo, :string, expr(^arg(:value)) do
+            public? true
+            argument :value, :string, allow_expr?: true
+          end
         end
 
         policies do
