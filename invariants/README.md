@@ -41,7 +41,7 @@ PostgreSQL comes from `PGHOST`, `PGPORT`, `PGUSER` and `PGPASSWORD` (default
 `localhost`, `postgres`/`postgres`). The tests drop and recreate the
 `ash_invariants` database (`INVARIANTS_PG_DATABASE`) and `tmp/`.
 
-A full run takes about 6 seconds after compiling: 2,253 checks.
+A full run takes about 6 seconds after compiling: 2,254 checks.
 
 ## How it works
 
