@@ -2365,38 +2365,49 @@ defmodule Ash.Actions.Read do
 
           attribute = Ash.Resource.Info.attribute(query.resource, name)
 
-          values = Enum.map(results, &Map.get(&1, attribute.name))
+          # An attribute the actor can't see was deselected, so there's nothing to load through.
+          values =
+            Enum.map(results, fn record ->
+              value = Map.get(record, attribute.name)
+              if loadable_attribute_value?(value), do: value
+            end)
 
           case attribute.type do
             {:array, type} ->
-              Enum.reduce_while(values, {:ok, []}, fn list, {:ok, acc} ->
-                case Ash.Type.load(
-                       type,
-                       list,
-                       load_statement,
-                       attribute.constraints[:items] || [],
-                       %{
-                         domain: domain,
-                         actor: actor,
-                         tenant: query.tenant,
-                         tracer: tracer,
-                         authorize?: authorize?
-                       }
-                     ) do
-                  {:ok, new_values} ->
-                    {:cont, {:ok, [new_values | acc]}}
+              Enum.reduce_while(values, {:ok, []}, fn
+                nil, {:ok, acc} ->
+                  {:cont, {:ok, [nil | acc]}}
 
-                  {:error, error} ->
-                    {:halt, {:error, error}}
-                end
+                list, {:ok, acc} ->
+                  case Ash.Type.load(
+                         type,
+                         list,
+                         load_statement,
+                         attribute.constraints[:items] || [],
+                         %{
+                           domain: domain,
+                           actor: actor,
+                           tenant: query.tenant,
+                           tracer: tracer,
+                           authorize?: authorize?
+                         }
+                       ) do
+                    {:ok, new_values} ->
+                      {:cont, {:ok, [new_values | acc]}}
+
+                    {:error, error} ->
+                      {:halt, {:error, error}}
+                  end
               end)
               |> case do
                 {:ok, list} ->
                   {:cont,
                    {:ok,
-                    Enum.zip_with(results, Enum.reverse(list), fn record, value ->
-                      Map.put(record, attribute.name, value)
-                    end)}}
+                    Enum.zip_with(
+                      results,
+                      Enum.reverse(list),
+                      &put_loaded_attribute(&1, attribute, &2)
+                    )}}
 
                 {:error, error} ->
                   {:halt, {:error, error}}
@@ -2419,9 +2430,7 @@ defmodule Ash.Actions.Read do
                 {:ok, new_values} ->
                   {:cont,
                    {:ok,
-                    Enum.zip_with(results, new_values, fn record, value ->
-                      Map.put(record, attribute.name, value)
-                    end)}}
+                    Enum.zip_with(results, new_values, &put_loaded_attribute(&1, attribute, &2))}}
 
                 {:error, error} ->
                   {:halt, {:error, error}}
@@ -2439,6 +2448,18 @@ defmodule Ash.Actions.Read do
       _, {:ok, results} ->
         {:cont, {:ok, results}}
     end)
+  end
+
+  defp loadable_attribute_value?(%Ash.NotLoaded{}), do: false
+  defp loadable_attribute_value?(%Ash.ForbiddenField{}), do: false
+  defp loadable_attribute_value?(_), do: true
+
+  defp put_loaded_attribute(record, attribute, value) do
+    if loadable_attribute_value?(Map.get(record, attribute.name)) do
+      Map.put(record, attribute.name, value)
+    else
+      record
+    end
   end
 
   @doc false
