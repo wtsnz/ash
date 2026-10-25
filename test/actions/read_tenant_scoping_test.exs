@@ -150,6 +150,91 @@ defmodule Ash.Test.Actions.ReadTenantScopingTest do
     end
   end
 
+  # Its tenant attribute compares case-insensitively.
+  defmodule CiNote do
+    @moduledoc false
+    use Ash.Resource,
+      domain: Ash.Test.Actions.ReadTenantScopingTest.Domain,
+      data_layer: Ash.DataLayer.Ets
+
+    ets do
+      private? true
+    end
+
+    multitenancy do
+      strategy :attribute
+      attribute :shop_id
+    end
+
+    attributes do
+      uuid_primary_key :id
+      attribute :shop_id, :ci_string, public?: true
+      attribute :body, :string, public?: true
+    end
+
+    actions do
+      defaults [:read, :destroy, create: [:body], update: [:body]]
+    end
+  end
+
+  defmodule Item do
+    @moduledoc false
+    use Ash.Resource,
+      domain: Ash.Test.Actions.ReadTenantScopingTest.Domain,
+      data_layer: Ash.DataLayer.Ets
+
+    ets do
+      private? true
+    end
+
+    multitenancy do
+      strategy :attribute
+      attribute :shop_id
+      global? true
+    end
+
+    attributes do
+      uuid_primary_key :id
+      attribute :shop_id, :integer, public?: true
+      attribute :body, :string, public?: true
+    end
+
+    relationships do
+      has_many :peers, __MODULE__ do
+        no_attributes? true
+        public? true
+      end
+    end
+
+    calculations do
+      calculate :body_copy, :string, expr(body), multitenancy: :allow_global
+    end
+
+    aggregates do
+      count :all_peers, :peers, multitenancy: :bypass
+    end
+
+    actions do
+      defaults [:read, :destroy, create: [:body], update: [:body]]
+
+      read :bypass do
+        multitenancy :bypass
+      end
+
+      read :allow_global do
+        multitenancy :allow_global
+      end
+
+      read :paged do
+        pagination offset?: true, keyset?: true, countable: true, required?: false
+      end
+
+      action :ping, :boolean do
+        run fn _, _ -> {:ok, true} end
+      end
+    end
+  end
+
   defmodule Domain do
     @moduledoc false
     use Ash.Domain, validate_config_inclusion?: false
@@ -159,6 +244,8 @@ defmodule Ash.Test.Actions.ReadTenantScopingTest do
       resource PolicyNote
       resource Post
       resource Comment
+      resource CiNote
+      resource Item
     end
   end
 
@@ -267,6 +354,119 @@ defmodule Ash.Test.Actions.ReadTenantScopingTest do
       refute Ash.can?({b_note, :update}, nil, tenant: "a")
       refute Ash.can?({b_note, :destroy}, nil, tenant: "a")
       refute Ash.can?({PolicyNote, :read}, nil, tenant: "a", data: b_note)
+    end
+  end
+
+  describe "edge cases" do
+    test "a query applied to records in memory uses the tenant option", %{
+      a_note: a_note,
+      b_note: b_note
+    } do
+      assert {:ok, records} =
+               Ash.Query.apply_to(Ash.Query.new(Note), [a_note, b_note], tenant: "a")
+
+      assert bodies(records) == ["a's"]
+    end
+
+    test "a combination of a :bypass read reads every tenant" do
+      query =
+        Note
+        |> Ash.Query.for_read(:bypass, %{}, tenant: "a")
+        |> Ash.Query.combination_of([Ash.Query.Combination.base(filter: Ash.Expr.expr(true))])
+
+      assert bodies(Ash.read!(query)) == ["a's", "b's"]
+    end
+
+    test "a combination keeps the tenant filter when a hook changes the tenant" do
+      query =
+        Note
+        |> Ash.Query.for_read(:read, %{}, tenant: "a")
+        |> Ash.Query.before_action(&Ash.Query.set_tenant(&1, "b"))
+
+      assert bodies(Ash.read!(query)) == ["a's"]
+
+      query =
+        Ash.Query.combination_of(query, [Ash.Query.Combination.base(filter: Ash.Expr.expr(true))])
+
+      assert bodies(Ash.read!(query)) == ["a's"]
+    end
+
+    test "a lateral load from a :bypass read keeps every parent's related records" do
+      Ash.create!(Item, %{body: "one"}, tenant: 1)
+      Ash.create!(Item, %{body: "two"}, tenant: 2)
+
+      records =
+        Item
+        |> Ash.Query.for_read(:bypass, %{}, tenant: 1)
+        |> Ash.Query.load(peers: Ash.Query.limit(Item, 1))
+        |> Ash.read!()
+
+      assert records
+             |> Enum.map(&{&1.shop_id, Enum.map(&1.peers, fn peer -> peer.shop_id end)})
+             |> Enum.sort() == [{1, [1]}, {2, [1]}]
+    end
+
+    test "Ash.can? without a record" do
+      assert Ash.can?({Item, :update}, nil, tenant: 1)
+      assert Ash.can?({Item, :destroy}, nil, tenant: 1)
+      assert Ash.can?({Item, :create}, nil, tenant: 1)
+      assert Ash.can?(Ash.ActionInput.for_action(Item, :ping, %{}, tenant: 1), nil)
+    end
+
+    test "Ash.can? on a record whose tenant attribute wasn't selected" do
+      note = Ash.create!(PolicyNote, %{body: "a's"}, tenant: "a", authorize?: false)
+
+      record =
+        PolicyNote
+        |> Ash.Query.select([:body])
+        |> Ash.Query.filter(id == ^note.id)
+        |> Ash.read_one!(tenant: "a", authorize?: false)
+
+      assert %Ash.NotLoaded{} = record.shop_id
+      assert Ash.can?({record, :update}, nil, tenant: "a")
+      assert Ash.can?({record, :destroy}, nil, tenant: "a")
+      assert Ash.can?({PolicyNote, :read}, nil, tenant: "a", data: record)
+
+      b_note = Ash.create!(PolicyNote, %{body: "b's"}, tenant: "b", authorize?: false)
+      b_record = %{record | id: b_note.id}
+      refute Ash.can?({b_record, :update}, nil, tenant: "a")
+    end
+
+    test "Ash.can? compares the tenant the way reads do" do
+      note = Ash.create!(CiNote, %{body: "one"}, tenant: "ACME")
+      assert Ash.get!(CiNote, note.id, tenant: "acme").id == note.id
+      assert Ash.can?({note, :update}, nil, tenant: "acme")
+      assert Ash.can?({note, :destroy}, nil, tenant: "acme")
+      assert Ash.can?({CiNote, :read}, nil, tenant: "acme", data: note)
+    end
+
+    test "a global record and an :allow_global read" do
+      global = Ash.create!(Item, %{body: "global"})
+      assert Ash.can?({global, :update}, nil)
+      refute Ash.can?({global, :update}, nil, tenant: 1)
+      assert Ash.can?({Item, :allow_global}, nil, data: global)
+      refute Ash.can?({Item, :allow_global}, nil, tenant: 1, data: global)
+    end
+
+    test "streams, gets, pages, counts, bypass aggregates and allow_global calculations" do
+      a = Ash.create!(Item, %{body: "one"}, tenant: 1)
+      b = Ash.create!(Item, %{body: "two"}, tenant: 2)
+
+      assert [%{id: id}] =
+               Ash.stream!(Item, tenant: 1, batch_size: 1, allow_stream_with: :full_read)
+               |> Enum.to_list()
+
+      assert id == a.id
+      assert Ash.get(Item, b.id, tenant: 1, not_found_error?: false) == {:ok, nil}
+
+      for page <- [[limit: 1, offset: 0, count: true], [limit: 1, count: true]] do
+        result = Item |> Ash.Query.for_read(:paged, %{}, tenant: 1) |> Ash.read!(page: page)
+        assert result.count == 1
+        assert [%{id: ^id}] = result.results
+      end
+
+      assert Ash.load!(a, :all_peers, tenant: 1).all_peers == 2
+      assert Ash.load!(a, :body_copy, tenant: 1).body_copy == "one"
     end
   end
 end
