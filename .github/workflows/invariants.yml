@@ -1,0 +1,46 @@
+# SPDX-FileCopyrightText: 2026 ash contributors <https://github.com/ash-project/ash/graphs/contributors>
+# SPDX-License-Identifier: MIT
+name: Data-layer invariants
+on:
+  pull_request:
+    paths:
+      - 'invariants/**'
+      - 'lib/**'
+      - '.github/workflows/invariants.yml'
+      - 'mix.exs'
+      - 'mix.lock'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  invariants:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        deps: [release, main]
+    continue-on-error: ${{ matrix.deps == 'main' }}
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports: ['5432:5432']
+        options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
+    env:
+      MIX_ENV: test
+      INVARIANTS_DEPS: ${{ matrix.deps }}
+    defaults:
+      run:
+        working-directory: invariants
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: erlef/setup-beam@54075bcc5e249e4758d363f27d099f55d843f124 # v1.24.1
+        with:
+          otp-version: '29.0.1'
+          elixir-version: '1.20.0'
+      - run: mix deps.get
+      - run: mix compile --warnings-as-errors
+      - run: mix format --check-formatted
+      - run: mix test
