@@ -2939,6 +2939,38 @@ defmodule Ash.Filter do
     parse_expression([statement], context)
   end
 
+  defp add_exists_expression_part(
+         %Ash.Query.Exists{expr: exists_expression} = exists,
+         related,
+         context,
+         expression
+       ) do
+    case parse_expression(
+           exists_expression,
+           %{
+             context
+             | resource: related,
+               root_resource: related
+           }
+           |> Map.update(
+             :parent_stack,
+             [context[:root_resource]],
+             &[context[:root_resource] | &1]
+           )
+         ) do
+      {:ok, result} ->
+        {:ok,
+         BooleanExpression.optimized_new(:and, expression, %{
+           exists
+           | expr: result,
+             input?: context[:input?] || false
+         })}
+
+      {:error, error} ->
+        {:error, error}
+    end
+  end
+
   defp add_expression_part(boolean, context, expression, could_be_function? \\ true)
 
   defp add_expression_part(boolean, context, nil, _) do
@@ -3032,7 +3064,6 @@ defmodule Ash.Filter do
          %Ash.Query.Exists{
            at_path: at_path,
            path: path,
-           expr: exists_expression,
            related?: related?,
            resource: resource
          } = exists,
@@ -3040,11 +3071,6 @@ defmodule Ash.Filter do
          expression,
          _could_be_function?
        ) do
-    # Check if data layer supports unrelated exists
-    if !related? && !Ash.DataLayer.data_layer_can?(context.resource, {:exists, :unrelated}) do
-      raise "Data layer does not support unrelated exists expressions"
-    end
-
     related =
       if related? do
         related(context, at_path ++ path)
@@ -3052,42 +3078,21 @@ defmodule Ash.Filter do
         resource
       end
 
-    if !related do
-      raise """
-      Could not determine related resource for `exists/2` expression.
+    cond do
+      !related? && !Ash.DataLayer.data_layer_can?(context.resource, {:exists, :unrelated}) ->
+        {:error,
+         Ash.Error.Query.AggregatesNotSupported.exception(
+           resource: context.resource,
+           feature: "unrelated exists expressions"
+         )}
 
-      Context Resource: #{inspect(context)}
-      Context Relationship Path: #{inspect(context[:relationship_path])}
-      At Path: #{inspect(at_path)}
-      Path: #{inspect(path)}
-      Related: #{inspect(related)}
-      Expression: #{inspect(exists)}
-      """
-    end
+      # Not a relationship path, or one client input can't use (see `related/2`).
+      !related ->
+        {:error,
+         exists_invalid_relationship_path_error(exists, context.resource, at_path ++ path)}
 
-    case parse_expression(
-           exists_expression,
-           %{
-             context
-             | resource: related,
-               root_resource: related
-           }
-           |> Map.update(
-             :parent_stack,
-             [context[:root_resource]],
-             &[context[:root_resource] | &1]
-           )
-         ) do
-      {:ok, result} ->
-        {:ok,
-         BooleanExpression.optimized_new(:and, expression, %{
-           exists
-           | expr: result,
-             input?: context[:input?] || false
-         })}
-
-      {:error, error} ->
-        {:error, error}
+      true ->
+        add_exists_expression_part(exists, related, context, expression)
     end
   end
 
@@ -4732,7 +4737,7 @@ defmodule Ash.Filter do
       ) do
     resource = context[:resource]
 
-    case validate_exists_paths(exists, resource, at_path, path) do
+    case validate_exists_paths(exists, resource, at_path, path, context[:public?] || false) do
       :ok ->
         expanded_at_path = expand_through_path_names(resource, at_path)
 
@@ -5365,12 +5370,13 @@ defmodule Ash.Filter do
     end
   end
 
-  defp validate_exists_paths(exists, resource, at_path, path) do
+  # Client input (public?) can only use public relationships.
+  defp validate_exists_paths(exists, resource, at_path, path, public?) do
     cond do
       exists_invalid_path?(at_path) or exists_invalid_path?(path) ->
         {:error, exists_invalid_syntax_error(exists, resource)}
 
-      not exists_relationship_path_valid?(resource, at_path) ->
+      not exists_relationship_path_valid?(resource, at_path, public?) ->
         {:error, exists_invalid_relationship_path_error(exists, resource, at_path ++ path)}
 
       true ->
@@ -5381,7 +5387,7 @@ defmodule Ash.Filter do
             Ash.Resource.Info.related(resource, at_path)
           end
 
-        if exists_relationship_path_valid?(at_path_resource, path) do
+        if exists_relationship_path_valid?(at_path_resource, path, public?) do
           :ok
         else
           {:error, exists_invalid_relationship_path_error(exists, resource, at_path ++ path)}
@@ -5389,12 +5395,19 @@ defmodule Ash.Filter do
     end
   end
 
-  defp exists_relationship_path_valid?(_resource, []), do: true
+  defp exists_relationship_path_valid?(_resource, [], _public?), do: true
 
-  defp exists_relationship_path_valid?(resource, [name | rest]) do
-    case Ash.Resource.Info.relationship(resource, name) do
+  defp exists_relationship_path_valid?(resource, [name | rest], public?) do
+    relationship =
+      if public? do
+        Ash.Resource.Info.public_relationship(resource, name)
+      else
+        Ash.Resource.Info.relationship(resource, name)
+      end
+
+    case relationship do
       nil -> false
-      %{destination: destination} -> exists_relationship_path_valid?(destination, rest)
+      %{destination: destination} -> exists_relationship_path_valid?(destination, rest, public?)
     end
   end
 
@@ -5421,16 +5434,19 @@ defmodule Ash.Filter do
   end
 
   defp exists_invalid_relationship_path_error(%Ash.Query.Exists{} = exists, resource, path) do
-    """
-    Invalid `exists/2` expression on #{inspect(resource)}.
+    message =
+      """
+      Invalid `exists/2` expression on #{inspect(resource)}.
 
-    Could not find a related resource at path #{inspect(path)}.
+      Could not find a related resource at path #{inspect(path)}.
 
-    Ensure the relationship name is spelled correctly. The correct syntax is `exists(relationship, condition)`.
+      Ensure the relationship name is spelled correctly. The correct syntax is `exists(relationship, condition)`.
 
-    Expression: #{inspect(exists)}
-    """
-    |> String.trim()
+      Expression: #{inspect(exists)}
+      """
+      |> String.trim()
+
+    Ash.Error.Query.InvalidQuery.exception(value: exists, message: message)
   end
 
   defp exists_unrelated_resource_error(%Ash.Query.Exists{} = exists) do
