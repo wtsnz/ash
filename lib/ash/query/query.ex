@@ -439,10 +439,11 @@ defmodule Ash.Query do
 
   Filters added as user input (or filters constructed with `Ash.Filter.parse_input`)
   will honor any field policies on resources by replacing any references to the field
-  with `nil` in cases where the actor should not be able to see the given field.
+  with `nil` in cases where the actor should not be able to see the given field, and
+  apply the read policies of related resources to relationship paths. Only public
+  fields and relationships can be referenced.
 
-  This function does not expect the expression style filter (because an external source
-  could never reasonably provide that). Instead, use the keyword/map style syntax. For
+  A filter from an external source is usually given in the keyword/map style syntax. For
   example:
 
   `expr(name == "fred")`
@@ -452,7 +453,16 @@ defmodule Ash.Query do
   - map syntax: `%{"name" => %{"eq" => "fred"}}`
   - keyword syntax: `[name: [eq: "fred"]]`
 
-  See `Ash.Filter` for more.
+  An expression built from client input, for example by a filter form, can be given too.
+  Every reference in it, including those in `exists/2` and inline aggregates, is treated
+  as input, whether or not it was built as one:
+
+      iex> query = Ash.Query.filter_input(MyApp.Post, expr(^ref(:title) == "fred"))
+      iex> [%Ash.Query.Ref{input?: true}] = Ash.Filter.list_refs(query.filter)
+
+  Use `Ash.Query.filter/2` for filters written by your application, which are trusted.
+
+  See `Ash.Filter` for more, and `apply_client_input/3` to apply a client's whole query.
   """
   def filter_input(query, filter, opts \\ []) do
     query = new(query)
@@ -465,6 +475,165 @@ defmodule Ash.Query do
         add_error(query, :filter, error)
     end
   end
+
+  @client_input_keys [:filter, :sort, :page, :load]
+  @client_page_keys [:limit, :offset, :after, :before, :count]
+
+  @doc """
+  Applies a query given by a client, as client input.
+
+  `input` is a map or keyword list, with atom or string keys, of:
+
+  - `:filter` - applied with `filter_input/3`.
+  - `:sort` - applied with `sort_input/3`.
+  - `:page` - the page options `:limit`, `:offset`, `:after`, `:before` and `:count`.
+    A page's `:filter` is trusted, so it isn't accepted from a client.
+  - `:load` - a map or keyword list of public relationships to load, each with its own
+    client input, applied to the related query the same way.
+
+  Any other key adds an error to the query. Field policies and the read policies of related
+  resources apply to everything given here, so this is the safe way for an extension to apply
+  a request's query. Your application's own filters and sorts can be added to the same query
+  with `filter/2` and `sort/3`.
+
+  ## Options
+
+  - `:ref_transformer` - passed to `filter_input/3`, at every level.
+
+  ## Examples
+
+      MyApp.Post
+      |> Ash.Query.for_read(:read, %{}, actor: actor)
+      |> Ash.Query.apply_client_input(%{
+        "filter" => %{"title" => %{"contains" => "ash"}},
+        "sort" => "-inserted_at",
+        "page" => %{"limit" => 10},
+        "load" => %{"comments" => %{"sort" => "inserted_at"}}
+      })
+  """
+  @spec apply_client_input(t() | Ash.Resource.t(), map() | Keyword.t(), Keyword.t()) :: t()
+  def apply_client_input(query, input, opts \\ [])
+
+  def apply_client_input(query, input, opts) do
+    query = new(query)
+
+    if client_container?(input) do
+      apply_client_container(query, input, opts)
+    else
+      add_error(
+        query,
+        InvalidQuery.exception(value: input, message: "client input must be a map")
+      )
+    end
+  end
+
+  defp apply_client_container(query, input, opts) do
+    Enum.reduce(input, query, fn {key, value}, query ->
+      case client_input_key(key, @client_input_keys) do
+        {:ok, :filter} ->
+          filter_input(query, value, Keyword.take(opts, [:ref_transformer]))
+
+        {:ok, :sort} ->
+          sort_input(query, value)
+
+        {:ok, :page} ->
+          client_page(query, value)
+
+        {:ok, :load} ->
+          client_load(query, value, opts)
+
+        :error ->
+          add_error(
+            query,
+            InvalidQuery.exception(
+              field: key,
+              value: value,
+              message: "#{inspect(key)} isn't a client query option"
+            )
+          )
+      end
+    end)
+  end
+
+  defp client_page(query, page) do
+    if client_container?(page) do
+      do_client_page(query, page)
+    else
+      add_error(query, :page, InvalidPage.exception(page: page))
+    end
+  end
+
+  defp do_client_page(query, page) do
+    page
+    |> Enum.reduce_while({:ok, []}, fn {key, value}, {:ok, page} ->
+      case client_input_key(key, @client_page_keys) do
+        {:ok, key} -> {:cont, {:ok, [{key, value} | page]}}
+        :error -> {:halt, {:error, InvalidPage.exception(page: {key, value})}}
+      end
+    end)
+    |> case do
+      {:ok, page} -> page(query, Enum.reverse(page))
+      {:error, error} -> add_error(query, :page, error)
+    end
+  end
+
+  defp client_load(query, loads, opts) do
+    if client_container?(loads) do
+      do_client_load(query, loads, opts)
+    else
+      add_error(query, :load, InvalidQuery.exception(value: loads, message: "invalid load"))
+    end
+  end
+
+  defp do_client_load(query, loads, opts) do
+    Enum.reduce(loads, query, fn
+      {name, related_input}, query when is_atom(name) or is_binary(name) ->
+        case Ash.Resource.Info.public_relationship(query.resource, name) do
+          nil ->
+            add_error(
+              query,
+              :load,
+              NoSuchRelationship.exception(
+                resource: query.resource,
+                relationship: name,
+                load_path: []
+              )
+            )
+
+          relationship ->
+            related_query =
+              apply_client_input(relationship.destination, related_input || %{}, opts)
+
+            if related_query.valid? do
+              load(query, [{relationship.name, related_query}])
+            else
+              add_error(query, [:load, relationship.name], related_query.errors)
+            end
+        end
+
+      load, query ->
+        add_error(query, :load, InvalidQuery.exception(value: load, message: "invalid load"))
+    end)
+  end
+
+  # A map, or a list of key-value pairs, as decoded from a request.
+  defp client_container?(input) when is_map(input), do: not is_struct(input)
+  defp client_container?(input) when is_list(input), do: Enum.all?(input, &match?({_, _}, &1))
+  defp client_container?(_input), do: false
+
+  # Matches client keys against known atoms, without creating atoms from client input.
+  defp client_input_key(key, allowed) when is_atom(key) do
+    if key in allowed, do: {:ok, key}, else: :error
+  end
+
+  defp client_input_key(key, allowed) when is_binary(key) do
+    case Enum.find(allowed, &(Atom.to_string(&1) == key)) do
+      nil -> :error
+      key -> {:ok, key}
+    end
+  end
+
+  defp client_input_key(_key, _allowed), do: :error
 
   @doc """
   Produces a query that is the combination of multiple queries.

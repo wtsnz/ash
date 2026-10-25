@@ -315,10 +315,17 @@ defmodule Ash.Sort do
     end
   end
 
+  # Client input names fields. A built calculation or aggregate (e.g. from `expr_sort/2`) isn't
+  # something a client can give, and its references wouldn't be checked as input.
+  defp do_get_field(_resource, %struct{} = field, true, _input)
+       when struct in [Ash.Query.Calculation, Ash.Query.Aggregate] do
+    {:error, InvalidSort.exception(sort: field)}
+  end
+
   defp do_get_field(resource, field, true, input) do
     case Ash.Resource.Info.public_field(resource, field) do
       %Ash.Resource.Calculation{} = calc ->
-        input_calculation(resource, calc, input)
+        input_calculation(resource, calc, input, false)
 
       nil ->
         {:error, NoSuchField.exception(field: field, resource: resource)}
@@ -339,7 +346,7 @@ defmodule Ash.Sort do
   defp do_get_field(resource, field, _, input) do
     case Ash.Resource.Info.field(resource, field) do
       %Ash.Resource.Calculation{} = calc ->
-        input_calculation(resource, calc, input)
+        input_calculation(resource, calc, input, true)
 
       nil ->
         {:error, NoSuchField.exception(field: field, resource: resource)}
@@ -349,10 +356,15 @@ defmodule Ash.Sort do
     end
   end
 
-  defp input_calculation(resource, calc, input) do
+  # Arguments from client input can't be expressions, which could compute on fields the actor
+  # can't see.
+  defp input_calculation(resource, calc, input, allow_expr?) do
     with {:ok, args} <- calculation_input(calc, input),
          {:ok, calc} <-
-           Ash.Query.Calculation.from_resource_calculation(resource, calc, args: args) do
+           Ash.Query.Calculation.from_resource_calculation(resource, calc,
+             args: args,
+             allow_expr?: allow_expr?
+           ) do
       {:ok, %{calc | name: :__calc__}}
     end
   end
