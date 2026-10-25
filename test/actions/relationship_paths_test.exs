@@ -47,9 +47,14 @@ defmodule Ash.Test.Actions.RelationshipPathsTest do
 
     actions do
       defaults [:read, create: :*]
+      read :forbid_all
     end
 
     policies do
+      policy action(:forbid_all) do
+        forbid_if always()
+      end
+
       policy action_type(:read) do
         authorize_if expr(name != "Hidden")
       end
@@ -120,7 +125,23 @@ defmodule Ash.Test.Actions.RelationshipPathsTest do
       read :all_orders
     end
 
+    field_policies do
+      field_policy :visible do
+        forbid_if always()
+      end
+
+      field_policy :* do
+        authorize_if always()
+      end
+    end
+
     policies do
+      # An actor with `deny_orders: true` can't read any orders.
+      policy action_type(:read) do
+        forbid_if actor_attribute_equals(:deny_orders, true)
+        authorize_if always()
+      end
+
       policy action_type(:read) do
         authorize_if expr(visible == true)
       end
@@ -159,6 +180,13 @@ defmodule Ash.Test.Actions.RelationshipPathsTest do
       end
 
       has_many :customers, Customer, through: [:orders, :customer], public?: true
+      has_many :buyers_via, Customer, through: [:buyers], public?: true
+      has_many :nested_customers, Customer, through: [:customers], public?: true
+
+      has_many :forbidden_customers, Customer,
+        through: [:orders, :customer],
+        read_action: :forbid_all,
+        public?: true
     end
 
     aggregates do
@@ -242,9 +270,17 @@ defmodule Ash.Test.Actions.RelationshipPathsTest do
       count :rating_count, :ratings
     end
 
+    calculations do
+      calculate :well_rated, :boolean, expr(rating_count > 1)
+    end
+
     actions do
       defaults [:read, create: :*]
       read :all_children
+
+      read :policy_label do
+        argument :label, :string, allow_nil?: false
+      end
 
       read :by_label do
         argument :label, :string, allow_nil?: false
@@ -253,6 +289,10 @@ defmodule Ash.Test.Actions.RelationshipPathsTest do
     end
 
     policies do
+      policy action(:policy_label) do
+        authorize_if expr(label == ^arg(:label))
+      end
+
       policy action_type(:read) do
         authorize_if expr(hidden == false)
       end
@@ -281,6 +321,11 @@ defmodule Ash.Test.Actions.RelationshipPathsTest do
     relationships do
       has_many :children, Child, destination_attribute: :parent_id
       has_many :read_children, Child, destination_attribute: :parent_id, read_action: :read
+
+      has_many :high_children, Child,
+        destination_attribute: :parent_id,
+        read_action: :policy_label,
+        read_action_arguments: %{label: "high"}
     end
 
     aggregates do
@@ -479,6 +524,149 @@ defmodule Ash.Test.Actions.RelationshipPathsTest do
       query = Ash.Query.filter(Child, rating_count > 1)
 
       assert parent_aggregate(:well_rated, :count, :children, query) == [{1, 0}, {2, 0}]
+    end
+  end
+
+  describe "aggregate arguments (review)" do
+    # Policy filters were cached by relationship and action, so the second aggregate got the
+    # first one's.
+    test "aggregates with queries for the same action with different arguments each apply their own read policies" do
+      parents_with_children()
+      high = Ash.Query.for_read(Child, :policy_label, %{label: "high"})
+      low = Ash.Query.for_read(Child, :policy_label, %{label: "low"})
+      assert parent_aggregate(:one_high, :count, :children, high) == [{1, 1}, {2, 0}]
+      assert parent_aggregate(:one_low, :count, :children, low) == [{1, 0}, {2, 1}]
+
+      actual =
+        Parent
+        |> Ash.Query.aggregate(:high, :count, :children, query: high)
+        |> Ash.Query.aggregate(:low, :count, :children, query: low)
+        |> Ash.Query.sort(:id)
+        |> Ash.read!(@actor)
+        |> Enum.map(&{&1.id, &1.aggregates.high, &1.aggregates.low})
+
+      assert actual == [{1, 1, 0}, {2, 0, 1}]
+    end
+
+    test "a query's arguments override the relationship's read_action_arguments, as when loading" do
+      parents_with_children()
+      low = Ash.Query.for_read(Child, :policy_label, %{label: "low"})
+
+      loaded =
+        Parent
+        |> Ash.Query.sort(:id)
+        |> Ash.Query.load(high_children: low)
+        |> Ash.read!(@actor)
+
+      assert Enum.map(loaded, &{&1.id, Enum.map(&1.high_children, fn child -> child.label end)}) ==
+               [{1, []}, {2, ["low"]}]
+
+      assert parent_aggregate(:low, :count, :high_children, low) == [{1, 0}, {2, 1}]
+    end
+  end
+
+  describe "through relationships (review)" do
+    test "a many_to_many inside a through relationship, or a nested through relationship" do
+      event = event_with_orders()
+
+      for relationship <- [:buyers_via, :nested_customers] do
+        loaded = Ash.load!(event, [relationship], @actor)
+        assert Enum.map(Map.fetch!(loaded, relationship), & &1.name) == ["Ann"]
+
+        result =
+          Event
+          |> Ash.Query.aggregate(:names, :list, [relationship], field: :name)
+          |> Ash.read_one!(@actor)
+
+        assert result.aggregates.names == ["Ann"]
+      end
+    end
+
+    test "a through relationship along the path keeps its own read action, as when loading" do
+      event = event_with_orders()
+      customer = Customer |> Ash.Query.filter(name == "Ann") |> Ash.read_one!(authorize?: false)
+      Ash.create!(Tag, %{name: "secret", customer_id: customer.id}, authorize?: false)
+      assert Ash.load!(event, :forbidden_customers, @actor).forbidden_customers == []
+
+      result =
+        Event
+        |> Ash.Query.aggregate(:names, :list, [:forbidden_customers, :tags], field: :name)
+        |> Ash.read_one!(@actor)
+
+      assert result.aggregates.names == []
+    end
+  end
+
+  describe "other aggregates (review)" do
+    test "first and exists aggregates, and an aggregate with authorize? false" do
+      event_with_orders()
+
+      for relationship <- [:buyers, :customers] do
+        result =
+          Event
+          |> Ash.Query.aggregate(:first, :first, relationship,
+            field: :name,
+            query: [sort: [name: :desc]]
+          )
+          |> Ash.Query.aggregate(:any, :exists, relationship, query: [filter: [name: "Cara"]])
+          |> Ash.Query.aggregate(:all, :count, relationship, authorize?: false)
+          |> Ash.read_one!(@actor)
+
+        assert result.aggregates == %{first: "Ann", any: false, all: 2}
+      end
+    end
+
+    test "a calculation in an aggregate's query authorizes the aggregate it uses" do
+      parents_with_children()
+
+      assert parent_aggregate(:well_rated, :count, :children, Ash.Query.filter(Child, well_rated)) ==
+               [{1, 0}, {2, 0}]
+    end
+
+    test "sum aggregates and sorts on aggregates" do
+      parents_with_children()
+
+      result =
+        Parent
+        |> Ash.Query.aggregate(:sum_ids, :sum, :children, field: :id)
+        |> Ash.Query.sort(:id)
+        |> Ash.read!(@actor)
+
+      assert Enum.map(result, &{&1.id, &1.aggregates.sum_ids}) == [{1, 11}, {2, 21}]
+      assert Parent |> Ash.Query.sort(child_count: :desc) |> Ash.read!(@actor) |> length() == 2
+    end
+
+    test "a forbidden read of the join resource gives the aggregates' defaults" do
+      event = event_with_orders()
+
+      loaded =
+        Ash.load!(event, [:buyer_count, :buyer_names, :customer_count],
+          authorize?: true,
+          actor: %{deny_orders: true}
+        )
+
+      assert loaded.buyer_count == 0
+      assert loaded.buyer_names == []
+      assert loaded.customer_count == 0
+    end
+
+    test "a field policy on the join resource applies to filter_input" do
+      event_with_orders()
+      assert events_matching(%{orders: %{visible: %{eq: true}}}) == 0
+    end
+
+    test "an aggregate's own join filter applies with the read policies" do
+      event_with_orders()
+
+      result =
+        Event
+        |> Ash.Query.aggregate(:names, :list, [:orders, :customer],
+          field: :name,
+          join_filters: %{[:orders] => [visible: false]}
+        )
+        |> Ash.read_one!(@actor)
+
+      assert result.aggregates.names == []
     end
   end
 end
