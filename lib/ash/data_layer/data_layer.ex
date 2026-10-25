@@ -748,7 +748,7 @@ defmodule Ash.DataLayer do
   @spec update(Ash.Resource.t(), Ash.Changeset.t()) ::
           {:ok, Ash.Resource.Record.t()} | {:error, term} | {:error, :no_rollback, term}
   def update(resource, changeset) do
-    with {:ok, changeset} <- Ash.Actions.Helpers.WriteTenancy.scope_write(changeset) do
+    with {:ok, changeset} <- Ash.Actions.Helpers.Tenancy.scope_write(changeset) do
       changeset = %{changeset | tenant: changeset.to_tenant}
       update(Ash.DataLayer.data_layer(resource), resource, changeset)
     end
@@ -918,7 +918,7 @@ defmodule Ash.DataLayer do
   def bulk_create(resource, changesets, options) do
     changesets =
       if options[:upsert?] do
-        Stream.map(changesets, &Ash.Actions.Helpers.WriteTenancy.filter/1)
+        Stream.map(changesets, &Ash.Actions.Helpers.Tenancy.filter/1)
       else
         changesets
       end
@@ -968,7 +968,7 @@ defmodule Ash.DataLayer do
           | {:error, Ash.Error.t()}
           | {:error, :no_rollback, Ash.Error.t()}
   def update_many(resource, changesets, options) do
-    changesets = Stream.map(changesets, &Ash.Actions.Helpers.WriteTenancy.filter/1)
+    changesets = Stream.map(changesets, &Ash.Actions.Helpers.Tenancy.filter/1)
     update_many(Ash.DataLayer.data_layer(resource), resource, changesets, options)
   end
 
@@ -1004,7 +1004,7 @@ defmodule Ash.DataLayer do
   @spec destroy(Ash.Resource.t(), Ash.Changeset.t()) ::
           :ok | {:error, term} | {:error, :no_rollback, term}
   def destroy(resource, changeset) do
-    with {:ok, changeset} <- Ash.Actions.Helpers.WriteTenancy.scope_write(changeset) do
+    with {:ok, changeset} <- Ash.Actions.Helpers.Tenancy.scope_write(changeset) do
       changeset = %{changeset | tenant: changeset.to_tenant}
 
       destroy(Ash.DataLayer.data_layer(resource), resource, changeset)
@@ -1091,7 +1091,7 @@ defmodule Ash.DataLayer do
           | {:error, :no_rollback, term}
 
   def upsert(resource, changeset, keys, identity \\ nil) do
-    changeset = Ash.Actions.Helpers.WriteTenancy.filter(changeset)
+    changeset = Ash.Actions.Helpers.Tenancy.filter(changeset)
     changeset = %{changeset | tenant: changeset.to_tenant}
     data_layer = Ash.DataLayer.data_layer(resource)
 

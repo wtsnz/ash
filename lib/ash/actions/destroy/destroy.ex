@@ -429,7 +429,7 @@ defmodule Ash.Actions.Destroy do
   end
 
   defp handle_attribute_multitenancy(changeset) do
-    Ash.Actions.Helpers.WriteTenancy.filter(changeset)
+    Ash.Actions.Helpers.Tenancy.filter(changeset)
   end
 
   defp validate_manual_action_return_result!({:ok, %resource{}} = result, resource, _) do

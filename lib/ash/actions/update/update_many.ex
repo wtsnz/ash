@@ -626,7 +626,7 @@ defmodule Ash.Actions.Update.UpdateMany do
   defp maybe_put(opts, key, value), do: Keyword.put(opts, key, value)
 
   defp apply_attribute_multitenancy(%Ash.Changeset{} = changeset) do
-    Ash.Actions.Helpers.WriteTenancy.filter(changeset)
+    Ash.Actions.Helpers.Tenancy.filter(changeset)
   end
 
   defp apply_attribute_multitenancy(other), do: other
