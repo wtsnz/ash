@@ -34,17 +34,45 @@ defmodule Ash.Test.Actions.WriteTenantScopingMnesiaTest do
     end
   end
 
+  defmodule HiddenNote do
+    @moduledoc false
+    use Ash.Resource,
+      domain: Ash.Test.Actions.WriteTenantScopingMnesiaTest.Domain,
+      data_layer: Ash.DataLayer.Mnesia
+
+    resource do
+      base_filter visible: true
+    end
+
+    multitenancy do
+      strategy :attribute
+      attribute :shop_id
+    end
+
+    attributes do
+      uuid_primary_key :id
+      attribute :shop_id, :string, allow_nil?: false, public?: true
+      attribute :visible, :boolean, default: true, public?: true
+      attribute :body, :string, public?: true
+    end
+
+    actions do
+      defaults [:read]
+    end
+  end
+
   defmodule Domain do
     @moduledoc false
     use Ash.Domain, validate_config_inclusion?: false
 
     resources do
       resource Note
+      resource HiddenNote
     end
   end
 
   setup do
-    capture_log(fn -> Ash.DataLayer.Mnesia.start(Domain, [Note]) end)
+    capture_log(fn -> Ash.DataLayer.Mnesia.start(Domain, [Note, HiddenNote]) end)
 
     on_exit(fn ->
       capture_log(fn ->
@@ -89,5 +117,17 @@ defmodule Ash.Test.Actions.WriteTenantScopingMnesiaTest do
     b_note = Ash.create!(Note, %{body: "original"}, tenant: "b")
     assert {:error, _} = quietly(fn -> Ash.destroy(b_note, tenant: "a") end)
     assert stored(b_note) == "original"
+  end
+
+  test "the tenant check doesn't apply the resource's read filters" do
+    note = Ash.Seed.seed!(HiddenNote, %{body: "original", visible: false}, tenant: "a")
+
+    changeset =
+      note
+      |> Ash.Changeset.new()
+      |> Ash.Changeset.set_tenant("a")
+      |> Ash.Changeset.force_change_attribute(:body, "changed")
+
+    assert {:ok, %{body: "changed"}} = Ash.DataLayer.update(HiddenNote, changeset)
   end
 end

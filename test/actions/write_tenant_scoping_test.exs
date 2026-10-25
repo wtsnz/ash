@@ -13,6 +13,7 @@ defmodule Ash.Test.Actions.WriteTenantScopingTest do
   """
   use ExUnit.Case, async: true
 
+  require Ash.Expr
   require Ash.Query
 
   defmodule Scope do
@@ -430,6 +431,18 @@ defmodule Ash.Test.Actions.WriteTenantScopingTest do
       assert stored_client_note(b_note.id) == [{"b", "b's"}]
     end
 
+    test "a changeset whose tenant was cleared falls back to the record's" do
+      note = note!("a")
+
+      assert {:ok, _} =
+               note
+               |> Ash.Changeset.for_update(:update_nonatomic, %{body: "changed"})
+               |> Ash.Changeset.set_tenant(nil)
+               |> Ash.update()
+
+      assert stored(note) == "changed"
+    end
+
     test "context multitenancy" do
       {:ok, note} = Ash.create(CtxNote, %{body: "original"}, tenant: "a")
       assert {:ok, _} = Ash.update(note, %{body: "changed"}, tenant: "a")
@@ -529,6 +542,53 @@ defmodule Ash.Test.Actions.WriteTenantScopingTest do
       assert stored(b_note) == "original"
     end
 
+    for action <- [:update, :update_nonatomic] do
+      test "a tenant given when running a changeset built without one, #{action}" do
+        b_note = note!("b")
+        changeset = Ash.Changeset.for_update(b_note, unquote(action), %{body: "changed by a"})
+        assert {:error, _} = Ash.update(changeset, tenant: "a")
+        assert stored(b_note) == "original"
+      end
+    end
+
+    test "a changeset that copies another changeset's context" do
+      a_note = note!("a")
+      b_note = note!("b")
+      test_pid = self()
+
+      a_note
+      |> Ash.Changeset.for_update(:update_nonatomic, %{body: "changed"}, tenant: "a")
+      |> Ash.Changeset.after_action(fn changeset, record ->
+        result =
+          b_note
+          |> Ash.Changeset.for_update(:update_nonatomic, %{body: "changed by a"},
+            tenant: "a",
+            context: changeset.context
+          )
+          |> Ash.update()
+
+        send(test_pid, {:copied_context_result, result})
+        {:ok, record}
+      end)
+      |> Ash.update!()
+
+      assert_received {:copied_context_result, {:error, _}}
+      assert stored(b_note) == "original"
+    end
+
+    test "a changeset without an action, written through the data layer" do
+      b_note = note!("b")
+
+      changeset =
+        b_note
+        |> Ash.Changeset.new()
+        |> Ash.Changeset.set_tenant("a")
+        |> Ash.Changeset.force_change_attribute(:body, "changed by a")
+
+      assert {:error, %Ash.Error.Changes.StaleRecord{}} = Ash.DataLayer.update(Note, changeset)
+      assert stored(b_note) == "original"
+    end
+
     test "a context-multitenancy destroy runs in the tenant it was given" do
       {:ok, b_note} = Ash.create(CtxNote, %{body: "original"}, tenant: "b")
       # Tenant a has no such row. ETS treats deleting a missing row as `:ok`, so only the
@@ -610,6 +670,19 @@ defmodule Ash.Test.Actions.WriteTenantScopingTest do
       assert stored(b_note) == "original"
     end
 
+    test "update_many with a record read without a tenant" do
+      for strategy <- [:atomic, :atomic_batches, :stream] do
+        b_note = "b" |> note!() |> read_globally()
+
+        Ash.update_many([{b_note, %{body: "changed by a"}}], Note, :update,
+          tenant: "a",
+          strategy: strategy
+        )
+
+        assert stored(b_note) == "original"
+      end
+    end
+
     test "a refused record is not returned" do
       b_note = note!("b")
 
@@ -650,6 +723,29 @@ defmodule Ash.Test.Actions.WriteTenantScopingTest do
         )
 
       refute Enum.any?(result.records || [], &(&1.secret == "b's secret"))
+      assert stored_client_note(b_note.id) == [{"b", "b's"}]
+    end
+
+    test "an upsert with its own upsert_condition is refused", %{b_note: b_note} do
+      condition = Ash.Expr.expr(body == "b's")
+
+      assert {:error, _} =
+               Ash.create(ClientNote, %{id: b_note.id, body: "from a"},
+                 action: :save,
+                 tenant: "a",
+                 upsert_condition: condition
+               )
+
+      # A refused bulk upsert is skipped like any upsert whose condition is false: no error, and
+      # no record returned.
+      result =
+        Ash.bulk_create([%{id: b_note.id, body: "from a"}], ClientNote, :save,
+          tenant: "a",
+          upsert_condition: condition,
+          return_records?: true
+        )
+
+      assert result.records == []
       assert stored_client_note(b_note.id) == [{"b", "b's"}]
     end
 
