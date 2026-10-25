@@ -2639,18 +2639,7 @@ defmodule Ash.Actions.Destroy.Bulk do
       cleaned_records
       |> Ash.Actions.Helpers.select(base_changeset)
       |> Ash.Actions.Present.batch(resource, base_changeset, Keyword.put(opts, :domain, domain))
-      |> case do
-        {:ok, records} ->
-          records ++ errors
-
-        {:error, error} ->
-          error
-          |> Ash.Actions.Helpers.Bulk.maybe_rollback(resource, opts)
-          |> Ash.Actions.Helpers.Bulk.maybe_stop_on_error(opts)
-          |> Ash.Helpers.error()
-          |> List.wrap()
-          |> Kernel.++(errors)
-      end
+      |> Kernel.++(errors)
     else
       errors
     end

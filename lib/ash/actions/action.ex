@@ -188,7 +188,8 @@ defmodule Ash.Actions.Action do
       tenant: opts[:tenant],
       domain: domain,
       tracer: opts[:tracer],
-      authorize?: opts[:authorize?]
+      authorize?: opts[:authorize?],
+      context: Map.delete(input.context || %{}, :private)
     )
   end
 

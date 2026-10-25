@@ -1864,18 +1864,7 @@ defmodule Ash.Actions.Create.Bulk do
 
       cleaned_records
       |> Ash.Actions.Present.batch(resource, loaded, Keyword.put(opts, :domain, domain))
-      |> case do
-        {:ok, records} ->
-          records ++ errors
-
-        {:error, error} ->
-          error
-          |> Ash.Actions.Helpers.Bulk.maybe_rollback(resource, opts)
-          |> Ash.Actions.Helpers.Bulk.maybe_stop_on_bulk_create_error(resource, opts)
-          |> Ash.Helpers.error()
-          |> List.wrap()
-          |> Kernel.++(errors)
-      end
+      |> Kernel.++(errors)
     else
       errors
     end
