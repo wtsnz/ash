@@ -7,7 +7,9 @@ defmodule Ash.Actions.Helpers.Tenancy do
   # Scopes reads and writes to their tenant under attribute multitenancy: a query or changeset
   # given a tenant only reads, changes, deletes or upserts over records in that tenant.
   #
-  # The read action uses `filter_query/1`.
+  # Reads: the read action calls `filter_query/1`, and so do `Ash.Query.data_layer_query/2` and
+  # `Ash.Query.apply_to/3`, so a query lowered for the data layer or evaluated in memory without
+  # running the read action (by `Ash.can?`, or a data layer's joins and lookups) is scoped too.
   #
   # Writes: `Ash.DataLayer.update/2`, `destroy/2`, `upsert/4`, `update_many/3` and `bulk_create/3`
   # (for upserts) call this for every changeset. The single actions also call `filter/1` earlier,
