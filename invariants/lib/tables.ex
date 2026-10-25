@@ -56,6 +56,7 @@ defmodule Ash.Invariants.Tables do
         add(:id, :bigint, primary_key: true)
         add(:name, :text)
         add(:secret, :text)
+        add(:private_code, :text)
         add(:event_id, :bigint)
         add(:profile, :map)
         add(:cards, {:array, :map})

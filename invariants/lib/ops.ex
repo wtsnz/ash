@@ -16,6 +16,8 @@ defmodule Ash.Invariants.Op do
     can't see, such as a write given another organisation's record.
   - `refusable?`: client input, which may also be refused with an
     `Ash.Error.Invalid` instead of answering.
+  - `trusted?`: a sort or filter the application wrote, which may use values
+    the actor can't see, so its answer may depend on them.
   - `needs`: data-layer features it needs, such as `:through`.
   - `run`: `fn ctx -> answer end`; see `Ash.Invariants.Ops`.
   """
@@ -28,6 +30,7 @@ defmodule Ash.Invariants.Op do
     kind: :read,
     isolation?: true,
     refusable?: false,
+    trusted?: false,
     needs: []
   ]
 end
@@ -55,7 +58,8 @@ defmodule Ash.Invariants.Ops do
     reads() ++
       calculations() ++
       client_input() ++
-      pages() ++ event_writes() ++ note_writes() ++ upserts() ++ manage() ++ fields()
+      pages() ++
+      trusted_sorts() ++ event_writes() ++ note_writes() ++ upserts() ++ manage() ++ fields()
   end
 
   # Reads over events, under every shape
@@ -289,16 +293,59 @@ defmodule Ash.Invariants.Ops do
     ]
   end
 
+  # Sorts the application writes on values the actor can't see: an admin-only
+  # calculation and an attribute that isn't public, in a query and built into
+  # a read action. They order by the real values, but a keyset cursor goes
+  # back to the client, so it may not carry them.
+
+  defp trusted_sorts do
+    by_key = &(&1.role.(Person) |> Ash.Query.sort(secret_key: :desc, id: :asc))
+    action = fn name -> &(&1.role.(Person) |> Ash.Query.for_read(name, %{}, opts(&1))) end
+    ids = fn records -> Enum.map(records, & &1.id) end
+
+    [
+      {"trusted.sort_hidden", :hidden_sorted,
+       &(&1 |> by_key.() |> Ash.read!(opts(&1)) |> ids.())},
+      {"trusted.action_sort_hidden", :hidden_sorted,
+       &(&1 |> action.(:by_secret).() |> Ash.read!(opts(&1)) |> ids.())},
+      {"trusted.action_sort_private", :hidden_sorted,
+       &(&1 |> action.(:by_private).() |> Ash.read!(opts(&1)) |> ids.())},
+      {"trusted.keyset_hidden", :hidden_sorted,
+       &(&1 |> by_key.() |> keyset_pages(opts(&1)) |> ids.())},
+      {"trusted.keyset_action_private", :hidden_sorted,
+       &(&1 |> action.(:by_private).() |> keyset_pages(opts(&1), :by_private) |> ids.())},
+      # What a client gets back: the sorted calculation's value, and cursors.
+      {"trusted.sort_hidden_value", :hidden_value,
+       &(&1 |> by_key.() |> Ash.read!(opts(&1)) |> Enum.map(fn p -> unseen(p.secret_key) end))},
+      {"trusted.keyset_hidden_cursor", :cursor_hidden,
+       &(&1 |> by_key.() |> keyset_pages(opts(&1)) |> Enum.map(fn p -> cursor(p) end))},
+      {"trusted.keyset_action_hidden_cursor", :cursor_action_hidden,
+       &(&1
+         |> action.(:by_secret).()
+         |> keyset_pages(opts(&1), :by_secret)
+         |> Enum.map(fn p -> cursor(p) end))},
+      {"trusted.keyset_action_private_cursor", :cursor_action_private,
+       &(&1
+         |> action.(:by_private).()
+         |> keyset_pages(opts(&1), :by_private)
+         |> Enum.map(fn p -> cursor(p) end))}
+    ]
+    |> Enum.map(fn {id, group, run} -> %Op{id: id, group: group, run: run, trusted?: true} end)
+  end
+
   # Every record, one keyset page of one record at a time.
-  defp keyset_pages(query, opts, page \\ [], acc \\ []) do
+  defp keyset_pages(query, opts, action \\ :paged, page \\ [], acc \\ []) do
     %{results: results, more?: more?} =
-      Ash.read!(query, [action: :paged, page: [limit: 1] ++ page] ++ opts)
+      Ash.read!(query, [action: action, page: [limit: 1] ++ page] ++ opts)
 
     acc = acc ++ results
 
-    if more? and results != [],
-      do: keyset_pages(query, opts, [after: List.last(results).__metadata__.keyset], acc),
-      else: acc
+    if more? and results != [] do
+      after_last = [after: List.last(results).__metadata__.keyset]
+      keyset_pages(query, opts, action, after_last, acc)
+    else
+      acc
+    end
   end
 
   defp offset_pages(query, opts, offset \\ 0, acc \\ []) do
@@ -551,7 +598,7 @@ defmodule Ash.Invariants.Ops do
       ctx.role.(Person) |> Ash.Query.filter(id == 1) |> Ash.Query.load(:order_count)
     end
 
-    new = World.person(3) |> Map.update!(:payment, & &1.value)
+    new = World.person(3) |> Map.delete(:private_code) |> Map.update!(:payment, & &1.value)
 
     bulk = fn strategy ->
       [strategy: strategy, return_records?: true, allow_stream_with: :full_read]
@@ -621,6 +668,11 @@ defmodule Ash.Invariants.Ops do
   defp nested(nil, _fun), do: nil
   defp nested(value, fun), do: field(fun.(value))
 
+  # A value the actor may not see, as a sort leaves it on the record.
+  defp unseen(%Ash.ForbiddenField{}), do: :unseen
+  defp unseen(%Ash.NotLoaded{}), do: :unseen
+  defp unseen(value), do: value
+
   defp field(%Ash.ForbiddenField{}), do: :forbidden
   defp field(%Ash.NotLoaded{}), do: :not_loaded
   defp field(value), do: value
@@ -668,6 +720,12 @@ defmodule Ash.Invariants.Ops do
 
       :hidden_order ->
         [1, 2]
+
+      :hidden_sorted ->
+        [2, 1]
+
+      :hidden_value ->
+        [:unseen, :unseen]
 
       :visible_notes ->
         for(note <- World.visible(view).notes, do: note.id) |> Enum.sort()

@@ -40,7 +40,7 @@ PostgreSQL comes from `PGHOST`, `PGPORT`, `PGUSER` and `PGPASSWORD` (default
 `localhost`, `postgres`/`postgres`). The tests drop and recreate the
 `ash_invariants` database (`INVARIANTS_PG_DATABASE`) and `tmp/`.
 
-A full run takes about 6 seconds after compiling: 2,178 checks.
+A full run takes about 6 seconds after compiling: 2,253 checks.
 
 ## How it works
 
@@ -53,7 +53,7 @@ A full run takes about 6 seconds after compiling: 2,178 checks.
   read through three shapes: multitenant by attribute (`tenant`), behind a
   read policy (`secure`) and multitenant by schema (`schema`, ETS and
   Postgres).
-- `Ash.Invariants.Ops`: 97 operations, each returning a plain term:
+- `Ash.Invariants.Ops`: 106 operations, each returning a plain term:
   - loads, aggregates, `exists`, filters and `filter_input` over every path,
     and bounded loads;
   - aggregates referenced in calculations, in client filters and as inline
@@ -65,6 +65,10 @@ A full run takes about 6 seconds after compiling: 2,178 checks.
   - keyset and offset pagination: every page together against the unpaged
     read, keyset pages sorted on an admin-only field, the cursors they
     return, and a cursor a client wrote;
+  - sorts the application writes on an admin-only calculation and on an
+    attribute that isn't public, in a query and built into a read action.
+    These may order by the real values, so they skip `noninterference`, but
+    the records and cursors a client gets back still may not carry them;
   - bulk writes with every strategy given records from both organisations;
     upserts whose identity or primary key another organisation has;
     `manage_relationship` with another organisation's or a hidden note; and
@@ -101,6 +105,7 @@ the same holds with the data layers' `main` branches. Grouped:
 | all | `sort_input` on an aggregate the actor can't see raises. |
 | all | An inline aggregate in client input can turn off authorization; on Postgres its filter can read the parent's hidden fields through `parent/1`. |
 | SQLite | `parent/1` in client input raises, in `exists` and in an inline aggregate's filter. |
+| all | A keyset cursor carries the values the application sorted on, including an admin-only calculation and an attribute that isn't public. |
 
 Against the previous releases (Ash 3.37.0, AshSQL 0.8.3, AshPostgres 2.15.1)
 it also fails where those were fixed since: `through` loads of one record

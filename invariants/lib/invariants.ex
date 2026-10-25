@@ -37,7 +37,7 @@ defmodule Ash.Invariants do
       if(op.isolation?, do: :isolation),
       if(op.kind == :write, do: :untouched),
       if(Ops.expected(op.group, {shape, 1}) != nil, do: :expected),
-      :noninterference,
+      if(not op.trusted?, do: :noninterference),
       :secrets
     ]
     |> Enum.reject(&is_nil/1)

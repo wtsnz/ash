@@ -178,6 +178,14 @@ defmodule Ash.Invariants.Known do
        "parent/1 in client input raises: in exists (a missing parent binding) and in an inline aggregate's filter"},
       {@all,
        [
+         "tenant/trusted.keyset_hidden_cursor secrets",
+         "tenant/trusted.keyset_action_hidden_cursor secrets",
+         "tenant/trusted.keyset_action_private_cursor secrets"
+       ],
+       "A keyset cursor carries the values the application sorted on, including a calculation " <>
+         "the actor can't see and an attribute that isn't public"},
+      {@all,
+       [
          "tenant/upsert.primary_key expected",
          "tenant/upsert.primary_key untouched",
          "tenant/upsert.primary_key_bulk expected",

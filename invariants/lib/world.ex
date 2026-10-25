@@ -104,6 +104,7 @@ defmodule Ash.Invariants.World do
       id: id,
       name: "p#{id}",
       secret: hidden.("secret"),
+      private_code: hidden.("private"),
       event_id: id,
       profile: %{bio: "bio-#{id}", ssn: hidden.("ssn")},
       cards: [%{label: "c#{id}", number: hidden.("card")}],

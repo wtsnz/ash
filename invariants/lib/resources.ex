@@ -389,6 +389,8 @@ defmodule Ash.Invariants.Resources do
           attribute :id, :integer, primary_key?: true, allow_nil?: false, public?: true
           attribute :name, :string, public?: true
           attribute :secret, :string, public?: true
+          # Not public: no client can read, filter or sort on it.
+          attribute :private_code, :string
           attribute :event_id, :integer, public?: true
           attribute :profile, Ash.Invariants.Profile, public?: true
           attribute :cards, {:array, Ash.Invariants.Card}, public?: true
@@ -404,6 +406,17 @@ defmodule Ash.Invariants.Resources do
           defaults [:read, :destroy, create: :*, update: :*]
 
           read :paged do
+            pagination keyset?: true, offset?: true, required?: false
+          end
+
+          # Reads sorted by the application on values the actor can't see.
+          read :by_secret do
+            prepare build(sort: [secret_key: :desc, id: :asc])
+            pagination keyset?: true, offset?: true, required?: false
+          end
+
+          read :by_private do
+            prepare build(sort: [private_code: :desc, id: :asc])
             pagination keyset?: true, offset?: true, required?: false
           end
         end
@@ -425,6 +438,8 @@ defmodule Ash.Invariants.Resources do
             public? true
             argument :value, :string, allow_expr?: true
           end
+
+          calculate :secret_key, :string, expr(secret), public?: true
         end
 
         policies do
@@ -434,7 +449,7 @@ defmodule Ash.Invariants.Resources do
         end
 
         field_policies do
-          field_policy [:secret, :order_count] do
+          field_policy [:secret, :order_count, :secret_key] do
             authorize_if actor_attribute_equals(:admin, true)
           end
 
