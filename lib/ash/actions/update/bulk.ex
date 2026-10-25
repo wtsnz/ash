@@ -3346,7 +3346,21 @@ defmodule Ash.Actions.Update.Bulk do
       |> Ash.Actions.Helpers.Bulk.clean_changeset_id_metadata()
 
     if opts[:return_records?] do
-      Ash.Actions.Helpers.select(cleaned_records, base_changeset) ++ errors
+      cleaned_records
+      |> Ash.Actions.Helpers.select(base_changeset)
+      |> Ash.Actions.Present.batch(resource, base_changeset, Keyword.put(opts, :domain, domain))
+      |> case do
+        {:ok, records} ->
+          records ++ errors
+
+        {:error, error} ->
+          error
+          |> Ash.Actions.Helpers.Bulk.maybe_rollback(resource, opts)
+          |> Ash.Actions.Helpers.Bulk.maybe_stop_on_error(opts)
+          |> Ash.Helpers.error()
+          |> List.wrap()
+          |> Kernel.++(errors)
+      end
     else
       errors
     end

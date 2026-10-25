@@ -1855,7 +1855,27 @@ defmodule Ash.Actions.Create.Bulk do
     cleaned_records = Ash.Actions.Helpers.Bulk.clean_changeset_id_metadata(loaded_records)
 
     if opts[:return_records?] do
-      cleaned_records ++ errors
+      loaded =
+        resource
+        |> Ash.Query.new()
+        |> Ash.Query.load(List.wrap(opts[:load]))
+        |> Map.put(:select, opts[:select] && List.wrap(opts[:select]))
+        |> Ash.Query.set_tenant(opts[:tenant])
+
+      cleaned_records
+      |> Ash.Actions.Present.batch(resource, loaded, Keyword.put(opts, :domain, domain))
+      |> case do
+        {:ok, records} ->
+          records ++ errors
+
+        {:error, error} ->
+          error
+          |> Ash.Actions.Helpers.Bulk.maybe_rollback(resource, opts)
+          |> Ash.Actions.Helpers.Bulk.maybe_stop_on_bulk_create_error(resource, opts)
+          |> Ash.Helpers.error()
+          |> List.wrap()
+          |> Kernel.++(errors)
+      end
     else
       errors
     end

@@ -283,7 +283,7 @@ defmodule Ash.Actions.Destroy do
                       {:ok, destroyed, %{notifications: manage_notifications}}
                       |> Helpers.notify(changeset, opts)
                       |> Helpers.select(changeset)
-                      |> Helpers.restrict_field_access(changeset)
+                      |> Ash.Actions.Present.result(changeset, Keyword.put(opts, :domain, domain))
                     else
                       destroyed =
                         Helpers.select(destroyed, %{

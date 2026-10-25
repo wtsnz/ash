@@ -1059,7 +1059,11 @@ defmodule Ash.Actions.Helpers do
           if value do
             record
           else
-            Enum.reduce(fields, record, fn field, record ->
+            fields
+            # Already hidden, e.g. an embedded value cleaned by the read that loaded it, keeps
+            # its placeholder and original value.
+            |> Enum.reject(&match?(%Ash.ForbiddenField{}, Map.get(record, &1)))
+            |> Enum.reduce(record, fn field, record ->
               type =
                 case Ash.Resource.Info.field(query_or_changeset.resource, field) do
                   %Ash.Resource.Aggregate{} -> :aggregate
