@@ -7,9 +7,12 @@ defmodule Ash.Actions.Helpers.WriteTenancy do
   # Scopes writes to their tenant under attribute multitenancy: a write given a tenant only
   # changes, deletes or upserts over records in that tenant.
   #
-  # `Ash.DataLayer.update/2`, `destroy/2`, `upsert/4` and `bulk_create/3` (for upserts) call this
-  # for every changeset, so the scope doesn't depend on which action path built it. The single
-  # actions also call `filter/1` earlier, before authorization. The filter is only added once.
+  # `Ash.DataLayer.update/2`, `destroy/2`, `upsert/4`, `update_many/3` and `bulk_create/3` (for
+  # upserts) call this for every changeset, so the scope doesn't depend on which action path
+  # built it. The single actions also call `filter/1` earlier, before authorization, and bulk
+  # creates before batching upserts by their filter. Adding the predicate again is harmless, so
+  # nothing records that it was added (a record of it could be copied to another changeset along
+  # with its context).
   #
   # Context multitenancy needs nothing here: the data layer applies `changeset.tenant` itself.
 
@@ -17,7 +20,7 @@ defmodule Ash.Actions.Helpers.WriteTenancy do
 
   @doc """
   Adds the tenant filter to a changeset, unless it has no tenant, the resource doesn't use
-  attribute multitenancy, the action bypasses multitenancy, or it's already there.
+  attribute multitenancy, or the action bypasses multitenancy.
 
   On an update or destroy the filter must match the stored record. On an upsert it's the
   condition for updating a conflicting record.
@@ -30,9 +33,7 @@ defmodule Ash.Actions.Helpers.WriteTenancy do
 
       predicate ->
         if Ash.DataLayer.data_layer_can?(changeset.resource, :changeset_filter) do
-          changeset
-          |> Ash.Changeset.filter(predicate)
-          |> mark_filtered()
+          Ash.Changeset.filter(changeset, predicate)
         else
           changeset
         end
@@ -53,7 +54,7 @@ defmodule Ash.Actions.Helpers.WriteTenancy do
 
       predicate ->
         if Ash.DataLayer.data_layer_can?(changeset.resource, :changeset_filter) do
-          {:ok, filter(changeset)}
+          {:ok, Ash.Changeset.filter(changeset, predicate)}
         else
           check_stored_tenant(changeset, predicate)
         end
@@ -65,8 +66,7 @@ defmodule Ash.Actions.Helpers.WriteTenancy do
 
     if not is_nil(tenant) and
          Ash.Resource.Info.multitenancy_strategy(changeset.resource) == :attribute and
-         not bypass?(changeset) and
-         changeset.context[:private][:tenant_filter] != {:filtered, tenant} do
+         not bypass?(changeset) do
       attribute = Ash.Resource.Info.multitenancy_attribute(changeset.resource)
       {m, f, a} = Ash.Resource.Info.multitenancy_parse_attribute(changeset.resource)
       value = apply(m, f, [tenant | a])
@@ -86,25 +86,21 @@ defmodule Ash.Actions.Helpers.WriteTenancy do
       Ash.Actions.Helpers.get_multitenancy_from_context(changeset) in [:bypass, :bypass_all]
   end
 
-  defp mark_filtered(changeset) do
-    Ash.Changeset.set_context(changeset, %{
-      private: %{tenant_filter: {:filtered, changeset.to_tenant}}
-    })
-  end
-
-  # Not atomic with the write. Within a transaction (as single actions run) it's as good as the
-  # data layer's isolation.
+  # Reads the record by primary key and tenant only, without the resource's read filters. Not
+  # atomic with the write; within a transaction (as single actions and bulk batches run) it's as
+  # good as the data layer's isolation.
   defp check_stored_tenant(changeset, predicate) do
     with {:ok, pkey_filter} <- Ash.Filter.get_filter(changeset.resource, changeset.data),
          {:ok, query} <-
            changeset.resource
+           |> Ash.Query.new(base_filter?: false)
            |> Ash.Query.do_filter(pkey_filter)
            |> Ash.Query.do_filter(predicate)
            |> Ash.Query.data_layer_query(),
          {:ok, records} <- Ash.DataLayer.run_query(query, changeset.resource) do
       case records do
         [_] ->
-          {:ok, mark_filtered(changeset)}
+          {:ok, changeset}
 
         _ ->
           {:error,

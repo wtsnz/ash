@@ -1263,6 +1263,15 @@ defmodule Ash.Actions.Create.Bulk do
             end
           end
 
+        # An upsert's filter is the condition for updating a conflicting record, and upserts are
+        # batched by it, so each changeset needs its tenant filter before batching.
+        batch =
+          if opts[:upsert?] || action.upsert? do
+            Enum.map(batch, &Ash.Actions.Helpers.WriteTenancy.filter/1)
+          else
+            batch
+          end
+
         {changesets_by_ref, changesets_by_index} = index_changesets(batch)
 
         batch
