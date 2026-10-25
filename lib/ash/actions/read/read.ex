@@ -4762,10 +4762,7 @@ defmodule Ash.Actions.Read do
 
         case Map.fetch(
                path_filters,
-               RelationshipSteps.policy_key(
-                 last_step,
-                 aggregate.query.action.name
-               )
+               RelationshipSteps.policy_key(last_step, aggregate.query)
              ) do
           :error ->
             true

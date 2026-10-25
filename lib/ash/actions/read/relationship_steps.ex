@@ -21,6 +21,9 @@ defmodule Ash.Actions.Read.RelationshipSteps do
     #   isn't defined on the join resource.
     # - `relationship` is the relationship whose options (read action, filter, limit, domain and
     #   context) apply to the records this step arrives at.
+    # - `read_action_relationship` is the relationship whose read action and arguments they're
+    #   read with: `relationship`, or the `through` relationship whose path ends at them, if it
+    #   has a read action of its own, as when it's loaded.
     # - `accessing_from` is the relationship the records are read as accessed from: the
     #   relationship in the path that arrives at them, or the `through` relationship whose path
     #   ends at them.
@@ -28,11 +31,12 @@ defmodule Ash.Actions.Read.RelationshipSteps do
     #   `through` relationships replaced by their paths. A `many_to_many`'s join resource is at
     #   the path of its join relationship. Every key is a path of relationships defined on the
     #   resources along it.
-    defstruct [:hop, :relationship, :accessing_from, :key]
+    defstruct [:hop, :relationship, :read_action_relationship, :accessing_from, :key]
 
     @type t :: %__MODULE__{
             hop: Ash.Resource.Relationships.relationship(),
             relationship: Ash.Resource.Relationships.relationship(),
+            read_action_relationship: Ash.Resource.Relationships.relationship(),
             accessing_from: %{source: Ash.Resource.t(), name: atom},
             key: list(atom)
           }
@@ -92,7 +96,15 @@ defmodule Ash.Actions.Read.RelationshipSteps do
        when is_list(through) do
     resource
     |> expand(through, key, [], many_to_many)
-    |> List.update_at(-1, &%{&1 | accessing_from: accessing_from(relationship)})
+    |> List.update_at(-1, fn step ->
+      step = %{step | accessing_from: accessing_from(relationship)}
+
+      if relationship.read_action do
+        %{step | read_action_relationship: relationship}
+      else
+        step
+      end
+    end)
   end
 
   defp relationship_steps(resource, %{type: :many_to_many} = relationship, key, :expand) do
@@ -112,6 +124,7 @@ defmodule Ash.Actions.Read.RelationshipSteps do
       %Step{
         hop: join_hop,
         relationship: relationship,
+        read_action_relationship: relationship,
         accessing_from: accessing_from(relationship),
         key: key ++ [relationship.name]
       }
@@ -126,6 +139,7 @@ defmodule Ash.Actions.Read.RelationshipSteps do
     %Step{
       hop: relationship,
       relationship: relationship,
+      read_action_relationship: relationship,
       accessing_from: accessing_from(relationship),
       key: key ++ [relationship.name]
     }
@@ -157,11 +171,14 @@ defmodule Ash.Actions.Read.RelationshipSteps do
   - `:accessing_from` - the relationship the records are accessed from, if not `relationship`
   - `:base_query` - the query the records are read with, at the end of a path, such as an
     aggregate's query. Its action and arguments are used.
+  - `:read_action_relationship` - the relationship whose read action and arguments are used, if
+    not `relationship`
   - `:filter?` - whether to add the relationship's filter. Defaults to `true`.
   """
   @spec query(Ash.Resource.Relationships.relationship(), scope, Keyword.t()) :: Ash.Query.t()
   def query(relationship, scope, opts \\ []) do
-    action = read_action(relationship, opts[:base_query])
+    read_action_relationship = opts[:read_action_relationship] || relationship
+    action = read_action(read_action_relationship, opts[:base_query])
 
     relationship.destination
     |> Ash.Query.new()
@@ -173,7 +190,7 @@ defmodule Ash.Actions.Read.RelationshipSteps do
     |> Ash.Query.set_context(relationship.context)
     |> Ash.Query.for_read(
       action,
-      read_action_arguments(relationship, opts[:base_query], action),
+      read_action_arguments(read_action_relationship, opts[:base_query], action),
       authorize?: scope.authorize?,
       actor: scope.actor,
       tenant: scope.tenant,
@@ -213,7 +230,7 @@ defmodule Ash.Actions.Read.RelationshipSteps do
   end
 
   # The base query's arguments were given for its own action, and the relationship's for its
-  # read action.
+  # read action. As when loading, the base query's take precedence.
   defp read_action_arguments(relationship, base_query, action) do
     base_arguments =
       case base_query do
@@ -228,15 +245,20 @@ defmodule Ash.Actions.Read.RelationshipSteps do
         %{}
       end
 
-    Map.merge(base_arguments, relationship_arguments)
+    Map.merge(relationship_arguments, base_arguments)
   end
 
   @doc """
-  The key that a step's read policy filter is stored under, for the action it's read with.
+  The key that a step's read policy filter is stored under: the relationship it's accessed from,
+  and the action and arguments it's read with, which policies can depend on. `base_query` is
+  the query the records are read with, if any, as for `query/3`.
   """
-  @spec policy_key(Step.t(), atom) :: {Ash.Resource.t(), atom, atom}
-  def policy_key(%Step{accessing_from: accessing_from}, action) do
-    {accessing_from.source, accessing_from.name, action}
+  @spec policy_key(Step.t(), Ash.Query.t() | nil) :: {Ash.Resource.t(), atom, atom, map}
+  def policy_key(%Step{} = step, base_query \\ nil) do
+    action = read_action(step.read_action_relationship, base_query)
+    arguments = read_action_arguments(step.read_action_relationship, base_query, action)
+
+    {step.accessing_from.source, step.accessing_from.name, action, arguments}
   end
 
   @doc """
@@ -253,10 +275,11 @@ defmodule Ash.Actions.Read.RelationshipSteps do
       query(step.relationship, %{scope | authorize?: true},
         accessing_from: step.accessing_from,
         base_query: base_query,
+        read_action_relationship: step.read_action_relationship,
         filter?: false
       )
 
-    key = policy_key(step, related_query.action.name)
+    key = policy_key(step, base_query)
 
     cond do
       Map.has_key?(filters, key) ->
@@ -311,7 +334,7 @@ defmodule Ash.Actions.Read.RelationshipSteps do
     |> expand(path)
     |> Enum.drop(-1)
     |> Enum.reduce(%{}, fn step, join_filters ->
-      case Map.get(policy_filters, policy_key(step, read_action(step.relationship))) do
+      case Map.get(policy_filters, policy_key(step)) do
         %Ash.Filter{expression: true} -> join_filters
         %Ash.Filter{expression: expression} -> Map.put(join_filters, step.key, expression)
         nil -> join_filters

@@ -210,9 +210,7 @@ defmodule Ash.Actions.Read.RelatedAuthorization do
   end
 
   defp relationship_filter(step, path_filters) do
-    key = RelationshipSteps.policy_key(step, RelationshipSteps.read_action(step.relationship))
-
-    case Map.get(path_filters, key) do
+    case Map.get(path_filters, RelationshipSteps.policy_key(step)) do
       nil -> nil
       %Ash.Filter{expression: expression} -> expression
     end
@@ -432,7 +430,7 @@ defmodule Ash.Actions.Read.RelatedAuthorization do
   defp destination(resource, action, []), do: {resource, action}
 
   defp destination(resource, _action, path) do
-    %{relationship: relationship} = resource |> expand_path(path) |> List.last()
+    %{read_action_relationship: relationship} = resource |> expand_path(path) |> List.last()
 
     {relationship.destination, relationship.read_action || primary_read(relationship.destination)}
   end
