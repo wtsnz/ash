@@ -11,6 +11,7 @@ defmodule Ash.Actions.Read.RelatedAuthorization do
   # the way to it, and can see the field itself. `exists` only considers related records that
   # the actor can read.
 
+  alias Ash.Actions.Read.RelationshipSteps
   alias Ash.Query.{BooleanExpression, Exists, Parent, Ref}
 
   @doc """
@@ -163,23 +164,20 @@ defmodule Ash.Actions.Read.RelatedAuthorization do
   one relationship is split into nested `exists`, one per relationship.
   """
   def authorize_exists_path(%Exists{path: path, expr: expr} = exists, resource, path_filters) do
-    relationships =
-      resource
-      |> expand_path_with_through(path)
-      |> Enum.map(&elem(&1, 0))
+    steps = expand_path(resource, path)
 
-    expr = shift_parents(expr, length(relationships) - 1)
+    expr = shift_parents(expr, length(steps) - 1)
 
-    relationships
+    steps
     |> Enum.reverse()
-    |> Enum.reduce(expr, fn relationship, expr ->
+    |> Enum.reduce(expr, fn step, expr ->
       expr =
-        case relationship_filter(relationship, path_filters) do
+        case relationship_filter(step, path_filters) do
           nil -> expr
           condition -> BooleanExpression.optimized_new(:and, condition, expr)
         end
 
-      %{exists | path: [relationship.name], at_path: [], expr: expr}
+      %{exists | path: [step.hop.name], at_path: [], expr: expr}
     end)
     |> then(&%{&1 | at_path: exists.at_path})
   end
@@ -189,9 +187,9 @@ defmodule Ash.Actions.Read.RelatedAuthorization do
   """
   def relationship_condition(resource, path, path_filters) do
     resource
-    |> expand_path_with_through(path)
-    |> Enum.reduce(true, fn {relationship, filter_path}, condition ->
-      case relationship_filter(relationship, path_filters) do
+    |> expand_path(path)
+    |> Enum.reduce(true, fn step, condition ->
+      case relationship_filter(step, path_filters) do
         nil ->
           condition
 
@@ -199,51 +197,22 @@ defmodule Ash.Actions.Read.RelatedAuthorization do
           BooleanExpression.optimized_new(
             :and,
             condition,
-            Ash.Filter.move_to_relationship_path(filter, filter_path)
+            Ash.Filter.move_to_relationship_path(filter, step.key)
           )
       end
     end)
   end
 
-  @doc """
-  Expands relationships with `through` into the relationships they go through, along with the
-  path to each one.
-  """
-  def expand_path_with_through(resource, path) do
-    expand_path_with_through(resource, path, [], [])
+  # Expressions can only refer to relationships that are defined, so a `many_to_many` stays one
+  # step.
+  defp expand_path(resource, path) do
+    RelationshipSteps.expand(resource, path, many_to_many: :keep)
   end
 
-  defp expand_path_with_through(_resource, [], _current_path, acc), do: Enum.reverse(acc)
+  defp relationship_filter(step, path_filters) do
+    key = RelationshipSteps.policy_key(step, RelationshipSteps.read_action(step.relationship))
 
-  defp expand_path_with_through(resource, [name | rest], current_path, acc) do
-    relationship = Ash.Resource.Info.relationship(resource, name)
-
-    case Map.get(relationship, :through) do
-      through when is_list(through) ->
-        nested = expand_path_with_through(resource, through, current_path, [])
-        expanded_path = current_path ++ through
-        {last_relationship, _} = List.last(nested)
-
-        expand_path_with_through(
-          last_relationship.destination,
-          rest,
-          expanded_path,
-          Enum.reverse(nested) ++ acc
-        )
-
-      _ ->
-        filter_path = current_path ++ [name]
-        new_acc = [{relationship, filter_path} | acc]
-        expand_path_with_through(relationship.destination, rest, filter_path, new_acc)
-    end
-  end
-
-  defp relationship_filter(relationship, path_filters) do
-    read_action =
-      relationship.read_action ||
-        Ash.Resource.Info.primary_action!(relationship.destination, :read).name
-
-    case Map.get(path_filters, {relationship.source, relationship.name, read_action}) do
+    case Map.get(path_filters, key) do
       nil -> nil
       %Ash.Filter{expression: expression} -> expression
     end
@@ -335,8 +304,8 @@ defmodule Ash.Actions.Read.RelatedAuthorization do
 
   defp relationship_requirements(resource, path) do
     resource
-    |> expand_path_with_through(path)
-    |> Enum.map(fn {relationship, _filter_path} -> {:relationship, relationship} end)
+    |> expand_path(path)
+    |> Enum.map(&{:relationship, &1})
   end
 
   defp field_conditions(field_items, domain, context) do
@@ -463,7 +432,7 @@ defmodule Ash.Actions.Read.RelatedAuthorization do
   defp destination(resource, action, []), do: {resource, action}
 
   defp destination(resource, _action, path) do
-    {relationship, _} = resource |> expand_path_with_through(path) |> List.last()
+    %{relationship: relationship} = resource |> expand_path(path) |> List.last()
 
     {relationship.destination, relationship.read_action || primary_read(relationship.destination)}
   end

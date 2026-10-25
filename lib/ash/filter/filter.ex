@@ -7,6 +7,8 @@ defmodule Ash.Filter do
   @dialyzer {:nowarn_function, do_map: 2, map: 2}
   require Logger
 
+  alias Ash.Actions.Read.RelationshipSteps
+
   alias Ash.Error.Query.{
     InvalidFilterValue,
     NoSuchField,
@@ -1067,18 +1069,16 @@ defmodule Ash.Filter do
       |> Enum.concat(input_exists_paths(query.filter))
       |> Enum.uniq()
       |> Enum.reduce_while({:ok, filters}, fn path, {:ok, filters} ->
-        expanded_relationships = expand_through_path(query.resource, path)
+        steps = RelationshipSteps.expand(query.resource, path, many_to_many: :keep)
 
-        case Enum.reduce_while(expanded_relationships, {:ok, filters}, fn relationship,
-                                                                          {:ok, filters} ->
+        case Enum.reduce_while(steps, {:ok, filters}, fn step, {:ok, filters} ->
                add_authorization_path_filter(
                  filters,
-                 relationship,
+                 step,
                  domain,
                  query.context[:shared],
                  actor,
-                 tenant,
-                 refs
+                 tenant
                )
              end) do
           {:ok, filters} -> {:cont, {:ok, filters}}
@@ -1109,13 +1109,13 @@ defmodule Ash.Filter do
   end
 
   @doc false
-  # Adds authorization filters for specific relationships and unrelated exists, keyed the same
-  # way as `relationship_filters/7`. Items are `{:relationship, relationship}` or
+  # Adds authorization filters for specific relationship steps and unrelated exists, keyed the
+  # same way as `relationship_filters/7`. Items are `{:relationship, step}` or
   # `{:unrelated_exists, exists}`.
   def relationship_authorization_filters(domain, shared, actor, tenant, items, filters) do
     Enum.reduce_while(items, {:ok, filters}, fn
-      {:relationship, relationship}, {:ok, filters} ->
-        add_authorization_path_filter(filters, relationship, domain, shared, actor, tenant, [])
+      {:relationship, step}, {:ok, filters} ->
+        add_authorization_path_filter(filters, step, domain, shared, actor, tenant)
 
       {:unrelated_exists, exists}, {:ok, filters} ->
         case add_unrelated_exists_filter(filters, exists, domain, actor, tenant) do
@@ -1127,78 +1127,31 @@ defmodule Ash.Filter do
 
   defp add_authorization_path_filter(
          filters,
-         last_relationship,
+         step,
          domain,
          shared,
          actor,
          tenant,
-         _refs,
-         base_related_query \\ nil,
-         _aggregate? \\ false
+         base_query \\ nil
        ) do
-    case relationship_query(
-           last_relationship,
-           domain,
-           actor,
-           tenant,
-           base_related_query,
-           %{shared: shared}
-         ) do
-      %{errors: []} = related_query ->
-        if filters[{last_relationship.source, last_relationship.name, related_query.action.name}] do
-          {:cont, {:ok, filters}}
-        else
-          related_query
-          |> Ash.Query.set_context(%{
-            accessing_from: %{
-              source: last_relationship.source,
-              name: last_relationship.name
-            }
-          })
-          |> Ash.Query.select([])
-          |> Map.put(:filter, nil)
-          |> Ash.can(actor,
-            run_queries?: false,
-            pre_flight?: false,
-            alter_source?: true,
-            no_check?: true,
-            return_forbidden_error?: true,
-            maybe_is: false
-          )
-          |> case do
-            {:ok, true, authorized_related_query} ->
-              related_filter =
-                if is_nil(authorized_related_query.filter) do
-                  %Ash.Filter{expression: true, resource: related_query.resource}
-                else
-                  authorized_related_query.filter
-                end
+    scope = policy_scope(domain, shared, actor, tenant)
 
-              {:cont,
-               {:ok,
-                Map.put(
-                  filters,
-                  {last_relationship.source, last_relationship.name, related_query.action.name},
-                  related_filter
-                )}}
-
-            {:ok, false, _error} ->
-              {:cont,
-               {:ok,
-                Map.put(
-                  filters,
-                  {last_relationship.source, last_relationship.name, related_query.action.name},
-                  %Ash.Filter{expression: false, resource: related_query.resource}
-                )}}
-
-            {:error, error} ->
-              {:halt, {:error, error}}
-          end
-        end
-
-      %{errors: errors} ->
-        {:halt, {:error, errors}}
+    case RelationshipSteps.add_policy_filter(filters, step, scope, base_query) do
+      {:ok, filters} -> {:cont, {:ok, filters}}
+      {:error, error} -> {:halt, {:error, error}}
     end
+  end
+
+  defp policy_scope(domain, shared, actor, tenant) do
+    %{
+      actor: actor,
+      authorize?: true,
+      tenant: tenant,
+      tracer: nil,
+      shared: shared || %{},
+      domain: domain,
+      arguments: %{}
+    }
   end
 
   defp add_aggregate_path_authorization(
@@ -1231,33 +1184,31 @@ defmodule Ash.Filter do
       aggregate_query = Ash.Query.set_context(aggregate.query, shared)
       aggregate = %{aggregate | query: aggregate_query}
 
-      if Map.get(aggregate, :related?, true) do
-        aggregate.relationship_path
-        |> :lists.droplast()
-        |> Ash.Query.Aggregate.subpaths()
-        |> Enum.reduce_while({:ok, filters}, fn subpath, {:ok, filters} ->
-          # Path is relative to the aggregate's own source, which differs from
-          # `query.resource` when this is a nested aggregate's inner aggregate.
-          last_relationship = last_relationship(aggregate.resource, subpath)
+      # The path is relative to the aggregate's own source, which differs from `query.resource`
+      # when this is a nested aggregate's inner aggregate. Every step is authorized, including a
+      # `many_to_many`'s join resource and the steps of a `through` relationship.
+      steps =
+        if Map.get(aggregate, :related?, true) do
+          RelationshipSteps.expand(aggregate.resource, aggregate.relationship_path)
+        end
 
+      # Aggregates referenced in the aggregate's own query are authorized too.
+      nested_aggregates =
+        aggregate.query.filter
+        |> used_aggregates(:*)
+        |> Enum.filter(& &1.authorize?)
+
+      if steps do
+        steps
+        |> Enum.drop(-1)
+        |> Enum.reduce_while({:ok, filters}, fn step, {:ok, filters} ->
           add_authorization_path_filter(
             filters,
-            last_relationship,
+            step,
             domain,
             query.context[:shared],
             actor,
-            tenant,
-            refs,
-            Ash.Query.for_read(
-              last_relationship.destination,
-              Ash.Resource.Info.primary_action(last_relationship.destination, :read).name,
-              %{},
-              actor: actor,
-              tenant: tenant,
-              authorize?: authorize?,
-              context: shared
-            ),
-            true
+            tenant
           )
         end)
       else
@@ -1290,29 +1241,25 @@ defmodule Ash.Filter do
       end
       |> case do
         {:ok, filters} ->
-          if Map.get(aggregate, :related?, true) do
-            last_relationship = last_relationship(aggregate.resource, aggregate.relationship_path)
-
+          if steps do
             case relationship_filters(
                    domain,
                    aggregate.query,
                    actor,
                    tenant,
-                   [],
+                   nested_aggregates,
                    authorize?,
                    filters
                  ) do
               {:ok, filters} ->
                 add_authorization_path_filter(
                   filters,
-                  last_relationship,
+                  List.last(steps),
                   domain,
                   query.context[:shared],
                   actor,
                   tenant,
-                  refs,
-                  aggregate.query,
-                  true
+                  aggregate.query
                 )
 
               {:error, error} ->
@@ -1324,7 +1271,7 @@ defmodule Ash.Filter do
                    aggregate.query,
                    actor,
                    tenant,
-                   [],
+                   nested_aggregates,
                    authorize?,
                    filters
                  ) do
@@ -1506,91 +1453,13 @@ defmodule Ash.Filter do
          actor,
          tenant
        ) do
-    last_relationship = last_relationship(resource, path)
+    step = RelationshipSteps.last_step(resource, path, many_to_many: :keep)
 
-    case relationship_query(last_relationship, domain, actor, tenant, nil) do
-      %{errors: []} = related_query ->
-        if filters[{last_relationship.source, last_relationship.name, related_query.action.name}] do
-          {:ok, filters}
-        else
-          case Ash.can(related_query, actor,
-                 run_queries?: false,
-                 pre_flight?: false,
-                 alter_source?: true,
-                 no_check?: true,
-                 return_forbidden_error?: true,
-                 maybe_is: false
-               ) do
-            {:ok, true, authorized_related_query} ->
-              related_filter =
-                if is_nil(authorized_related_query.filter) do
-                  %Ash.Filter{expression: true, resource: related_query.resource}
-                else
-                  authorized_related_query.filter
-                end
-
-              {:ok,
-               Map.put(
-                 filters,
-                 {last_relationship.source, last_relationship.name, related_query.action.name},
-                 related_filter
-               )}
-
-            {:ok, false, _error} ->
-              {:ok,
-               Map.put(
-                 filters,
-                 {last_relationship.source, last_relationship.name, related_query.action.name},
-                 %Ash.Filter{expression: false, resource: related_query.resource}
-               )}
-
-            {:error, error} ->
-              {:error, error}
-          end
-        end
-
-      error_query ->
-        {:error, error_query.errors}
-    end
-  end
-
-  defp relationship_query(relationship, domain, actor, tenant, base, source_context \\ %{}) do
-    base_query = base || Ash.Query.new(relationship.destination)
-    domain = relationship.domain || domain
-
-    action =
-      relationship.read_action || (base_query.action && base_query.action.name) ||
-        Ash.Resource.Info.primary_action!(relationship.destination, :read).name
-
-    query =
-      relationship.destination
-      |> Ash.Query.set_context(relationship.context)
-      |> Ash.Query.set_context(source_context)
-      |> Ash.Query.sort(relationship.sort, prepend?: true)
-
-    if query.__validated_for_action__ == action do
-      query
-    else
-      Ash.Query.for_read(
-        query,
-        action,
-        relationship_query_arguments(relationship, base_query, action),
-        actor: actor,
-        authorize?: true,
-        tenant: tenant,
-        domain: domain,
-        context: source_context
-      )
-    end
-  end
-
-  # The base query's arguments are for its own action, so they only apply when that action is read
-  defp relationship_query_arguments(relationship, base_query, action) do
-    if base_query.action && base_query.action.name == action do
-      Map.merge(base_query.arguments || %{}, relationship_read_action_arguments(relationship))
-    else
-      relationship_read_action_arguments(relationship)
-    end
+    RelationshipSteps.add_policy_filter(
+      filters,
+      step,
+      policy_scope(domain, nil, actor, tenant)
+    )
   end
 
   defp relationship_read_action_arguments(relationship) do
@@ -5395,36 +5264,11 @@ defmodule Ash.Filter do
     end
   end
 
-  defp expand_through_path(resource, path) do
-    expand_through_path(resource, path, [])
-  end
-
-  defp expand_through_path(_resource, [], acc), do: Enum.reverse(acc)
-
-  defp expand_through_path(resource, [name | rest], acc) do
-    relationship = Ash.Resource.Info.relationship(resource, name)
-
-    if is_nil(relationship) do
-      raise Ash.Error.Query.NoSuchRelationship,
-        resource: resource,
-        relationship: name
-    end
-
-    case Map.get(relationship, :through) do
-      through when is_list(through) ->
-        nested_rels = expand_through_path(resource, through, [])
-        destination = List.last(nested_rels).destination
-        expand_through_path(destination, rest, Enum.reverse(nested_rels) ++ acc)
-
-      _ ->
-        expand_through_path(relationship.destination, rest, [relationship | acc])
-    end
-  end
-
   defp expand_through_path_names(resource, path) do
-    resource
-    |> expand_through_path(path)
-    |> Enum.map(& &1.name)
+    case RelationshipSteps.last_step(resource, path, many_to_many: :keep) do
+      nil -> []
+      step -> step.key
+    end
   end
 
   defp exists_related_hydrate_error(exists, resource, at_path, path) do
@@ -5516,24 +5360,5 @@ defmodule Ash.Filter do
     Expression: #{inspect(exists)}
     """
     |> String.trim()
-  end
-
-  defp last_relationship(resource, list) do
-    path = :lists.droplast(list)
-    last = List.last(list)
-
-    with related when not is_nil(related) <- Ash.Resource.Info.related(resource, path),
-         relationship when not is_nil(relationship) <-
-           Ash.Resource.Info.relationship(related, last) do
-      relationship
-    else
-      _ ->
-        raise """
-        Attempted to read relationship path that does not exist.
-
-        Resource: #{inspect(resource)}
-        Path: #{inspect(list)}
-        """
-    end
   end
 end

@@ -434,9 +434,10 @@ defmodule Ash.Actions.Read.Relationships do
 
                 {:cont, {:ok, acc ++ [entry]}}
 
-              {%{hop: hop}, %{relationship: arriving}}, {:ok, acc} ->
+              {%{hop: hop}, %{relationship: arriving} = previous}, {:ok, acc} ->
                 arriving
                 |> through_step_query(scope)
+                |> RelationshipSteps.filter_step(related_query, previous.key)
                 |> RelationshipSteps.authorize(scope, arriving.name)
                 |> case do
                   {:ok, step_query} ->
@@ -495,6 +496,7 @@ defmodule Ash.Actions.Read.Relationships do
                 relationship.source_attribute_on_join_resource,
                 relationship.destination_attribute_on_join_resource
               ])
+              |> RelationshipSteps.filter_step(related_query, [join_relationship.name])
               |> RelationshipSteps.hydrate_refs(
                 source_query.context[:private][:actor],
                 relationship.source,
@@ -917,6 +919,7 @@ defmodule Ash.Actions.Read.Relationships do
         RelatedAuthorization.trusted_sort(relationship.through, join_relationship.sort)
       )
       |> Ash.Query.set_context(join_relationship.context)
+      |> RelationshipSteps.filter_step(related_query, [join_relationship.name])
       |> then(fn q ->
         if join_relationship.limit do
           Ash.Query.limit(q, join_relationship.limit)
