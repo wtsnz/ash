@@ -4,7 +4,7 @@
 
 Generated from an unreviewed run: each result was classified automatically against the intended answer. Nothing here has been reviewed.
 
-Feature catalog version 1: 164 features and 1319 scenarios.
+Feature catalog version 1: 172 features and 1395 scenarios.
 
 | Status | Meaning |
 | --- | --- |
@@ -164,7 +164,7 @@ fix.
 | Feature | postgres | Not working |
 | --- | --- | --- |
 | Load each aggregate kind on records | ✅ Works 9/9 |  |
-| Run each aggregate kind over a whole query | 🟡 Partial 13/15 | `root.list_unsorted` wrong, `root.unsorted_first_empty` crashed |
+| Run each aggregate kind over a whole query | 🟡 Partial 14/15 | `root.list_unsorted` wrong |
 | Defaults, nils, uniqueness and field counts | 🟡 Partial 11/12 | `values.list_unsorted` wrong |
 | Aggregate decimals, dates, times and constrained types | ❓ Open question 14/15 | `values.decimal_avg` open question |
 | Order first and list aggregates, including nils and ties | ❓ Open question 8/9 | `ordering.unique_other_field` open question |
@@ -257,6 +257,20 @@ fix.
 | Feature | postgres | Not working |
 | --- | --- | --- |
 | Counts match loads, and root sums match an in-memory reference | ✅ Works 2/2 |  |
+
+## 15. Adversarial invariants
+
+| Feature | postgres | Not working |
+| --- | --- | --- |
+| Tenancy scopes many_to_many and through loads, aggregates and filters | 🟡 Partial 7/17 | `adv.tenant.has_one_limit` wrong, `adv.tenant.has_one_sorted` wrong, `adv.tenant.has_one_unsorted` wrong, `adv.tenant.m2m_limit_one` wrong, `adv.tenant.m2m_load` wrong, `adv.tenant.through_limit_one` wrong, `adv.tenant.through_load` wrong, `adv.tenant.through_long_load` wrong, `adv.tenant.through_many_to_many_load` wrong, `adv.tenant.through_offset` wrong |
+| Schema-based tenancy scopes the same paths | 🟡 Partial 2/6 | `adv.schema.m2m_aggregates` wrong, `adv.schema.m2m_exists` wrong, `adv.schema.through_limit_one` wrong, `adv.schema.through_load` crashed |
+| Bounded through loads keep their path | 🟡 Partial 5/8 | `adv.plain.has_one_limit` wrong, `adv.plain.through_limit_one` wrong, `adv.plain.through_offset` wrong |
+| The join resource's read policy applies to loads, aggregates and input filters | 🟡 Partial 5/11 | `adv.join_policy.m2m_aggregate_filter` wrong, `adv.join_policy.m2m_aggregates` wrong, `adv.join_policy.m2m_exists_aggregate` wrong, `adv.join_policy.m2m_filter_input` wrong, `adv.join_policy.through_aggregates` wrong, `adv.join_policy.through_exists_aggregate` wrong |
+| Updates and destroys given another tenant's records change nothing of it | 🟡 Partial 7/13 | `adv.foreign.bulk_destroy.fallback` wrong, `adv.foreign.bulk_destroy.stream` wrong, `adv.foreign.bulk_update.fallback` wrong, `adv.foreign.bulk_update.stream` wrong, `adv.foreign.bulk_update.stream_global_records` wrong, `adv.foreign.destroy_changeset` wrong |
+| Upserts stay in their tenant | 🟡 Partial 3/6 | `adv.upsert.all_tenants` open question, `adv.upsert.all_tenants_skipped_bulk` open question, `adv.upsert.skipped_bulk` order dependent |
+| Field policies apply to write results, embedded values included | 🟡 Partial 3/11 | `adv.field_write.bulk_create` wrong, `adv.field_write.bulk_destroy.atomic` wrong, `adv.field_write.bulk_update.atomic` wrong, `adv.field_write.bulk_update.atomic_batches` wrong, `adv.field_write.create` wrong, `adv.field_write.destroy` wrong, `adv.field_write.update` wrong, `adv.field_write.update_load` wrong |
+| manage_relationship can't relate another tenant's or a hidden record | ✅ Works 4/4 |  |
+
 
 ## Claims versus results
 
@@ -394,6 +408,46 @@ answer changes with the order rows were stored in; ❔ did not run.
 | `list` | `items` | `none` | `tenant` | `off` | `page` | ✅ |
 | `list` | `linked_items` | `open` | `global` | `off` | `loaded` | ✅ |
 | `sum` | `linked_items` | `none` | `global` | `off` | `sort` | ✅ |
+
+## Decoy variant
+
+Every scenario also runs with a hidden copy of each fixture row stored
+next to the real ones: in a mirror tenant, with colliding local ids, where
+the table is multitenant by attribute, and otherwise with a reserved id a
+read policy hides (`Ash.Conformance.Decoy`). An issue is a decoy in the
+answer (leaked), or an answer that was right and changes with decoys
+(influenced); a decoy error needs triage. Each needs a recorded gap. Hints
+are guesses from the direction of the change.
+
+**13 issues** (0 leaked, 13 influenced; 0 unrecorded) · 24 need triage (0 unrecorded) · the rest clean: 1043 same, 6 base failing, 309 opted out, 0 not run.
+
+| Scenario | Status | Hint | Diff | Gap |
+| --- | --- | --- | --- | --- |
+| `bounds.filter_after_limit` | influenced | hidden rows took limit/offset slots? | `1: 2 → nil` | [Authorization bounds](GAPS.md#authorization-bounds) |
+| `bounds.list_filter_after_limit` | influenced | hidden rows took limit/offset slots? | `1: [2] → []` | [Authorization bounds](GAPS.md#authorization-bounds) |
+| `bounds.relationship_limit` | influenced | hidden rows took limit/offset slots? | `1: 9 → nil` | [Authorization bounds](GAPS.md#authorization-bounds) |
+| `bounds.relationship_offset` | influenced |  | `1: 2 → nil, 2: nil → 4` | [Authorization bounds](GAPS.md#authorization-bounds) |
+| `bounds.relationship_offset_only` | influenced | counts hidden rows? | `1: 4 → 11, 2: nil → 4` | [Authorization bounds](GAPS.md#authorization-bounds) |
+| `bounds.unsorted_limit` | influenced | hidden rows took limit/offset slots? | `1: 1 → 0, 2: 1 → 0` | [Authorization bounds](GAPS.md#authorization-bounds) |
+| `field.root_aggregate` | influenced | counts hidden rows? | `5 → 10` | [Aggregate reference authorization](GAPS.md#aggregate-reference-authorization) |
+| `filter.aggregate_dependency` | influenced | counts hidden rows? | `1: 1 → 3` | [Aggregate reference authorization](GAPS.md#aggregate-reference-authorization) |
+| `filter.aggregate_dependency_calculation` | influenced | counts hidden rows? | `1: 1 → 3` | [Aggregate reference authorization](GAPS.md#aggregate-reference-authorization) |
+| `filter.aggregate_dependency_filtered` | influenced | counts hidden rows? | `1: 2 → 4` | [Aggregate reference authorization](GAPS.md#aggregate-reference-authorization) |
+| `write.atomic_update` | influenced | counts hidden rows? | `[0] #1: 4 → 8, [1] #1: 1 → 2` | [Aggregate reference authorization](GAPS.md#aggregate-reference-authorization) |
+| `write.bulk_update_filter` | influenced |  | `[1] #1: "beta" → "big"` | [Aggregate reference authorization](GAPS.md#aggregate-reference-authorization) |
+| `write.single_atomic_update` | influenced | counts hidden rows? | `1 → 2` | [Aggregate reference authorization](GAPS.md#aggregate-reference-authorization) |
+
+Need triage: the scenario's own run is right, and with decoys it raises. Scenarios with the same error and gap share a row.
+
+| Scenario | Error | Gap |
+| --- | --- | --- |
+| `shape.exists.integer.depth_2.constant.filter` and 5 more | `Ash.Error.Unknown: ** (RuntimeError) no such relationship Ash.Conformance.Postgres.ShapeIntegerLeaf.integer_mids` | [Exists path authorization](GAPS.md#exists-path-authorization) |
+| `shape.exists.integer.depth_3.constant.filter` and 5 more | `Ash.Error.Unknown: ** (RuntimeError) no such relationship Ash.Conformance.Postgres.ShapeIntegerTip.integer_mids` | [Exists path authorization](GAPS.md#exists-path-authorization) |
+| `shape.exists.uuid.depth_2.constant.filter` and 5 more | `Ash.Error.Unknown: ** (RuntimeError) no such relationship Ash.Conformance.Postgres.ShapeUuidLeaf.uuid_mids` | [Exists path authorization](GAPS.md#exists-path-authorization) |
+| `shape.exists.uuid.depth_3.constant.filter` and 5 more | `Ash.Error.Unknown: ** (RuntimeError) no such relationship Ash.Conformance.Postgres.ShapeUuidTip.uuid_mids` | [Exists path authorization](GAPS.md#exists-path-authorization) |
+
+6 scenarios already fail without decoys, so a difference isn't a decoy signal; their own gaps: [Authorization bounds](GAPS.md#authorization-bounds), [Join resource policies](GAPS.md#join-resource-policies), [Nested parent](GAPS.md#nested-parent), [No attributes](GAPS.md#no-attributes), [Prepared query](GAPS.md#prepared-query).
+
 
 ## Blockers
 

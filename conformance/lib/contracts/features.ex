@@ -772,8 +772,48 @@ defmodule Ash.Conformance.Contracts.Features do
            claims: [secure_parent: {:aggregate, :count}],
            scenarios: ~w(equivalence.visible_count_load equivalence.root_reference)
          )
-       ]}
+       ]},
+      {15, "Adversarial invariants", adversarial()}
     ]
+  end
+
+  # Shapes and paths where a missing tenant or policy filter returns another
+  # tenant's or a hidden row (`Ash.Conformance.Scenarios.Adversarial`). The
+  # roles only exist where the fixture runs, so no claims are probed.
+  defp adversarial do
+    for {id, title, prefix, basis} <- [
+          {"adversarial.through_tenancy",
+           "Tenancy scopes many_to_many and through loads, aggregates and filters", "adv.tenant.",
+           "advanced/multitenancy.md"},
+          {"adversarial.through_schema", "Schema-based tenancy scopes the same paths",
+           "adv.schema.", "advanced/multitenancy.md"},
+          {"adversarial.through_bounds", "Bounded through loads keep their path", "adv.plain.",
+           "resources/relationships.md"},
+          {"adversarial.join_policies",
+           "The join resource's read policy applies to loads, aggregates and input filters",
+           "adv.join_policy.", "security/policies.md"},
+          {"adversarial.foreign_writes",
+           "Updates and destroys given another tenant's records change nothing of it",
+           "adv.foreign.", "advanced/multitenancy.md"},
+          {"adversarial.upserts", "Upserts stay in their tenant", "adv.upsert.",
+           "actions/create-actions.md"},
+          {"adversarial.write_field_policies",
+           "Field policies apply to write results, embedded values included", "adv.field_write.",
+           "security/policies.md"},
+          {"adversarial.manage_relationship",
+           "manage_relationship can't relate another tenant's or a hidden record", "adv.manage.",
+           "resources/relationships.md"}
+        ] do
+      feature(id, title, "#{@docs}/#{basis}",
+        claims: [],
+        scenarios:
+          for(
+            scenario <- Ash.Conformance.Scenarios.Adversarial.all(),
+            String.starts_with?(scenario.id, prefix),
+            do: scenario.id
+          )
+      )
+    end
   end
 
   # One feature per tier-1 type: its values round-trip unchanged.

@@ -14,8 +14,18 @@ defmodule Ash.Conformance.ContractTest do
     Runner
   }
 
-  test "all dependencies use the parent Ash checkout" do
-    assert Mix.Project.deps_paths()[:ash] == Path.expand("..")
+  test "every data layer runs against the same Ash, AshSQL and their declared set" do
+    # One copy of each core package, chosen by `CONFORMANCE_DEPS` in mix.exs:
+    # the Hex release by default, or `main`.
+    paths = Mix.Project.deps_paths()
+
+    for package <- [:ash, :ash_sql, :ash_sqlite, :ash_postgres],
+        do: assert(Map.has_key?(paths, package))
+
+    if Ash.Conformance.Report.dependency_set() == "release" and
+         System.get_env("CONFORMANCE_ASH_PATH") in [nil, ""] do
+      assert to_string(Application.spec(:ash, :vsn)) == "3.37.0"
+    end
   end
 
   test "duplicate IDs and incomplete expectations cannot enter the registry" do
@@ -96,7 +106,10 @@ defmodule Ash.Conformance.ContractTest do
              Report.declaration_rows(),
              &(&1.adapter == :sqlite and &1.profile == :context_tenancy)
            )
+  end
 
+  @tag :committed_report
+  test "the committed inventory and capability reports are current" do
     assert File.read!("COVERAGE.md") == Inventory.markdown()
     assert File.read!("CAPABILITIES.md") == Capabilities.markdown()
   end

@@ -20,8 +20,11 @@ defmodule Ash.Conformance.Resources.Base do
     authorizers = Keyword.get(opts, :authorizers, [])
 
     # A resource in a policy variant's set gets that variant's policies,
-    # unless it declares its own authorizers (Ash.Conformance.Variant).
-    policy = if authorizers == [], do: Ash.Conformance.Variant.policy(__CALLER__.module)
+    # unless it declares its own authorizers (Ash.Conformance.Variant). The
+    # decoy set adds its hiding policy to those as well.
+    variant = Ash.Conformance.Variant.policy(__CALLER__.module)
+    policy = if authorizers == [], do: variant
+    own_policies = if authorizers != [], do: Ash.Conformance.Variant.own_policies(variant)
     authorizers = if policy, do: [Ash.Policy.Authorizer], else: authorizers
 
     # The adapter supplies its data layer and configuration block for each
@@ -45,6 +48,10 @@ defmodule Ash.Conformance.Resources.Base do
       end
 
       unquote(Ash.Conformance.Variant.policies(policy))
+      unquote(own_policies)
+
+      @doc false
+      def __conformance_table__, do: unquote(table)
     end
   end
 end

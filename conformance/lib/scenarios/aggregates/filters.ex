@@ -15,12 +15,18 @@ defmodule Ash.Conformance.Scenarios.Aggregates.Filters do
       new("filter.ordinary", :filters, %{1 => 4, 2 => 4, 3 => nil}, fn ctx ->
         loaded(ctx, :sum, :children, field: :value, query: [filter: [visible: true]])
       end),
-      new("filter.exists", :filters, %{1 => 4, 2 => nil, 3 => nil}, fn ctx ->
-        loaded(ctx, :sum, :children,
-          field: :value,
-          query: Ash.Query.filter(ctx.child, exists(ratings, score > 5))
-        )
-      end),
+      new(
+        "filter.exists",
+        :filters,
+        %{1 => 4, 2 => nil, 3 => nil},
+        fn ctx ->
+          loaded(ctx, :sum, :children,
+            field: :value,
+            query: Ash.Query.filter(ctx.child, exists(ratings, score > 5))
+          )
+        end,
+        variants: Ash.Conformance.Variant.plain_relationship_filter()
+      ),
       new("filter.aggregate_dependency", :filters, %{1 => 1, 2 => 0, 3 => 0}, fn ctx ->
         loaded(ctx, :count, :children, query: Ash.Query.filter(ctx.child, rating_count > 1))
       end),
@@ -116,15 +122,22 @@ defmodule Ash.Conformance.Scenarios.Aggregates.Filters do
         fn ctx ->
           loaded(ctx, :count, :children, query: Ash.Query.filter(ctx.child, ratings.score > 5))
         end,
-        requires: ["filter.fanout_read_control"]
+        requires: ["filter.fanout_read_control"],
+        variants: Ash.Conformance.Variant.plain_relationship_filter()
       ),
-      new("filter.fanout_read_control", :filters, [11, 12], fn ctx ->
-        ctx.child
-        |> Ash.Query.filter(ratings.score > 5)
-        |> Ash.Query.sort(:id)
-        |> Ash.read!(authorize?: Ash.Conformance.Variant.authorize?())
-        |> Enum.map(& &1.id)
-      end),
+      new(
+        "filter.fanout_read_control",
+        :filters,
+        [11, 12],
+        fn ctx ->
+          ctx.child
+          |> Ash.Query.filter(ratings.score > 5)
+          |> Ash.Query.sort(:id)
+          |> Ash.read!(authorize?: Ash.Conformance.Variant.authorize?())
+          |> Enum.map(& &1.id)
+        end,
+        variants: Ash.Conformance.Variant.plain_relationship_filter()
+      ),
       new("filter.sibling_independence", :filters, {4, 11}, fn ctx ->
         row =
           selected_parent(ctx)
@@ -143,16 +156,25 @@ defmodule Ash.Conformance.Scenarios.Aggregates.Filters do
           query: Ash.Query.filter(ctx.child, exists(ratings, score > 5) or value == 7)
         )
       end),
-      new("filter.not_exists", :filters, %{1 => 7, 2 => 4, 3 => nil}, fn ctx ->
-        loaded(ctx, :sum, :children,
-          field: :value,
-          query: Ash.Query.filter(ctx.child, not exists(ratings, score > 5))
-        )
-      end)
+      new(
+        "filter.not_exists",
+        :filters,
+        %{1 => 7, 2 => 4, 3 => nil},
+        fn ctx ->
+          loaded(ctx, :sum, :children,
+            field: :value,
+            query: Ash.Query.filter(ctx.child, not exists(ratings, score > 5))
+          )
+        end,
+        variants: Ash.Conformance.Variant.plain_relationship_filter()
+      )
     ] ++ fanout() ++ fanout_predicates() ++ parent_uses()
   end
 
-  @fanout [requires: ["filter.fanout_read_control"]]
+  @fanout [
+    requires: ["filter.fanout_read_control"],
+    variants: Ash.Conformance.Variant.plain_relationship_filter()
+  ]
 
   # The average also includes child 13, through one extra rating above 5.
   defp fanout_opts(:avg),
@@ -206,7 +228,8 @@ defmodule Ash.Conformance.Scenarios.Aggregates.Filters do
             query: Ash.Query.filter(ctx.child, ratings.score > 5 and value == 2)
           )
         end,
-        requires: ["filter.fanout_read_control"]
+        requires: ["filter.fanout_read_control"],
+        variants: Ash.Conformance.Variant.plain_relationship_filter()
       ),
       new(
         "filter.fanout_or",
@@ -218,7 +241,8 @@ defmodule Ash.Conformance.Scenarios.Aggregates.Filters do
             query: Ash.Query.filter(ctx.child, ratings.score > 5 or value == 7)
           )
         end,
-        requires: ["filter.fanout_read_control"]
+        requires: ["filter.fanout_read_control"],
+        variants: Ash.Conformance.Variant.plain_relationship_filter()
       ),
       new(
         "filter.fanout_not_count",
@@ -229,11 +253,20 @@ defmodule Ash.Conformance.Scenarios.Aggregates.Filters do
             query: Ash.Query.filter(ctx.child, not (ratings.score > 5))
           )
         end,
-        requires: ["filter.fanout_read_control"]
+        requires: ["filter.fanout_read_control"],
+        variants: Ash.Conformance.Variant.plain_relationship_filter()
       ),
-      new("filter.fanout_nil_count", :filters, %{1 => 1, 2 => 1, 3 => 0}, fn ctx ->
-        loaded(ctx, :count, :children, query: Ash.Query.filter(ctx.child, is_nil(ratings.score)))
-      end)
+      new(
+        "filter.fanout_nil_count",
+        :filters,
+        %{1 => 1, 2 => 1, 3 => 0},
+        fn ctx ->
+          loaded(ctx, :count, :children,
+            query: Ash.Query.filter(ctx.child, is_nil(ratings.score))
+          )
+        end,
+        variants: Ash.Conformance.Variant.plain_relationship_filter()
+      )
     ]
   end
 

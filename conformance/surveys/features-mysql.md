@@ -4,7 +4,7 @@
 
 Generated from an unreviewed run: each result was classified automatically against the intended answer. Nothing here has been reviewed.
 
-Feature catalog version 1: 164 features and 1319 scenarios.
+Feature catalog version 1: 172 features and 1395 scenarios.
 
 | Status | Meaning |
 | --- | --- |
@@ -258,6 +258,20 @@ fix.
 | --- | --- | --- |
 | Counts match loads, and root sums match an in-memory reference | 🟡 Partial 1/2 | `equivalence.visible_count_load` rejected |
 
+## 15. Adversarial invariants
+
+| Feature | mysql | Not working |
+| --- | --- | --- |
+| Tenancy scopes many_to_many and through loads, aggregates and filters | ➖ Not applicable |  |
+| Schema-based tenancy scopes the same paths | ➖ Not applicable |  |
+| Bounded through loads keep their path | ➖ Not applicable |  |
+| The join resource's read policy applies to loads, aggregates and input filters | ➖ Not applicable |  |
+| Updates and destroys given another tenant's records change nothing of it | ➖ Not applicable |  |
+| Upserts stay in their tenant | ➖ Not applicable |  |
+| Field policies apply to write results, embedded values included | ➖ Not applicable |  |
+| manage_relationship can't relate another tenant's or a hidden record | ➖ Not applicable |  |
+
+
 ## Claims versus results
 
 A data layer's `can?/2` claims never decide what runs. This lists features
@@ -381,6 +395,21 @@ getting a hidden record when the actor may read every note.
 | strict_admin | ✅ | – | – | ✅ | ✅ | ✅ | ✅ | ✅ | ◌ | ◌ | ◌ | ✅ | ✅ | ✅ | ✅ | – | – | – | – | – | – | – |
 | field | – | – | – | – | – | – | – | – | – | – | – | – | – | – | – | – | ❌ | ✅ | ✅ | ◌ | – | – |
 | control (no authorization) | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ | ✅ | ✅ |
+
+
+## Decoy variant
+
+Every scenario also runs with a hidden copy of each fixture row stored
+next to the real ones: in a mirror tenant, with colliding local ids, where
+the table is multitenant by attribute, and otherwise with a reserved id a
+read policy hides (`Ash.Conformance.Decoy`). An issue is a decoy in the
+answer (leaked), or an answer that was right and changes with decoys
+(influenced); a decoy error needs triage. Each needs a recorded gap. Hints
+are guesses from the direction of the change.
+
+**No issues** · nothing to triage · the rest clean: 0 same, 0 base failing, 0 opted out, 953 not run.
+
+Not run: 953, no decoy resource set.
 
 
 ## Blockers

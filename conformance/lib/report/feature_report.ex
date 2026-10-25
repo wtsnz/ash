@@ -129,6 +129,7 @@ defmodule Ash.Conformance.Report.FeatureReport do
     fix.
 
     #{sections}
+    #{if source == :declared, do: Ash.Conformance.Report.DecoyReport.declared(adapters)}
     #{claims_section(adapters, summaries)}
     """
   end

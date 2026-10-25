@@ -6,10 +6,10 @@ defmodule Mix.Tasks.Conformance.CompareSurveys do
   Compares two surveys of the same adapter, for example ash-project main
   against the unreleased work:
 
-      CONFORMANCE_DEPS=upstream MIX_ENV=test mix conformance.survey sqlite
+      CONFORMANCE_DEPS=main MIX_ENV=test mix conformance.survey sqlite
       MIX_ENV=test mix conformance.survey sqlite
       MIX_ENV=test mix conformance.compare_surveys \\
-        results/upstream/survey-sqlite.json results/survey-sqlite.json
+        results/main/survey-sqlite.json results/survey-sqlite.json
 
   Prints which features and scenarios changed classification, and writes the
   same Markdown next to the current survey.

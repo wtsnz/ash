@@ -22,42 +22,38 @@ and context-tenancy profiles; actor/context authorization; equivalence and write
 checks; benchmark commands; and isolated CI. Two inherited fixture mutations
 were moved outside operation capture without changing their datasets.
 
-| Dependency | Source |
-| --- | --- |
-| Ash | Parent checkout, initially fork main `bc9884e08`, version 3.33.11 |
-| AshSQL | `ash-project/ash_sql` at `0ef973c11a96774f088137f3b2288ef9732d44f7` (main, ash_sql#264) |
-| AshSQLite | `ash-project/ash_sqlite` at `f489778aae1abad8de436ed07dfb3237148a44fd` (main, ash_sqlite#232) |
-| AshPostgres | `ash-project/ash_postgres` at `945073e431ec6eb3fbbb831a8ce5b561d8f8cd35` |
+| Dependency | `release` (default) | `main` (`CONFORMANCE_DEPS=main`) |
+| --- | --- | --- |
+| Ash | 3.37.0 (Hex) | `ash-project/ash` `main`, `41e179ffa76dab0d24543fecab256b0123bd4c6e` |
+| AshSQL | 0.8.3 (Hex) | `ash-project/ash_sql` `main`, `91360948fbab4cb2dbb955f99b9f49125b44b75e` |
+| AshSQLite | 0.2.19 (Hex) | `ash-project/ash_sqlite` `main`, `1a51fcb44e3a108908906430aa8b00cba73f9f30` |
+| AshPostgres | 2.15.1 (Hex) | `ash-project/ash_postgres` `main`, `7f2d90e79bbcd4c1991bd29d5764920aeaa7dffc` |
 
-Until 2026-09-25 the pins were the unmerged work on Will's forks:
-`wtsnz/ash_sql` at `0985b9fdcca0a0919defdf76b0c44115fa8b8340` and
-`wtsnz/ash_sqlite` at `46a4b869450a2a961ef9af44b5b69da2d5aff29c`. Both were
-squash-merged upstream that day, as ash_sql#264 (the aggregate extraction)
-and ash_sqlite#232 (grouped SQLite aggregates). The pins moved to the merge
-commits on ash-project `main`:
+The `main` commits are those of 2026-10-24, locked in `mix.main.lock`.
 
-- ash_sql's merge commit has the same tree as the old pin.
-- ash_sqlite's merge commit differs only in its own `mix.lock`, a `mint`
-  bump merged separately (#234).
+Until 2026-10-24 Ash was the parent checkout (fork main `bc9884e08`, 3.33.11)
+and the adapters were pinned Git commits: AshSQL `0ef973c` (ash_sql#264),
+AshSQLite `f489778` (ash_sqlite#232) and AshPostgres `945073e`. Before
+2026-09-25 AshSQL and AshSQLite were unmerged work on Will's forks
+(`wtsnz/ash_sql` `0985b9f`, `wtsnz/ash_sqlite` `46a4b86`), squash-merged
+upstream as ash_sql#264 and ash_sqlite#232.
 
-The separately stacked from-many and schema fixes are intentionally
-excluded. Updating pins requires rerunning every inherited gap, not
-accepting observations from a neighboring checkout.
+AshSQLite 0.2.19, the latest release, predates ash_sqlite#232: it has no
+aggregate support over relationships, and its verifier warns for every such
+aggregate the suite defines. SQLite's expectations follow `main`, where that
+work is, so the default run fails those SQLite scenarios until AshSQLite
+releases it (see ADVERSARIAL.md, "Dependencies").
 
-`override: true` on Ash forces every adapter/transitive dependency to the parent
-checkout. The AshSQL override forces both adapters to the same unreleased commit
-instead of their Hex version constraints. The adapters are pinned Git dependencies;
-all transitive versions are in `mix.lock`. CI never reads adjacent worktrees.
-For a local adapter experiment, set `CONFORMANCE_ASH_SQL_PATH`,
-`CONFORMANCE_ASH_SQLITE_PATH` or `CONFORMANCE_ASH_POSTGRES_PATH` to a checkout.
-The dependency then becomes a path with `override: true`. Nothing is substituted
-unless a variable is set, CI sets none, and each report lists any override that
-was active. Pins change only by editing `mix.exs` and the lock.
-
-`CONFORMANCE_DEPS=upstream` swaps the three adapters for ash-project `main`,
-locked separately in `mix.upstream.lock` with its own deps and build
-directories. The suite compiles against both sets: the SQLite custom aggregate
-module has no SQL implementation where AshSQLite lacks custom aggregates.
+`override: true` on the four core packages forces every adapter and
+transitive dependency to the same Ash and AshSQL. All transitive versions
+are in the lock. CI never reads adjacent worktrees. For a local experiment,
+set `CONFORMANCE_ASH_PATH`, `CONFORMANCE_ASH_SQL_PATH`,
+`CONFORMANCE_ASH_SQLITE_PATH` or `CONFORMANCE_ASH_POSTGRES_PATH` to a
+checkout, or `CONFORMANCE_DEPS=main CONFORMANCE_MAIN_DIR=<dir>` for all four.
+The dependency then becomes a path with `override: true`. Nothing is
+substituted unless a variable is set, CI sets none, and each report lists
+any override that was active. Pins change only by editing `mix.exs` and the
+lock.
 
 The SQLite repo enables `write_transactions?`. AshSQLite defaults it to false for
 existing apps but recommends it, and its installer enables it. With it off,

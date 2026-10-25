@@ -47,6 +47,7 @@ defmodule Ash.Conformance.SurveyTest do
     assert Survey.classify(scenario(:unresolved), {:ok, 1}) == {:open_question, :unresolved}
   end
 
+  @tag :committed_report
   test "the committed ETS survey report is current" do
     assert File.read!("surveys/features-ets.md") ==
              Survey.markdown(Ash.Conformance.Ets, Survey.run(Ash.Conformance.Ets)),

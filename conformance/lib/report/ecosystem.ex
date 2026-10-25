@@ -69,6 +69,7 @@ defmodule Ash.Conformance.Report.Ecosystem do
     #{Ash.Conformance.Report.OperationGrid.markdown(results)}
     #{Ash.Conformance.Report.PolicyGrid.markdown(results)}
     #{Ash.Conformance.Report.CombinationGrid.markdown(results)}
+    #{Ash.Conformance.Report.DecoyReport.markdown(results)}
     #{FeatureReport.legend()}
     | ➖ Not run | The data layer's storage could not be set up for this run. |
 

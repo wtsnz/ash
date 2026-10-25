@@ -28,6 +28,15 @@ defmodule Ash.Conformance.Contracts.Records do
 
   def task(gap), do: "GAPS.md##{gap}"
 
+  @doc """
+  Rules that apply only when the suite runs against the dependency set `set`
+  (`CONFORMANCE_DEPS`: `release` or `main`), for a result that differs
+  between the latest releases and `main`.
+  """
+  def on_deps(set, rules) do
+    if Ash.Conformance.Report.dependency_set() == set, do: List.wrap(rules), else: []
+  end
+
   @doc "Scenarios expected to return the intended answer."
   def supported(patterns), do: {:supported, List.wrap(patterns)}
 
@@ -52,6 +61,7 @@ defmodule Ash.Conformance.Contracts.Records do
   end
 
   defp do_resolve(adapter, rules) do
+    rules = List.flatten(rules)
     ids = adapter |> Ash.Conformance.Catalog.for_adapter() |> Enum.map(& &1.id)
     rules = Enum.map(rules, fn rule -> {rule, rule |> patterns() |> Enum.map(&glob/1)} end)
 
@@ -89,6 +99,7 @@ defmodule Ash.Conformance.Contracts.Records do
 
   @doc "An adapter's variant records by `{scenario ID, variant}`, from its variant rules."
   def resolve_variants(adapter, rules) do
+    rules = List.flatten(rules)
     ids = adapter |> Ash.Conformance.Catalog.for_adapter() |> Enum.map(& &1.id)
 
     Enum.reduce(rules, %{}, fn {:expect_variant, patterns, variants, record}, acc ->

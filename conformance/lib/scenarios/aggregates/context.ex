@@ -71,27 +71,45 @@ defmodule Ash.Conformance.Scenarios.Aggregates.Context do
       new("context.attribute_tenant", :context, %{1 => 3, 2 => 0, 3 => 0}, fn ctx ->
         loaded(ctx, :count, :tenant_children, [], tenant: "a")
       end),
-      new("context.tenant_bypass", :context, %{1 => 4, 2 => 1, 3 => 0}, fn ctx ->
-        loaded(ctx, :count, :tenant_children, [multitenancy: :bypass], tenant: "a")
-      end),
-      new("context.bypass_sibling", :context, {3, 4}, fn ctx ->
-        row =
-          selected_parent(ctx)
-          |> Ash.Query.aggregate(:scoped, :count, :tenant_children)
-          |> Ash.Query.aggregate(:all, :count, :tenant_children, multitenancy: :bypass)
-          |> Ash.read_one!(tenant: "a", authorize?: Ash.Conformance.Variant.authorize?())
+      new(
+        "context.tenant_bypass",
+        :context,
+        %{1 => 4, 2 => 1, 3 => 0},
+        fn ctx ->
+          loaded(ctx, :count, :tenant_children, [multitenancy: :bypass], tenant: "a")
+        end,
+        variants: Ash.Conformance.Variant.across_tenants()
+      ),
+      new(
+        "context.bypass_sibling",
+        :context,
+        {3, 4},
+        fn ctx ->
+          row =
+            selected_parent(ctx)
+            |> Ash.Query.aggregate(:scoped, :count, :tenant_children)
+            |> Ash.Query.aggregate(:all, :count, :tenant_children, multitenancy: :bypass)
+            |> Ash.read_one!(tenant: "a", authorize?: Ash.Conformance.Variant.authorize?())
 
-        {row.aggregates.scoped, row.aggregates.all}
-      end),
+          {row.aggregates.scoped, row.aggregates.all}
+        end,
+        variants: Ash.Conformance.Variant.across_tenants()
+      ),
       new("context.through_arguments", :context, %{1 => 3, 2 => 3, 3 => nil}, fn ctx ->
         loaded(ctx, :sum, :scoped_tags, field: :value)
       end),
       new("context.through_tenant", :context, %{1 => 3, 2 => 3, 3 => nil}, fn ctx ->
         loaded(ctx, :sum, :tenant_tags, [field: :value], tenant: "a")
       end),
-      new("context.through_bypass", :context, %{1 => 11, 2 => 3, 3 => nil}, fn ctx ->
-        loaded(ctx, :sum, :tenant_tags, [field: :value, multitenancy: :bypass], tenant: "a")
-      end),
+      new(
+        "context.through_bypass",
+        :context,
+        %{1 => 11, 2 => 3, 3 => nil},
+        fn ctx ->
+          loaded(ctx, :sum, :tenant_tags, [field: :value, multitenancy: :bypass], tenant: "a")
+        end,
+        variants: Ash.Conformance.Variant.across_tenants()
+      ),
       new("context.authorization", :context, %{1 => 3, 2 => 1, 3 => 0}, fn ctx ->
         loaded(ctx, :count, :authorized_children, [], authorize?: true)
       end),

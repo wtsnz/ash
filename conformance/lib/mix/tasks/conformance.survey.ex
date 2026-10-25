@@ -7,7 +7,7 @@ defmodule Mix.Tasks.Conformance.Survey do
 
       MIX_ENV=test mix conformance.survey ets
       MIX_ENV=test mix conformance.survey ets --output surveys
-      CONFORMANCE_DEPS=upstream MIX_ENV=test mix conformance.survey sqlite
+      CONFORMANCE_DEPS=main MIX_ENV=test mix conformance.survey sqlite
 
   Writes `survey-ADAPTER.json` and an unreviewed `features-ADAPTER.md`.
   """

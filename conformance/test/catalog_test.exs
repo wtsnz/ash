@@ -111,15 +111,17 @@ defmodule Ash.Conformance.CatalogTest do
 
     shared = Enum.map(Ash.Conformance.Contracts.SharedGaps.all(), & &1.id)
 
-    for id <- Gaps.ids(), id not in shared do
+    for id <- Gaps.ids(), id not in shared, Gaps.fixed_in(id) == [] do
       assert id in linked, "#{id} is documented but no expectation links to it"
     end
   end
 
+  @tag :committed_report
   test "the checked-in matrix matches the executable declarations" do
     assert File.read!("MATRIX.md") == Report.matrix(), "Run mix conformance.matrix"
   end
 
+  @tag :committed_report
   test "every scenario links to its declaration, including generated cases" do
     matrix = Report.matrix()
 
@@ -189,6 +191,7 @@ defmodule Ash.Conformance.CatalogTest do
       assert FeatureReport.summarize(feature, rows).status == :changed
     end
 
+    @tag :committed_report
     test "the checked-in feature report matches the declared contracts" do
       assert File.read!("FEATURES.md") == FeatureReport.declared(), "Run mix conformance.features"
     end

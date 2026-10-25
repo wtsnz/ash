@@ -165,7 +165,7 @@ defmodule Ash.Conformance.Scenarios.Tenancy do
           |> Ash.read!()
           |> Enum.map(& &1.id)
         end,
-        @tenancy
+        @tenancy ++ [variants: Ash.Conformance.Variant.across_tenants()]
       ),
       new(
         "tenant.bounds",

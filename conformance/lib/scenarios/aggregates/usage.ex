@@ -4,7 +4,7 @@
 
 defmodule Ash.Conformance.Scenarios.Aggregates.Usage do
   @moduledoc "Aggregates used in filters, sorts, pages and calculations, including through relationships."
-  import Ash.Conformance.Scenario, only: [new: 4]
+  import Ash.Conformance.Scenario, only: [new: 4, new: 5]
   import Ash.Conformance.Scenarios.Aggregates.Helpers
   require Ash.Query
   require Ash.Sort
@@ -140,23 +140,35 @@ defmodule Ash.Conformance.Scenarios.Aggregates.Usage do
           end)
         end
       ),
-      new("use.fanout_count", :usage, 2, fn ctx ->
-        ctx.child
-        |> Ash.Query.filter(ratings.score > 5)
-        |> Ash.count!(authorize?: Ash.Conformance.Variant.authorize?())
-      end),
-      new("use.fanout_read_page", :usage, {[11, 12], 2}, fn ctx ->
-        page =
+      new(
+        "use.fanout_count",
+        :usage,
+        2,
+        fn ctx ->
           ctx.child
           |> Ash.Query.filter(ratings.score > 5)
-          |> Ash.Query.sort(id: :asc)
-          |> Ash.read!(
-            page: [limit: 2, count: true],
-            authorize?: Ash.Conformance.Variant.authorize?()
-          )
+          |> Ash.count!(authorize?: Ash.Conformance.Variant.authorize?())
+        end,
+        variants: Ash.Conformance.Variant.plain_relationship_filter()
+      ),
+      new(
+        "use.fanout_read_page",
+        :usage,
+        {[11, 12], 2},
+        fn ctx ->
+          page =
+            ctx.child
+            |> Ash.Query.filter(ratings.score > 5)
+            |> Ash.Query.sort(id: :asc)
+            |> Ash.read!(
+              page: [limit: 2, count: true],
+              authorize?: Ash.Conformance.Variant.authorize?()
+            )
 
-        {Enum.map(page.results, & &1.id), page.count}
-      end)
+          {Enum.map(page.results, & &1.id), page.count}
+        end,
+        variants: Ash.Conformance.Variant.plain_relationship_filter()
+      )
     ]
   end
 end

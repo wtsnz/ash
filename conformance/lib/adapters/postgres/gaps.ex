@@ -13,12 +13,73 @@ defmodule Ash.Conformance.Postgres.Gaps do
         title: "Root first",
         kind: :implementation,
         owners: [:ash_sql],
+        fixed_in: ["release", "main"],
         body: ~S"""
         The crash is in AshSQL's lateral `add_subquery_aggregate_select/6`.
 
         Postgres root `first` without an explicit sort dereferences a missing first
         relationship. The empty-input scenario should return nil. Explicitly sorted
         first and empty-input controls already pass.
+        """
+      },
+      %{
+        id: "through-tenant",
+        title: "Through tenant",
+        kind: :implementation,
+        owners: [:ash_postgres],
+        body: ~S"""
+
+        Apply attribute multitenancy to the join resource and each `through` step of
+        a lateral-join load. Orders are multitenant by `org_id` and unique on
+        `[:event_id, :customer_id]`, so Ash loads `many_to_many :buyers` and every
+        `has_many`/`has_one` `through` relationship with AshPostgres's lateral join.
+        That join builds the orders' query with `Ash.Query.set_tenant/2` and
+        `Ash.Query.data_layer_query/1`, and attribute tenancy is only added by the
+        read action, so organisation 1 gets the customers of both organisations'
+        orders: event 1's buyers are `[1, 2, 3, 4]` instead of `[1, 3]`, event 3,
+        with no organisation 1 order, gets customer 2, and the sorted `has_one`
+        returns organisation 2's customer (`adv.tenant.m2m_load`,
+        `adv.tenant.through_load`, `adv.tenant.through_long_load`,
+        `adv.tenant.has_one_sorted`, `adv.tenant.has_one_unsorted`,
+        `adv.tenant.m2m_limit_one`). Aggregates and `exists` over the same
+        relationships are built by AshSQL's joins, which apply tenancy, and are
+        right. ETS and AshSQLite's `many_to_many` are right. On AshPostgres `main`,
+        where [Through many-to-many step](#through-many-to-many-step) is fixed,
+        the four-hop path ending in `buyers` leaks the same way
+        (`adv.tenant.through_many_to_many_load`).
+        """
+      },
+      %{
+        id: "through-many-to-many-step",
+        title: "Through many-to-many step",
+        kind: :implementation,
+        owners: [:ash_postgres],
+        fixed_in: ["main"],
+        body: ~S"""
+
+        Join through the join resource when a `through` path's last step is a
+        `many_to_many`. Loading `through: [:orders, :event, :buyers]` joins
+        customers to events on `customers.id = events.id`, without the orders table
+        of the `buyers` step, so each event gets the customer whose id equals its
+        own (`adv.tenant.through_many_to_many_load`: event 1 gets customer 1, event
+        3 customer 3). The same path ending in `[:orders, :customer]` is right apart
+        from [Through tenant](#through-tenant).
+        """
+      },
+      %{
+        id: "schema-through-destination",
+        title: "Schema through destination",
+        kind: :implementation,
+        owners: [:ash_postgres],
+        body: ~S"""
+
+        Keep a shared destination in its own schema when loading a `through`
+        relationship under schema-based tenancy. Events and customers are shared;
+        orders live in each tenant's schema. Loading `customers` through
+        `[:orders, :customer]` with tenant `dc_tenant_a` queries
+        `"dc_tenant_a"."adv_customers"`, which doesn't exist
+        (`adv.schema.through_load`). The `many_to_many` over the same orders loads
+        correctly (`adv.schema.m2m_load`). This is an error, not a wrong answer.
         """
       },
       %{
@@ -105,6 +166,7 @@ defmodule Ash.Conformance.Postgres.Gaps do
         title: "Tenant bypass",
         kind: :implementation,
         owners: [:ash_sql],
+        fixed_in: ["main"],
         body: ~S"""
         AshSQL's lateral strategy applies attribute tenancy without the aggregate's read
         action. The grouped strategy passes it and returns the intended results.

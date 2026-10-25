@@ -16,6 +16,8 @@ defmodule Ash.Conformance.Tiers do
   - The policy grid: each policy shape on each path (`policy.*`).
   - The combination grid: features alone and in pairs (`combo.*`), and the
     shapes grid: paths, key types and missing rows (`shape.*`).
+  - Adversarial invariants: shapes and paths where a missing tenant or
+    policy filter returns another tenant's or a hidden row (`adv.*`).
   - Tier 4, integration: every other scenario. These run on the richly
     typed fixtures and usually exercise several features at once, so read a
     failure here after the grids above. (Tier 3, core-typed fixtures, was
@@ -28,6 +30,7 @@ defmodule Ash.Conformance.Tiers do
     {:expressions, "Expressions", ["expr.", "nil.", "sig.", "edge."]},
     {:policies, "Policy grid", "policy."},
     {:combinations, "Combinations", ["combo.", "shape."]},
+    {:adversarial, "Adversarial invariants", "adv."},
     {:integration, "Integration (tier 4)", nil}
   ]
 

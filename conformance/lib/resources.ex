@@ -10,7 +10,8 @@ defmodule Ash.Conformance.Resources do
       end
 
   `variants: true` also defines the resource sets `Ash.Conformance.Variant`'s
-  policy variants read from, over the same tables.
+  policy variants read from, over the same tables; a list of variants, such
+  as `[:decoy]`, defines only theirs.
 
   Surveyed adapters can instead call `compile!/1` from `setup!/0`. Ash checks a
   resource against its data layer when the resource is defined, and reports
@@ -22,16 +23,21 @@ defmodule Ash.Conformance.Resources do
     {variants?, opts} = Keyword.pop(opts, :variants, false)
     namespace = opts |> Keyword.fetch!(:namespace) |> Macro.expand(__CALLER__)
 
-    sets =
-      if variants?,
-        do: [
-          opts
-          | for(
-              {_, ns} <- Ash.Conformance.Variant.namespaces(),
-              do: Keyword.put(opts, :namespace, Module.concat(namespace, ns))
-            )
-        ],
-        else: [opts]
+    variants =
+      case variants? do
+        true -> Map.keys(Ash.Conformance.Variant.namespaces())
+        false -> []
+        variants when is_list(variants) -> variants
+      end
+
+    sets = [
+      opts
+      | for(
+          variant <- Enum.sort(variants),
+          ns = Map.fetch!(Ash.Conformance.Variant.namespaces(), variant),
+          do: Keyword.put(opts, :namespace, Module.concat(namespace, ns))
+        )
+    ]
 
     {:__block__, [], Enum.map(sets, &resource_set/1)}
   end
@@ -50,6 +56,7 @@ defmodule Ash.Conformance.Resources do
       use Ash.Conformance.Resources.Identities, unquote(opts)
       use Ash.Conformance.Resources.Signatures, unquote(opts)
       use Ash.Conformance.Resources.Shapes, unquote(opts)
+      use Ash.Conformance.Resources.Adversarial, unquote(opts)
     end
   end
 

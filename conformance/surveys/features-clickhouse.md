@@ -4,7 +4,7 @@
 
 Generated from an unreviewed run: each result was classified automatically against the intended answer. Nothing here has been reviewed.
 
-Feature catalog version 1: 164 features and 1319 scenarios.
+Feature catalog version 1: 172 features and 1395 scenarios.
 
 | Status | Meaning |
 | --- | --- |
@@ -234,8 +234,8 @@ fix.
 | Two policies that must both pass | 🟡 Partial 10/16 · 5 blocked | `policy.all_of.aggregate_filter` crashed (blocked by `policy.control.aggregate_filter`), `policy.all_of.bulk_update` wrong (blocked by `policy.control.bulk_update`), `policy.all_of.exists_filter_input` crashed (blocked by `policy.control.exists_filter_input`), `policy.all_of.get_error` crashed, `policy.all_of.loaded_count` wrong (blocked by `policy.control.loaded_count`), `policy.all_of.loaded_sum` wrong (blocked by `policy.control.loaded_sum`) |
 | One policy whose checks either pass | 🟡 Partial 10/16 · 5 blocked | `policy.any_of.aggregate_filter` crashed (blocked by `policy.control.aggregate_filter`), `policy.any_of.bulk_update` wrong (blocked by `policy.control.bulk_update`), `policy.any_of.exists_filter_input` crashed (blocked by `policy.control.exists_filter_input`), `policy.any_of.get_error` crashed, `policy.any_of.loaded_count` wrong (blocked by `policy.control.loaded_count`), `policy.any_of.loaded_sum` wrong (blocked by `policy.control.loaded_sum`) |
 | A policy on a to-one relationship | 🟡 Partial 1/16 · 5 blocked | `policy.related.aggregate_filter` crashed (blocked by `policy.control.aggregate_filter`), `policy.related.bulk_destroy` crashed, `policy.related.bulk_update` wrong (blocked by `policy.control.bulk_update`), `policy.related.count` crashed, `policy.related.exists_filter_input` crashed (blocked by `policy.control.exists_filter_input`), `policy.related.get_error` crashed, `policy.related.get_hidden` crashed, `policy.related.keyset_pages` crashed, `policy.related.load` crashed, `policy.related.loaded_count` crashed (blocked by `policy.control.loaded_count`), `policy.related.loaded_sum` crashed (blocked by `policy.control.loaded_sum`), `policy.related.offset_page` crashed, `policy.related.read` crashed, `policy.related.sum` crashed, `policy.related.update_hidden` crashed |
-| A policy on a multi-hop exists | 🟡 Partial 6/16 · 5 blocked | `policy.member.aggregate_filter` crashed (blocked by `policy.control.aggregate_filter`), `policy.member.bulk_destroy` crashed, `policy.member.bulk_update` crashed (blocked by `policy.control.bulk_update`), `policy.member.count` crashed, `policy.member.exists_filter_input` crashed (blocked by `policy.control.exists_filter_input`), `policy.member.get_error` crashed, `policy.member.loaded_count` wrong (blocked by `policy.control.loaded_count`), `policy.member.loaded_sum` wrong (blocked by `policy.control.loaded_sum`), `policy.member.sum` crashed, `policy.member.update_hidden` crashed |
-| A policy composed with can_read | 🟡 Partial 6/16 · 5 blocked | `policy.can_read.aggregate_filter` crashed (blocked by `policy.control.aggregate_filter`), `policy.can_read.bulk_destroy` crashed, `policy.can_read.bulk_update` crashed (blocked by `policy.control.bulk_update`), `policy.can_read.count` crashed, `policy.can_read.exists_filter_input` crashed (blocked by `policy.control.exists_filter_input`), `policy.can_read.get_error` crashed, `policy.can_read.loaded_count` wrong (blocked by `policy.control.loaded_count`), `policy.can_read.loaded_sum` wrong (blocked by `policy.control.loaded_sum`), `policy.can_read.sum` crashed, `policy.can_read.update_hidden` crashed |
+| A policy on a multi-hop exists | 🟡 Partial 8/16 · 5 blocked | `policy.member.aggregate_filter` crashed (blocked by `policy.control.aggregate_filter`), `policy.member.bulk_destroy` crashed, `policy.member.bulk_update` crashed (blocked by `policy.control.bulk_update`), `policy.member.exists_filter_input` crashed (blocked by `policy.control.exists_filter_input`), `policy.member.get_error` crashed, `policy.member.loaded_count` wrong (blocked by `policy.control.loaded_count`), `policy.member.loaded_sum` wrong (blocked by `policy.control.loaded_sum`), `policy.member.update_hidden` crashed |
+| A policy composed with can_read | 🟡 Partial 8/16 · 5 blocked | `policy.can_read.aggregate_filter` crashed (blocked by `policy.control.aggregate_filter`), `policy.can_read.bulk_destroy` crashed, `policy.can_read.bulk_update` crashed (blocked by `policy.control.bulk_update`), `policy.can_read.exists_filter_input` crashed (blocked by `policy.control.exists_filter_input`), `policy.can_read.get_error` crashed, `policy.can_read.loaded_count` wrong (blocked by `policy.control.loaded_count`), `policy.can_read.loaded_sum` wrong (blocked by `policy.control.loaded_sum`), `policy.can_read.update_hidden` crashed |
 | A strict policy, for an actor it forbids | 🟡 Partial 11/16 · 4 blocked | `policy.strict.aggregate_filter` crashed (blocked by `policy.control.aggregate_filter`), `policy.strict.bulk_destroy` wrong, `policy.strict.exists_filter_input` crashed (blocked by `policy.control.exists_filter_input`), `policy.strict.loaded_count` wrong (blocked by `policy.control.loaded_count`), `policy.strict.loaded_sum` wrong (blocked by `policy.control.loaded_sum`) |
 | A strict policy, for an actor it allows | 🟡 Partial 8/13 · 5 blocked | `policy.strict_admin.aggregate_filter` crashed (blocked by `policy.control.aggregate_filter`), `policy.strict_admin.bulk_update` wrong (blocked by `policy.control.bulk_update`), `policy.strict_admin.exists_filter_input` crashed (blocked by `policy.control.exists_filter_input`), `policy.strict_admin.loaded_count` wrong (blocked by `policy.control.loaded_count`), `policy.strict_admin.loaded_sum` wrong (blocked by `policy.control.loaded_sum`) |
 | Field policies hide values, in reads, filters and aggregates | ❌ Broken 0/4 · 1 blocked | `policy.field.field_aggregate` wrong (blocked by `policy.control.field_aggregate`), `policy.field.field_filter` crashed, `policy.field.field_filter_input` crashed, `policy.field.field_read` crashed |
@@ -257,6 +257,20 @@ fix.
 | Feature | clickhouse | Not working |
 | --- | --- | --- |
 | Counts match loads, and root sums match an in-memory reference | 🟡 Partial 1/2 | `equivalence.visible_count_load` wrong |
+
+## 15. Adversarial invariants
+
+| Feature | clickhouse | Not working |
+| --- | --- | --- |
+| Tenancy scopes many_to_many and through loads, aggregates and filters | ➖ Not applicable |  |
+| Schema-based tenancy scopes the same paths | ➖ Not applicable |  |
+| Bounded through loads keep their path | ➖ Not applicable |  |
+| The join resource's read policy applies to loads, aggregates and input filters | ➖ Not applicable |  |
+| Updates and destroys given another tenant's records change nothing of it | ➖ Not applicable |  |
+| Upserts stay in their tenant | ➖ Not applicable |  |
+| Field policies apply to write results, embedded values included | ➖ Not applicable |  |
+| manage_relationship can't relate another tenant's or a hidden record | ➖ Not applicable |  |
+
 
 ## Claims versus results
 
@@ -384,12 +398,27 @@ getting a hidden record when the actor may read every note.
 | all_of | ✅ | ✅ | ❌ | ✅ | ✅ | ✅ | ✅ | ✅ | ◌ | ◌ | ◌ | ✅ | ◌ | ◌ | ✅ | ✅ | – | – | – | – | – | – |
 | any_of | ✅ | ✅ | ❌ | ✅ | ✅ | ✅ | ✅ | ✅ | ◌ | ◌ | ◌ | ✅ | ◌ | ◌ | ✅ | ✅ | – | – | – | – | – | – |
 | related | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ◌ | ◌ | ◌ | ✅ | ◌ | ◌ | ❌ | ❌ | – | – | – | – | – | – |
-| member | ✅ | ✅ | ❌ | ❌ | ❌ | ✅ | ✅ | ✅ | ◌ | ◌ | ◌ | ✅ | ◌ | ◌ | ❌ | ❌ | – | – | – | – | – | – |
-| can_read | ✅ | ✅ | ❌ | ❌ | ❌ | ✅ | ✅ | ✅ | ◌ | ◌ | ◌ | ✅ | ◌ | ◌ | ❌ | ❌ | – | – | – | – | – | – |
+| member | ✅ | ✅ | ❌ | ✅ | ✅ | ✅ | ✅ | ✅ | ◌ | ◌ | ◌ | ✅ | ◌ | ◌ | ❌ | ❌ | – | – | – | – | – | – |
+| can_read | ✅ | ✅ | ❌ | ✅ | ✅ | ✅ | ✅ | ✅ | ◌ | ◌ | ◌ | ✅ | ◌ | ◌ | ❌ | ❌ | – | – | – | – | – | – |
 | strict | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ◌ | ◌ | ◌ | ✅ | ◌ | ✅ | ❌ | ✅ | – | – | – | – | – | – |
 | strict_admin | ✅ | – | – | ✅ | ✅ | ✅ | ✅ | ✅ | ◌ | ◌ | ◌ | ✅ | ◌ | ◌ | ✅ | – | – | – | – | – | – | – |
 | field | – | – | – | – | – | – | – | – | – | – | – | – | – | – | – | – | ❌ | ❌ | ❌ | ◌ | – | – |
 | control (no authorization) | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ | ✅ | ❌ | ❌ | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ | ✅ | ✅ |
+
+
+## Decoy variant
+
+Every scenario also runs with a hidden copy of each fixture row stored
+next to the real ones: in a mirror tenant, with colliding local ids, where
+the table is multitenant by attribute, and otherwise with a reserved id a
+read policy hides (`Ash.Conformance.Decoy`). An issue is a decoy in the
+answer (leaked), or an answer that was right and changes with decoys
+(influenced); a decoy error needs triage. Each needs a recorded gap. Hints
+are guesses from the direction of the change.
+
+**No issues** · nothing to triage · the rest clean: 0 same, 0 base failing, 0 opted out, 953 not run.
+
+Not run: 953, no decoy resource set.
 
 
 ## Blockers

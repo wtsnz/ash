@@ -6,9 +6,9 @@ defmodule Ash.Conformance.VariantTest do
   alias Ash.Conformance.{Adapter, Catalog, Runner, Variant}
 
   for adapter <- Adapter.selected(),
-      Variant.supported?(adapter),
       scenario <- Catalog.for_adapter(adapter),
       variant <- Variant.all(),
+      Variant.supported?(adapter, variant),
       Variant.applies?(scenario, variant) == true do
     @tag adapter: adapter.id(), scenario: scenario.id, area: scenario.area, variant: variant
     test "#{adapter.id()} #{scenario.id}@#{variant}" do

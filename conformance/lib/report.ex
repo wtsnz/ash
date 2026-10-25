@@ -263,12 +263,12 @@ defmodule Ash.Conformance.Report do
     "<code>#{escaped}</code>"
   end
 
-  @doc "Results for the pinned set go in `results/`; other sets in `results/<set>/`."
-  def dependency_set, do: System.get_env("CONFORMANCE_DEPS", "pinned")
+  @doc "Results for the release set go in `results/`; other sets in `results/<set>/`."
+  def dependency_set, do: System.get_env("CONFORMANCE_DEPS", "release")
 
   def results_dir do
     case dependency_set() do
-      "pinned" -> "results"
+      "release" -> "results"
       set -> Path.join("results", set)
     end
   end

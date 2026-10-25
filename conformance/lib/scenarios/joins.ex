@@ -45,13 +45,19 @@ defmodule Ash.Conformance.Scenarios.Joins do
 
   defp reads do
     [
-      new("read.join_to_many", :reads, [1, 2], &owners(&1, expr(items.value > 4)), opts(@reads)),
+      new(
+        "read.join_to_many",
+        :reads,
+        [1, 2],
+        &owners(&1, expr(items.value > 4)),
+        opts(@reads, Ash.Conformance.Variant.plain_relationship_filter())
+      ),
       new(
         "read.join_or_paths",
         :reads,
         [1, 2],
         &owners(&1, expr(items.status == "closed" or linked_items.value > 5)),
-        opts(@reads)
+        opts(@reads, Ash.Conformance.Variant.plain_relationship_filter())
       ),
       # Both conditions must hold for the same item: none is closed and above 4.
       new(
@@ -59,14 +65,14 @@ defmodule Ash.Conformance.Scenarios.Joins do
         :reads,
         [],
         &owners(&1, expr(items.value > 4 and items.status == "closed")),
-        opts(@reads)
+        opts(@reads, Ash.Conformance.Variant.plain_relationship_filter())
       ),
       new(
         "read.join_exists_or",
         :reads,
         [1, 2, 3],
         &owners(&1, expr(exists(items, value > 5) or exists(linked_items, status == "closed"))),
-        opts(@reads)
+        opts(@reads, Ash.Conformance.Variant.plain_relationship_filter())
       ),
       # Owners with an item whose value is not above 4; owner 3 has none.
       new(
@@ -74,7 +80,7 @@ defmodule Ash.Conformance.Scenarios.Joins do
         :reads,
         [1, 2],
         &owners(&1, expr(not (items.value > 4))),
-        opts(@reads)
+        opts(@reads, Ash.Conformance.Variant.plain_relationship_filter())
       ),
       new(
         "read.join_count",

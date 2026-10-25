@@ -92,7 +92,8 @@ defmodule Ash.Conformance.Catalog do
       Scenarios.Authorization,
       Scenarios.Policies,
       Scenarios.Combinations,
-      Scenarios.Consistency
+      Scenarios.Consistency,
+      Scenarios.Adversarial
     ]
     |> Enum.flat_map(& &1.all())
     |> Enum.sort_by(& &1.id)

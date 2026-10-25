@@ -10,8 +10,8 @@ See [MATRIX.md](MATRIX.md) for behavior contracts and `results/` for actual exec
 | Resource role | Feature or concrete probe | sqlite | postgres |
 | --- | --- | --- | --- |
 | child | `:action_select` | false | true |
-| child | `:aggregate_filter` | true | true |
-| child | `:aggregate_sort` | true | true |
+| child | `:aggregate_filter` | false | true |
+| child | `:aggregate_sort` | false | true |
 | child | `:async_engine` | false | true |
 | child | `:atomic_update` | false | false |
 | child | `:boolean_filter` | true | true |
@@ -47,15 +47,15 @@ See [MATRIX.md](MATRIX.md) for behavior contracts and `results/` for actual exec
 | child | `:update_many` | false | true |
 | child | `:update_query` | true | true |
 | child | `:upsert` | true | true |
-| child | `{:aggregate, :avg}` | true | true |
-| child | `{:aggregate, :count}` | true | true |
-| child | `{:aggregate, :custom}` | true | true |
-| child | `{:aggregate, :exists}` | true | true |
-| child | `{:aggregate, :first}` | true | true |
-| child | `{:aggregate, :list}` | true | true |
-| child | `{:aggregate, :max}` | true | true |
-| child | `{:aggregate, :min}` | true | true |
-| child | `{:aggregate, :sum}` | true | true |
+| child | `{:aggregate, :avg}` | false | true |
+| child | `{:aggregate, :count}` | false | true |
+| child | `{:aggregate, :custom}` | false | true |
+| child | `{:aggregate, :exists}` | false | true |
+| child | `{:aggregate, :first}` | false | true |
+| child | `{:aggregate, :list}` | false | true |
+| child | `{:aggregate, :max}` | false | true |
+| child | `{:aggregate, :min}` | false | true |
+| child | `{:aggregate, :sum}` | false | true |
 | child | `{:filter_expr, child.value == 2}` | true | true |
 | child | `{:query_aggregate, :avg}` | true | true |
 | child | `{:query_aggregate, :count}` | true | true |
@@ -67,8 +67,8 @@ See [MATRIX.md](MATRIX.md) for behavior contracts and `results/` for actual exec
 | child | `{:query_aggregate, :min}` | true | true |
 | child | `{:query_aggregate, :sum}` | true | true |
 | parent | `:action_select` | false | true |
-| parent | `:aggregate_filter` | true | true |
-| parent | `:aggregate_sort` | true | true |
+| parent | `:aggregate_filter` | false | true |
+| parent | `:aggregate_sort` | false | true |
 | parent | `:async_engine` | false | true |
 | parent | `:atomic_update` | false | false |
 | parent | `:boolean_filter` | true | true |
@@ -104,28 +104,28 @@ See [MATRIX.md](MATRIX.md) for behavior contracts and `results/` for actual exec
 | parent | `:update_many` | false | true |
 | parent | `:update_query` | true | true |
 | parent | `:upsert` | true | true |
-| parent | `{:aggregate, :avg}` | true | true |
-| parent | `{:aggregate, :count}` | true | true |
-| parent | `{:aggregate, :custom}` | true | true |
-| parent | `{:aggregate, :exists}` | true | true |
-| parent | `{:aggregate, :first}` | true | true |
-| parent | `{:aggregate, :list}` | true | true |
-| parent | `{:aggregate, :max}` | true | true |
-| parent | `{:aggregate, :min}` | true | true |
-| parent | `{:aggregate, :sum}` | true | true |
-| parent | `{:aggregate, :unrelated}` | true | true |
+| parent | `{:aggregate, :avg}` | false | true |
+| parent | `{:aggregate, :count}` | false | true |
+| parent | `{:aggregate, :custom}` | false | true |
+| parent | `{:aggregate, :exists}` | false | true |
+| parent | `{:aggregate, :first}` | false | true |
+| parent | `{:aggregate, :list}` | false | true |
+| parent | `{:aggregate, :max}` | false | true |
+| parent | `{:aggregate, :min}` | false | true |
+| parent | `{:aggregate, :sum}` | false | true |
+| parent | `{:aggregate, :unrelated}` | false | true |
 | parent | `{:aggregate_relationship, relationship(:all_children)}` | false | true |
-| parent | `{:aggregate_relationship, relationship(:children)}` | true | true |
+| parent | `{:aggregate_relationship, relationship(:children)}` | false | true |
 | parent | `{:aggregate_relationship, relationship(:manual_children)}` | false | true |
-| parent | `{:aggregate_relationship, relationship(:tags)}` | true | true |
-| parent | `{:aggregate_relationship, relationship(:top_children)}` | true | true |
+| parent | `{:aggregate_relationship, relationship(:tags)}` | false | true |
+| parent | `{:aggregate_relationship, relationship(:top_children)}` | false | true |
 | parent | `{:atomic, :create}` | true | true |
 | parent | `{:atomic, :update}` | true | true |
 | parent | `{:atomic, :upsert}` | true | true |
 | parent | `{:combine, :intersection}` | false | true |
 | parent | `{:combine, :union_all}` | false | true |
 | parent | `{:combine, :union}` | false | true |
-| parent | `{:exists, :unrelated}` | true | true |
+| parent | `{:exists, :unrelated}` | false | true |
 | parent | `{:filter_relationship, relationship(:all_children)}` | true | true |
 | parent | `{:filter_relationship, relationship(:children)}` | true | true |
 | parent | `{:filter_relationship, relationship(:manual_children)}` | true | true |
@@ -147,8 +147,8 @@ See [MATRIX.md](MATRIX.md) for behavior contracts and `results/` for actual exec
 | parent | `{:query_aggregate, :sum}` | true | true |
 | parent | `{:sort, Ash.Type.Integer}` | true | true |
 | secure_parent | `:action_select` | false | true |
-| secure_parent | `:aggregate_filter` | true | true |
-| secure_parent | `:aggregate_sort` | true | true |
+| secure_parent | `:aggregate_filter` | false | true |
+| secure_parent | `:aggregate_sort` | false | true |
 | secure_parent | `:async_engine` | false | true |
 | secure_parent | `:atomic_update` | false | false |
 | secure_parent | `:boolean_filter` | true | true |
@@ -185,8 +185,8 @@ See [MATRIX.md](MATRIX.md) for behavior contracts and `results/` for actual exec
 | secure_parent | `:update_query` | true | true |
 | secure_parent | `:upsert` | true | true |
 | tenant_parent | `:action_select` | false | true |
-| tenant_parent | `:aggregate_filter` | true | true |
-| tenant_parent | `:aggregate_sort` | true | true |
+| tenant_parent | `:aggregate_filter` | false | true |
+| tenant_parent | `:aggregate_sort` | false | true |
 | tenant_parent | `:async_engine` | false | true |
 | tenant_parent | `:atomic_update` | false | false |
 | tenant_parent | `:boolean_filter` | true | true |
@@ -232,7 +232,7 @@ execution is otherwise unobserved.
 | Callback | Optional | sqlite | postgres |
 | --- | --- | --- | --- |
 | `add_aggregate/3` | true | false | false |
-| `add_aggregates/3` | true | true | true |
+| `add_aggregates/3` | true | false | true |
 | `add_calculation/4` | true | false | false |
 | `add_calculations/3` | true | true | true |
 | `attribute_ecto_type/2` | true | false | true |
@@ -258,13 +258,14 @@ execution is otherwise unobserved.
 | `prefer_transaction?/1` | true | false | true |
 | `prefer_transaction_for_atomic_updates?/1` | true | true | true |
 | `resource_to_query/2` | false | true | true |
-| `return_query/2` | true | true | true |
+| `return_query/2` | true | false | true |
 | `rollback/2` | true | true | true |
 | `run_aggregate_query/3` | true | true | true |
 | `run_aggregate_query_with_lateral_join/5` | true | false | true |
 | `run_query/2` | true | true | true |
 | `run_query_with_lateral_join/4` | true | false | true |
 | `select/3` | true | true | true |
+| `set_as_of/3` | true | false | true |
 | `set_context/3` | true | true | true |
 | `set_tenant/3` | true | false | true |
 | `sort/3` | true | true | true |
