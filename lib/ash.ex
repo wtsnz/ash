@@ -4328,6 +4328,7 @@ defmodule Ash do
         true ->
           changeset
       end
+      |> put_write_tenant(opts)
 
     Ash.Helpers.expect_options!(opts)
     domain = Ash.Helpers.domain!(changeset, opts)
@@ -4464,6 +4465,7 @@ defmodule Ash do
         %Ash.Changeset{} = changeset -> changeset
         record -> Ash.Changeset.new(record)
       end
+      |> put_write_tenant(opts)
 
     with :ok <- checked,
          {:ok, opts} <- DestroyOpts.validate(opts),
@@ -4482,6 +4484,41 @@ defmodule Ash do
 
       :ok ->
         :ok
+    end
+  end
+
+  # The tenant an update or destroy runs in: one given when running it (as `tenant` or by the
+  # scope), then the changeset's, then the tenant the record was read or written in.
+  defp put_write_tenant(changeset, opts) do
+    case explicit_tenant(opts) do
+      nil ->
+        case changeset.data do
+          %{__metadata__: %{tenant: tenant}}
+          when is_nil(changeset.tenant) and not is_nil(tenant) ->
+            Ash.Changeset.set_tenant(changeset, tenant)
+
+          _ ->
+            changeset
+        end
+
+      tenant ->
+        Ash.Changeset.set_tenant(changeset, tenant)
+    end
+  end
+
+  defp explicit_tenant(opts) do
+    case {opts[:tenant], opts[:scope]} do
+      {nil, nil} ->
+        nil
+
+      {nil, scope} ->
+        case Ash.Scope.ToOpts.get_tenant(scope) do
+          {:ok, tenant} -> tenant
+          :error -> nil
+        end
+
+      {tenant, _} ->
+        tenant
     end
   end
 
