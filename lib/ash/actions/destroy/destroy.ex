@@ -388,10 +388,14 @@ defmodule Ash.Actions.Destroy do
   defp manage_relationships(other, _, _, _), do: other
 
   defp set_tenant(changeset) do
+    # The tenant the record was read or written in is only a fallback for a changeset without one.
     changeset =
       case changeset.data do
-        %{__metadata__: %{tenant: tenant}} -> Ash.Changeset.set_tenant(changeset, tenant)
-        _ -> changeset
+        %{__metadata__: %{tenant: tenant}} when is_nil(changeset.tenant) ->
+          Ash.Changeset.set_tenant(changeset, tenant)
+
+        _ ->
+          changeset
       end
 
     if Helpers.get_multitenancy_from_context(changeset) in [:bypass, :bypass_all] do
@@ -425,17 +429,7 @@ defmodule Ash.Actions.Destroy do
   end
 
   defp handle_attribute_multitenancy(changeset) do
-    if changeset.tenant &&
-         Ash.Resource.Info.multitenancy_strategy(changeset.resource) == :attribute do
-      attribute = Ash.Resource.Info.multitenancy_attribute(changeset.resource)
-
-      {m, f, a} = Ash.Resource.Info.multitenancy_parse_attribute(changeset.resource)
-      attribute_value = apply(m, f, [changeset.to_tenant | a])
-
-      Ash.Changeset.filter(changeset, [{attribute, attribute_value}])
-    else
-      changeset
-    end
+    Ash.Actions.Helpers.Tenancy.filter(changeset)
   end
 
   defp validate_manual_action_return_result!({:ok, %resource{}} = result, resource, _) do
