@@ -218,6 +218,25 @@ defmodule Ash.Test.Sort.SortTest do
                errors: [%Ash.Error.Query.InvalidSort{sort: %{"field" => "title"}}]
              } = Ash.Query.sort_input(Post, [%{"field" => "title"}])
     end
+
+    test "an expression sort adds an error to the query" do
+      require Ash.Sort
+
+      for sort <- [
+            [{Ash.Sort.expr_sort(title, :string), :asc}],
+            [Ash.Sort.expr_sort(title, :string)]
+          ] do
+        assert %Ash.Query{valid?: false, errors: [%Ash.Error.Query.InvalidSort{}]} =
+                 Ash.Query.sort_input(Post, sort)
+      end
+    end
+
+    test "an expression sort is still accepted by a trusted sort" do
+      require Ash.Sort
+
+      assert %Ash.Query{valid?: true} =
+               Ash.Query.sort(Post, [{Ash.Sort.expr_sort(title, :string), :asc}])
+    end
   end
 
   describe "sorting on calculations whose expression/2 reads context.source_context" do
