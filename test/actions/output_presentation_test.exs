@@ -197,6 +197,145 @@ defmodule Ash.Test.Actions.OutputPresentationTest do
     end
   end
 
+  defmodule HolderNote do
+    @moduledoc false
+    use Ash.Resource,
+      domain: Ash.Test.Actions.OutputPresentationTest.Domain,
+      data_layer: Ash.DataLayer.Ets,
+      authorizers: [Ash.Policy.Authorizer]
+
+    ets do
+      private? true
+    end
+
+    policies do
+      policy always() do
+        authorize_if always()
+      end
+    end
+
+    field_policies do
+      field_policy :body do
+        authorize_if actor_attribute_equals(:admin?, true)
+      end
+
+      field_policy :* do
+        authorize_if always()
+      end
+    end
+
+    attributes do
+      uuid_primary_key :id
+      attribute :body, :string, public?: true, default: "note body"
+    end
+
+    relationships do
+      belongs_to :holder, Ash.Test.Actions.OutputPresentationTest.Holder,
+        public?: true,
+        attribute_writable?: true
+    end
+
+    actions do
+      defaults [:read, create: :*]
+    end
+  end
+
+  defmodule Holder do
+    @moduledoc false
+    use Ash.Resource,
+      domain: Ash.Test.Actions.OutputPresentationTest.Domain,
+      data_layer: Ash.DataLayer.Ets,
+      authorizers: [Ash.Policy.Authorizer]
+
+    alias Ash.Test.Actions.OutputPresentationTest.Profile
+
+    ets do
+      private? true
+    end
+
+    policies do
+      policy always() do
+        authorize_if always()
+      end
+    end
+
+    field_policies do
+      field_policy :read_only do
+        authorize_if action(:read)
+      end
+
+      field_policy :write_only do
+        authorize_if action(:update)
+      end
+
+      field_policy :contextual do
+        authorize_if context_equals(:allow_secret?, true)
+      end
+
+      field_policy :context_hidden do
+        forbid_if context_equals(:hide_secret?, true)
+        authorize_if always()
+      end
+
+      # Evaluating this filter fails.
+      field_policy :runtime_checked do
+        authorize_if expr(error(Ash.Error.Query.InvalidQuery, %{message: "can't decide"}))
+      end
+
+      field_policy :* do
+        authorize_if always()
+      end
+    end
+
+    attributes do
+      uuid_primary_key :id
+      attribute :name, :string, public?: true
+      attribute :profile, Profile, public?: true
+
+      attribute :payload, :map,
+        public?: true,
+        constraints: [fields: [profile: [type: Profile], label: [type: :string]]]
+
+      attribute :nested_arrays, {:array, {:array, Profile}}, public?: true, default: []
+    end
+
+    calculations do
+      calculate :profile_calc, Profile, expr(profile), public?: true
+      calculate :read_only, :string, expr(name), public?: true
+      calculate :write_only, :string, expr(name), public?: true
+      calculate :contextual, :string, expr(name), public?: true
+      calculate :context_hidden, :string, expr(name), public?: true
+      calculate :runtime_checked, :string, expr(name), public?: true
+    end
+
+    relationships do
+      has_many :notes, Ash.Test.Actions.OutputPresentationTest.HolderNote, public?: true
+    end
+
+    actions do
+      defaults [:read, :destroy, create: :*, update: :*]
+
+      action :map_result, :map do
+        constraints fields: [profile: [type: Profile]]
+        run fn _, _ -> {:ok, %{profile: struct(Profile, bio: "b", ssn: "secret")}} end
+      end
+
+      action :tuple_result, :tuple do
+        constraints fields: [profile: [type: Profile]]
+        run fn _, _ -> {:ok, {struct(Profile, bio: "b", ssn: "secret")}} end
+      end
+
+      action :profile_struct, :struct do
+        constraints instance_of: Profile
+        argument :id, :uuid, allow_nil?: false
+
+        run fn input, _ ->
+          {:ok, Ash.get!(__MODULE__, input.arguments.id, authorize?: false).profile}
+        end
+      end
+    end
+  end
+
   defmodule Domain do
     @moduledoc false
     use Ash.Domain, validate_config_inclusion?: false
@@ -204,6 +343,8 @@ defmodule Ash.Test.Actions.OutputPresentationTest do
     resources do
       resource Ash.Test.Actions.OutputPresentationTest.Note
       resource Ash.Test.Actions.OutputPresentationTest.User
+      resource Ash.Test.Actions.OutputPresentationTest.HolderNote
+      resource Ash.Test.Actions.OutputPresentationTest.Holder
     end
   end
 
@@ -509,6 +650,180 @@ defmodule Ash.Test.Actions.OutputPresentationTest do
         assert %Ash.ForbiddenField{} = read.profiles
         assert %Ash.ForbiddenField{} = read.contact
       end
+    end
+  end
+
+  describe "cases from review" do
+    defp holder!(attrs \\ %{}) do
+      holder =
+        Ash.create!(
+          Holder,
+          Map.merge(%{name: "secret", profile: %{bio: "b", ssn: "secret"}}, attrs),
+          authorize?: false
+        )
+
+      Ash.create!(HolderNote, %{holder_id: holder.id}, authorize?: false)
+      holder
+    end
+
+    defp stored_holder(holder), do: Ash.get!(Holder, holder.id, authorize?: false)
+
+    test "nested arrays of embedded resources keep their shape" do
+      created =
+        Ash.create!(
+          Holder,
+          %{
+            nested_arrays: [
+              [%{bio: "a", ssn: "1"}, %{bio: "b", ssn: "2"}],
+              [%{bio: "c", ssn: "3"}]
+            ]
+          },
+          @user
+        )
+
+      assert [[%Profile{} = a, %Profile{} = b], [%Profile{} = c]] = created.nested_arrays
+      assert %Ash.ForbiddenField{original_value: "1"} = a.ssn
+      assert %Ash.ForbiddenField{original_value: "2"} = b.ssn
+      assert %Ash.ForbiddenField{original_value: "3"} = c.ssn
+      assert c.bio == "c"
+    end
+
+    test "a field policy that can't be evaluated hides the value instead of failing the committed write" do
+      holder = holder!() |> Ash.load!(:runtime_checked, authorize?: false)
+
+      assert {:ok, updated} =
+               holder |> Ash.Changeset.for_update(:update, %{name: "v"}, @user) |> Ash.update()
+
+      assert %Ash.ForbiddenField{} = updated.runtime_checked
+      assert stored_holder(holder).name == "v"
+    end
+
+    test "fields of related records loaded before the action are hidden" do
+      # Field policies only: which related records the actor may read isn't checked again.
+      holder = holder!() |> Ash.load!(:notes, authorize?: false)
+
+      updated = holder |> Ash.Changeset.for_update(:update, %{name: "v"}, @user) |> Ash.update!()
+      assert [%HolderNote{body: %Ash.ForbiddenField{}}] = updated.notes
+
+      updated = holder |> Ash.Changeset.for_update(:update, %{name: "v"}, @admin) |> Ash.update!()
+      assert [%HolderNote{body: "note body"}] = updated.notes
+    end
+
+    test "fields of related records loaded by the action are hidden" do
+      updated =
+        holder!()
+        |> Ash.Changeset.for_update(:update, %{name: "v"}, @user)
+        |> Ash.update!(load: [:notes])
+
+      assert [%HolderNote{body: %Ash.ForbiddenField{}}] = updated.notes
+    end
+
+    test "a typed calculation loaded before the action hides its embedded fields" do
+      holder = holder!() |> Ash.load!(:profile_calc, authorize?: false)
+
+      updated = holder |> Ash.Changeset.for_update(:update, %{name: "v"}, @user) |> Ash.update!()
+      assert %Ash.ForbiddenField{} = updated.profile_calc.ssn
+      assert updated.profile_calc.bio == "b"
+    end
+
+    test "embedded resources in a map's fields are hidden" do
+      created =
+        Ash.create!(Holder, %{payload: %{profile: %{bio: "b", ssn: "secret"}, label: "l"}}, @user)
+
+      assert %Ash.ForbiddenField{} = created.payload.profile.ssn
+      assert created.payload.label == "l"
+
+      created =
+        Ash.create!(
+          Holder,
+          %{payload: %{profile: %{bio: "b", ssn: "secret"}, label: "l"}},
+          @admin
+        )
+
+      assert created.payload.profile.ssn == "secret"
+    end
+
+    test "generic map and tuple returns hide embedded fields" do
+      map = Holder |> Ash.ActionInput.for_action(:map_result, %{}, @user) |> Ash.run_action!()
+      assert %Ash.ForbiddenField{} = map.profile.ssn
+
+      {profile} =
+        Holder |> Ash.ActionInput.for_action(:tuple_result, %{}, @user) |> Ash.run_action!()
+
+      assert %Ash.ForbiddenField{} = profile.ssn
+
+      map = Holder |> Ash.ActionInput.for_action(:map_result, %{}, @admin) |> Ash.run_action!()
+      assert map.profile.ssn == "secret"
+    end
+
+    test "an embedded struct returned by a generic action can be written back" do
+      holder = holder!()
+
+      profile =
+        Holder
+        |> Ash.ActionInput.for_action(:profile_struct, %{id: holder.id}, @user)
+        |> Ash.run_action!()
+
+      assert %Ash.ForbiddenField{original_value: "secret"} = profile.ssn
+
+      holder |> Ash.Changeset.for_update(:update, %{profile: profile}, @user) |> Ash.update!()
+      assert stored_holder(holder).profile.ssn == "secret"
+    end
+
+    test "fields loaded before the action are checked with the action's context" do
+      holder = holder!() |> Ash.load!([:contextual, :context_hidden], authorize?: false)
+
+      updated =
+        holder
+        |> Ash.Changeset.for_update(:update, %{name: "v"}, @user)
+        |> Ash.Changeset.set_context(%{allow_secret?: true, hide_secret?: true})
+        |> Ash.update!()
+
+      assert updated.contextual == "secret"
+      assert %Ash.ForbiddenField{} = updated.context_hidden
+    end
+
+    test "fields loaded before the action are checked like fields the action loads" do
+      # Both are checked as the primary read action would, not as the update.
+      carried =
+        holder!()
+        |> Ash.load!([:read_only, :write_only], authorize?: false)
+        |> Ash.Changeset.for_update(:update, %{name: "v"}, @user)
+        |> Ash.update!()
+
+      loaded =
+        holder!()
+        |> Ash.Changeset.for_update(:update, %{name: "v"}, @user)
+        |> Ash.Changeset.load([:read_only, :write_only])
+        |> Ash.update!()
+
+      assert carried.read_only == "secret"
+      assert %Ash.ForbiddenField{} = carried.write_only
+      assert loaded.read_only == "v"
+      assert %Ash.ForbiddenField{} = loaded.write_only
+    end
+
+    test "returned notifications keep the notifier values, so they can be delivered later" do
+      {updated, notifications} =
+        user!()
+        |> Ash.Changeset.for_update(:update_with_publication, %{name: "v"}, @user)
+        |> Ash.update!(return_notifications?: true)
+
+      refute Enum.any?(
+               updated.calculations,
+               &match?({{Ash.Notifier.NotifierDependencies, _}, _}, &1)
+             )
+
+      [notification] = Enum.filter(notifications, &(&1.resource == User))
+
+      assert Enum.any?(
+               notification.data.calculations,
+               &match?({{Ash.Notifier.NotifierDependencies, _}, _}, &1)
+             )
+
+      Ash.Notifier.notify(notifications)
+      assert_received {:broadcast, "user:updated", "update_with_publication", delivered}
+      assert delivered.data.name == "v"
     end
   end
 end
