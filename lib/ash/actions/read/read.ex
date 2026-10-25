@@ -3738,15 +3738,9 @@ defmodule Ash.Actions.Read do
       |> :lists.droplast()
       |> Ash.Query.Aggregate.subpaths()
       |> Enum.reduce(current_join_filters, fn path, current_join_filters ->
-        action =
-          resource
-          |> Ash.Resource.Info.related(path)
-          |> Ash.Resource.Info.primary_action!(:read)
-          |> Map.get(:name)
-
         last_relationship = last_relationship(resource, prefix ++ path)
 
-        case Map.fetch(path_filters, {last_relationship.source, last_relationship.name, action}) do
+        case Map.fetch(path_filters, Ash.Filter.relationship_policy_key(last_relationship)) do
           {:ok, filter} ->
             filter = unwrap_filter_expression(filter)
 
@@ -4792,7 +4786,7 @@ defmodule Ash.Actions.Read do
 
         case Map.fetch(
                path_filters,
-               {last_relationship.source, last_relationship.name, aggregate.query.action.name}
+               Ash.Filter.relationship_policy_key(last_relationship, aggregate.query)
              ) do
           :error ->
             true

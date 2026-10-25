@@ -1145,7 +1145,9 @@ defmodule Ash.Filter do
            %{shared: shared}
          ) do
       %{errors: []} = related_query ->
-        if filters[{last_relationship.source, last_relationship.name, related_query.action.name}] do
+        key = relationship_policy_key(last_relationship, base_related_query)
+
+        if filters[key] do
           {:cont, {:ok, filters}}
         else
           related_query
@@ -1174,20 +1176,14 @@ defmodule Ash.Filter do
                   authorized_related_query.filter
                 end
 
-              {:cont,
-               {:ok,
-                Map.put(
-                  filters,
-                  {last_relationship.source, last_relationship.name, related_query.action.name},
-                  related_filter
-                )}}
+              {:cont, {:ok, Map.put(filters, key, related_filter)}}
 
             {:ok, false, _error} ->
               {:cont,
                {:ok,
                 Map.put(
                   filters,
-                  {last_relationship.source, last_relationship.name, related_query.action.name},
+                  key,
                   %Ash.Filter{expression: false, resource: related_query.resource}
                 )}}
 
@@ -1248,15 +1244,7 @@ defmodule Ash.Filter do
             actor,
             tenant,
             refs,
-            Ash.Query.for_read(
-              last_relationship.destination,
-              Ash.Resource.Info.primary_action(last_relationship.destination, :read).name,
-              %{},
-              actor: actor,
-              tenant: tenant,
-              authorize?: authorize?,
-              context: shared
-            ),
+            nil,
             true
           )
         end)
@@ -1510,7 +1498,9 @@ defmodule Ash.Filter do
 
     case relationship_query(last_relationship, domain, actor, tenant, nil) do
       %{errors: []} = related_query ->
-        if filters[{last_relationship.source, last_relationship.name, related_query.action.name}] do
+        key = relationship_policy_key(last_relationship)
+
+        if filters[key] do
           {:ok, filters}
         else
           case Ash.can(related_query, actor,
@@ -1529,18 +1519,13 @@ defmodule Ash.Filter do
                   authorized_related_query.filter
                 end
 
-              {:ok,
-               Map.put(
-                 filters,
-                 {last_relationship.source, last_relationship.name, related_query.action.name},
-                 related_filter
-               )}
+              {:ok, Map.put(filters, key, related_filter)}
 
             {:ok, false, _error} ->
               {:ok,
                Map.put(
                  filters,
-                 {last_relationship.source, last_relationship.name, related_query.action.name},
+                 key,
                  %Ash.Filter{expression: false, resource: related_query.resource}
                )}
 
@@ -1557,10 +1542,7 @@ defmodule Ash.Filter do
   defp relationship_query(relationship, domain, actor, tenant, base, source_context \\ %{}) do
     base_query = base || Ash.Query.new(relationship.destination)
     domain = relationship.domain || domain
-
-    action =
-      relationship.read_action || (base_query.action && base_query.action.name) ||
-        Ash.Resource.Info.primary_action!(relationship.destination, :read).name
+    action = relationship_read_action(relationship, base)
 
     query =
       relationship.destination
@@ -1584,17 +1566,41 @@ defmodule Ash.Filter do
     end
   end
 
-  # The base query's arguments are for its own action, so they only apply when that action is read
+  # The base query's arguments are for its own action, so they only apply when that action is read,
+  # and the relationship's read_action_arguments only apply to its read action.
   defp relationship_query_arguments(relationship, base_query, action) do
+    relationship_arguments =
+      if relationship.read_action in [nil, action] do
+        relationship_read_action_arguments(relationship)
+      else
+        %{}
+      end
+
     if base_query.action && base_query.action.name == action do
-      Map.merge(base_query.arguments || %{}, relationship_read_action_arguments(relationship))
+      Map.merge(base_query.arguments || %{}, relationship_arguments)
     else
-      relationship_read_action_arguments(relationship)
+      relationship_arguments
     end
   end
 
   defp relationship_read_action_arguments(relationship) do
     Map.get(relationship, :read_action_arguments, %{})
+  end
+
+  @doc false
+  # The key the read policy filter for the records reached through a relationship is stored and
+  # looked up under: the relationship, and the action the records are read with.
+  def relationship_policy_key(relationship, base_query \\ nil) do
+    {relationship.source, relationship.name, relationship_read_action(relationship, base_query)}
+  end
+
+  # As when loading, records are read with the action of the query they're read with (an
+  # aggregate's query), if there is one, then the relationship's read action.
+  defp relationship_read_action(_relationship, %Ash.Query{action: %{name: name}}), do: name
+
+  defp relationship_read_action(relationship, _base_query) do
+    relationship.read_action ||
+      Ash.Resource.Info.primary_action!(relationship.destination, :read).name
   end
 
   defp group_refs_by_all_paths(paths_with_refs) do
