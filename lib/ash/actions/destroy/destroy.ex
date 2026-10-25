@@ -429,17 +429,7 @@ defmodule Ash.Actions.Destroy do
   end
 
   defp handle_attribute_multitenancy(changeset) do
-    if changeset.tenant &&
-         Ash.Resource.Info.multitenancy_strategy(changeset.resource) == :attribute do
-      attribute = Ash.Resource.Info.multitenancy_attribute(changeset.resource)
-
-      {m, f, a} = Ash.Resource.Info.multitenancy_parse_attribute(changeset.resource)
-      attribute_value = apply(m, f, [changeset.to_tenant | a])
-
-      Ash.Changeset.filter(changeset, [{attribute, attribute_value}])
-    else
-      changeset
-    end
+    Ash.Actions.Helpers.WriteTenancy.filter(changeset)
   end
 
   defp validate_manual_action_return_result!({:ok, %resource{}} = result, resource, _) do

@@ -8,7 +8,6 @@ defmodule Ash.Actions.Update do
   alias Ash.Actions.Helpers
 
   require Ash.Tracer
-  import Ash.Expr
 
   @spec run(Ash.Domain.t(), Ash.Resource.Record.t(), Ash.Resource.Actions.action(), Keyword.t()) ::
           :ok
@@ -839,16 +838,6 @@ defmodule Ash.Actions.Update do
   end
 
   defp handle_attribute_multitenancy(changeset) do
-    if changeset.tenant &&
-         Ash.Resource.Info.multitenancy_strategy(changeset.resource) == :attribute do
-      attribute = Ash.Resource.Info.multitenancy_attribute(changeset.resource)
-
-      {m, f, a} = Ash.Resource.Info.multitenancy_parse_attribute(changeset.resource)
-      attribute_value = apply(m, f, [changeset.to_tenant | a])
-
-      Ash.Changeset.filter(changeset, expr(^ref(attribute) == ^attribute_value))
-    else
-      changeset
-    end
+    Ash.Actions.Helpers.WriteTenancy.filter(changeset)
   end
 end
