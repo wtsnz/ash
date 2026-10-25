@@ -13,8 +13,9 @@ compare answers instead of pinning them, so most checks need no expected value:
   only the rows the actor may see. Reads run as organisation 1 then 2, and 2
   then 1, so a statement cached for one tenant shows up in the other's answer.
 - **untouched**: after a write, every row the actor may not see is unchanged.
-- **expected**: with only the rows the actor may see, the answer is the
-  intended one, computed from the fixture.
+- **correct**: with only the rows the actor may see stored, the answer is the
+  right one, worked out from the fixture. A failure here can't be blamed on
+  other tenants or hidden rows: it's a plain wrong answer or an exception.
 - **noninterference**: changing only values the actor may not see doesn't
   change the answer. Person 1's admin-only values sort first and person 2's
   last, and the other way round; a filter, sort or cursor that reads them
@@ -87,25 +88,72 @@ a new question, add the group's intended answer to `Ops.expected/2`.
 
 With this checkout (Ash 3.37.1) and AshSQL 0.8.4, AshSqlite 0.3.0 and
 AshPostgres 2.15.2, every entry in `Ash.Invariants.Known` fails as recorded;
-the same holds with the data layers' `main` branches. Grouped:
+the same holds with the data layers' `main` branches. Each entry has a kind,
+for what goes wrong. "Caught by" names the checks that fail:
 
-| Layers | What |
-| --- | --- |
-| all | Aggregates and `filter_input` over a `many_to_many` skip the join resource's read policy (over `through` too, on ETS and Postgres). |
-| all | An aggregate used as a root aggregate's field or in an atomic update counts rows the read policy hides. |
-| all | Streaming bulk updates and destroys given records write another tenant's records (on SQLite, bulk destroys stream and do too). |
-| all | Destroying a changeset built with a tenant destroys another tenant's record. |
-| all | Write results show admin-only values in embedded resources, arrays and unions. |
-| all | An upsert on the primary key under attribute tenancy updates another tenant's record. |
-| Postgres | Under schema tenancy, a statement planned for one tenant's joined query is reused for the next; `through` loads read a shared destination from the tenant's schema. |
-| Postgres | An `exists` aggregate over a `through` isn't correlated with its record. |
-| ETS, SQLite | An update of a record without tenancy that references an aggregate over a multitenant resource raises (ETS) or counts every tenant's rows (SQLite). |
-| SQLite | `many_to_many` loads with a limit or offset return the wrong records. |
-| all | A calculation argument given as an expression in `filter_input` or `sort_input` reads a field the actor can't see. |
-| all | `sort_input` on an aggregate the actor can't see raises. |
-| all | An inline aggregate in client input can turn off authorization; on Postgres its filter can read the parent's hidden fields through `parent/1`. |
-| SQLite | `parent/1` in client input raises, in `exists` and in an inline aggregate's filter. |
-| all | A keyset cursor carries the values the application sorted on, including an admin-only calculation and an attribute that isn't public. |
+- isolation: the answer changes when other tenants' rows or hidden rows are
+  stored too;
+- untouched: a write changed a row the actor can't see;
+- correct: the answer is wrong even with only the actor's own rows stored;
+- noninterference: the answer changes when only values the actor can't see
+  change;
+- secrets: a value the actor can't see is in the answer;
+- agrees: two ways of asking the same question give different answers.
+
+**Reads another tenant's data**
+
+| Issue | Layers | Caught by |
+| --- | --- | --- |
+| Under schema-based tenancy, a statement planned for one tenant's joined query is reused for the next tenant (the planner cache key misses the join's prefix) | Postgres | correct, isolation, agrees |
+| An update of a record that isn't multitenant, referencing an aggregate over a multitenant resource, counts every tenant's rows (single and streaming updates) | SQLite | isolation, agrees |
+
+**Writes another tenant's data**
+
+| Issue | Layers | Caught by |
+| --- | --- | --- |
+| Streaming bulk updates and destroys given records write another tenant's records | ETS, SQLite, Postgres | correct, untouched, agrees |
+| Streaming bulk destroys given records destroy another tenant's records | ETS, Postgres | agrees |
+| Bulk destroys given records stream on AshSqlite, and destroy another tenant's records | SQLite | correct, untouched |
+| Destroying a changeset built with a tenant destroys a record of another tenant | ETS, SQLite, Postgres | correct, untouched, agrees |
+| An upsert on the primary key under attribute multitenancy updates another tenant's record | ETS, SQLite, Postgres | correct, untouched |
+
+**Counts or returns rows a read policy hides**
+
+| Issue | Layers | Caught by |
+| --- | --- | --- |
+| Aggregates and filter_input over a many_to_many skip the join resource's read policy | ETS, SQLite, Postgres | isolation, agrees |
+| Aggregates over a has_many through skip the read policy of the resources in its path | ETS, Postgres | isolation |
+| An exists aggregate over a has_many through skips the read policy of the resources in its path | ETS | isolation |
+| An aggregate referenced as a root aggregate's field or in an atomic update counts rows the read policy hides | ETS, SQLite, Postgres | isolation, agrees |
+| Atomic bulk results on ETS show an admin-only aggregate, counting rows the read policy hides | ETS | isolation |
+| An inline aggregate in client input can turn off authorization | ETS, SQLite, Postgres | isolation, agrees |
+
+**Shows or reveals a field the actor can't see**
+
+| Issue | Layers | Caught by |
+| --- | --- | --- |
+| Write results show admin-only values in embedded resources, arrays of them and unions | ETS, SQLite, Postgres | correct, secrets, noninterference, agrees |
+| Atomic bulk destroy results show admin-only values in embedded resources, arrays and unions | ETS, Postgres | correct, secrets, noninterference |
+| Streaming bulk update results on ETS show admin-only values in embedded resources, arrays and unions | ETS | correct, secrets, noninterference |
+| A calculation argument given as an expression in client input reads a field the actor can't see | ETS, SQLite, Postgres | correct, noninterference, agrees |
+| An inline aggregate's filter in client input reads the parent's fields the actor can't see | Postgres | correct, noninterference |
+| A keyset cursor carries the values the application sorted on, including a calculation the actor can't see and an attribute that isn't public | ETS, SQLite, Postgres | secrets |
+
+**Wrong answer, whoever asks**
+
+| Issue | Layers | Caught by |
+| --- | --- | --- |
+| An exists aggregate over a has_many through isn't correlated with its source record | Postgres | correct, agrees |
+| many_to_many loads with a limit or offset return the wrong records | SQLite | correct, agrees |
+
+**Raises instead of answering**
+
+| Issue | Layers | Caught by |
+| --- | --- | --- |
+| Under schema-based tenancy, has_many through loads raise: they look for a shared destination in the tenant's schema | Postgres | correct, agrees |
+| sort_input on an aggregate the actor can't see raises | ETS, SQLite, Postgres | correct, agrees |
+| parent/1 in client input raises: in exists (a missing parent binding) and in an inline aggregate's filter | SQLite | correct |
+| An atomic update of a record that isn't multitenant, referencing an aggregate over a multitenant resource, raises that the aggregate needs a tenant | ETS | correct |
 
 Against the previous releases (Ash 3.37.0, AshSQL 0.8.3, AshPostgres 2.15.1)
 it also fails where those were fixed since: `through` loads of one record

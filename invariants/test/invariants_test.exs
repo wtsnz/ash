@@ -30,3 +30,14 @@ for layer <- Ash.Invariants.Layer.all() do
     end
   end
 end
+
+defmodule Ash.Invariants.Test.Known do
+  use ExUnit.Case, async: true
+
+  test "every known failure has a kind" do
+    kinds = Keyword.keys(Ash.Invariants.Known.kinds())
+
+    for {kind, _layers, _patterns, reason} <- Ash.Invariants.Known.all(),
+        do: assert(kind in kinds, reason)
+  end
+end

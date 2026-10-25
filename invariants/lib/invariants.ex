@@ -11,7 +11,7 @@ defmodule Ash.Invariants do
     rows the actor may see. Reads run as organisation 1 then 2, and 2 then 1,
     so a statement cached for one tenant shows up in the other's answer.
   - `untouched`: after a write, every row the actor may not see is unchanged.
-  - `expected`: with only the rows the actor may see, the answer is the
+  - `correct`: with only the rows the actor may see, the answer is the
     group's intended answer from the fixture.
   - `noninterference`: changing only values the actor may not see (the
     `:altered` fixture) doesn't change the answer.
@@ -36,7 +36,7 @@ defmodule Ash.Invariants do
     [
       if(op.isolation?, do: :isolation),
       if(op.kind == :write, do: :untouched),
-      if(Ops.expected(op.group, {shape, 1}) != nil, do: :expected),
+      if(Ops.expected(op.group, {shape, 1}) != nil, do: :correct),
       if(not op.trusted?, do: :noninterference),
       :secrets
     ]
@@ -114,7 +114,7 @@ defmodule Ash.Invariants do
     {:error, "rows the actor can't see changed:\n" <> Enum.join(changed, "\n")}
   end
 
-  defp verdict(:expected, %{kind: :read} = op, shape, observation) do
+  defp verdict(:correct, %{kind: :read} = op, shape, observation) do
     failures =
       for org <- [1, 2],
           expected = Ops.expected(op.group, {shape, org}),
@@ -125,7 +125,7 @@ defmodule Ash.Invariants do
     result(failures)
   end
 
-  defp verdict(:expected, op, shape, observation) do
+  defp verdict(:correct, op, shape, observation) do
     expected = Ops.expected(op.group, {shape, 1})
     answer = observation.clean || observation.full
 
