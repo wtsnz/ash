@@ -315,6 +315,13 @@ defmodule Ash.Sort do
     end
   end
 
+  # Client input names fields. A built calculation or aggregate (e.g. from `expr_sort/2`) isn't
+  # something a client can give, and its references wouldn't be checked as input.
+  defp do_get_field(_resource, %struct{} = field, true, _input)
+       when struct in [Ash.Query.Calculation, Ash.Query.Aggregate] do
+    {:error, InvalidSort.exception(sort: field)}
+  end
+
   defp do_get_field(resource, field, true, input) do
     case Ash.Resource.Info.public_field(resource, field) do
       %Ash.Resource.Calculation{} = calc ->
