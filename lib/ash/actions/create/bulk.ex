@@ -1267,7 +1267,7 @@ defmodule Ash.Actions.Create.Bulk do
         # batched by it, so each changeset needs its tenant filter before batching.
         batch =
           if opts[:upsert?] || action.upsert? do
-            Enum.map(batch, &Ash.Actions.Helpers.WriteTenancy.filter/1)
+            Enum.map(batch, &Ash.Actions.Helpers.Tenancy.filter/1)
           else
             batch
           end

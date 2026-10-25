@@ -4438,6 +4438,8 @@ defmodule Ash.Query do
   @spec apply_to(t(), records :: list(Ash.Resource.Record.t()), opts :: Keyword.t()) ::
           {:ok, list(Ash.Resource.Record.t())} | {:error, Ash.Error.t()}
   def apply_to(query, records, opts \\ []) do
+    query = Ash.Actions.Helpers.Tenancy.filter_query(query)
+
     domain =
       query.domain || Ash.Resource.Info.domain(query.resource) || opts[:domain] ||
         Ash.Actions.Helpers.maybe_embedded_domain(query.resource) ||
@@ -4550,6 +4552,16 @@ defmodule Ash.Query do
   end
 
   def data_layer_query(%{resource: resource, domain: domain} = ash_query, opts) do
+    # A query lowered without running its read action (by `Ash.can?`, or a data layer's joins
+    # and lookups) still only reads its tenant's records. The read action has already scoped
+    # its own queries, and its tenant filter holds even if a hook changes the tenant afterwards.
+    ash_query =
+      if opts[:tenant_scoped?] do
+        ash_query
+      else
+        Ash.Actions.Helpers.Tenancy.filter_query(ash_query)
+      end
+
     context =
       ash_query.context
       |> Map.put(:action, ash_query.action)

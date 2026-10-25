@@ -12,7 +12,6 @@ defmodule Ash.Actions.Read do
 
   require Logger
   require Ash.Query
-  import Ash.Expr
   require Ash.Tracer
 
   def unpaginated_read(query, action \\ nil, opts \\ []) do
@@ -795,7 +794,8 @@ defmodule Ash.Actions.Read do
                      :ok <- validate_combinations(query, calculations_at_runtime, query.load),
                      {:ok, data_layer_query} <-
                        Ash.Query.data_layer_query(query,
-                         data_layer_calculations: data_layer_calculations
+                         data_layer_calculations: data_layer_calculations,
+                         tenant_scoped?: true
                        ),
                      {{:ok, results}, query} <-
                        run_query(
@@ -986,7 +986,10 @@ defmodule Ash.Actions.Read do
         with {:ok, query} <- paginate(query, action, opts[:skip_pagination?]),
              :ok <- validate_combinations(query, calculations_at_runtime, query.load),
              {:ok, data_layer_query} <-
-               Ash.Query.data_layer_query(query, data_layer_calculations: data_layer_calculations) do
+               Ash.Query.data_layer_query(query,
+                 data_layer_calculations: data_layer_calculations,
+                 tenant_scoped?: true
+               ) do
           # `Ash.page/2` reruns the read with these, so it must produce a page.
           page_opts = Keyword.delete(opts, :data_layer_query?)
 
@@ -1786,7 +1789,7 @@ defmodule Ash.Actions.Read do
                query.tenant,
                opts[:tracer]
              ),
-           {:ok, data_layer_query} <- Ash.Query.data_layer_query(query),
+           {:ok, data_layer_query} <- Ash.Query.data_layer_query(query, tenant_scoped?: true),
            {:ok, data_layer_query} <-
              Ash.DataLayer.add_aggregates(
                data_layer_query,
@@ -2806,19 +2809,7 @@ defmodule Ash.Actions.Read do
   end
 
   defp handle_attribute_multitenancy(query) do
-    if query.tenant && Ash.Resource.Info.multitenancy_strategy(query.resource) == :attribute do
-      multitenancy_attribute = Ash.Resource.Info.multitenancy_attribute(query.resource)
-
-      if multitenancy_attribute do
-        {m, f, a} = Ash.Resource.Info.multitenancy_parse_attribute(query.resource)
-        attribute_value = apply(m, f, [query.to_tenant | a])
-        Ash.Query.filter(query, ^ref(multitenancy_attribute) == ^attribute_value)
-      else
-        query
-      end
-    else
-      query
-    end
+    Ash.Actions.Helpers.Tenancy.filter_query(query)
   end
 
   defp get_action(resource, action) do
@@ -3849,7 +3840,7 @@ defmodule Ash.Actions.Read do
                |> Ash.Query.limit(query_before_pagination.limit)
                |> Ash.Query.offset(query_before_pagination.offset)
                |> Map.put(:filter, filter),
-             {:ok, data_layer_query} <- Ash.Query.data_layer_query(query) do
+             {:ok, data_layer_query} <- Ash.Query.data_layer_query(query, tenant_scoped?: true) do
           if return? do
             if Ash.DataLayer.in_transaction?(resource) ||
                  !Ash.DataLayer.can?(:async_engine, resource) ||

@@ -235,7 +235,31 @@ defmodule Ash.Can do
           }
         })
 
+      # Policies are checked against the given records in memory, which doesn't check that
+      # they belong to the tenant. An action authorizing itself (`alter_source?`) scopes its
+      # own write or read to the tenant.
+      records =
+        cond do
+          opts[:alter_source?] ->
+            []
+
+          match?(%Ash.Changeset{action_type: type} when type in [:update, :destroy], subject) and
+              is_struct(subject.data, resource) ->
+            [subject.data]
+
+          match?(%Ash.Query{}, subject) ->
+            List.wrap(opts[:data])
+
+          true ->
+            []
+        end
+
+      in_tenant? = Enum.all?(records, &Ash.Actions.Helpers.Tenancy.in_tenant?(subject, &1))
+
       case Ash.Domain.Info.resource(domain, resource) do
+        {:ok, _} when not in_tenant? ->
+          {:ok, false, Ash.Error.to_error_class(Ash.Error.Forbidden.exception([]))}
+
         {:ok, _} ->
           domain
           |> run_check(actor, subject, opts)
