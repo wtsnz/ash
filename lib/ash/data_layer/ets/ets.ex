@@ -969,16 +969,21 @@ defmodule Ash.DataLayer.Ets do
           } = _aggregate,
           {:ok, record} ->
             if related? do
+              {join_filters, step_filters} =
+                split_join_filters(record.__struct__, relationship_path, join_filters)
+
               with {:ok, loaded_record} <-
                      Ash.load(
                        record,
                        record.__struct__
                        |> Ash.Query.load(
                          relationship_path_to_load(
+                           record.__struct__,
                            relationship_path,
                            Ash.Query.set_context(Ash.Query.unset(query, :load), %{
                              private: %{authorize?: false}
-                           })
+                           }),
+                           step_filters
                          )
                        )
                        |> Ash.Query.load(relationship_path_to_load(relationship_path, field))
@@ -1097,6 +1102,88 @@ defmodule Ash.DataLayer.Ets do
 
   defp relationship_path_to_load([key | rest], leaf) do
     [{key, relationship_path_to_load(rest, leaf)}]
+  end
+
+  # Loads the path with the filters for steps within each relationship (a `many_to_many`'s join
+  # resource and the steps of a `through` relationship) in the context of the query that loads it.
+  defp relationship_path_to_load(resource, path, leaf, step_filters, index \\ 0)
+
+  defp relationship_path_to_load(_resource, [], leaf, _step_filters, _index), do: leaf
+
+  defp relationship_path_to_load(resource, [key | rest], leaf, step_filters, index) do
+    destination = Ash.Resource.Info.related(resource, key)
+    load = relationship_path_to_load(destination, rest, leaf, step_filters, index + 1)
+
+    case Map.fetch(step_filters, index) do
+      {:ok, filters} ->
+        query =
+          case load do
+            %Ash.Query{} = query -> query
+            load -> destination |> Ash.Query.new() |> Ash.Query.load(load)
+          end
+
+        [{key, Ash.Actions.Read.RelationshipSteps.put_step_filters(query, filters)}]
+
+      :error ->
+        [{key, load}]
+    end
+  end
+
+  # An aggregate's join filters are keyed by the path to the records they filter, with `through`
+  # relationships replaced by their paths. The records at the end of each relationship in its
+  # path are filtered as they're traversed, under the path of relationships as written, and the
+  # records within a relationship as it's loaded, by the index of the relationship in the path.
+  defp split_join_filters(_resource, _path, join_filters) when join_filters in [nil, %{}] do
+    {join_filters || %{}, %{}}
+  end
+
+  defp split_join_filters(resource, path, join_filters) do
+    path
+    |> Enum.with_index()
+    |> Enum.reduce({join_filters, %{}, resource, []}, fn {name, index},
+                                                         {traversed, step_filters, resource, key} ->
+      steps = Ash.Actions.Read.RelationshipSteps.expand(resource, [name])
+      last = List.last(steps)
+      arrived_key = key ++ last.key
+
+      declared_key = Enum.take(path, index + 1)
+
+      traversed =
+        case Map.fetch(join_filters, arrived_key) do
+          {:ok, filter} when arrived_key != declared_key ->
+            traversed
+            |> Map.delete(arrived_key)
+            |> Map.update(declared_key, filter, fn existing ->
+              Ash.Query.BooleanExpression.new(:and, existing, filter)
+            end)
+
+          _ ->
+            traversed
+        end
+
+      {traversed, level_filters} =
+        steps
+        |> Enum.drop(-1)
+        |> Enum.reduce({traversed, %{}}, fn step, {traversed, level_filters} ->
+          case Map.fetch(join_filters, key ++ step.key) do
+            {:ok, filter} ->
+              {Map.delete(traversed, key ++ step.key), Map.put(level_filters, step.key, filter)}
+
+            :error ->
+              {traversed, level_filters}
+          end
+        end)
+
+      step_filters =
+        if level_filters == %{} do
+          step_filters
+        else
+          Map.put(step_filters, index, level_filters)
+        end
+
+      {traversed, step_filters, last.hop.destination, arrived_key}
+    end)
+    |> then(fn {traversed, step_filters, _resource, _key} -> {traversed, step_filters} end)
   end
 
   @doc false

@@ -6,7 +6,7 @@ defmodule Ash.Actions.Read do
   @moduledoc false
 
   alias Ash.Actions.Helpers
-  alias Ash.Actions.Read.RelatedAuthorization
+  alias Ash.Actions.Read.{RelatedAuthorization, RelationshipSteps}
   alias Ash.Error.Invalid.{LimitRequired, NonCountableAction, PaginationRequired}
   alias Ash.Filter
 
@@ -3715,42 +3715,17 @@ defmodule Ash.Actions.Read do
     end
   end
 
-  defp add_join_filters(
-         current_join_filters,
-         aggregate_relationship_path,
-         resource,
-         path_filters,
-         prefix \\ []
-       ) do
-    if aggregate_relationship_path == [] do
-      current_join_filters
-    else
-      aggregate_relationship_path
-      |> :lists.droplast()
-      |> Ash.Query.Aggregate.subpaths()
-      |> Enum.reduce(current_join_filters, fn path, current_join_filters ->
-        action =
-          resource
-          |> Ash.Resource.Info.related(path)
-          |> Ash.Resource.Info.primary_action!(:read)
-          |> Map.get(:name)
-
-        last_relationship = last_relationship(resource, prefix ++ path)
-
-        case Map.fetch(path_filters, {last_relationship.source, last_relationship.name, action}) do
-          {:ok, filter} ->
-            filter = unwrap_filter_expression(filter)
-
-            Map.update(current_join_filters, path, filter, fn current_filter ->
-              current_filter = unwrap_filter_expression(current_filter)
-              Ash.Query.BooleanExpression.new(:and, current_filter, filter)
-            end)
-
-          :error ->
-            current_join_filters
-        end
+  # Each step before the last is filtered by its read policies, including a `many_to_many`'s join
+  # resource and the steps of a `through` relationship, under the step's key.
+  defp add_join_filters(current_join_filters, aggregate_relationship_path, resource, path_filters) do
+    resource
+    |> RelationshipSteps.join_filters(aggregate_relationship_path, path_filters)
+    |> Enum.reduce(current_join_filters, fn {path, filter}, current_join_filters ->
+      Map.update(current_join_filters, path, filter, fn current_filter ->
+        current_filter = unwrap_filter_expression(current_filter)
+        Ash.Query.BooleanExpression.new(:and, current_filter, filter)
       end)
-    end
+    end)
   end
 
   defp unwrap_filter_expression(%Ash.Filter{expression: expression}), do: expression
@@ -4779,11 +4754,15 @@ defmodule Ash.Actions.Read do
 
     additional_filter =
       if Map.get(aggregate, :related?, true) do
-        last_relationship = last_relationship(aggregate.resource, aggregate.relationship_path)
+        last_step =
+          RelationshipSteps.last_step(
+            aggregate.resource,
+            aggregate.relationship_path
+          )
 
         case Map.fetch(
                path_filters,
-               {last_relationship.source, last_relationship.name, aggregate.query.action.name}
+               RelationshipSteps.policy_key(last_step, aggregate.query)
              ) do
           :error ->
             true

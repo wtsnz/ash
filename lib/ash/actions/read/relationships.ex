@@ -4,7 +4,7 @@
 
 defmodule Ash.Actions.Read.Relationships do
   @moduledoc false
-  alias Ash.Actions.Read.RelatedAuthorization
+  alias Ash.Actions.Read.{RelatedAuthorization, RelationshipSteps}
   require Ash.Query
   import Ash.Expr
 
@@ -399,7 +399,11 @@ defmodule Ash.Actions.Read.Relationships do
         end
       end)
       |> Ash.Query.set_context(relationship.context)
-      |> hydrate_refs(query.context[:private][:actor], relationship.source, query.arguments)
+      |> RelationshipSteps.hydrate_refs(
+        query.context[:private][:actor],
+        relationship.source,
+        query.arguments
+      )
       |> with_lateral_join_query(query, relationship, records)
 
     if !related_query.context[:data_layer][:lateral_join_source] &&
@@ -415,27 +419,26 @@ defmodule Ash.Actions.Read.Relationships do
       lateral_join_source_path =
         cond do
           is_list(Map.get(relationship, :through)) ->
-            {hops, arriving_relationships} =
-              relationship.source
-              |> expand_through_steps(relationship.through)
-              |> Enum.unzip()
+            steps = expand_through!(relationship.source, relationship.through)
+            scope = RelationshipSteps.scope(source_query, related_query)
 
-            # Each hop after the first starts from the records the previous hop arrived at,
+            # Each hop after the first starts from the records the previous step arrived at,
             # so its query is read the way the relationship arriving at them reads.
-            hops
-            |> Enum.zip([nil | Enum.drop(arriving_relationships, -1)])
+            steps
+            |> Enum.zip([nil | Enum.drop(steps, -1)])
             |> Enum.reduce_while({:ok, []}, fn
-              {hop, nil}, {:ok, acc} ->
+              {%{hop: hop}, nil}, {:ok, acc} ->
                 entry =
                   {clear_lateral_join_source(source_query), hop.source_attribute,
                    hop.destination_attribute, hop}
 
                 {:cont, {:ok, acc ++ [entry]}}
 
-              {hop, arriving}, {:ok, acc} ->
+              {%{hop: hop}, %{relationship: arriving} = previous}, {:ok, acc} ->
                 arriving
-                |> through_step_query(source_query, related_query)
-                |> authorize_through_step(source_query, arriving.name)
+                |> through_step_query(scope)
+                |> RelationshipSteps.filter_step(related_query, previous.key)
+                |> RelationshipSteps.authorize(scope, arriving.name)
                 |> case do
                   {:ok, step_query} ->
                     entry = {step_query, hop.source_attribute, hop.destination_attribute, hop}
@@ -493,7 +496,8 @@ defmodule Ash.Actions.Read.Relationships do
                 relationship.source_attribute_on_join_resource,
                 relationship.destination_attribute_on_join_resource
               ])
-              |> hydrate_refs(
+              |> RelationshipSteps.filter_step(related_query, [join_relationship.name])
+              |> RelationshipSteps.hydrate_refs(
                 source_query.context[:private][:actor],
                 relationship.source,
                 source_query.arguments
@@ -583,28 +587,6 @@ defmodule Ash.Actions.Read.Relationships do
     end
   end
 
-  defp hydrate_refs(query, actor, parent, source_args) do
-    query.filter
-    |> Ash.Expr.fill_template(
-      actor: actor,
-      tenant: query.to_tenant,
-      args: source_args,
-      context: query.context
-    )
-    |> Ash.Filter.hydrate_refs(%{
-      resource: query.resource,
-      parent_stack: [parent],
-      public?: false
-    })
-    |> case do
-      {:ok, hydrated} ->
-        %{query | filter: hydrated}
-
-      {:error, error} ->
-        Ash.Query.add_error(query, error)
-    end
-  end
-
   defp clear_lateral_join_source(source_query) do
     Ash.Query.unset(source_query, [:load, :select, :sort])
   end
@@ -629,11 +611,13 @@ defmodule Ash.Actions.Read.Relationships do
             domain: last.domain
           }
 
+          scope = RelationshipSteps.scope(source_query, related_query)
+
           last
-          |> through_step_query(source_query, related_query,
+          |> through_step_query(scope,
             accessing_from: %{source: relationship.source, name: relationship.name}
           )
-          |> authorize_through_step(source_query, relationship.name)
+          |> RelationshipSteps.authorize(scope, relationship.name)
           |> case do
             {:ok, step_query} -> {:ok, [{step_query, primary_key, primary_key, hop}]}
             {:error, error} -> {:error, error}
@@ -651,61 +635,10 @@ defmodule Ash.Actions.Read.Relationships do
     end
   end
 
-  defp authorize_through_step(step_query, source_query, path) do
-    if source_query.context[:private][:authorize?] &&
-         Ash.Actions.Helpers.authorizers?(step_query) do
-      case Ash.can(
-             step_query,
-             source_query.context[:private][:actor],
-             return_forbidden_error?: true,
-             pre_flight?: false,
-             alter_source?: true,
-             run_queries?: false,
-             base_query: step_query
-           ) do
-        {:ok, true} -> {:ok, step_query}
-        {:ok, true, authorized_query} -> {:ok, authorized_query}
-        {:ok, false, error} -> {:error, Ash.Error.set_path(error, path)}
-        {:error, error} -> {:error, Ash.Error.set_path(error, path)}
-      end
-    else
-      {:ok, step_query}
-    end
-  end
-
   # The query for the records `relationship` arrives at, partway along a through path.
-  defp through_step_query(relationship, source_query, related_query, opts \\ []) do
-    relationship.destination
-    |> Ash.Query.new()
-    |> Ash.Query.set_tenant(source_query.tenant)
-    |> Ash.Query.set_context(%{
-      accessing_from:
-        opts[:accessing_from] || %{source: relationship.source, name: relationship.name},
-      shared: source_query.context[:shared] || %{}
-    })
-    |> Ash.Query.set_context(relationship.context)
-    |> Ash.Query.for_read(
-      relationship_read_action_name(relationship),
-      relationship_read_action_arguments(relationship),
-      authorize?: source_query.context[:private][:authorize?],
-      actor: source_query.context[:private][:actor],
-      tenant: source_query.tenant,
-      tracer: source_query.context[:private][:tracer],
-      domain: relationship.domain || related_query.domain
-    )
-    |> Ash.Query.do_filter(
-      RelatedAuthorization.trusted_filter(
-        relationship.destination,
-        relationship.filter,
-        [relationship.source]
-      ),
-      parent_stack: [relationship.source]
-    )
-    |> hydrate_refs(
-      source_query.context[:private][:actor],
-      relationship.source,
-      source_query.arguments
-    )
+  defp through_step_query(relationship, scope, opts \\ []) do
+    relationship
+    |> RelationshipSteps.query(scope, opts)
     |> clear_lateral_join_source()
     |> limit_through_step(relationship)
   end
@@ -986,6 +919,7 @@ defmodule Ash.Actions.Read.Relationships do
         RelatedAuthorization.trusted_sort(relationship.through, join_relationship.sort)
       )
       |> Ash.Query.set_context(join_relationship.context)
+      |> RelationshipSteps.filter_step(related_query, [join_relationship.name])
       |> then(fn q ->
         if join_relationship.limit do
           Ash.Query.limit(q, join_relationship.limit)
@@ -2082,79 +2016,39 @@ defmodule Ash.Actions.Read.Relationships do
 
   # The relationship whose options apply to a through relationship's destination records.
   defp last_through_relationship(%{through: through} = relationship) when is_list(through) do
-    {_hop, last} =
-      relationship.source
-      |> expand_through_steps(through)
-      |> List.last()
-
-    last
+    relationship.source
+    |> expand_through!(through)
+    |> List.last()
+    |> Map.get(:relationship)
   end
 
   defp last_through_relationship(_relationship), do: nil
 
   defp expand_through_path(resource, path) do
     resource
-    |> expand_through_steps(path)
-    |> Enum.map(&elem(&1, 0))
+    |> expand_through!(path)
+    |> Enum.map(& &1.hop)
   end
 
-  # Expands a through path into `{hop, relationship}` pairs. Each hop joins one resource to the
-  # next, and `relationship` is the one whose options (read action, filter, domain and
-  # `accessing_from`) apply to the records the hop arrives at. A `many_to_many` becomes two
-  # hops: its join relationship, then a hop from the join resource to its destination.
-  defp expand_through_steps(resource, path) do
-    expand_through_steps(resource, path, [])
-  end
+  # `parent/1` in a many_to_many's filter refers to its source record, which is two steps back
+  # once the join resource is a step of its own.
+  defp expand_through!(resource, path) do
+    steps = RelationshipSteps.expand(resource, path)
 
-  defp expand_through_steps(_resource, [], acc), do: Enum.reverse(acc)
-
-  defp expand_through_steps(resource, [name | rest], acc) do
-    relationship = Ash.Resource.Info.relationship(resource, name)
-
-    if is_nil(relationship) do
-      raise Ash.Error.Query.NoSuchRelationship,
-        resource: resource,
-        relationship: name
-    end
-
-    case relationship do
-      %{through: through} when is_list(through) ->
-        nested = expand_through_steps(resource, through, [])
-        {last_hop, _} = List.last(nested)
-        expand_through_steps(last_hop.destination, rest, Enum.reverse(nested) ++ acc)
-
-      %{type: :many_to_many} ->
-        # `parent/1` in a many_to_many's filter refers to its source record, which is two
-        # steps back once the join resource is a step of its own.
+    Enum.each(steps, fn
+      %{relationship: %{type: :many_to_many} = relationship} ->
         if do_has_parent_expr?(relationship.filter) do
           raise ArgumentError,
                 "The filter of many_to_many relationship `#{relationship.name}` on " <>
-                  "#{inspect(resource)} uses `parent/1`, so it can't be a step in a through path."
+                  "#{inspect(relationship.source)} uses `parent/1`, so it can't be a step in a " <>
+                  "through path."
         end
 
-        join_relationship =
-          Ash.Resource.Info.relationship(resource, relationship.join_relationship)
-
-        join_hop = %Ash.Resource.Relationships.BelongsTo{
-          name: relationship.name,
-          source: relationship.through,
-          destination: relationship.destination,
-          source_attribute: relationship.destination_attribute_on_join_resource,
-          destination_attribute: relationship.destination_attribute,
-          domain: relationship.domain
-        }
-
-        expand_through_steps(
-          relationship.destination,
-          rest,
-          [{join_hop, relationship}, {join_relationship, join_relationship} | acc]
-        )
-
       _ ->
-        expand_through_steps(relationship.destination, rest, [
-          {relationship, relationship} | acc
-        ])
-    end
+        :ok
+    end)
+
+    steps
   end
 
   defp raise_if_parent_expr!(relationship, query, reason) do
