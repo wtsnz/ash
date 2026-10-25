@@ -3855,41 +3855,6 @@ defmodule Ash.Filter do
        when name in @inline_aggregates do
     resource = Ash.Resource.Info.related(context.resource, call.relationship_path)
     first_arg = Enum.at(args, 0)
-
-    # Check if this is an unrelated aggregate (resource module)
-    {related, path, unrelated?} =
-      case first_arg do
-        module when is_atom(module) ->
-          # Check if it's a module that looks like a resource (starts with uppercase)
-          module_string = to_string(module)
-
-          if String.match?(module_string, ~r/^[A-Z]/) and Code.ensure_loaded?(module) do
-            # This is an unrelated aggregate
-            {module, [], true}
-          else
-            # This is a relationship path
-            path = refs_to_path(first_arg)
-            related = Ash.Resource.Info.related(resource, path)
-
-            if !related do
-              raise "Expression `#{inspect(call)}` is invalid. `#{inspect(first_arg)}` is not a valid relationship path from #{inspect(resource)}."
-            end
-
-            {related, path, false}
-          end
-
-        _ ->
-          # This is a relationship path
-          path = refs_to_path(first_arg)
-          related = Ash.Resource.Info.related(resource, path)
-
-          if !related do
-            raise "Expression `#{inspect(call)}` is invalid. `#{inspect(first_arg)}` is not a valid relationship path from #{inspect(resource)}."
-          end
-
-          {related, path, false}
-      end
-
     opts = Enum.at(args, 1) || []
 
     kind =
@@ -3899,42 +3864,46 @@ defmodule Ash.Filter do
         name
       end
 
-    # Check data layer capability for unrelated aggregates
-    capability = if unrelated?, do: {:aggregate, :unrelated}, else: {:aggregate, kind}
+    with {:ok, related, path, unrelated?} <-
+           inline_aggregate_target(call, resource, first_arg, context) do
+      # Check data layer capability for unrelated aggregates
+      capability = if unrelated?, do: {:aggregate, :unrelated}, else: {:aggregate, kind}
 
-    if Ash.DataLayer.data_layer_can?(context.resource, capability) do
-      if Keyword.keyword?(opts) do
-        # Convert inline aggregate options to proper aggregate options
-        opts =
-          opts
-          |> convert_inline_aggregate_options()
-          |> then(fn opts ->
-            if unrelated? do
-              Keyword.put(opts, :resource, related)
-            else
-              Keyword.put(opts, :path, path)
+      cond do
+        !Ash.DataLayer.data_layer_can?(context.resource, capability) ->
+          {:error,
+           Ash.Error.Query.AggregatesNotSupported.exception(resource: resource, feature: "using")}
+
+        !Keyword.keyword?(opts) ->
+          {:error, "Aggregate options must be keyword list. In: #{inspect(call)}"}
+
+        true ->
+          # Convert inline aggregate options to proper aggregate options
+          opts = convert_inline_aggregate_options(opts)
+
+          with {:ok, opts} <- client_aggregate_options(opts, related, context) do
+            opts =
+              if unrelated? do
+                Keyword.put(opts, :resource, related)
+              else
+                Keyword.put(opts, :path, path)
+              end
+
+            with {:ok, agg} <-
+                   Aggregate.new(
+                     resource,
+                     agg_name(kind, opts),
+                     kind,
+                     opts
+                   ) do
+              {:ok,
+               %Ref{
+                 relationship_path: call.relationship_path,
+                 attribute: agg
+               }}
             end
-          end)
-
-        with {:ok, agg} <-
-               Aggregate.new(
-                 resource,
-                 agg_name(kind, opts),
-                 kind,
-                 opts
-               ) do
-          {:ok,
-           %Ref{
-             relationship_path: call.relationship_path,
-             attribute: agg
-           }}
-        end
-      else
-        {:error, "Aggregate options must be keyword list. In: #{inspect(call)}"}
+          end
       end
-    else
-      {:error,
-       Ash.Error.Query.AggregatesNotSupported.exception(resource: resource, feature: "using")}
     end
   end
 
@@ -4154,6 +4123,119 @@ defmodule Ash.Filter do
         # Convert filter: expr(...) to query: [filter: expr(...)]
         query = [filter: filter]
         Keyword.put(opts, :query, query)
+    end
+  end
+
+  # The resource an inline aggregate aggregates over: another resource, or the destination of a
+  # relationship path. Client input can only aggregate over public relationships.
+  defp inline_aggregate_target(call, resource, first_arg, context) do
+    unrelated? =
+      is_atom(first_arg) and String.match?(to_string(first_arg), ~r/^[A-Z]/) and
+        Code.ensure_loaded?(first_arg)
+
+    cond do
+      unrelated? && context[:input?] ->
+        {:error,
+         Ash.Error.Query.InvalidQuery.exception(
+           value: call,
+           message: "client input can't aggregate over another resource"
+         )}
+
+      unrelated? ->
+        {:ok, first_arg, [], true}
+
+      true ->
+        path = refs_to_path(first_arg)
+
+        related =
+          cond do
+            is_nil(resource) ->
+              nil
+
+            context[:input?] ->
+              with %{} <-
+                     Ash.Resource.Info.public_relationship(
+                       context.resource,
+                       call.relationship_path ++ path
+                     ) do
+                Ash.Resource.Info.related(resource, path)
+              end
+
+            true ->
+              Ash.Resource.Info.related(resource, path)
+          end
+
+        if related do
+          {:ok, related, path, false}
+        else
+          {:error,
+           Ash.Error.Query.NoSuchRelationship.exception(
+             resource: resource || context.resource,
+             relationship: Enum.join(call.relationship_path ++ List.wrap(path), ".")
+           )}
+        end
+    end
+  end
+
+  @client_aggregate_options [:field, :query, :default, :uniq?, :include_nil?]
+
+  # Client input can give an aggregate's field, default and filter or sort, which are parsed as
+  # client input against the aggregated resource. Options that change how the aggregate is
+  # authorized or computed (authorize?, read_action, join_filters, expr, implementation, ...)
+  # can't be given.
+  defp client_aggregate_options(opts, related, context) do
+    if context[:input?] do
+      case Keyword.keys(opts) -- @client_aggregate_options do
+        [] ->
+          client_aggregate_query(opts, related, context)
+
+        keys ->
+          {:error,
+           Ash.Error.Query.InvalidQuery.exception(
+             value: opts,
+             message: "client input can't set #{inspect(keys)} on an aggregate"
+           )}
+      end
+    else
+      {:ok, opts}
+    end
+  end
+
+  defp client_aggregate_query(opts, related, context) do
+    case Keyword.fetch(opts, :query) do
+      :error ->
+        {:ok, opts}
+
+      {:ok, query} ->
+        if Keyword.keyword?(query) and Keyword.keys(query) -- [:filter, :sort] == [] do
+          related_query =
+            related
+            |> Ash.Query.new()
+            |> then(fn related_query ->
+              case Keyword.fetch(query, :filter) do
+                {:ok, filter} ->
+                  Ash.Query.filter_input(related_query, filter,
+                    ref_transformer: context[:ref_transformer]
+                  )
+
+                :error ->
+                  related_query
+              end
+            end)
+            |> Ash.Query.sort_input(query[:sort])
+
+          if related_query.valid? do
+            {:ok, Keyword.put(opts, :query, related_query)}
+          else
+            {:error, related_query.errors}
+          end
+        else
+          {:error,
+           Ash.Error.Query.InvalidQuery.exception(
+             value: query,
+             message: "an aggregate's query in client input can only give a filter and sort"
+           )}
+        end
     end
   end
 
