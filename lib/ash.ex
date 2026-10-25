@@ -4488,7 +4488,9 @@ defmodule Ash do
   end
 
   # The tenant an update or destroy runs in: one given when running it (as `tenant` or by the
-  # scope), then the changeset's, then the tenant the record was read or written in.
+  # scope), then the changeset's, then the tenant the record was read or written in. A changeset
+  # already built for its action ran its changes for its own tenant, so it can't be run in
+  # another one.
   defp put_write_tenant(changeset, opts) do
     case explicit_tenant(opts) do
       nil ->
@@ -4502,7 +4504,19 @@ defmodule Ash do
         end
 
       tenant ->
-        Ash.Changeset.set_tenant(changeset, tenant)
+        if changeset.__validated_for_action__ && not is_nil(changeset.tenant) &&
+             Ash.ToTenant.to_tenant(tenant, changeset.resource) != changeset.to_tenant do
+          Ash.Changeset.add_error(
+            changeset,
+            Ash.Error.Invalid.TenantMismatch.exception(
+              resource: changeset.resource,
+              tenant: changeset.tenant,
+              given: tenant
+            )
+          )
+        else
+          Ash.Changeset.set_tenant(changeset, tenant)
+        end
     end
   end
 
