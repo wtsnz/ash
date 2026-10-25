@@ -254,7 +254,11 @@ defmodule Ash.Can do
             []
         end
 
-      in_tenant? = Enum.all?(records, &Ash.Actions.Helpers.Tenancy.in_tenant?(subject, &1))
+      # Only records that exist: a check without one builds an empty record.
+      in_tenant? =
+        records
+        |> Enum.filter(&stored_record?(resource, &1))
+        |> Enum.all?(&Ash.Actions.Helpers.Tenancy.in_tenant?(subject, &1))
 
       case Ash.Domain.Info.resource(domain, resource) do
         {:ok, _} when not in_tenant? ->
@@ -269,6 +273,12 @@ defmodule Ash.Can do
           {:error, error}
       end
     end
+  end
+
+  defp stored_record?(resource, record) do
+    resource
+    |> Ash.Resource.Info.primary_key()
+    |> Enum.all?(&(not is_nil(Map.get(record, &1))))
   end
 
   # An actor's attributes are trusted exactly as provided, but a temporal authorization reads

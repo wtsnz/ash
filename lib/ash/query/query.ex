@@ -4438,7 +4438,13 @@ defmodule Ash.Query do
   @spec apply_to(t(), records :: list(Ash.Resource.Record.t()), opts :: Keyword.t()) ::
           {:ok, list(Ash.Resource.Record.t())} | {:error, Ash.Error.t()}
   def apply_to(query, records, opts \\ []) do
-    query = Ash.Actions.Helpers.Tenancy.filter_query(query)
+    query =
+      if is_nil(query.tenant) && opts[:tenant] do
+        set_tenant(query, opts[:tenant])
+      else
+        query
+      end
+      |> Ash.Actions.Helpers.Tenancy.filter_query()
 
     domain =
       query.domain || Ash.Resource.Info.domain(query.resource) || opts[:domain] ||
@@ -4650,7 +4656,7 @@ defmodule Ash.Query do
             Ash.Resource.Info.selected_by_default_attribute_names(ash_query.resource)
           )
 
-        case combination_queries(ash_query) do
+        case combination_queries(ash_query, opts) do
           {:ok, combinations, previous} ->
             with {:ok, query} <-
                    Ash.DataLayer.combination_of(combinations, ash_query.resource, domain) do
@@ -4689,7 +4695,7 @@ defmodule Ash.Query do
     |> Map.fetch!(:select)
   end
 
-  defp combination_queries(query) do
+  defp combination_queries(query, opts) do
     base_query = Ash.Query.new(query.resource)
 
     Enum.reduce_while(
@@ -4716,9 +4722,11 @@ defmodule Ash.Query do
         |> Ash.Query.set_context(%{data_layer: %{combination_query?: true}})
         |> then(fn
           %{valid?: true} = combination_query ->
+            # A combination's members are part of the query: scoped with it, by its read action.
             case data_layer_query(combination_query,
                    previous_combination: previous,
-                   data_layer_calculations: calculations
+                   data_layer_calculations: calculations,
+                   tenant_scoped?: opts[:tenant_scoped?]
                  ) do
               {:ok, combination_query} ->
                 {:cont,

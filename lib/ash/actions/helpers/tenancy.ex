@@ -78,14 +78,45 @@ defmodule Ash.Actions.Helpers.Tenancy do
   end
 
   @doc """
-  Whether a record belongs to the tenant a query or changeset is scoped to. Always `true` when the
-  query or changeset doesn't need the tenant filter.
+  Whether a record belongs to the tenant a query or changeset is scoped to, compared the way a
+  read compares it. Always `true` when the query or changeset doesn't need the tenant filter. A
+  record whose tenant attribute wasn't selected is looked up by primary key in the tenant.
   """
   @spec in_tenant?(Ash.Query.t() | Ash.Changeset.t(), Ash.Resource.Record.t()) :: boolean()
   def in_tenant?(subject, record) do
     case scope(subject) do
-      nil -> true
-      {attribute, value} -> Map.get(record, attribute) == value
+      nil ->
+        true
+
+      {attribute, _value} ->
+        predicate = predicate(subject)
+
+        case Map.get(record, attribute) do
+          %Ash.NotLoaded{} -> stored_in_tenant?(subject.resource, record, predicate)
+          _ -> matches?(subject, record, predicate)
+        end
+    end
+  end
+
+  defp matches?(subject, record, predicate) do
+    domain = subject.domain || Ash.Resource.Info.domain(subject.resource)
+    filter = Ash.Filter.parse!(subject.resource, predicate)
+
+    match?({:ok, [_]}, Ash.Filter.Runtime.filter_matches(domain, [record], filter))
+  end
+
+  defp stored_in_tenant?(resource, record, predicate) do
+    with {:ok, pkey_filter} <- Ash.Filter.get_filter(resource, record),
+         {:ok, query} <-
+           resource
+           |> Ash.Query.new(base_filter?: false)
+           |> Ash.Query.do_filter(pkey_filter)
+           |> Ash.Query.do_filter(predicate)
+           |> Ash.Query.data_layer_query(),
+         {:ok, [_]} <- Ash.DataLayer.run_query(query, resource) do
+      true
+    else
+      _ -> false
     end
   end
 

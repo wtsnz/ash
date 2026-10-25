@@ -585,7 +585,9 @@ defmodule Ash.DataLayer.Ets do
           Ash.Query.do_filter(query, filter)
       end
 
-    with {:ok, data_layer_query} <- Ash.Query.data_layer_query(query) do
+    # Looks the source records up again by key: they were already read, in whatever tenants
+    # their query allowed.
+    with {:ok, data_layer_query} <- Ash.Query.data_layer_query(query, tenant_scoped?: true) do
       run_query(data_layer_query, query.resource)
     end
   end
