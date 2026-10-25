@@ -507,7 +507,7 @@ defmodule Ash.Test.Actions.WriteTenantScopingTest do
     test "isn't updated in another tenant", %{a_note: a_note, b_note: b_note} do
       changeset = Ash.Changeset.for_update(a_note, :stamp_tenant, %{}, tenant: "a")
 
-      assert {:error, %Ash.Error.Invalid{}} =
+      assert {:error, %Ash.Error.Invalid{errors: [%Ash.Error.Invalid.TenantMismatch{}]}} =
                Ash.update(changeset, tenant: "b")
 
       assert stored(a_note, "a") == "a's"
@@ -517,7 +517,7 @@ defmodule Ash.Test.Actions.WriteTenantScopingTest do
     test "isn't destroyed in another tenant", %{a_note: a_note, b_note: b_note} do
       changeset = Ash.Changeset.for_destroy(a_note, :destroy, %{}, tenant: "a")
 
-      assert {:error, %Ash.Error.Invalid{}} =
+      assert {:error, %Ash.Error.Invalid{errors: [%Ash.Error.Invalid.TenantMismatch{}]}} =
                Ash.destroy(changeset, tenant: "b")
 
       assert stored(a_note, "a") == "a's"
