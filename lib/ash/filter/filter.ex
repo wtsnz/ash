@@ -3966,9 +3966,11 @@ defmodule Ash.Filter do
 
     cond do
       resource_calculation ->
+        # Arguments in client input can't be expressions, as in the map syntax.
         with {:ok, calculation} <-
                Calculation.from_resource_calculation(context.resource, resource_calculation,
-                 args: Map.new(Enum.at(args, 0) || [])
+                 args: Map.new(Enum.at(args, 0) || []),
+                 allow_expr?: !context[:input?]
                ) do
           {:ok,
            %Ref{
