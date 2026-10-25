@@ -1227,10 +1227,12 @@ defmodule Ash.Policy.Authorizer do
       # Synthetic query just for the strict_check_result calls below.
       # It's never executed — we only need actor/tenant/domain context
       # to compute the policy expressions.
+      # It carries the caller's context, which checks like `context_equals` read.
       query =
         resource
         |> Ash.Query.new()
         |> Ash.Query.set_tenant(tenant)
+        |> Ash.Query.set_context(opts[:context] || %{})
         |> Ash.Query.set_context(%{private: %{actor: actor}})
 
       authorizer =
@@ -1240,7 +1242,7 @@ defmodule Ash.Policy.Authorizer do
           changeset: nil,
           action_input: nil,
           subject: query,
-          context: %{},
+          context: query.context,
           domain: domain
         })
 
@@ -1330,6 +1332,7 @@ defmodule Ash.Policy.Authorizer do
             actor: actor,
             tenant: tenant,
             domain: domain,
+            context: opts[:context] || %{},
             authorize?: false,
             reuse_values?: true
           ]

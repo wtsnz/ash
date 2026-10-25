@@ -127,6 +127,7 @@ defmodule Ash.Actions.Present do
             actor: opts[:actor],
             tenant: opts[:tenant],
             domain: opts[:domain],
+            context: opts[:context],
             for_fields: undecided
           )
         end
@@ -247,6 +248,9 @@ defmodule Ash.Actions.Present do
       domain: opts[:domain] || Ash.Resource.Info.domain(resource),
       tracer: opts[:tracer],
       authorize?: opts[:authorize?],
+      # The action's own context, without its internal state (actor, authorize?), which the
+      # checks set themselves.
+      context: Map.delete(Map.get(subject, :context) || %{}, :private),
       decided: decided(subject)
     ]
   end

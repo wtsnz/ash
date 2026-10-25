@@ -328,6 +328,7 @@ defmodule Ash.Authorizer do
   - `:actor` - the actor whose visibility is being checked.
   - `:tenant` - the tenant the records belong to.
   - `:domain` - the domain context.
+  - `:context` - the context of the action the records come from, for checks that read it.
   """
   @spec apply_field_level_auth(
           Ash.Resource.t(),
