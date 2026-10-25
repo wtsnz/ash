@@ -4333,7 +4333,6 @@ defmodule Ash do
     domain = Ash.Helpers.domain!(changeset, opts)
 
     checked = check_as_of_option(changeset, opts)
-    opts = Keyword.put_new(opts, :tenant, Map.get(changeset.data.__metadata__, :tenant))
 
     with :ok <- checked,
          {:ok, opts} <- UpdateOpts.validate(opts),
@@ -4357,12 +4356,6 @@ defmodule Ash do
     Ash.Helpers.expect_record!(record)
     Ash.Helpers.expect_options!(opts)
     Ash.Helpers.expect_map_or_nil!(opts[:input])
-
-    opts =
-      case Map.fetch(record.__metadata__, :tenant) do
-        {:ok, tenant} when not is_nil(tenant) -> Keyword.put_new(opts, :tenant, tenant)
-        _ -> opts
-      end
 
     changeset_opts = Keyword.take(opts, Keyword.keys(Ash.Changeset.for_update_opts()))
     update_opts = Keyword.take(opts, Keyword.keys(@update_opts_schema))
@@ -4462,19 +4455,7 @@ defmodule Ash do
   def destroy(changeset_or_record, opts \\ []) do
     Ash.Helpers.expect_changeset_or_record!(changeset_or_record)
 
-    data =
-      case changeset_or_record do
-        %Ash.Changeset{data: data} -> data
-        record -> record
-      end
-
     checked = check_as_of_option(changeset_or_record, opts)
-
-    opts =
-      case Map.fetch(data.__metadata__, :tenant) do
-        {:ok, tenant} when not is_nil(tenant) -> Keyword.put_new(opts, :tenant, tenant)
-        _ -> opts
-      end
 
     Ash.Helpers.expect_options!(opts)
 
