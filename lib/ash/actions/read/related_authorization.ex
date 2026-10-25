@@ -239,11 +239,7 @@ defmodule Ash.Actions.Read.RelatedAuthorization do
   end
 
   defp relationship_filter(relationship, path_filters) do
-    read_action =
-      relationship.read_action ||
-        Ash.Resource.Info.primary_action!(relationship.destination, :read).name
-
-    case Map.get(path_filters, {relationship.source, relationship.name, read_action}) do
+    case Map.get(path_filters, Ash.Filter.relationship_policy_key(relationship)) do
       nil -> nil
       %Ash.Filter{expression: expression} -> expression
     end
