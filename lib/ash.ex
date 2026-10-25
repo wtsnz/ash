@@ -4328,12 +4328,12 @@ defmodule Ash do
         true ->
           changeset
       end
+      |> put_write_tenant(opts)
 
     Ash.Helpers.expect_options!(opts)
     domain = Ash.Helpers.domain!(changeset, opts)
 
     checked = check_as_of_option(changeset, opts)
-    opts = Keyword.put_new(opts, :tenant, Map.get(changeset.data.__metadata__, :tenant))
 
     with :ok <- checked,
          {:ok, opts} <- UpdateOpts.validate(opts),
@@ -4357,12 +4357,6 @@ defmodule Ash do
     Ash.Helpers.expect_record!(record)
     Ash.Helpers.expect_options!(opts)
     Ash.Helpers.expect_map_or_nil!(opts[:input])
-
-    opts =
-      case Map.fetch(record.__metadata__, :tenant) do
-        {:ok, tenant} when not is_nil(tenant) -> Keyword.put_new(opts, :tenant, tenant)
-        _ -> opts
-      end
 
     changeset_opts = Keyword.take(opts, Keyword.keys(Ash.Changeset.for_update_opts()))
     update_opts = Keyword.take(opts, Keyword.keys(@update_opts_schema))
@@ -4462,19 +4456,7 @@ defmodule Ash do
   def destroy(changeset_or_record, opts \\ []) do
     Ash.Helpers.expect_changeset_or_record!(changeset_or_record)
 
-    data =
-      case changeset_or_record do
-        %Ash.Changeset{data: data} -> data
-        record -> record
-      end
-
     checked = check_as_of_option(changeset_or_record, opts)
-
-    opts =
-      case Map.fetch(data.__metadata__, :tenant) do
-        {:ok, tenant} when not is_nil(tenant) -> Keyword.put_new(opts, :tenant, tenant)
-        _ -> opts
-      end
 
     Ash.Helpers.expect_options!(opts)
 
@@ -4483,6 +4465,7 @@ defmodule Ash do
         %Ash.Changeset{} = changeset -> changeset
         record -> Ash.Changeset.new(record)
       end
+      |> put_write_tenant(opts)
 
     with :ok <- checked,
          {:ok, opts} <- DestroyOpts.validate(opts),
@@ -4501,6 +4484,55 @@ defmodule Ash do
 
       :ok ->
         :ok
+    end
+  end
+
+  # The tenant an update or destroy runs in: one given when running it (as `tenant` or by the
+  # scope), then the changeset's, then the tenant the record was read or written in. A changeset
+  # already built for its action ran its changes for its own tenant, so it can't be run in
+  # another one.
+  defp put_write_tenant(changeset, opts) do
+    case explicit_tenant(opts) do
+      nil ->
+        case changeset.data do
+          %{__metadata__: %{tenant: tenant}}
+          when is_nil(changeset.tenant) and not is_nil(tenant) ->
+            Ash.Changeset.set_tenant(changeset, tenant)
+
+          _ ->
+            changeset
+        end
+
+      tenant ->
+        if changeset.__validated_for_action__ && not is_nil(changeset.tenant) &&
+             Ash.ToTenant.to_tenant(tenant, changeset.resource) != changeset.to_tenant do
+          Ash.Changeset.add_error(
+            changeset,
+            Ash.Error.Invalid.TenantMismatch.exception(
+              resource: changeset.resource,
+              tenant: changeset.tenant,
+              given: tenant
+            )
+          )
+        else
+          Ash.Changeset.set_tenant(changeset, tenant)
+        end
+    end
+  end
+
+  defp explicit_tenant(opts) do
+    case {opts[:tenant], opts[:scope]} do
+      {nil, nil} ->
+        nil
+
+      {nil, scope} ->
+        case Ash.Scope.ToOpts.get_tenant(scope) do
+          {:ok, tenant} -> tenant
+          :error -> nil
+        end
+
+      {tenant, _} ->
+        tenant
     end
   end
 

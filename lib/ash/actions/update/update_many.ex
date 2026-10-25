@@ -4,7 +4,6 @@
 
 defmodule Ash.Actions.Update.UpdateMany do
   @moduledoc false
-  require Ash.Expr
   # Updates many records, each with its own input.
   #
   # The `:strategy` option controls how the work is executed (default `[:atomic_batches]`):
@@ -627,17 +626,7 @@ defmodule Ash.Actions.Update.UpdateMany do
   defp maybe_put(opts, key, value), do: Keyword.put(opts, key, value)
 
   defp apply_attribute_multitenancy(%Ash.Changeset{} = changeset) do
-    if changeset.tenant &&
-         Ash.Resource.Info.multitenancy_strategy(changeset.resource) == :attribute &&
-         Map.get(changeset.action, :multitenancy) not in [:bypass, :bypass_all] do
-      attribute = Ash.Resource.Info.multitenancy_attribute(changeset.resource)
-      {m, f, a} = Ash.Resource.Info.multitenancy_parse_attribute(changeset.resource)
-      attribute_value = apply(m, f, [changeset.to_tenant | a])
-
-      Ash.Changeset.filter(changeset, Ash.Expr.expr(^Ash.Expr.ref(attribute) == ^attribute_value))
-    else
-      changeset
-    end
+    Ash.Actions.Helpers.WriteTenancy.filter(changeset)
   end
 
   defp apply_attribute_multitenancy(other), do: other
