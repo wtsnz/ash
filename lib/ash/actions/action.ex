@@ -85,7 +85,10 @@ defmodule Ash.Actions.Action do
             end
           end)
 
-        result = maybe_load(result, input, domain, opts)
+        result =
+          result
+          |> maybe_load(input, domain, opts)
+          |> present(input, domain, opts)
 
         case result do
           {:error, error} ->
@@ -177,6 +180,19 @@ defmodule Ash.Actions.Action do
   end
 
   defp maybe_load(other, _input, _domain, _opts), do: other
+
+  defp present({:ok, result}, %{action: %{returns: returns}} = input, domain, opts)
+       when not is_nil(returns) do
+    Ash.Actions.Present.value(result, returns, input.action.constraints || [],
+      actor: opts[:actor],
+      tenant: opts[:tenant],
+      domain: domain,
+      tracer: opts[:tracer],
+      authorize?: opts[:authorize?]
+    )
+  end
+
+  defp present(other, _input, _domain, _opts), do: other
 
   defp run_with_transaction(domain, input, module, run_opts, context, opts) do
     # Run before_transaction hooks first
