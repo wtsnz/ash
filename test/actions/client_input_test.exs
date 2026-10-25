@@ -91,6 +91,13 @@ defmodule Ash.Test.Actions.ClientInputTest do
       has_many :hidden_comments, Ash.Test.Actions.ClientInputTest.Comment
     end
 
+    calculations do
+      calculate :echo, :string, expr(^arg(:value)) do
+        public? true
+        argument :value, :string, allow_expr?: true
+      end
+    end
+
     aggregates do
       count :comment_count, :comments, public?: true
     end
@@ -313,6 +320,91 @@ defmodule Ash.Test.Actions.ClientInputTest do
                Post
                |> Ash.Query.apply_client_input(%{filter: %{name: "p1"}, select: [:internal]})
                |> Ash.read(@user)
+    end
+  end
+
+  describe "cases from review" do
+    test "malformed client input adds an error instead of raising" do
+      for input <- [[1], %{"page" => [1]}, %{"load" => [1]}, %{"page" => "1"}, ~D[2026-01-01]] do
+        refute Ash.Query.apply_client_input(Post, input).valid?, inspect(input)
+      end
+    end
+
+    test "a calculation argument given as an expression is refused in sorts" do
+      query = Ash.Query.sort_input(Post, echo: {%{value: expr(internal)}, :asc})
+      assert {:error, %Ash.Error.Invalid{}} = Ash.read(query, @user)
+
+      query =
+        Ash.Query.apply_client_input(Post, %{sort: [echo: {%{value: expr(internal)}, :desc}]})
+
+      assert {:error, %Ash.Error.Invalid{}} = Ash.read(query, @user)
+    end
+
+    test "a calculation argument given as an expression is refused in filters" do
+      query = Ash.Query.filter_input(Post, expr(echo(value: internal) == "zz"))
+      assert {:error, %Ash.Error.Invalid{}} = Ash.read(query, @user)
+    end
+
+    test "calculation arguments given as values still work" do
+      assert names(Ash.Query.filter_input(Post, expr(echo(value: "x") == "x")), @user) ==
+               ["p1", "p2", "p3"]
+
+      assert ordered(Ash.Query.sort_input(Post, echo: {%{value: "x"}, :asc}, name: :asc), @user) ==
+               ["p1", "p2", "p3"]
+    end
+
+    test "trusted filters can still give a calculation an expression argument" do
+      assert names(Ash.Query.filter(Post, echo(value: internal) == "zz"), @user) == ["p1"]
+    end
+
+    test "an inline aggregate's filter is client input" do
+      # Back through the comment to its post, to test the post's hidden field.
+      for filter <- [
+            expr(count(comments, filter: expr(post.internal == "zz")) == 2),
+            expr(count(comments, query: [filter: expr(post.internal == "zz")]) == 2)
+          ] do
+        assert names(Ash.Query.filter_input(Post, filter), @user) == []
+        assert names(Ash.Query.filter_input(Post, filter), @admin) == ["p1"]
+      end
+
+      assert names(
+               Ash.Query.filter_input(
+                 Post,
+                 expr(count(comments, filter: expr(body == "public")) == 1)
+               ),
+               @user
+             ) == ["p1"]
+    end
+
+    test "an inline aggregate can't turn off authorization" do
+      query = Ash.Query.filter_input(Post, expr(count(comments, authorize?: false) == 3))
+      assert {:error, %Ash.Error.Invalid{}} = Ash.read(query, @user)
+    end
+
+    test "an inline aggregate can't use a relationship that isn't public" do
+      query = Ash.Query.filter_input(Post, expr(count(hidden_comments) == 3))
+      assert {:error, %Ash.Error.Invalid{}} = Ash.read(query, @user)
+
+      # Trusted filters can (the aggregate still only counts comments the actor can read).
+      assert names(Ash.Query.filter(Post, count(hidden_comments) == 2), @user) == ["p1"]
+    end
+
+    test "exists can't use a relationship that isn't public" do
+      query = Ash.Query.filter_input(Post, expr(exists(hidden_comments, body == "secret")))
+      assert {:error, %Ash.Error.Invalid{}} = Ash.read(query, @user)
+    end
+
+    test "exists and inline aggregates over a path that doesn't exist return an error" do
+      for filter <- [expr(exists(nope, true)), expr(count(nope) > 0)] do
+        query = Ash.Query.filter_input(Post, filter)
+        refute query.valid?, inspect(filter)
+      end
+    end
+
+    test "exists with parent in client input" do
+      filter = expr(exists(comments, parent(internal) == "zz"))
+      assert names(Ash.Query.filter_input(Post, filter), @user) == []
+      assert names(Ash.Query.filter_input(Post, filter), @admin) == ["p1"]
     end
   end
 end
