@@ -182,12 +182,23 @@ defmodule Ash.Test.Actions.WriteTenantScopingTest do
     end
 
     attributes do
-      uuid_primary_key :id
+      # Writable, so two tenants can hold records with the same primary key.
+      uuid_primary_key :id, writable?: true, public?: true
       attribute :body, :string, public?: true
     end
 
     actions do
-      defaults [:read, :destroy, create: [:body], update: [:body]]
+      defaults [:read, :destroy, create: [:id, :body], update: [:body]]
+
+      # A change that depends on the tenant the changeset was built for.
+      update :stamp_tenant do
+        require_atomic? false
+        accept []
+
+        change fn changeset, _ ->
+          Ash.Changeset.force_change_attribute(changeset, :body, "built for #{changeset.tenant}")
+        end
+      end
     end
   end
 
@@ -476,6 +487,47 @@ defmodule Ash.Test.Actions.WriteTenantScopingTest do
                |> Ash.destroy()
 
       assert stored(b_note) == :gone
+    end
+  end
+
+  describe "a changeset built for one tenant" do
+    setup do
+      id = Ash.UUID.generate()
+      {:ok, a_note} = Ash.create(CtxNote, %{id: id, body: "a's"}, tenant: "a")
+      {:ok, b_note} = Ash.create(CtxNote, %{id: id, body: "b's"}, tenant: "b")
+      %{a_note: a_note, b_note: b_note}
+    end
+
+    test "runs again in the same tenant", %{a_note: a_note} do
+      changeset = Ash.Changeset.for_update(a_note, :stamp_tenant, %{}, tenant: "a")
+      assert {:ok, _} = Ash.update(changeset, tenant: "a")
+      assert stored(a_note, "a") == "built for a"
+    end
+
+    test "isn't updated in another tenant", %{a_note: a_note, b_note: b_note} do
+      changeset = Ash.Changeset.for_update(a_note, :stamp_tenant, %{}, tenant: "a")
+
+      assert {:error, %Ash.Error.Invalid{}} =
+               Ash.update(changeset, tenant: "b")
+
+      assert stored(a_note, "a") == "a's"
+      assert stored(b_note, "b") == "b's"
+    end
+
+    test "isn't destroyed in another tenant", %{a_note: a_note, b_note: b_note} do
+      changeset = Ash.Changeset.for_destroy(a_note, :destroy, %{}, tenant: "a")
+
+      assert {:error, %Ash.Error.Invalid{}} =
+               Ash.destroy(changeset, tenant: "b")
+
+      assert stored(a_note, "a") == "a's"
+      assert stored(b_note, "b") == "b's"
+    end
+
+    test "isn't run in another tenant given by a scope", %{a_note: a_note, b_note: b_note} do
+      changeset = Ash.Changeset.for_update(a_note, :stamp_tenant, %{}, tenant: "a")
+      assert {:error, _} = Ash.update(changeset, scope: %Scope{tenant: "b"})
+      assert stored(b_note, "b") == "b's"
     end
   end
 
