@@ -11,6 +11,7 @@ defmodule Ash.Resource.Relationships.BelongsTo do
     :primary_key?,
     :define_attribute?,
     :attribute_type,
+    :attribute_constraints,
     :destination_attribute,
     :public?,
     :source_attribute,
@@ -57,6 +58,7 @@ defmodule Ash.Resource.Relationships.BelongsTo do
           primary_key?: boolean,
           define_attribute?: boolean,
           attribute_type: term,
+          attribute_constraints: Keyword.t(),
           writable?: boolean,
           attribute_writable?: boolean,
           attribute_public?: boolean,
@@ -122,6 +124,12 @@ defmodule Ash.Resource.Relationships.BelongsTo do
                     type: :any,
                     default: Application.compile_env(:ash, :default_belongs_to_type, :uuid),
                     doc: "The type of the generated created attribute. See `Ash.Type` for more."
+                  ],
+                  attribute_constraints: [
+                    type: :keyword_list,
+                    default: [],
+                    doc:
+                      "Constraints to apply to the generated attribute. See `Ash.Type` for more."
                   ]
                 ],
                 @global_opts,
