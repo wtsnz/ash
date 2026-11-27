@@ -82,6 +82,106 @@ defmodule Ash.Test.Resource.Relationships.BelongsToTest do
              ] = Ash.Resource.Info.attributes(Post)
     end
 
+    test "it creates an attribute that honors attribute_constraints" do
+      defposts do
+        relationships do
+          belongs_to :foobar, FooBar,
+            attribute_type: :string,
+            attribute_constraints: [min_length: 3, trim?: false]
+        end
+      end
+
+      assert [
+               _,
+               %Ash.Resource.Attribute{
+                 name: :foobar_id,
+                 type: Ash.Type.String,
+                 constraints: constraints
+               }
+             ] = Ash.Resource.Info.attributes(Post)
+
+      assert constraints[:min_length] == 3
+      assert constraints[:trim?] == false
+    end
+
+    test "enforces attribute_constraints on a parameterized custom type at runtime" do
+      defmodule PrefixedId do
+        use Ash.Type
+
+        @impl true
+        def storage_type(_), do: :string
+
+        @impl true
+        def constraints, do: [prefix: [type: :string, required: true]]
+
+        @impl true
+        def cast_input(nil, _), do: {:ok, nil}
+
+        def cast_input(value, constraints) when is_binary(value) do
+          prefix = Keyword.fetch!(constraints, :prefix)
+
+          if String.starts_with?(value, prefix <> "_") do
+            {:ok, value}
+          else
+            {:error, message: "must start with #{prefix}_"}
+          end
+        end
+
+        def cast_input(_, _), do: :error
+
+        @impl true
+        def cast_stored(value, _), do: {:ok, value}
+
+        @impl true
+        def dump_to_native(value, _), do: {:ok, value}
+      end
+
+      defmodule ConstrainedParent do
+        use Ash.Resource, domain: Domain, data_layer: Ash.DataLayer.Ets
+
+        attributes do
+          attribute :id, PrefixedId,
+            primary_key?: true,
+            allow_nil?: false,
+            public?: true,
+            writable?: true,
+            constraints: [prefix: "par"]
+        end
+
+        actions do
+          defaults [:read, create: [:id]]
+        end
+      end
+
+      defmodule ConstrainedChild do
+        use Ash.Resource, domain: Domain, data_layer: Ash.DataLayer.Ets
+
+        attributes do
+          uuid_primary_key :id
+        end
+
+        relationships do
+          belongs_to :parent, ConstrainedParent,
+            attribute_type: PrefixedId,
+            attribute_constraints: [prefix: "par"],
+            attribute_writable?: true,
+            public?: true
+        end
+
+        actions do
+          defaults [:read, create: [:parent_id]]
+        end
+      end
+
+      parent = Ash.create!(ConstrainedParent, %{id: "par_123"})
+
+      child = Ash.create!(ConstrainedChild, %{parent_id: parent.id})
+      assert child.parent_id == "par_123"
+      assert Ash.load!(child, :parent).parent.id == "par_123"
+
+      assert {:error, _} = Ash.create(ConstrainedChild, %{parent_id: "other_123"})
+    end
+
     test "it creates a relationship" do
       defposts do
         relationships do
@@ -203,6 +303,20 @@ defmodule Ash.Test.Resource.Relationships.BelongsToTest do
           defposts do
             relationships do
               belongs_to(:foobar, Foobar, primary_key?: "blah", public?: true)
+            end
+          end
+        end
+      )
+    end
+
+    test "fails if `attribute_constraints` is not a keyword list" do
+      assert_raise(
+        Spark.Error.DslError,
+        ~r/invalid value for :attribute_constraints option: expected keyword list/,
+        fn ->
+          defposts do
+            relationships do
+              belongs_to(:foobar, FooBar, attribute_constraints: "blah")
             end
           end
         end

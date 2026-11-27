@@ -27,6 +27,7 @@ defmodule Ash.Resource.Transformers.BelongsToAttribute do
         Transformer.build_entity(@extension, [:attributes], :attribute,
           name: relationship.source_attribute,
           type: relationship.attribute_type || @default_belongs_to_type,
+          constraints: relationship.attribute_constraints || [],
           allow_nil?:
             if relationship.primary_key? do
               false
